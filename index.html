@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sangwa · སངས་བ · 桑瓦</title>
+<meta name="description" content="Sangwa — learn English, Chinese and Tibetan through Tibetan. A gamified language app built around a mountain route from Base Camp to the Summit.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231B2A47'/%3E%3Cpath d='M15 72 L38 34 L50 52 L60 38 L85 72 Z' fill='%23F3F7FB'/%3E%3Ccircle cx='60' cy='26' r='7' fill='%23E8A33D'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Tibetan:wght@400;600;700&family=Noto+Sans+SC:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12213B;
+    --sky-deep:#152647;
+    --sky-mid:#233A66;
+    --snow:#F5F8FC;
+    --snow-dim:#DCE4F0;
+    --gold:#E8A33D;
+    --gold-dim:#B87F2A;
+    --ice:#4FB4D8;
+    --good:#3FAE72;
+    --bad:#E1584B;
+    --flag-blue:#3D6FB4;
+    --flag-white:#F5F8FC;
+    --flag-red:#C4443A;
+    --flag-green:#4C9A63;
+    --flag-yellow:#E3B23C;
+    --radius:18px;
+    --shadow: 0 10px 30px rgba(10,18,36,.35);
+    --font-display:'Space Grotesk', 'Noto Sans Tibetan', sans-serif;
+    --font-body:'Inter','Noto Sans SC','Noto Sans Tibetan',sans-serif;
+    --font-bo:'Noto Sans Tibetan','Inter',sans-serif;
+    --font-zh:'Noto Sans SC','Inter',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:var(--font-body);
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #24406f 0%, transparent 60%),
+      linear-gradient(180deg, var(--sky-deep) 0%, var(--sky-mid) 55%, #16283f 100%);
+    color:var(--snow);
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  #app{max-width:480px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; position:relative; overflow-x:hidden;}
+  h1,h2,h3{font-family:var(--font-display); margin:0; letter-spacing:.01em;}
+  button{font-family:var(--font-body); cursor:pointer;}
+  .lang-bo{font-family:var(--font-bo);}
+  .lang-zh{font-family:var(--font-zh);}
+
+  /* ---------- flag strip ---------- */
+  .flagstrip{display:flex; height:6px; width:100%;}
+  .flagstrip span{flex:1;}
+  .flagstrip span:nth-child(1){background:var(--flag-blue);}
+  .flagstrip span:nth-child(2){background:var(--flag-white);}
+  .flagstrip span:nth-child(3){background:var(--flag-red);}
+  .flagstrip span:nth-child(4){background:var(--flag-green);}
+  .flagstrip span:nth-child(5){background:var(--flag-yellow);}
+
+  /* ---------- top bar ---------- */
+  .topbar{display:flex; align-items:center; justify-content:space-between; padding:14px 18px; gap:10px;}
+  .topbar .stat{display:flex; align-items:center; gap:5px; font-weight:600; font-size:14px; background:rgba(255,255,255,.06); padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.08);}
+  .iconbtn{background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1); color:var(--snow); width:38px; height:38px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px;}
+  .brand{display:flex; align-items:center; gap:8px; font-family:var(--font-display); font-weight:700; font-size:20px; letter-spacing:.02em;}
+  .brand .peak{color:var(--gold);}
+
+  /* ---------- home ---------- */
+  .home{padding:8px 20px 40px; display:flex; flex-direction:column; gap:22px;}
+  .hero{text-align:center; padding:22px 6px 6px;}
+  .hero h1{font-size:34px; color:var(--snow);}
+  .hero .sub{margin-top:8px; font-size:15px; color:var(--snow-dim); line-height:1.5;}
+  .hero .sub .lang-bo{font-size:16px;}
+  .track-grid{display:grid; grid-template-columns:1fr; gap:14px;}
+  .track-card{
+    text-align:left; border:1px solid rgba(255,255,255,.1); border-radius:var(--radius);
+    background:linear-gradient(160deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+    padding:18px; display:flex; align-items:center; gap:14px; color:var(--snow);
+    box-shadow:var(--shadow); position:relative; overflow:hidden;
+  }
+  .track-card:active{transform:scale(.98);}
+  .track-card .glyph{font-size:30px; width:54px; height:54px; border-radius:14px; display:flex; align-items:center; justify-content:center; background:rgba(232,163,61,.15); flex-shrink:0;}
+  .track-card .tc-title{font-family:var(--font-display); font-weight:700; font-size:19px;}
+  .track-card .tc-native{font-size:15px; color:var(--gold); margin-top:2px;}
+  .track-card .tc-sub{font-size:12.5px; color:var(--snow-dim); margin-top:4px;}
+  .track-card .tc-progress{margin-left:auto; font-size:12px; color:var(--snow-dim); text-align:right; flex-shrink:0;}
+
+  /* ---------- world map ---------- */
+  .map-wrap{flex:1; display:flex; flex-direction:column;}
+  .map-scroll{flex:1; padding:20px 10px 50px; position:relative;}
+  .route{position:relative; padding:10px 30px; display:flex; flex-direction:column; align-items:center; gap:56px;}
+  .route::before{
+    content:''; position:absolute; left:50%; top:20px; bottom:20px; width:4px; transform:translateX(-50%);
+    background:repeating-linear-gradient(180deg, rgba(245,248,252,.35) 0 10px, transparent 10px 20px);
+    z-index:0;
+  }
+  .node{position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:8px;}
+  .node.left{align-self:flex-start; margin-left:8%;}
+  .node.right{align-self:flex-end; margin-right:8%;}
+  .node-btn{
+    width:84px; height:84px; border-radius:50%; border:4px solid var(--sky-deep);
+    display:flex; align-items:center; justify-content:center; font-size:32px;
+    box-shadow:0 8px 0 rgba(0,0,0,.25), var(--shadow);
+    background:linear-gradient(160deg,#DDB25E,var(--gold-dim));
+  }
+  .node-btn.locked{background:linear-gradient(160deg,#5b6b86,#3a465c); color:rgba(255,255,255,.6);}
+  .node-btn.done{background:linear-gradient(160deg,#6BC98F,var(--good));}
+  .node-btn:active{transform:translateY(4px); box-shadow:0 4px 0 rgba(0,0,0,.25);}
+  .node-label{font-family:var(--font-display); font-weight:700; font-size:14px; text-align:center; max-width:120px;}
+  .node-sub{font-size:11.5px; color:var(--snow-dim); text-align:center; max-width:130px;}
+  .node-stars{display:flex; gap:2px; font-size:12px; color:var(--gold);}
+  .world-flag{position:absolute; top:-46px; left:50%; transform:translateX(-50%); font-size:26px;}
+  .world-block{position:relative; padding-top:56px; width:100%;}
+  .world-title{text-align:center; font-family:var(--font-display); font-weight:700; font-size:16px; color:var(--snow); margin-bottom:2px;}
+  .world-subtitle{text-align:center; font-size:12px; color:var(--gold); margin-bottom:18px;}
+
+  /* ---------- lesson player ---------- */
+  .lesson{flex:1; display:flex; flex-direction:column; padding:0 20px 24px;}
+  .progressbar{height:10px; border-radius:999px; background:rgba(255,255,255,.12); overflow:hidden; margin:6px 0 4px;}
+  .progressbar-fill{height:100%; background:linear-gradient(90deg,var(--ice),var(--gold)); transition:width .35s ease;}
+  .hearts-row{display:flex; gap:4px; font-size:16px;}
+  .q-wrap{flex:1; display:flex; flex-direction:column; justify-content:center; gap:26px; padding:14px 0;}
+  .q-card{text-align:center;}
+  .q-eyebrow{font-size:12px; text-transform:uppercase; letter-spacing:.12em; color:var(--snow-dim); margin-bottom:10px;}
+  .q-prompt{font-family:var(--font-display); font-size:36px; font-weight:700; line-height:1.25;}
+  .q-prompt.script-bo{font-family:var(--font-bo); font-size:34px;}
+  .q-prompt.script-zh{font-family:var(--font-zh); font-size:38px;}
+  .q-translit{margin-top:8px; color:var(--gold); font-size:15px; font-style:italic;}
+  .options{display:grid; grid-template-columns:1fr; gap:12px;}
+  .opt{
+    border:2px solid rgba(255,255,255,.14); background:rgba(255,255,255,.05); color:var(--snow);
+    border-radius:14px; padding:15px 16px; font-size:18px; font-weight:600; text-align:left;
+    display:flex; flex-direction:column; gap:2px;
+  }
+  .opt .opt-sub{font-size:12px; font-weight:400; color:var(--snow-dim);}
+  .opt.script-bo{font-family:var(--font-bo);}
+  .opt.script-zh{font-family:var(--font-zh);}
+  .opt:active{transform:scale(.98);}
+  .opt.correct{border-color:var(--good); background:rgba(63,174,114,.22);}
+  .opt.wrong{border-color:var(--bad); background:rgba(225,88,75,.22);}
+  .opt.disabled{pointer-events:none; opacity:.55;}
+  .opt.reveal{pointer-events:none;}
+
+  .feedback-bar{position:sticky; bottom:0; margin:0 -20px -24px; padding:18px 20px 22px; display:flex; align-items:center; gap:14px;}
+  .feedback-bar.good{background:rgba(63,174,114,.92);}
+  .feedback-bar.bad{background:rgba(225,88,75,.92);}
+  .feedback-bar .fb-text{flex:1;}
+  .fb-title{font-family:var(--font-display); font-weight:700; font-size:16px;}
+  .fb-sub{font-size:13px; opacity:.9; margin-top:2px;}
+  .btn{
+    border:none; border-radius:14px; padding:14px 18px; font-family:var(--font-display); font-weight:700;
+    font-size:15px; letter-spacing:.02em; box-shadow:0 4px 0 rgba(0,0,0,.2);
+  }
+  .btn-primary{background:var(--gold); color:#241704;}
+  .btn-primary:active{transform:translateY(3px); box-shadow:0 1px 0 rgba(0,0,0,.2);}
+  .btn-light{background:var(--snow); color:var(--ink);}
+  .btn-ghost{background:rgba(255,255,255,.12); color:var(--snow);}
+  .btn-block{width:100%;}
+
+  /* ---------- lesson complete ---------- */
+  .complete{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 26px; text-align:center; gap:18px;}
+  .complete .medal{font-size:70px;}
+  .complete h2{font-size:26px;}
+  .stat-row{display:flex; gap:14px; width:100%;}
+  .stat-box{flex:1; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:14px; padding:14px 8px;}
+  .stat-box .val{font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--gold);}
+  .stat-box .lab{font-size:11.5px; color:var(--snow-dim); margin-top:2px;}
+  .stars-final{font-size:34px; letter-spacing:6px;}
+
+  /* ---------- locked / coming soon ---------- */
+  .locked-panel{padding:24px; text-align:center; background:rgba(255,255,255,.05); border:1px dashed rgba(255,255,255,.25); border-radius:16px; margin:10px 0;}
+  .locked-panel h3{margin-bottom:6px;}
+  .locked-panel p{color:var(--snow-dim); font-size:13.5px; line-height:1.5;}
+
+  /* ---------- profile ---------- */
+  .profile{padding:16px 20px 40px; display:flex; flex-direction:column; gap:16px;}
+  .profile-card{background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:18px;}
+  .profile-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+
+  .footer-note{text-align:center; font-size:11px; color:rgba(245,248,252,.4); padding:10px 30px 26px;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important; animation:none !important;}
+  }
+
+  ::selection{background:var(--gold); color:#241704;}
+</style>
+</head>
+<body>
+<div class="flagstrip"><span></span><span></span><span></span><span></span><span></span></div>
+<div id="app"></div>
+
+<script>
+/* =========================================================================
+   SANGWA — data + engine
+   A note for whoever extends this file: everything about content lives in
+   WORDBANK / LESSON_GROUPS / WORLD_META below. The four courses are NOT
+   separately authored — they are generated from one shared word bank by
+   swapping which language is the "prompt" and which is the "answer".
+   ========================================================================= */
+
+// ---- shared vocabulary bank -------------------------------------------------
+// bo_translit is a rough Lhasa-dialect romanization for learner support only.
+// IMPORTANT: this vocabulary was assembled for a working prototype and should
+// be reviewed by a native Tibetan speaker/linguist and a Mandarin speaker
+// before this app is used with real learners (see README "Content review").
+const WORDBANK = [
+  // greetings
+  {id:'hello',    cat:'greetings', en:'Hello',       zh:'你好',   zh_py:'nǐ hǎo',    bo:'བཀྲ་ཤིས་བདེ་ལེགས', bo_tr:'tashi delek'},
+  {id:'thankyou', cat:'greetings', en:'Thank you',   zh:'谢谢',   zh_py:'xièxie',    bo:'ཐུགས་རྗེ་ཆེ',        bo_tr:'thuk-je-che'},
+  {id:'yes',      cat:'greetings', en:'Yes',         zh:'是',     zh_py:'shì',       bo:'ཡིན',              bo_tr:'yin'},
+  {id:'no',       cat:'greetings', en:'No',          zh:'不是',   zh_py:'bú shì',    bo:'མིན',              bo_tr:'min'},
+  {id:'goodbye',  cat:'greetings', en:'Goodbye',     zh:'再见',   zh_py:'zàijiàn',   bo:'བདེ་མོ་གནང་',       bo_tr:'de-mo nang'},
+  {id:'sorry',    cat:'greetings', en:'Sorry',       zh:'对不起', zh_py:'duìbùqǐ',   bo:'དགོངས་དག',          bo_tr:'gong-dak'},
+  // numbers
+  {id:'one',   cat:'numbers1', en:'One',   zh:'一', zh_py:'yī',  bo:'གཅིག', bo_tr:'chik'},
+  {id:'two',   cat:'numbers1', en:'Two',   zh:'二', zh_py:'èr',  bo:'གཉིས', bo_tr:'nyi'},
+  {id:'three', cat:'numbers1', en:'Three', zh:'三', zh_py:'sān', bo:'གསུམ', bo_tr:'sum'},
+  {id:'four',  cat:'numbers1', en:'Four',  zh:'四', zh_py:'sì',  bo:'བཞི',  bo_tr:'zhi'},
+  {id:'five',  cat:'numbers1', en:'Five',  zh:'五', zh_py:'wǔ',  bo:'ལྔ',   bo_tr:'nga'},
+  {id:'six',   cat:'numbers2', en:'Six',   zh:'六', zh_py:'liù', bo:'དྲུག', bo_tr:'druk'},
+  {id:'seven', cat:'numbers2', en:'Seven', zh:'七', zh_py:'qī',  bo:'བདུན', bo_tr:'dün'},
+  {id:'eight', cat:'numbers2', en:'Eight', zh:'八', zh_py:'bā',  bo:'བརྒྱད', bo_tr:'gyé'},
+  {id:'nine',  cat:'numbers2', en:'Nine',  zh:'九', zh_py:'jiǔ', bo:'དགུ',  bo_tr:'gu'},
+  {id:'ten',   cat:'numbers2', en:'Ten',   zh:'十', zh_py:'shí', bo:'བཅུ',  bo_tr:'chu'},
+  // family
+  {id:'mother',   cat:'family', en:'Mother',   zh:'妈妈', zh_py:'māma',   bo:'ཨ་མ',    bo_tr:'ama'},
+  {id:'father',   cat:'family', en:'Father',   zh:'爸爸', zh_py:'bàba',   bo:'ཨ་ཕ',    bo_tr:'apa'},
+  {id:'son',      cat:'family', en:'Son',      zh:'儿子', zh_py:'érzi',   bo:'བུ',     bo_tr:'bu'},
+  {id:'daughter', cat:'family', en:'Daughter', zh:'女儿', zh_py:'nǚ\u2019ér', bo:'བུ་མོ', bo_tr:'bumo'},
+  {id:'family',   cat:'family', en:'Family',   zh:'家人', zh_py:'jiārén', bo:'ནང་མི',  bo_tr:'nangmi'},
+  {id:'friend',   cat:'family', en:'Friend',   zh:'朋友', zh_py:'péngyou',bo:'གྲོགས་པོ', bo_tr:'drokpo'},
+  // colors
+  {id:'red',    cat:'colors', en:'Red',    zh:'红色', zh_py:'hóngsè',  bo:'དམར་པོ', bo_tr:'marpo'},
+  {id:'blue',   cat:'colors', en:'Blue',   zh:'蓝色', zh_py:'lánsè',   bo:'སྔོན་པོ', bo_tr:'ngönpo'},
+  {id:'green',  cat:'colors', en:'Green',  zh:'绿色', zh_py:'lǜsè',    bo:'ལྗང་ཁུ', bo_tr:'jangku'},
+  {id:'yellow', cat:'colors', en:'Yellow', zh:'黄色', zh_py:'huángsè', bo:'སེར་པོ', bo_tr:'serpo'},
+  {id:'white',  cat:'colors', en:'White',  zh:'白色', zh_py:'báisè',   bo:'དཀར་པོ', bo_tr:'karpo'},
+  {id:'black',  cat:'colors', en:'Black',  zh:'黑色', zh_py:'hēisè',   bo:'ནག་པོ', bo_tr:'nakpo'},
+  // food
+  {id:'water', cat:'food', en:'Water', zh:'水',   zh_py:'shuǐ',   bo:'ཆུ',     bo_tr:'chu'},
+  {id:'tea',   cat:'food', en:'Tea',   zh:'茶',   zh_py:'chá',    bo:'ཇ',      bo_tr:'ja'},
+  {id:'foodw', cat:'food', en:'Food',  zh:'食物', zh_py:'shíwù',  bo:'ཁ་ལག',   bo_tr:'khalak'},
+  {id:'milk',  cat:'food', en:'Milk',  zh:'牛奶', zh_py:'niúnǎi', bo:'འོ་མ',   bo_tr:'oma'},
+  {id:'meat',  cat:'food', en:'Meat',  zh:'肉',   zh_py:'ròu',    bo:'ཤ',      bo_tr:'sha'},
+  {id:'fruit', cat:'food', en:'Fruit', zh:'水果', zh_py:'shuǐguǒ',bo:'ཤིང་ཏོག', bo_tr:'shingtok'},
+];
+const byId = id => WORDBANK.find(w=>w.id===id);
+
+// ---- lesson groups that make up World 1 ("Base Camp") ----------------------
+const LESSON_GROUPS = [
+  {key:'greetings', label:'Greetings',      icon:'🤝', ids:['hello','thankyou','yes','no','goodbye','sorry']},
+  {key:'numbers1',  label:'Numbers 1–5',    icon:'①', ids:['one','two','three','four','five']},
+  {key:'numbers2',  label:'Numbers 6–10',   icon:'⑥', ids:['six','seven','eight','nine','ten']},
+  {key:'family',    label:'Family',         icon:'👪', ids:['mother','father','son','daughter','family','friend']},
+  {key:'colors',    label:'Colors',         icon:'🎨', ids:['red','blue','green','yellow','white','black']},
+  {key:'food',      label:'Food & Drink',   icon:'🍵', ids:['water','tea','foodw','milk','meat','fruit']},
+];
+
+// ---- the five worlds on the route -------------------------------------------
+const WORLD_META = [
+  {icon:'🏕️', title:'Base Camp',   subtitle:'Foundations',            built:true},
+  {icon:'⛺',  title:'Camp I',      subtitle:'Everyday Life',          built:false, topics:'Verbs, clothing, everyday objects'},
+  {icon:'🥾',  title:'Camp II',     subtitle:'Getting Around',         built:false, topics:'Directions, transport, places in town'},
+  {icon:'❄️',  title:'Camp III',    subtitle:'Time & Weather',         built:false, topics:'Days, seasons, weather, the mountain climate'},
+  {icon:'🏔️',  title:'Summit Push', subtitle:'Conversation & Culture', built:false, topics:'Full conversations, customs, festivals'},
+];
+
+// ---- the four courses, generated from one word bank -------------------------
+const TRACKS = [
+  {id:'en_bo', promptLang:'bo', answerLang:'en', title:'English',   native:'དབྱིན་ཇི།', nativeScript:'bo', tagline:'Learn English using Tibetan', glyph:'🇬🇧'},
+  {id:'zh_bo', promptLang:'bo', answerLang:'zh', title:'中文',      native:'རྒྱ་སྐད།', nativeScript:'bo', tagline:'Learn Chinese using Tibetan', glyph:'🇨🇳'},
+  {id:'bo_zh', promptLang:'zh', answerLang:'bo', title:'བོད་སྐད།', native:'从中文学习', nativeScript:'zh', tagline:'Learn Tibetan using Chinese', glyph:'⛰️'},
+  {id:'bo_en', promptLang:'en', answerLang:'bo', title:'བོད་སྐད།', native:'Learn from English', nativeScript:'en', tagline:'Learn Tibetan using English', glyph:'⛰️'},
+];
+const trackById = id => TRACKS.find(t=>t.id===id);
+
+function wordText(word, lang){
+  if(lang==='bo') return word.bo;
+  if(lang==='zh') return word.zh;
+  return word.en;
+}
+function wordSub(word, lang){
+  if(lang==='bo') return word.bo_tr;
+  if(lang==='zh') return word.zh_py;
+  return '';
+}
+function scriptClass(lang){
+  if(lang==='bo') return 'script-bo';
+  if(lang==='zh') return 'script-zh';
+  return '';
+}
+
+// ---- exercise generation -----------------------------------------------------
+function shuffled(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function buildExercises(track, group){
+  const pool = group.ids.map(byId);
+  return shuffled(group.ids).map(id=>{
+    const word = byId(id);
+    const others = shuffled(pool.filter(w=>w.id!==id)).slice(0,3);
+    const options = shuffled([word, ...others]).map(w=>({
+      id:w.id, text:wordText(w, track.answerLang), sub:wordSub(w, track.answerLang), correct:w.id===word.id
+    }));
+    return {
+      wordId:word.id,
+      prompt:wordText(word, track.promptLang),
+      promptSub:wordSub(word, track.promptLang),
+      promptLang:track.promptLang,
+      options
+    };
+  });
+}
+
+// ---- persistence (falls back to in-memory if storage is unavailable,
+//      e.g. inside a sandboxed preview) ---------------------------------------
+const memoryFallback = {};
+const safeStorage = {
+  get(key){
+    try{ const v = window.localStorage.getItem(key); return v===null? null : v; }
+    catch(e){ return Object.prototype.hasOwnProperty.call(memoryFallback,key) ? memoryFallback[key] : null; }
+  },
+  set(key,val){
+    try{ window.localStorage.setItem(key,val); }
+    catch(e){ memoryFallback[key]=val; }
+  }
+};
+
+const STORAGE_KEY = 'sangwa_state_v1';
+const HEART_REGEN_MS = 30*60*1000; // 1 heart every 30 min
+const HEARTS_MAX = 5;
+
+function defaultState(){
+  return {
+    xp:0, streak:0, lastActive:null,
+    hearts:HEARTS_MAX, lastHeartTime: Date.now(),
+    tracks:{}, // trackId -> {completed:{ "world-groupkey": stars }}
+    screen:'home',
+    currentTrack:null, currentWorld:0,
+    session:null
+  };
+}
+function loadState(){
+  const raw = safeStorage.get(STORAGE_KEY);
+  if(!raw) return defaultState();
+  try{
+    const parsed = JSON.parse(raw);
+    return Object.assign(defaultState(), parsed);
+  }catch(e){ return defaultState(); }
+}
+function saveState(){ safeStorage.set(STORAGE_KEY, JSON.stringify(state)); }
+
+let state = loadState();
+regenHearts();
+
+function regenHearts(){
+  if(state.hearts >= HEARTS_MAX) { state.lastHeartTime = Date.now(); return; }
+  const elapsed = Date.now() - state.lastHeartTime;
+  const gained = Math.floor(elapsed / HEART_REGEN_MS);
+  if(gained > 0){
+    state.hearts = Math.min(HEARTS_MAX, state.hearts + gained);
+    state.lastHeartTime = state.hearts >= HEARTS_MAX ? Date.now() : state.lastHeartTime + gained*HEART_REGEN_MS;
+  }
+}
+function nextHeartEta(){
+  if(state.hearts>=HEARTS_MAX) return null;
+  const remain = HEART_REGEN_MS - (Date.now()-state.lastHeartTime);
+  const mins = Math.max(1, Math.ceil(remain/60000));
+  return mins;
+}
+
+function trackProgress(trackId){
+  if(!state.tracks[trackId]) state.tracks[trackId] = {completed:{}};
+  return state.tracks[trackId];
+}
+function lessonKey(worldIdx, groupKey){ return worldIdx+'-'+groupKey; }
+function isLessonDone(trackId, worldIdx, groupKey){
+  const p = trackProgress(trackId);
+  return p.completed[lessonKey(worldIdx,groupKey)] || 0;
+}
+function worldStats(trackId, worldIdx){
+  if(worldIdx!==0) return {done:0,total:0};
+  const p = trackProgress(trackId);
+  let done=0;
+  LESSON_GROUPS.forEach(g=>{ if(p.completed[lessonKey(worldIdx,g.key)]) done++; });
+  return {done, total:LESSON_GROUPS.length};
+}
+function isWorldUnlocked(trackId, worldIdx){
+  if(worldIdx===0) return true;
+  const st = worldStats(trackId, worldIdx-1);
+  return WORLD_META[worldIdx-1].built ? st.done===st.total : false;
+}
+function touchStreak(){
+  const today = new Date().toDateString();
+  if(state.lastActive===today) return;
+  if(state.lastActive){
+    const y = new Date(); y.setDate(y.getDate()-1);
+    if(state.lastActive===y.toDateString()) state.streak += 1;
+    else state.streak = 1;
+  } else {
+    state.streak = 1;
+  }
+  state.lastActive = today;
+}
+
+// ---- rendering ----------------------------------------------------------------
+const app = document.getElementById('app');
+function render(){ app.innerHTML = screens[state.screen](); saveState(); }
+
+function topbar(opts){
+  opts = opts||{};
+  const heartsHtml = Array.from({length:HEARTS_MAX}).map((_,i)=>`<span>${i<state.hearts?'❤️':'🩶'}</span>`).join('');
+  return `
+  <div class="topbar">
+    ${opts.back ? `<button class="iconbtn" onclick="${opts.back}">←</button>` : `<div class="brand"><span>⛰️</span>Sangwa<span class="peak">·</span></div>`}
+    <div style="display:flex; gap:8px; align-items:center;">
+      <div class="stat" title="Day streak">🔥 ${state.streak}</div>
+      <div class="stat" title="Total XP">⭐ ${state.xp}</div>
+      <button class="iconbtn" title="Hearts" onclick="goProfile()">${state.hearts<=1?'💔':'❤️'} ${state.hearts}</button>
+    </div>
+  </div>`;
+}
+
+const screens = {
+  home: renderHome,
+  map: renderMap,
+  world_locked: renderWorldLocked,
+  lesson: renderLesson,
+  complete: renderComplete,
+  outofhearts: renderOutOfHearts,
+  profile: renderProfile,
+};
+
+function renderHome(){
+  const cards = TRACKS.map(t=>{
+    const p = trackProgress(t.id);
+    const doneCount = Object.keys(p.completed).length;
+    return `
+    <button class="track-card" onclick="openTrack('${t.id}')">
+      <div class="glyph">${t.glyph}</div>
+      <div>
+        <div class="tc-title">${t.title}</div>
+        <div class="tc-native ${scriptClass(t.nativeScript)}">${t.native}</div>
+        <div class="tc-sub">${t.tagline}</div>
+      </div>
+      <div class="tc-progress">${doneCount ? doneCount+' lessons done' : 'Start →'}</div>
+    </button>`;
+  }).join('');
+
+  return `
+  ${topbar()}
+  <div class="home">
+    <div class="hero">
+      <h1>སངས་བ <span style="color:var(--gold)">Sangwa</span></h1>
+      <div class="sub">Four routes up the same mountain — choose the language you already speak, and climb toward the one you're learning.</div>
+    </div>
+    <div class="track-grid">${cards}</div>
+    <button class="btn btn-ghost btn-block" onclick="goProfile()">⛺ My progress</button>
+  </div>
+  <div class="footer-note">Base Camp is fully playable now. Camps I–III and the Summit are on the map as the next content drop.</div>
+  `;
+}
+
+function renderMap(){
+  const track = trackById(state.currentTrack);
+  const blocks = WORLD_META.map((w, idx)=>{
+    const unlocked = isWorldUnlocked(track.id, idx);
+    const stats = idx===0 ? worldStats(track.id, idx) : {done:0,total:0};
+    const nodeClass = !unlocked ? 'locked' : (idx===0 && stats.done===stats.total ? 'done' : '');
+    const sub = idx===0 ? `${stats.done}/${stats.total} lessons` : (unlocked? 'Ready' : 'Locked');
+    return `
+    <div class="world-block">
+      <div class="world-title">${w.icon} ${w.title}</div>
+      <div class="world-subtitle">${w.subtitle}</div>
+      <div class="node" style="align-self:center;">
+        <button class="node-btn ${nodeClass}" ${unlocked?`onclick="openWorld(${idx})"`:'disabled'}>${unlocked? (idx===0?'🚩':w.icon) : '🔒'}</button>
+        <div class="node-label">${sub}</div>
+      </div>
+    </div>`;
+  }).join('<div style="height:2px"></div>');
+
+  return `
+  ${topbar({back:'goHome()'})}
+  <div class="map-wrap">
+    <div style="text-align:center; padding:6px 20px 0;">
+      <h2 class="${scriptClass(track.nativeScript)}" style="font-size:20px;">${track.title} <span style="color:var(--gold); font-size:15px;">${track.native!==track.title?track.native:''}</span></h2>
+      <div style="color:var(--snow-dim); font-size:13px; margin-top:4px;">${track.tagline}</div>
+    </div>
+    <div class="map-scroll">
+      <div class="route" style="gap:34px;">${blocks}</div>
+    </div>
+  </div>
+  `;
+}
+
+function renderWorldLocked(){
+  const track = trackById(state.currentTrack);
+  const w = WORLD_META[state.currentWorld];
+  return `
+  ${topbar({back:'openTrack("'+track.id+'")'})}
+  <div class="home">
+    <div class="locked-panel">
+      <h3>${w.icon} ${w.title} is on the roadmap</h3>
+      <p>This camp will cover: <strong>${w.topics}</strong>.<br>Finish Base Camp first — new camps unlock as the route is built out.</p>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="openTrack('${track.id}')">Back to the route</button>
+  </div>`;
+}
+
+function openWorld(idx){
+  state.currentWorld = idx;
+  if(idx===0){ state.screen='lessonlist'; screens.lessonlist = renderLessonList; render(); }
+  else { state.screen='world_locked'; render(); }
+}
+
+function renderLessonList(){
+  const track = trackById(state.currentTrack);
+  const nodes = LESSON_GROUPS.map((g,i)=>{
+    const stars = isLessonDone(track.id, 0, g.key);
+    const side = i%2===0 ? 'left':'right';
+    return `
+    <div class="node ${side}">
+      <button class="node-btn ${stars? 'done':''}" onclick="startLesson('${g.key}')">${stars? '✓' : g.icon}</button>
+      <div class="node-label">${g.label}</div>
+      ${stars ? `<div class="node-stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>` : ''}
+    </div>`;
+  }).join('');
+  return `
+  ${topbar({back:'openTrack("'+track.id+'")'})}
+  <div class="map-wrap">
+    <div style="text-align:center; padding:6px 20px 0;">
+      <h2 style="font-size:20px;">🏕️ Base Camp</h2>
+      <div style="color:var(--snow-dim); font-size:13px; margin-top:4px;">Foundations · 6 lessons</div>
+    </div>
+    <div class="map-scroll"><div class="route">${nodes}</div></div>
+  </div>`;
+}
+
+function startLesson(groupKey){
+  const track = trackById(state.currentTrack);
+  const group = LESSON_GROUPS.find(g=>g.key===groupKey);
+  state.session = {
+    trackId:track.id, worldIdx:0, groupKey,
+    exercises: buildExercises(track, group),
+    qIndex:0, mistakes:0, answered:false, xpEarned:0
+  };
+  state.screen='lesson';
+  render();
+}
+
+function renderLesson(){
+  const s = state.session;
+  const track = trackById(s.trackId);
+  const total = s.exercises.length;
+  const q = s.exercises[s.qIndex];
+  const pct = Math.round((s.qIndex/total)*100);
+
+  const optsHtml = q.options.map(o=>{
+    let cls = 'opt '+scriptClass(track.answerLang);
+    if(s.answered){
+      if(o.correct) cls+=' correct reveal';
+      else if(o.id===s.picked && !o.correct) cls+=' wrong reveal';
+      else cls+=' disabled reveal';
+    }
+    return `<button class="${cls}" ${s.answered?'':`onclick="answer('${o.id}')"`}>
+      <span>${o.text}</span>
+      ${o.sub?`<span class="opt-sub">${o.sub}</span>`:''}
+    </button>`;
+  }).join('');
+
+  const feedback = s.answered ? `
+    <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
+      <div class="fb-text">
+        <div class="fb-title">${s.lastCorrect? 'Correct! +10 XP' : 'Not quite'}</div>
+        ${!s.lastCorrect ? `<div class="fb-sub">Answer: ${q.options.find(o=>o.correct).text}</div>` : ''}
+      </div>
+      <button class="btn btn-light" onclick="nextQuestion()">${s.qIndex+1>=total ? 'Finish':'Continue'}</button>
+    </div>` : '';
+
+  return `
+  ${topbar({back:'exitLesson()'})}
+  <div class="lesson">
+    <div class="progressbar"><div class="progressbar-fill" style="width:${pct}%"></div></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <div class="hearts-row">${Array.from({length:HEARTS_MAX}).map((_,i)=>`<span>${i<state.hearts?'❤️':'🩶'}</span>`).join('')}</div>
+      <div style="font-size:12px; color:var(--snow-dim);">${s.qIndex+1} / ${total}</div>
+    </div>
+    <div class="q-wrap">
+      <div class="q-card">
+        <div class="q-eyebrow">Translate</div>
+        <div class="q-prompt ${scriptClass(q.promptLang)}">${q.prompt}</div>
+        ${q.promptSub?`<div class="q-translit">${q.promptSub}</div>`:''}
+      </div>
+      <div class="options">${optsHtml}</div>
+    </div>
+  </div>
+  ${feedback}
+  `;
+}
+
+function answer(optId){
+  const s = state.session;
+  const q = s.exercises[s.qIndex];
+  const opt = q.options.find(o=>o.id===optId);
+  s.answered = true; s.picked = optId; s.lastCorrect = opt.correct;
+  if(opt.correct){
+    s.xpEarned += 10; state.xp += 10;
+  } else {
+    s.mistakes += 1; state.hearts = Math.max(0, state.hearts-1); state.lastHeartTime = state.hearts<HEARTS_MAX && state.hearts===HEARTS_MAX-1 ? Date.now() : state.lastHeartTime;
+    if(state.hearts===0){ render(); setTimeout(()=>{ state.screen='outofhearts'; render(); }, 550); return; }
+  }
+  render();
+}
+
+function nextQuestion(){
+  const s = state.session;
+  if(state.hearts<=0){ state.screen='outofhearts'; render(); return; }
+  s.qIndex += 1; s.answered=false; s.picked=null;
+  if(s.qIndex>=s.exercises.length){ finishLesson(); return; }
+  render();
+}
+
+function finishLesson(){
+  const s = state.session;
+  const total = s.exercises.length;
+  let stars = 1;
+  if(s.mistakes===0) stars=3; else if(s.mistakes<=Math.ceil(total*0.34)) stars=2;
+  const p = trackProgress(s.trackId);
+  const key = lessonKey(s.worldIdx, s.groupKey);
+  p.completed[key] = Math.max(p.completed[key]||0, stars);
+  if(stars===3) { state.xp += 20; s.xpEarned += 20; }
+  touchStreak();
+  state.screen='complete';
+  render();
+}
+
+function renderComplete(){
+  const s = state.session;
+  const total = s.exercises.length;
+  const stars = trackProgress(s.trackId).completed[lessonKey(s.worldIdx,s.groupKey)];
+  return `
+  ${topbar()}
+  <div class="complete">
+    <div class="medal">${stars===3?'🏆':stars===2?'🥈':'🥉'}</div>
+    <h2>Checkpoint reached!</h2>
+    <div class="stars-final">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
+    <div class="stat-row">
+      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">XP earned</div></div>
+      <div class="stat-box"><div class="val">${total-s.mistakes}/${total}</div><div class="lab">First-try correct</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.streak}</div><div class="lab">Day streak</div></div>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="backToLessonList()">Continue climbing</button>
+  </div>`;
+}
+
+function renderOutOfHearts(){
+  const eta = nextHeartEta();
+  return `
+  ${topbar()}
+  <div class="complete">
+    <div class="medal">💔</div>
+    <h2>Out of hearts</h2>
+    <p style="color:var(--snow-dim); max-width:280px;">Hearts refill on their own — about 1 every 30 minutes. ${eta?`Next heart in ~${eta} min.`:''} Come back to keep climbing, or review this lesson right away with a fresh attempt.</p>
+    <button class="btn btn-primary btn-block" onclick="retrySameLesson()">Try this lesson again</button>
+    <button class="btn btn-ghost btn-block" onclick="backToLessonList()">Back to Base Camp</button>
+  </div>`;
+}
+function retrySameLesson(){
+  if(state.hearts<=0){ regenHearts(); }
+  if(state.hearts<=0){ render(); return; }
+  const s = state.session;
+  startLesson(s.groupKey);
+}
+function backToLessonList(){ state.screen='lessonlist'; render(); }
+function exitLesson(){ state.screen='lessonlist'; render(); }
+
+function renderProfile(){
+  const totalDone = Object.values(state.tracks).reduce((n,t)=>n+Object.keys(t.completed).length,0);
+  const eta = nextHeartEta();
+  return `
+  ${topbar({back:'goHome()'})}
+  <div class="profile">
+    <div class="profile-card" style="text-align:center;">
+      <div style="font-size:40px;">🏔️</div>
+      <h2 style="margin-top:6px;">Basecamp Climber</h2>
+      <div style="color:var(--snow-dim); font-size:13px; margin-top:2px;">${totalDone} lesson${totalDone===1?'':'s'} completed across all routes</div>
+    </div>
+    <div class="profile-grid">
+      <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">⭐ ${state.xp}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">Total XP</div></div>
+      <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">🔥 ${state.streak}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">Day streak</div></div>
+      <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">${state.hearts}/${HEARTS_MAX}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">Hearts${eta?` · next in ~${eta}m`:''}</div></div>
+      <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">${totalDone}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">Lessons done</div></div>
+    </div>
+    <button class="btn btn-ghost btn-block" onclick="resetProgress()">Reset all progress</button>
+  </div>`;
+}
+function resetProgress(){
+  if(!confirm('Reset all XP, streaks and lesson progress? This cannot be undone.')) return;
+  state = defaultState();
+  saveState();
+  render();
+}
+
+// ---- navigation ---------------------------------------------------------------
+function goHome(){ regenHearts(); state.screen='home'; render(); }
+function goProfile(){ regenHearts(); state.screen='profile'; render(); }
+function openTrack(id){ regenHearts(); state.currentTrack=id; state.screen='map'; render(); }
+
+render();
+</script>
+</body>
+</html>
