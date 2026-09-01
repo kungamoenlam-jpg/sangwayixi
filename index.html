@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sangwa · སངས་བ · 桑瓦</title>
-<meta name="description" content="Sangwa — learn English, Chinese and Tibetan through Tibetan. A gamified language app built around a mountain route from Base Camp to the Summit.">
+<meta name="description" content="Sangwa — learn English, Chinese and Tibetan through Tibetan. A gamified 40-module route from Base Camp to the Summit.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231B2A47'/%3E%3Cpath d='M15 72 L38 34 L50 52 L60 38 L85 72 Z' fill='%23F3F7FB'/%3E%3Ccircle cx='60' cy='26' r='7' fill='%23E8A33D'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,7 +51,6 @@
   .lang-bo{font-family:var(--font-bo);}
   .lang-zh{font-family:var(--font-zh);}
 
-  /* ---------- flag strip ---------- */
   .flagstrip{display:flex; height:6px; width:100%;}
   .flagstrip span{flex:1;}
   .flagstrip span:nth-child(1){background:var(--flag-blue);}
@@ -60,19 +59,16 @@
   .flagstrip span:nth-child(4){background:var(--flag-green);}
   .flagstrip span:nth-child(5){background:var(--flag-yellow);}
 
-  /* ---------- top bar ---------- */
   .topbar{display:flex; align-items:center; justify-content:space-between; padding:14px 18px; gap:10px;}
   .topbar .stat{display:flex; align-items:center; gap:5px; font-weight:600; font-size:14px; background:rgba(255,255,255,.06); padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,.08);}
   .iconbtn{background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.1); color:var(--snow); width:38px; height:38px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:18px;}
   .brand{display:flex; align-items:center; gap:8px; font-family:var(--font-display); font-weight:700; font-size:20px; letter-spacing:.02em;}
   .brand .peak{color:var(--gold);}
 
-  /* ---------- home ---------- */
   .home{padding:8px 20px 40px; display:flex; flex-direction:column; gap:22px;}
   .hero{text-align:center; padding:22px 6px 6px;}
   .hero h1{font-size:34px; color:var(--snow);}
   .hero .sub{margin-top:8px; font-size:15px; color:var(--snow-dim); line-height:1.5;}
-  .hero .sub .lang-bo{font-size:16px;}
   .track-grid{display:grid; grid-template-columns:1fr; gap:14px;}
   .track-card{
     text-align:left; border:1px solid rgba(255,255,255,.1); border-radius:var(--radius);
@@ -87,7 +83,6 @@
   .track-card .tc-sub{font-size:12.5px; color:var(--snow-dim); margin-top:4px;}
   .track-card .tc-progress{margin-left:auto; font-size:12px; color:var(--snow-dim); text-align:right; flex-shrink:0;}
 
-  /* ---------- world map ---------- */
   .map-wrap{flex:1; display:flex; flex-direction:column;}
   .map-scroll{flex:1; padding:20px 10px 50px; position:relative;}
   .route{position:relative; padding:10px 30px; display:flex; flex-direction:column; align-items:center; gap:56px;}
@@ -97,26 +92,24 @@
     z-index:0;
   }
   .node{position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:8px;}
-  .node.left{align-self:flex-start; margin-left:8%;}
-  .node.right{align-self:flex-end; margin-right:8%;}
+  .node.left{align-self:flex-start; margin-left:6%;}
+  .node.right{align-self:flex-end; margin-right:6%;}
   .node-btn{
-    width:84px; height:84px; border-radius:50%; border:4px solid var(--sky-deep);
-    display:flex; align-items:center; justify-content:center; font-size:32px;
+    width:78px; height:78px; border-radius:50%; border:4px solid var(--sky-deep);
+    display:flex; align-items:center; justify-content:center; font-size:28px;
     box-shadow:0 8px 0 rgba(0,0,0,.25), var(--shadow);
     background:linear-gradient(160deg,#DDB25E,var(--gold-dim));
   }
   .node-btn.locked{background:linear-gradient(160deg,#5b6b86,#3a465c); color:rgba(255,255,255,.6);}
   .node-btn.done{background:linear-gradient(160deg,#6BC98F,var(--good));}
   .node-btn:active{transform:translateY(4px); box-shadow:0 4px 0 rgba(0,0,0,.25);}
-  .node-label{font-family:var(--font-display); font-weight:700; font-size:14px; text-align:center; max-width:120px;}
+  .node-label{font-family:var(--font-display); font-weight:700; font-size:13px; text-align:center; max-width:126px;}
   .node-sub{font-size:11.5px; color:var(--snow-dim); text-align:center; max-width:130px;}
   .node-stars{display:flex; gap:2px; font-size:12px; color:var(--gold);}
-  .world-flag{position:absolute; top:-46px; left:50%; transform:translateX(-50%); font-size:26px;}
-  .world-block{position:relative; padding-top:56px; width:100%;}
+  .world-block{position:relative; padding-top:6px; width:100%;}
   .world-title{text-align:center; font-family:var(--font-display); font-weight:700; font-size:16px; color:var(--snow); margin-bottom:2px;}
   .world-subtitle{text-align:center; font-size:12px; color:var(--gold); margin-bottom:18px;}
 
-  /* ---------- lesson player ---------- */
   .lesson{flex:1; display:flex; flex-direction:column; padding:0 20px 24px;}
   .progressbar{height:10px; border-radius:999px; background:rgba(255,255,255,.12); overflow:hidden; margin:6px 0 4px;}
   .progressbar-fill{height:100%; background:linear-gradient(90deg,var(--ice),var(--gold)); transition:width .35s ease;}
@@ -127,6 +120,9 @@
   .q-prompt{font-family:var(--font-display); font-size:36px; font-weight:700; line-height:1.25;}
   .q-prompt.script-bo{font-family:var(--font-bo); font-size:34px;}
   .q-prompt.script-zh{font-family:var(--font-zh); font-size:38px;}
+  .q-prompt.long{font-size:22px; line-height:1.35;}
+  .q-prompt.long.script-bo{font-size:21px;}
+  .q-prompt.long.script-zh{font-size:24px;}
   .q-translit{margin-top:8px; color:var(--gold); font-size:15px; font-style:italic;}
   .options{display:grid; grid-template-columns:1fr; gap:12px;}
   .opt{
@@ -137,6 +133,7 @@
   .opt .opt-sub{font-size:12px; font-weight:400; color:var(--snow-dim);}
   .opt.script-bo{font-family:var(--font-bo);}
   .opt.script-zh{font-family:var(--font-zh);}
+  .opt.long{font-size:15px;}
   .opt:active{transform:scale(.98);}
   .opt.correct{border-color:var(--good); background:rgba(63,174,114,.22);}
   .opt.wrong{border-color:var(--bad); background:rgba(225,88,75,.22);}
@@ -159,7 +156,6 @@
   .btn-ghost{background:rgba(255,255,255,.12); color:var(--snow);}
   .btn-block{width:100%;}
 
-  /* ---------- lesson complete ---------- */
   .complete{flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 26px; text-align:center; gap:18px;}
   .complete .medal{font-size:70px;}
   .complete h2{font-size:26px;}
@@ -169,22 +165,57 @@
   .stat-box .lab{font-size:11.5px; color:var(--snow-dim); margin-top:2px;}
   .stars-final{font-size:34px; letter-spacing:6px;}
 
-  /* ---------- locked / coming soon ---------- */
-  .locked-panel{padding:24px; text-align:center; background:rgba(255,255,255,.05); border:1px dashed rgba(255,255,255,.25); border-radius:16px; margin:10px 0;}
+  .locked-panel{padding:22px; text-align:center; background:rgba(255,255,255,.05); border:1px dashed rgba(255,255,255,.25); border-radius:16px; margin:10px 0;}
   .locked-panel h3{margin-bottom:6px;}
   .locked-panel p{color:var(--snow-dim); font-size:13.5px; line-height:1.5;}
+  .roadmap-row{display:flex; gap:10px; align-items:baseline; padding:8px 2px; border-bottom:1px solid rgba(255,255,255,.08); text-align:left;}
+  .roadmap-row:last-child{border-bottom:none;}
+  .roadmap-num{color:var(--gold); font-family:var(--font-display); font-weight:700; font-size:13px; width:24px; flex-shrink:0;}
+  .roadmap-label{font-size:14px;}
 
-  /* ---------- profile ---------- */
   .profile{padding:16px 20px 40px; display:flex; flex-direction:column; gap:16px;}
   .profile-card{background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:18px;}
   .profile-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
 
+  .auth-shell{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:30px 18px 40px;}
+  .auth-card{width:min(100%, 420px); background:rgba(11,20,35,.72); border:1px solid rgba(255,255,255,.12); border-radius:26px; box-shadow:var(--shadow); padding:22px 20px 18px; backdrop-filter:blur(12px);}
+  .brand-badge{display:inline-flex; align-items:center; justify-content:center; width:54px; height:54px; border-radius:16px; background:linear-gradient(160deg, rgba(232,163,61,.2), rgba(79,180,216,.12)); border:1px solid rgba(232,163,61,.2); font-size:26px; margin-bottom:10px;}
+  .auth-header{margin-bottom:18px;}
+  .auth-header h1{font-size:30px; line-height:1.1;}
+  .auth-sub{color:var(--snow-dim); font-size:14px; line-height:1.55; margin-top:8px;}
+  .auth-form{display:flex; flex-direction:column; gap:14px;}
+  .field{display:flex; flex-direction:column; gap:8px;}
+  .field label{font-size:12px; color:var(--snow-dim); letter-spacing:.08em; text-transform:uppercase;}
+  .input, .input-select{width:100%; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--snow); border-radius:12px; padding:14px 14px; font-size:15px; outline:none;}
+  .input::placeholder{color:rgba(245,248,252,.5);}
+  .input:focus, .input-select:focus{border-color:rgba(232,163,61,.8); box-shadow:0 0 0 3px rgba(232,163,61,.18);}
+  .input-select{appearance:none;}
+  .checkbox-row{display:flex; align-items:flex-start; gap:10px; color:var(--snow-dim); font-size:13px; line-height:1.45;}
+  .checkbox-row input{margin-top:2px; accent-color:var(--gold);}
+  .auth-actions{display:flex; flex-direction:column; gap:10px; margin-top:8px;}
+  .action-row{display:flex; gap:10px;}
+  .pill-row{display:flex; flex-wrap:wrap; gap:8px;}
+  .choice-card{flex:1; min-height:52px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.12); color:var(--snow); border-radius:12px; padding:12px 12px; font-size:14px; font-weight:600; text-align:left;}
+  .choice-card.selected{background:rgba(232,163,61,.18); border-color:rgba(232,163,61,.8);}
+  .choice-card.wide{flex-basis:100%;}
+  .auth-social{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px;}
+  .social-btn{background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.12); color:var(--snow); border-radius:12px; padding:11px 12px; font-weight:600;}
+  .helper{font-size:12px; color:var(--snow-dim); text-align:center; margin-top:8px;}
+  .helper a{color:var(--gold); text-decoration:none;}
+  .code-row{display:grid; grid-template-columns:repeat(6, 1fr); gap:8px; margin-top:12px;}
+  .code-box{width:100%; aspect-ratio:1 / 1.3; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.12); border-radius:12px; color:var(--snow); text-align:center; font-size:22px; font-weight:700; font-family:var(--font-display);}
+  .mini{font-size:11px; color:var(--snow-dim); text-transform:uppercase; letter-spacing:.08em;}
+  .upload-box{height:74px; border:1px dashed rgba(255,255,255,.18); border-radius:16px; background:rgba(255,255,255,.02); display:flex; align-items:center; justify-content:center; font-size:42px; color:var(--gold);}
+  .steps{display:flex; justify-content:center; gap:8px; margin-top:16px;}
+  .steps span{display:block; width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.18);}
+  .steps span.active{background:var(--gold);}
+  .center{display:flex; justify-content:center;}
+  .link-btn{background:none; border:none; color:var(--gold); font-weight:600; font-size:14px; padding:0;}
+  .muted{color:var(--snow-dim);}
+  .tiny{font-size:12px; color:var(--snow-dim);}
   .footer-note{text-align:center; font-size:11px; color:rgba(245,248,252,.4); padding:10px 30px 26px;}
 
-  @media (prefers-reduced-motion: reduce){
-    *{transition:none !important; animation:none !important;}
-  }
-
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
   ::selection{background:var(--gold); color:#241704;}
 </style>
 </head>
@@ -195,77 +226,392 @@
 <script>
 /* =========================================================================
    SANGWA — data + engine
-   A note for whoever extends this file: everything about content lives in
-   WORDBANK / LESSON_GROUPS / WORLD_META below. The four courses are NOT
-   separately authored — they are generated from one shared word bank by
-   swapping which language is the "prompt" and which is the "answer".
+   Content lives in three places:
+     WORDBANK      — one entry per vocabulary item (en / zh / bo + bo_tr / zh_py)
+     LESSON_GROUPS — the 10 modules that make up Level 1 ("Base Camp"), fully built
+     LEVELS        — the 4 levels on the route (mirrors a 40-module curriculum:
+                      words → sentences → conversations → ideas). Only Level 1
+                      has exercises; Levels 2–4 carry a numbered roadmap of
+                      what's coming, shown as a "coming soon" panel — never
+                      gated behind progress; every level is open any time.
+   The four *courses* (English via Tibetan, Chinese via Tibetan, Tibetan via
+   Chinese, Tibetan via English) are NOT separately authored — buildExercises()
+   generates all four directions from this one shared word bank by swapping
+   which language is the prompt and which is the answer.
    ========================================================================= */
 
-// ---- shared vocabulary bank -------------------------------------------------
-// bo_translit is a rough Lhasa-dialect romanization for learner support only.
+// bo_tr is a rough Lhasa-dialect romanization for learner support only.
 // IMPORTANT: this vocabulary was assembled for a working prototype and should
 // be reviewed by a native Tibetan speaker/linguist and a Mandarin speaker
-// before this app is used with real learners (see README "Content review").
+// before real learners use it (see README "Content review").
 const WORDBANK = [
-  // greetings
-  {id:'hello',    cat:'greetings', en:'Hello',       zh:'你好',   zh_py:'nǐ hǎo',    bo:'བཀྲ་ཤིས་བདེ་ལེགས', bo_tr:'tashi delek'},
-  {id:'thankyou', cat:'greetings', en:'Thank you',   zh:'谢谢',   zh_py:'xièxie',    bo:'ཐུགས་རྗེ་ཆེ',        bo_tr:'thuk-je-che'},
-  {id:'yes',      cat:'greetings', en:'Yes',         zh:'是',     zh_py:'shì',       bo:'ཡིན',              bo_tr:'yin'},
-  {id:'no',       cat:'greetings', en:'No',          zh:'不是',   zh_py:'bú shì',    bo:'མིན',              bo_tr:'min'},
-  {id:'goodbye',  cat:'greetings', en:'Goodbye',     zh:'再见',   zh_py:'zàijiàn',   bo:'བདེ་མོ་གནང་',       bo_tr:'de-mo nang'},
-  {id:'sorry',    cat:'greetings', en:'Sorry',       zh:'对不起', zh_py:'duìbùqǐ',   bo:'དགོངས་དག',          bo_tr:'gong-dak'},
-  // numbers
-  {id:'one',   cat:'numbers1', en:'One',   zh:'一', zh_py:'yī',  bo:'གཅིག', bo_tr:'chik'},
-  {id:'two',   cat:'numbers1', en:'Two',   zh:'二', zh_py:'èr',  bo:'གཉིས', bo_tr:'nyi'},
-  {id:'three', cat:'numbers1', en:'Three', zh:'三', zh_py:'sān', bo:'གསུམ', bo_tr:'sum'},
-  {id:'four',  cat:'numbers1', en:'Four',  zh:'四', zh_py:'sì',  bo:'བཞི',  bo_tr:'zhi'},
-  {id:'five',  cat:'numbers1', en:'Five',  zh:'五', zh_py:'wǔ',  bo:'ལྔ',   bo_tr:'nga'},
-  {id:'six',   cat:'numbers2', en:'Six',   zh:'六', zh_py:'liù', bo:'དྲུག', bo_tr:'druk'},
-  {id:'seven', cat:'numbers2', en:'Seven', zh:'七', zh_py:'qī',  bo:'བདུན', bo_tr:'dün'},
-  {id:'eight', cat:'numbers2', en:'Eight', zh:'八', zh_py:'bā',  bo:'བརྒྱད', bo_tr:'gyé'},
-  {id:'nine',  cat:'numbers2', en:'Nine',  zh:'九', zh_py:'jiǔ', bo:'དགུ',  bo_tr:'gu'},
-  {id:'ten',   cat:'numbers2', en:'Ten',   zh:'十', zh_py:'shí', bo:'བཅུ',  bo_tr:'chu'},
-  // family
-  {id:'mother',   cat:'family', en:'Mother',   zh:'妈妈', zh_py:'māma',   bo:'ཨ་མ',    bo_tr:'ama'},
-  {id:'father',   cat:'family', en:'Father',   zh:'爸爸', zh_py:'bàba',   bo:'ཨ་ཕ',    bo_tr:'apa'},
-  {id:'son',      cat:'family', en:'Son',      zh:'儿子', zh_py:'érzi',   bo:'བུ',     bo_tr:'bu'},
-  {id:'daughter', cat:'family', en:'Daughter', zh:'女儿', zh_py:'nǚ\u2019ér', bo:'བུ་མོ', bo_tr:'bumo'},
-  {id:'family',   cat:'family', en:'Family',   zh:'家人', zh_py:'jiārén', bo:'ནང་མི',  bo_tr:'nangmi'},
-  {id:'friend',   cat:'family', en:'Friend',   zh:'朋友', zh_py:'péngyou',bo:'གྲོགས་པོ', bo_tr:'drokpo'},
-  // colors
+  // module 01 — greetings & introductions
+  {id:'hello',    cat:'greetings', en:'Hello',     zh:'你好',   zh_py:'nǐ hǎo',   bo:'བཀྲ་ཤིས་བདེ་ལེགས', bo_tr:'tashi delek'},
+  {id:'thankyou', cat:'greetings', en:'Thank you', zh:'谢谢',   zh_py:'xièxie',   bo:'ཐུགས་རྗེ་ཆེ',       bo_tr:'thuk-je-che'},
+  {id:'yes',      cat:'greetings', en:'Yes',       zh:'是',     zh_py:'shì',      bo:'ཡིན',              bo_tr:'yin'},
+  {id:'no',       cat:'greetings', en:'No',        zh:'不是',   zh_py:'bú shì',   bo:'མིན',              bo_tr:'min'},
+  {id:'goodbye',  cat:'greetings', en:'Goodbye',   zh:'再见',   zh_py:'zàijiàn',  bo:'བདེ་མོ་གནང་',       bo_tr:'de-mo nang'},
+  {id:'sorry',    cat:'greetings', en:'Sorry',     zh:'对不起', zh_py:'duìbùqǐ',  bo:'དགོངས་དག',          bo_tr:'gong-dak'},
+  // module 02 — numbers & counting
+  {id:'one',   cat:'numbers', en:'One',   zh:'一', zh_py:'yī',  bo:'གཅིག',  bo_tr:'chik'},
+  {id:'two',   cat:'numbers', en:'Two',   zh:'二', zh_py:'èr',  bo:'གཉིས',  bo_tr:'nyi'},
+  {id:'three', cat:'numbers', en:'Three', zh:'三', zh_py:'sān', bo:'གསུམ',  bo_tr:'sum'},
+  {id:'four',  cat:'numbers', en:'Four',  zh:'四', zh_py:'sì',  bo:'བཞི',   bo_tr:'zhi'},
+  {id:'five',  cat:'numbers', en:'Five',  zh:'五', zh_py:'wǔ',  bo:'ལྔ',    bo_tr:'nga'},
+  {id:'six',   cat:'numbers', en:'Six',   zh:'六', zh_py:'liù', bo:'དྲུག',  bo_tr:'druk'},
+  {id:'seven', cat:'numbers', en:'Seven', zh:'七', zh_py:'qī',  bo:'བདུན',  bo_tr:'dün'},
+  {id:'eight', cat:'numbers', en:'Eight', zh:'八', zh_py:'bā',  bo:'བརྒྱད', bo_tr:'gyé'},
+  {id:'nine',  cat:'numbers', en:'Nine',  zh:'九', zh_py:'jiǔ', bo:'དགུ',   bo_tr:'gu'},
+  {id:'ten',   cat:'numbers', en:'Ten',   zh:'十', zh_py:'shí', bo:'བཅུ',   bo_tr:'chu'},
+  // module 03 — family & people
+  {id:'mother',   cat:'family', en:'Mother',   zh:'妈妈', zh_py:'māma',    bo:'ཨ་མ',    bo_tr:'ama'},
+  {id:'father',   cat:'family', en:'Father',   zh:'爸爸', zh_py:'bàba',    bo:'ཨ་ཕ',    bo_tr:'apa'},
+  {id:'son',      cat:'family', en:'Son',      zh:'儿子', zh_py:'érzi',    bo:'བུ',     bo_tr:'bu'},
+  {id:'daughter', cat:'family', en:'Daughter', zh:'女儿', zh_py:'nǚ’ér', bo:'བུ་མོ', bo_tr:'bumo'},
+  {id:'family',   cat:'family', en:'Family',   zh:'家人', zh_py:'jiārén',  bo:'ནང་མི',  bo_tr:'nangmi'},
+  {id:'friend',   cat:'family', en:'Friend',   zh:'朋友', zh_py:'péngyou', bo:'གྲོགས་པོ', bo_tr:'drokpo'},
+  // module 04 — colours & descriptions
   {id:'red',    cat:'colors', en:'Red',    zh:'红色', zh_py:'hóngsè',  bo:'དམར་པོ', bo_tr:'marpo'},
   {id:'blue',   cat:'colors', en:'Blue',   zh:'蓝色', zh_py:'lánsè',   bo:'སྔོན་པོ', bo_tr:'ngönpo'},
   {id:'green',  cat:'colors', en:'Green',  zh:'绿色', zh_py:'lǜsè',    bo:'ལྗང་ཁུ', bo_tr:'jangku'},
   {id:'yellow', cat:'colors', en:'Yellow', zh:'黄色', zh_py:'huángsè', bo:'སེར་པོ', bo_tr:'serpo'},
   {id:'white',  cat:'colors', en:'White',  zh:'白色', zh_py:'báisè',   bo:'དཀར་པོ', bo_tr:'karpo'},
   {id:'black',  cat:'colors', en:'Black',  zh:'黑色', zh_py:'hēisè',   bo:'ནག་པོ', bo_tr:'nakpo'},
-  // food
-  {id:'water', cat:'food', en:'Water', zh:'水',   zh_py:'shuǐ',   bo:'ཆུ',     bo_tr:'chu'},
-  {id:'tea',   cat:'food', en:'Tea',   zh:'茶',   zh_py:'chá',    bo:'ཇ',      bo_tr:'ja'},
-  {id:'foodw', cat:'food', en:'Food',  zh:'食物', zh_py:'shíwù',  bo:'ཁ་ལག',   bo_tr:'khalak'},
-  {id:'milk',  cat:'food', en:'Milk',  zh:'牛奶', zh_py:'niúnǎi', bo:'འོ་མ',   bo_tr:'oma'},
-  {id:'meat',  cat:'food', en:'Meat',  zh:'肉',   zh_py:'ròu',    bo:'ཤ',      bo_tr:'sha'},
-  {id:'fruit', cat:'food', en:'Fruit', zh:'水果', zh_py:'shuǐguǒ',bo:'ཤིང་ཏོག', bo_tr:'shingtok'},
+  // module 05 — food & drinks
+  {id:'water', cat:'food', en:'Water', zh:'水',   zh_py:'shuǐ',    bo:'ཆུ',     bo_tr:'chu'},
+  {id:'tea',   cat:'food', en:'Tea',   zh:'茶',   zh_py:'chá',     bo:'ཇ',      bo_tr:'ja'},
+  {id:'foodw', cat:'food', en:'Food',  zh:'食物', zh_py:'shíwù',   bo:'ཁ་ལག',   bo_tr:'khalak'},
+  {id:'milk',  cat:'food', en:'Milk',  zh:'牛奶', zh_py:'niúnǎi',  bo:'འོ་མ',   bo_tr:'oma'},
+  {id:'meat',  cat:'food', en:'Meat',  zh:'肉',   zh_py:'ròu',     bo:'ཤ',      bo_tr:'sha'},
+  {id:'fruit', cat:'food', en:'Fruit', zh:'水果', zh_py:'shuǐguǒ', bo:'ཤིང་ཏོག', bo_tr:'shingtok'},
+  // module 06 — home & objects
+  {id:'house',  cat:'home', en:'House',  zh:'房子', zh_py:'fángzi',   bo:'ཁང་པ',    bo_tr:'khangpa'},
+  {id:'door',   cat:'home', en:'Door',   zh:'门',   zh_py:'mén',      bo:'སྒོ',      bo_tr:'go'},
+  {id:'book',   cat:'home', en:'Book',   zh:'书',   zh_py:'shū',      bo:'དཔེ་ཆ',    bo_tr:'pecha'},
+  {id:'window', cat:'home', en:'Window', zh:'窗户', zh_py:'chuānghu', bo:'སྒེའུ་ཁུང', bo_tr:'geu-khung'},
+  {id:'bed',    cat:'home', en:'Bed',    zh:'床',   zh_py:'chuáng',   bo:'ཉལ་ཁྲི',    bo_tr:'nyal-tri'},
+  {id:'table',  cat:'home', en:'Table',  zh:'桌子', zh_py:'zhuōzi',   bo:'ཅོག་ཙེ',    bo_tr:'choktse'},
+  // module 07 — clothes & personal items
+  {id:'clothes', cat:'clothes', en:'Clothes', zh:'衣服', zh_py:'yīfu',     bo:'གོས',    bo_tr:'gö'},
+  {id:'shoes',   cat:'clothes', en:'Shoes',   zh:'鞋子', zh_py:'xiézi',    bo:'ལྷམ',    bo_tr:'lham'},
+  {id:'hat',     cat:'clothes', en:'Hat',     zh:'帽子', zh_py:'màozi',    bo:'ཞྭ་མོ',  bo_tr:'zhamo'},
+  {id:'phone',   cat:'clothes', en:'Phone',   zh:'手机', zh_py:'shǒujī',   bo:'ཁ་པར',   bo_tr:'khapar'},
+  {id:'money',   cat:'clothes', en:'Money',   zh:'钱',   zh_py:'qián',     bo:'དངུལ',   bo_tr:'ngül'},
+  {id:'watch',   cat:'clothes', en:'Watch',   zh:'手表', zh_py:'shǒubiǎo', bo:'ཆུ་ཚོད', bo_tr:'chutsö'},
+  // module 08 — time & dates
+  {id:'today',     cat:'time', en:'Today',     zh:'今天', zh_py:'jīntiān',  bo:'དེ་རིང',   bo_tr:'dering'},
+  {id:'tomorrow',  cat:'time', en:'Tomorrow',  zh:'明天', zh_py:'míngtiān', bo:'སང་ཉིན',   bo_tr:'sang-nyin'},
+  {id:'yesterday', cat:'time', en:'Yesterday', zh:'昨天', zh_py:'zuótiān',  bo:'ཁ་སང',     bo_tr:'khasang'},
+  {id:'morning',   cat:'time', en:'Morning',   zh:'早上', zh_py:'zǎoshang', bo:'ཞོགས་པ',   bo_tr:'zhokpa'},
+  {id:'night',     cat:'time', en:'Night',     zh:'晚上', zh_py:'wǎnshang', bo:'མཚན་མོ',   bo_tr:'tsenmo'},
+  {id:'week',      cat:'time', en:'Week',      zh:'星期', zh_py:'xīngqī',   bo:'གཟའ་འཁོར', bo_tr:'za-khor'},
+  // module 09 — everyday actions (dictionary/stem forms)
+  {id:'eat',   cat:'actions', en:'Eat',   zh:'吃',   zh_py:'chī',      bo:'ཟ',    bo_tr:'za'},
+  {id:'drink', cat:'actions', en:'Drink', zh:'喝',   zh_py:'hē',       bo:'འཐུང', bo_tr:'thung'},
+  {id:'sleep', cat:'actions', en:'Sleep', zh:'睡觉', zh_py:'shuìjiào', bo:'ཉལ',   bo_tr:'nyal'},
+  {id:'go',    cat:'actions', en:'Go',    zh:'去',   zh_py:'qù',       bo:'འགྲོ', bo_tr:'dro'},
+  {id:'come',  cat:'actions', en:'Come',  zh:'来',   zh_py:'lái',      bo:'ཡོང',  bo_tr:'yong'},
+  {id:'see',   cat:'actions', en:'See',   zh:'看',   zh_py:'kàn',      bo:'ལྟ',   bo_tr:'ta'},
+  // module 10 — questions & answers
+  {id:'who',   cat:'questions', en:'Who',   zh:'谁',       zh_py:'shéi',          bo:'སུ',    bo_tr:'su'},
+  {id:'what',  cat:'questions', en:'What',  zh:'什么',     zh_py:'shénme',        bo:'ག་རེ',  bo_tr:'kare'},
+  {id:'where', cat:'questions', en:'Where', zh:'哪里',     zh_py:'nǎlǐ',          bo:'ག་པར',  bo_tr:'kapar'},
+  {id:'when',  cat:'questions', en:'When',  zh:'什么时候', zh_py:'shénme shíhou', bo:'ནམ',    bo_tr:'nam'},
+  {id:'how',   cat:'questions', en:'How',   zh:'怎么',     zh_py:'zěnme',         bo:'ག་འདྲ', bo_tr:'kandra'},
+  // ===== Level 2 ("Camp I" — Building Sentences) vocabulary =====
+  // module 11 — sentence building (core connector/demonstrative words)
+  {id:'this', cat:'sentence', en:'This', zh:'这个', zh_py:'zhège', bo:'འདི', bo_tr:'di'},
+  {id:'that', cat:'sentence', en:'That', zh:'那个', zh_py:'nàge',  bo:'དེ',  bo_tr:'de'},
+  {id:'and',  cat:'sentence', en:'And',  zh:'和',   zh_py:'hé',    bo:'དང',  bo_tr:'dang'},
+  {id:'but',  cat:'sentence', en:'But',  zh:'但是', zh_py:'dànshì',bo:'འོན་ཀྱང', bo_tr:'ön-kyang'},
+  {id:'very', cat:'sentence', en:'Very', zh:'很',   zh_py:'hěn',   bo:'ཧ་ཅང', bo_tr:'ha-chang'},
+  {id:'also', cat:'sentence', en:'Also', zh:'也',   zh_py:'yě',    bo:'ཡང',  bo_tr:'yang'},
+  // module 12 — pronouns & possession
+  {id:'i',       cat:'pronouns', en:'I',    zh:'我',   zh_py:'wǒ',    bo:'ང',       bo_tr:'nga'},
+  {id:'you',     cat:'pronouns', en:'You',  zh:'你',   zh_py:'nǐ',    bo:'ཁྱེད་རང', bo_tr:'khyerang'},
+  {id:'he',      cat:'pronouns', en:'He / She', zh:'他 / 她', zh_py:'tā', bo:'ཁོང', bo_tr:'khong'},
+  {id:'my',      cat:'pronouns', en:'My',   zh:'我的', zh_py:'wǒ de', bo:'ངའི',    bo_tr:'ngai'},
+  {id:'your',    cat:'pronouns', en:'Your', zh:'你的', zh_py:'nǐ de', bo:'ཁྱེད་རང་གི', bo_tr:'khyerang-gi'},
+  {id:'they',    cat:'pronouns', en:'They', zh:'他们', zh_py:'tāmen', bo:'ཁོང་ཚོ', bo_tr:'khong-tso'},
+  // module 13 — essential verbs (dictionary/stem forms)
+  {id:'be',      cat:'verbs2', en:'To be',     zh:'是',   zh_py:'shì',   bo:'ཡིན', bo_tr:'yin'},
+  {id:'have',    cat:'verbs2', en:'To have',   zh:'有',   zh_py:'yǒu',   bo:'ཡོད', bo_tr:'yö'},
+  {id:'domake',  cat:'verbs2', en:'To do / make', zh:'做', zh_py:'zuò', bo:'བྱེད', bo_tr:'che'},
+  {id:'want',    cat:'verbs2', en:'To want',   zh:'要',   zh_py:'yào',   bo:'འདོད', bo_tr:'dö'},
+  {id:'give',    cat:'verbs2', en:'To give',   zh:'给',   zh_py:'gěi',   bo:'སྦྱིན', bo_tr:'jin'},
+  {id:'need',    cat:'verbs2', en:'To need',   zh:'需要', zh_py:'xūyào', bo:'དགོས', bo_tr:'gö'},
+  // module 14 — places & directions
+  {id:'here',  cat:'places', en:'Here',  zh:'这里', zh_py:'zhèlǐ', bo:'འདིར',   bo_tr:'dir'},
+  {id:'there', cat:'places', en:'There', zh:'那里', zh_py:'nàlǐ',  bo:'དེར',    bo_tr:'der'},
+  {id:'left',  cat:'places', en:'Left',  zh:'左边', zh_py:'zuǒbian', bo:'གཡོན', bo_tr:'yön'},
+  {id:'right', cat:'places', en:'Right', zh:'右边', zh_py:'yòubian', bo:'གཡས',  bo_tr:'yé'},
+  {id:'near',  cat:'places', en:'Near',  zh:'近',   zh_py:'jìn',   bo:'ཉེ་བ',   bo_tr:'nyewa'},
+  {id:'far',   cat:'places', en:'Far',   zh:'远',   zh_py:'yuǎn',  bo:'ཐག་རིང', bo_tr:'thagring'},
+  // module 15 — transport & travel
+  {id:'road',    cat:'transport', en:'Road',    zh:'路',   zh_py:'lù',    bo:'ལམ',      bo_tr:'lam'},
+  {id:'train',   cat:'transport', en:'Train',   zh:'火车', zh_py:'huǒchē',bo:'མེ་འཁོར', bo_tr:'me-khor'},
+  {id:'airport', cat:'transport', en:'Airport', zh:'机场', zh_py:'jīchǎng',bo:'གནམ་ཐང', bo_tr:'namthang'},
+  {id:'car',     cat:'transport', en:'Car',     zh:'汽车', zh_py:'qìchē', bo:'མོ་ཊ',    bo_tr:'mota'},
+  {id:'bridge',  cat:'transport', en:'Bridge',  zh:'桥',   zh_py:'qiáo',  bo:'ཟམ་པ',    bo_tr:'zampa'},
+  // module 16 — shopping & money
+  {id:'buy',       cat:'shopping', en:'Buy',       zh:'买',   zh_py:'mǎi',   bo:'ཉོ',      bo_tr:'nyo'},
+  {id:'sell',      cat:'shopping', en:'Sell',      zh:'卖',   zh_py:'mài',   bo:'བཙོང',    bo_tr:'tsong'},
+  {id:'price',     cat:'shopping', en:'Price',     zh:'价钱', zh_py:'jiàqián', bo:'རིན',   bo_tr:'rin'},
+  {id:'expensive', cat:'shopping', en:'Expensive', zh:'贵',   zh_py:'guì',   bo:'གོང་ཆེ',  bo_tr:'gong-che'},
+  {id:'cheap',     cat:'shopping', en:'Cheap',     zh:'便宜', zh_py:'piányi',bo:'གོང་ཆུང', bo_tr:'gong-chung'},
+  {id:'shop',      cat:'shopping', en:'Shop',      zh:'商店', zh_py:'shāngdiàn', bo:'ཚོང་ཁང', bo_tr:'tsongkhang'},
+  // module 17 — school & work
+  {id:'teacher',   cat:'work', en:'Teacher',   zh:'老师', zh_py:'lǎoshī',   bo:'དགེ་རྒན', bo_tr:'gegen'},
+  {id:'student',   cat:'work', en:'Student',   zh:'学生', zh_py:'xuésheng', bo:'སློབ་ཕྲུག', bo_tr:'lobtruk'},
+  {id:'school',    cat:'work', en:'School',    zh:'学校', zh_py:'xuéxiào',  bo:'སློབ་གྲྭ', bo_tr:'lobdra'},
+  {id:'jobwork',   cat:'work', en:'Work / Job', zh:'工作', zh_py:'gōngzuò', bo:'ལས་ཀ',    bo_tr:'lenka'},
+  {id:'office',    cat:'work', en:'Office',    zh:'办公室', zh_py:'bàngōngshì', bo:'ལས་ཁུངས', bo_tr:'lekhung'},
+  {id:'classroom', cat:'work', en:'Classroom', zh:'教室', zh_py:'jiàoshì',  bo:'སློབ་ཁང', bo_tr:'lobkhang'},
+  // module 18 — feelings & opinions
+  {id:'happy', cat:'feelings', en:'Happy', zh:'高兴', zh_py:'gāoxìng', bo:'སྐྱིད་པོ', bo_tr:'kyipo'},
+  {id:'sad',   cat:'feelings', en:'Sad',   zh:'难过', zh_py:'nánguò',  bo:'སྐྱོ་པོ', bo_tr:'kyopo'},
+  {id:'angry', cat:'feelings', en:'Angry', zh:'生气', zh_py:'shēngqì', bo:'ཁྲོས་པ', bo_tr:'thröpa'},
+  {id:'tired', cat:'feelings', en:'Tired', zh:'累',   zh_py:'lèi',     bo:'ངལ་བ',  bo_tr:'ngalwa'},
+  {id:'like2', cat:'feelings', en:'Like',  zh:'喜欢', zh_py:'xǐhuan',  bo:'དགའ་པོ', bo_tr:'gawpo'},
+  {id:'think', cat:'feelings', en:'Think', zh:'想',   zh_py:'xiǎng',   bo:'བསམ',   bo_tr:'sam'},
+  // module 19 — weather & nature
+  {id:'hot',      cat:'weather', en:'Hot',      zh:'热', zh_py:'rè',   bo:'ཚ་པོ',   bo_tr:'tshapo'},
+  {id:'cold',     cat:'weather', en:'Cold',     zh:'冷', zh_py:'lěng', bo:'གྲང་མོ', bo_tr:'drangmo'},
+  {id:'rain',     cat:'weather', en:'Rain',     zh:'雨', zh_py:'yǔ',   bo:'ཆར་པ',   bo_tr:'charpa'},
+  {id:'sun',      cat:'weather', en:'Sun',      zh:'太阳', zh_py:'tàiyáng', bo:'ཉི་མ', bo_tr:'nyima'},
+  {id:'mountain', cat:'weather', en:'Mountain', zh:'山', zh_py:'shān', bo:'རི',     bo_tr:'ri'},
+  {id:'river',    cat:'weather', en:'River',    zh:'河', zh_py:'hé',   bo:'ཆུ་བོ',  bo_tr:'chuwo'},
+  // module 20 — describing things
+  {id:'big',   cat:'describe', en:'Big',   zh:'大', zh_py:'dà',    bo:'ཆེན་པོ',   bo_tr:'chenpo'},
+  {id:'small', cat:'describe', en:'Small', zh:'小', zh_py:'xiǎo',  bo:'ཆུང་ཆུང', bo_tr:'chungchung'},
+  {id:'long',  cat:'describe', en:'Long',  zh:'长', zh_py:'cháng', bo:'རིང་པོ',  bo_tr:'ringpo'},
+  {id:'short', cat:'describe', en:'Short', zh:'短', zh_py:'duǎn',  bo:'ཐུང་ཐུང', bo_tr:'thungthung'},
+  {id:'good',  cat:'describe', en:'Good',  zh:'好', zh_py:'hǎo',   bo:'ཡག་པོ',   bo_tr:'yakpo'},
+  {id:'bad',   cat:'describe', en:'Bad',   zh:'不好', zh_py:'bù hǎo', bo:'ངན་པ', bo_tr:'ngenpa'},
+  // ===== Level 3 ("Camp II" — Everyday Conversation) — full sentences =====
+  // Translations for these 30 sentences were supplied directly, not
+  // generated — see README "Level 3 content source" for why that changes
+  // the confidence level compared to Levels 1–2.
+  {id:'s_wake',          cat:'conv', en:'I wake up quite early in the morning.', zh:'我早上起得很早。', bo:'ང་ཞོགས་པ་སྔ་པོ་ནས་ལངས་པ་ཡིན།'},
+  {id:'s_brush',         cat:'conv', en:'I brush my teeth twice a day.', zh:'我每天刷两次牙。', bo:'ངས་ཉིན་རེར་སོ་ཐེངས་གཉིས་བཀྲུ་གི་ཡོད།'},
+  {id:'s_washface',      cat:'conv', en:'I wash my face everyday.', zh:'我每天都洗脸。', bo:'ངས་ཉིན་ལྟར་གདོང་བཀྲུ་གི་ཡོད།'},
+  {id:'s_makebed',       cat:'conv', en:'I make my bed everyday.', zh:'我每天都整理床铺。', bo:'ངས་ཉིན་ལྟར་ཉལ་ཁྲི་བཟོས།'},
+  {id:'s_tea',           cat:'conv', en:'I drink a cup of tea with breakfast.', zh:'我早餐时喝一杯茶。', bo:'ངས་ཞོགས་ཇ་དང་མཉམ་དུ་ཇ་ཕོར་གང་འཐུང་གི་ཡོད།'},
+  {id:'s_cookbreakfast', cat:'conv', en:'I cook and eat breakfast.', zh:'我做早餐，也吃早餐。', bo:'ངས་ཁ་ལག་བཟོས་ནས་ཞོགས་ཇ་ཟོས།'},
+  {id:'s_sunhat',        cat:'conv', en:"The sun is very bright today. I'm going to wear a hat.", zh:'今天阳光很强烈。我要戴帽子。', bo:'དེ་རིང་ཉི་མ་ཤིན་ཏུ་འོད་ཆེམ་ཆེམ་ཆེ། ཞྭ་མོ་གྱོན་རྒྱུ་ཡིན།'},
+  {id:'s_birds',         cat:'conv', en:'The birds are chirping.', zh:'鸟儿在鸣叫。', bo:'བྱིའུ་རྣམས་ཀྱིས་སྐད་སྒྲ་སྒྲོག་བཞིན་འདུག'},
+  {id:'s_name',          cat:'conv', en:'What is your name?', zh:'你叫什么名字？', bo:'ཁྱོད་ཀྱི་མིང་ལ་ཅི་ཟེར?'},
+  {id:'s_howareyou',     cat:'conv', en:'How are you today?', zh:'你今天过得怎么样？', bo:'ཁྱེད་རང་དེ་རིང་གང་འདྲ་བྱུང་ངམ?'},
+  {id:'s_doinggood',     cat:'conv', en:'I am doing pretty good, thank you.', zh:'我很好，谢谢。', bo:'ངས་ཧ་ཅང་བཟང་། ཐུགས་རྗེ་ཆེ།'},
+  {id:'s_restroom',      cat:'conv', en:'Where is the restroom?', zh:'洗手间在哪里？', bo:'གཙང་སྦྲ་ཁང་གང་དུ་ཡོད་དམ།'},
+  {id:'s_needhelp',      cat:'conv', en:'I need a little help.', zh:'我需要一点帮助。', bo:'ང་ལ་རོགས་རམ་ཅུང་ཟད་དགོས།'},
+  {id:'s_couldhelp',     cat:'conv', en:'Could you help me with this?', zh:'你能帮我做这个吗？', bo:'ཁྱོད་ཀྱིས་ང་ལ་རོགས་པ་བྱེད་ཐུབ་བམ།'},
+  {id:'s_whattime',      cat:'conv', en:'What time works for you?', zh:'你什么时候有空？', bo:'ཁྱེད་རང་ལ་དུས་ཚོད་ག་ཚོད་ཡག་པོ་འདུག་གམ།'},
+  {id:'s_dontunderstand',cat:'conv', en:'I do not understand.', zh:'我不明白。', bo:'ངས་གོ་བ་ལེན་ཐུབ་མ་སོང།'},
+  {id:'s_speakslowly',   cat:'conv', en:'Please speak slowly.', zh:'请慢点说。', bo:'གསུང་དལ་གྱིས་གསུང་རོགས།'},
+  {id:'s_orangejuice',   cat:'conv', en:'I love orange juice.', zh:'我喜欢橙汁。', bo:'ང་ཚ་ལུ་མའི་ཁུ་བ་ལ་དགའ།'},
+  {id:'s_foodgood',      cat:'conv', en:'This food is really good. Yum.', zh:'这食物真好吃。真好吃。', bo:'ཁ་ལག་འདི་དངོས་གནས་ཡག་པོ་འདུག ཡུམ།'},
+  {id:'s_readbook',      cat:'conv', en:'I read a book every night before bed.', zh:'我每天晚上睡前都会看一本书。', bo:'ངས་ཉིན་ལྟར་དགོང་མོ་མ་ཉལ་བའི་སྔོན་ལ་དེབ་གཅིག་ཀློག་གི་ཡོད།'},
+  {id:'s_park',          cat:'conv', en:'They go to the park.', zh:'他们去公园。', bo:'ཁོ་ཚོ་གླིང་གར་སོང་།'},
+  {id:'s_dinner',        cat:'conv', en:'We eat dinner together.', zh:'我们一起吃晚饭。', bo:'ང་ཚོས་དགོང་ཟས་མཉམ་དུ་ཟོས།'},
+  {id:'s_dogbark',       cat:'conv', en:'My dog barks loudly.', zh:'我的狗叫得很大声。', bo:'ངའི་ཁྱི་སྐད་ཆེན་པོས་སྐད་རྒྱག་གི་འདུག'},
+  {id:'s_feelhappy',     cat:'conv', en:'I feel happy today.', zh:'我今天感觉很开心。', bo:'དེ་རིང་སྐྱིད་པའི་ཚོར་སྣང་བྱུང་།'},
+  {id:'s_busy',          cat:'conv', en:'I am busy right now.', zh:'我现在很忙。', bo:'ང་ད་ལྟ་བྲེལ་བ་ཆེ།'},
+  {id:'s_garden',        cat:'conv', en:'I have a beautiful garden.', zh:'我有一个美丽的花园。', bo:'ང་ལ་ལྡུམ་ར་མཛེས་པོ་ཞིག་ཡོད།'},
+  {id:'s_thanks',        cat:'conv', en:'Thank you for your help.', zh:'谢谢你的帮助。', bo:'རོགས་རམ་གནང་བར་ཐུགས་རྗེ་ཆེ།'},
+  {id:'s_later',         cat:'conv', en:'Talk to you later.', zh:'回头再聊。', bo:'རྗེས་སུ་སྐད་ཆ་བཤད།'},
+  {id:'s_tomorrow',      cat:'conv', en:'See you tomorrow.', zh:'明天见。', bo:'སང་ཉིན་མཇལ་ཡོང།'},
+  {id:'s_wonderfulday',  cat:'conv', en:'Have a wonderful day!', zh:'祝你今天过得愉快！', bo:'ཉིན་མོ་ཡག་པོ་ཤོག'},
 ];
-const byId = id => WORDBANK.find(w=>w.id===id);
 
-// ---- lesson groups that make up World 1 ("Base Camp") ----------------------
-const LESSON_GROUPS = [
-  {key:'greetings', label:'Greetings',      icon:'🤝', ids:['hello','thankyou','yes','no','goodbye','sorry']},
-  {key:'numbers1',  label:'Numbers 1–5',    icon:'①', ids:['one','two','three','four','five']},
-  {key:'numbers2',  label:'Numbers 6–10',   icon:'⑥', ids:['six','seven','eight','nine','ten']},
-  {key:'family',    label:'Family',         icon:'👪', ids:['mother','father','son','daughter','family','friend']},
-  {key:'colors',    label:'Colors',         icon:'🎨', ids:['red','blue','green','yellow','white','black']},
-  {key:'food',      label:'Food & Drink',   icon:'🍵', ids:['water','tea','foodw','milk','meat','fruit']},
+const PRACTICE_SENTENCE_BANK = [
+  {id:'stem_01', cat:'science', en:'I am studying science at school.', zh:'我在学校学习科学。', bo:'ང་སློབ་གྲྭར་ཚན་རིག་སློབ་སྦྱོང་བྱེད་བཞིན་ཡོད།', bo_tr:'nga skola la rig slob chug gi'},
+  {id:'stem_02', cat:'science', en:'We have a science class this morning.', zh:'我们今天上午有一节科学课。', bo:'དེ་རིང་ཞོགས་པ་ང་ཚོས་ཚན་རིག་འཛིན་གྲྭ་ཞིག་ཡོད།', bo_tr:'de ring shokpa ngatsho la rig dzin dra'},
+  {id:'stem_03', cat:'science', en:'The teacher is doing an experiment.', zh:'老师正在做实验。', bo:'དགེ་རྒན་གྱིས་ཚོད་ལྟ་བྱེད་བཞིན་ཡོད།', bo_tr:'gegen gi tshoda jey'},
+  {id:'stem_04', cat:'science', en:'We need to wear safety glasses.', zh:'我们需要戴安全眼镜。', bo:'ང་ཚོས་བདེ་འཇགས་མིག་ཤེལ་གྱོན་དགོས།', bo_tr:'ngatsho dekyi mik shel gyon'},
+  {id:'stem_05', cat:'science', en:'Please do not touch the chemicals.', zh:'请不要触摸化学药品。', bo:'རྫས་རིགས་ལ་ལག་པ་མ་འཆང་བར་ཞུ།', bo_tr:'raji la lagpa ma chang war zhu'},
+  {id:'stem_06', cat:'science', en:'The water is getting warmer.', zh:'水温正在升高。', bo:'ཆུ་དྲོ་རུ་འགྲོ་བཞིན་ཡོད།', bo_tr:'chu dro ru dro'},
+  {id:'stem_07', cat:'science', en:'The ice is slowly melting.', zh:'冰正在慢慢融化。', bo:'འཁྱགས་རོམ་རིམ་བཞིན་བཞུ་བཞིན་ཡོད།', bo_tr:'chakram rimpa shu ju'},
+  {id:'stem_08', cat:'science', en:'The plant needs sunlight to grow.', zh:'植物需要阳光才能生长。', bo:'རྩི་ཤིང་དེ་འཚར་ལོངས་བྱེད་པར་ཉི་མའི་འོད་དགོས།', bo_tr:'tsing shing de tsar long jepa nyi ma i od go'},
+  {id:'stem_09', cat:'science', en:'Plants need water and air.', zh:'植物需要水和空气。', bo:'རྩི་ཤིང་ལ་ཆུ་དང་རླུང་དགོས།', bo_tr:'tsing shing la chu dang lung go'},
+  {id:'stem_10', cat:'science', en:'The leaves are turning green.', zh:'叶子正在变绿。', bo:'ལོ་མ་ལྗང་ཁུ་ཆགས་བཞིན་ཡོད།', bo_tr:'lo ma jangku chag'},
+  {id:'stem_11', cat:'science', en:'The experiment is very interesting.', zh:'这个实验很有趣。', bo:'ཚོད་ལྟ་དེ་ཧ་ཅང་སྤྲོ་སྣང་ལྡན་པ་ཞིག་རེད།', bo_tr:'tsoda de ha chang tro nang den pa'},
+  {id:'stem_12', cat:'science', en:'We need to measure the temperature.', zh:'我们需要测量温度。', bo:'ང་ཚོས་དྲོད་ཚད་འཇལ་དགོས།', bo_tr:'ngatsho drow tsel jel go'},
+  {id:'stem_13', cat:'science', en:'The thermometer shows twenty degrees.', zh:'温度计显示20度。', bo:'ཚ་དྲོད་ཚད་འཇལ་ཆས་ཀྱིས་དྲོད་ཚད་ཉི་ཤུ་སྟོན་གྱི་ཡོད།', bo_tr:'cha row tse jel cha gi dro tsel nyishu'},
+  {id:'stem_14', cat:'science', en:'The water is boiling now.', zh:'水现在沸腾了。', bo:'ད་ལྟ་ཆུ་སྐོལ་འདུག', bo_tr:'da ta chu kol du'},
+  {id:'stem_15', cat:'science', en:'The liquid changed colour.', zh:'液体变色了。', bo:'ཁུ་བ་དེའི་ཁ་དོག་བརྗེ་སྒྱུར་བྱས།', bo_tr:'ku ba de i ka dok jey'},
+  {id:'stem_16', cat:'science', en:'We put the sample under the microscope.', zh:'我们把样本放在显微镜下。', bo:'ང་ཚོས་དཔེ་ཚད་དེ་ཕྲ་མཐོང་ཆེ་ཤེལ་གྱི་འོག་ལ་འཇོག་དགོས།', bo_tr:'ngatsho sample de tra thon che shel'},
+  {id:'stem_17', cat:'science', en:'I can see small cells.', zh:'我可以看到小细胞。', bo:'ངས་ཁམས་ཕྲན་ཆུང་ཆུང་མཐོང་ཐུབ།', bo_tr:'nga kham trin chung chung tong'},
+  {id:'stem_18', cat:'science', en:'The microscope makes things look bigger.', zh:'显微镜使物体看起来更大。', bo:'ཕྲ་མཐོང་ཆེ་ཤེལ་གྱིས་དངོས་པོ་ཆེ་རུ་གཏོང་བ་རེད།', bo_tr:'tra thon che shel gi dongpo che ru tong'},
+  {id:'stem_19', cat:'science', en:'The moon moves around the Earth.', zh:'月球绕着地球转。', bo:'ཟླ་བ་འཛམ་གླིང་གི་མཐའ་འཁོར་དུ་འགུལ་བསྐྱོད་བྱེད་ཀྱི་ཡོད།', bo_tr:'dawa dzamling gi tha khor du gyu'},
+  {id:'stem_20', cat:'science', en:'The Earth moves around the sun.', zh:'地球绕着太阳转。', bo:'འཛམ་གླིང་ཉི་མའི་མཐའ་འཁོར་དུ་འགུལ་བསྐྱོད་བྱེད་ཀྱི་ཡོད།', bo_tr:'dzamling nyi ma i tha khor du gyu'},
+  {id:'stem_21', cat:'lab', en:'We need to follow the instructions.', zh:'我们需要按照说明操作。', bo:'ང་ཚོས་བཀའ་སློབ་ལྟར་བྱེད་དགོས།', bo_tr:'ngatsho kashab tar jey go'},
+  {id:'stem_22', cat:'lab', en:'Please write down your results.', zh:'请写下你的实验结果。', bo:'ཁྱེད་རང་གི་གྲུབ་འབྲས་བྲིས་རོགས།', bo_tr:'khyerang gi drub dra bi'},
+  {id:'stem_23', cat:'lab', en:'I need a clean test tube.', zh:'我需要一个干净的试管。', bo:'ང་ལ་ཚོད་ལྟའི་དུང་ཅུང་གཙང་མ་ཞིག་དགོས།', bo_tr:'nga la tsoda i dung chung zhangma'},
+  {id:'stem_24', cat:'lab', en:'The bottle is on the table.', zh:'瓶子在桌子上。', bo:'དམ་བི་དེ་ལྕོག་རྩེ་སྟེང་ལ་ཡོད།', bo_tr:'bottle de chok tse thang la yo'},
+  {id:'stem_25', cat:'lab', en:'Be careful with the glass.', zh:'小心玻璃杯。', bo:'ཤེལ་ཕོར་ལ་གཟབ་གཟབ་བྱེད་དགོས།', bo_tr:'shel por la zhab zhab jey'},
+  {id:'stem_26', cat:'lab', en:'We need to use a measuring cup.', zh:'我们需要使用量杯。', bo:'ང་ཚོས་ཚད་འཇལ་ཕོར་པ་བེད་སྤྱོད་གཏོང་དགོས།', bo_tr:'ngatsho tse jel porba jey go'},
+  {id:'stem_27', cat:'lab', en:'Add some water to the container.', zh:'向容器中加一些水。', bo:'སྣོད་ནང་དུ་ཆུ་ཁ་ཤས་བླུགས་དགོས།', bo_tr:'nang du chu cha she lug go'},
+  {id:'stem_28', cat:'lab', en:'Mix the two liquids together.', zh:'将两种液体混合在一起。', bo:'ཁུ་བ་གཉིས་མཉམ་དུ་བསྲེས་དགོས།', bo_tr:'ku ba nyi nam du resh go'},
+  {id:'stem_29', cat:'lab', en:'The mixture is changing colour.', zh:'混合物的颜色发生了变化。', bo:'སྲེག་རྫས་དེ་ཚོས་མདོག་འགྱུར་བཞིན་ཡོད།', bo_tr:'sreja de cho dok drang'},
+  {id:'stem_30', cat:'lab', en:'We need to repeat the experiment.', zh:'我们需要重复这个实验。', bo:'ང་ཚོས་ཚོད་ལྟ་དེ་བསྐྱར་དུ་བྱེད་དགོས།', bo_tr:'ngatsho tsoda de kyap du jey go'},
+  {id:'stem_31', cat:'lab', en:'Our results are different this time.', zh:'这次我们的结果不一样。', bo:'ང་ཚོའི་གྲུབ་འབྲས་ཐེངས་འདིར་མི་འདྲ་བ་རེད།', bo_tr:'ngatsho drub dra thi rer mi dra'},
+  {id:'stem_32', cat:'lab', en:'Let’s check the numbers again.', zh:'让我们再检查一下数据。', bo:'ཡང་བསྐྱར་ཨང་གྲངས་བརྟག་དཔྱད་བྱེད།', bo_tr:'yangkyap angdrang truk chad'},
+  {id:'stem_33', cat:'lab', en:'I think we made a mistake.', zh:'我觉得我们做错了。', bo:'ངས་བསམ་ན་ང་ཚོས་ནོར་འཁྲུལ་བཟོས་ཡོད།', bo_tr:'nga sam na ngatsho nor trul cho'},
+  {id:'stem_34', cat:'lab', en:'Can you help me with this experiment?', zh:'你能帮我做这个实验吗？', bo:'ཁྱེད་ཀྱིས་ང་ལ་ཚོད་ལྟ་འདི་ལ་རོགས་པ་བྱེད་ཐུབ་བམ།', bo_tr:'khyed kyis nga la tsoda de la rokpa jey thu'},
+  {id:'stem_35', cat:'lab', en:'What do you think will happen?', zh:'你认为会发生什么？', bo:'ཁྱེད་རང་གིས་བསམ་ན་གང་འབྱུང་རྒྱུ་རེད་དམ།', bo_tr:'khyerang gi sam na gang jung gyu re'},
+  {id:'stem_36', cat:'lab', en:'I want to test my idea.', zh:'我想验证我的想法。', bo:'ངས་ངའི་བསམ་ཚུལ་ཚོད་ལྟ་བྱེད་འདོད་ཡོད།', bo_tr:'nga ngai samtsul tsoda jey do'},
+  {id:'stem_37', cat:'lab', en:'We need to collect more data.', zh:'我们需要收集更多数据。', bo:'ང་ཚོས་གནས་ཚུལ་མང་བ་བསྡུ་རུབ་བྱེད་དགོས།', bo_tr:'ngatsho nyi kyal jang du drub go'},
+  {id:'stem_38', cat:'lab', en:'The results look very interesting.', zh:'结果看起来很有趣。', bo:'གྲུབ་འབྲས་དེ་ཧ་ཅང་སྤྲོ་སྣང་ལྡན་པ་ཞིག་འདུག', bo_tr:'drub dra de ha chang tro nang denpa'},
+  {id:'stem_39', cat:'lab', en:'We can see a clear difference.', zh:'我们可以看到明显的区别。', bo:'ང་ཚོས་ཁྱད་པར་གསལ་པོ་མཐོང་ཐུབ།', bo_tr:'ngatsho khyapa selpo tong'},
+  {id:'stem_40', cat:'lab', en:'Let’s write our conclusion.', zh:'让我们写下结论。', bo:'ང་ཚོའི་མཇུག་སྡོམ་བྲིས།', bo_tr:'ngatsho mejuk dom bi'},
+  {id:'stem_41', cat:'tech', en:'I use a computer every day.', zh:'我每天都使用电脑。', bo:'ངས་ཉིན་ལྟར་གློག་ཀླད་བེད་སྤྱོད་བྱེད་ཀྱི་ཡོད།', bo_tr:'nga nyin tar laptop jey'},
+  {id:'stem_42', cat:'tech', en:'My laptop is on the desk.', zh:'我的笔记本电脑在桌子上。', bo:'ངའི་གློག་ཀླད་དེ་ཡིག་ཅོག་སྟེང་ལ་ཡོད།', bo_tr:'ngai laptop de yi chok thang la yo'},
+  {id:'stem_43', cat:'tech', en:'I need to charge my laptop.', zh:'我的笔记本电脑需要充电。', bo:'ངས་གློག་ཀླད་ལ་གློག་བླུགས་དགོས།', bo_tr:'nga laptop la chug go'},
+  {id:'stem_44', cat:'tech', en:'The battery is almost empty.', zh:'电池快没电了。', bo:'གློག་རྫས་ཕལ་ཆེར་སྟོང་པ་རེད།', bo_tr:'chugja pal che tsong pa'},
+  {id:'stem_45', cat:'tech', en:'Please turn on the computer.', zh:'请打开电脑。', bo:'གློག་ཀླད་ཁ་ཕྱེ་རོགས།', bo_tr:'laptop khap zhu'},
+  {id:'stem_46', cat:'tech', en:'The screen is very bright.', zh:'屏幕太亮了。', bo:'བརྙན་ཤེལ་ཧ་ཅང་འོད་མདངས་ལྡན་པ་རེད།', bo_tr:'screen ha chang od dang den'},
+  {id:'stem_47', cat:'tech', en:'My keyboard is not working.', zh:'我的键盘坏了。', bo:'ངའི་མཐེབ་གཞོང་ལས་ཀ་བྱེད་ཀྱི་མེད།', bo_tr:'ngai keyboard la work ma'},
+  {id:'stem_48', cat:'tech', en:'I cannot find the file.', zh:'我找不到这个文件。', bo:'ངས་ཡིག་ཆ་དེ་རྙེད་མ་ཐུབ།', bo_tr:'nga yikcha de find ma thub'},
+  {id:'stem_49', cat:'tech', en:'I saved the document on my computer.', zh:'我把文档保存到电脑上了。', bo:'ངས་ཡིག་ཆ་དེ་ངའི་གློག་ཀླད་ནང་དུ་ཉར་ཚགས་བྱས།', bo_tr:'nga yikcha de ngai laptop na tsuk'},
+  {id:'stem_50', cat:'tech', en:'Please open the website.', zh:'请打开这个网站。', bo:'དྲ་ཚིགས་ཁ་ཕྱེ་རོགས།', bo_tr:'website khap zhu'},
+  {id:'stem_51', cat:'tech', en:'I need to download this file.', zh:'我需要下载这个文件。', bo:'ངས་ཡིག་ཆ་འདི་ཕབ་ལེན་བྱེད་དགོས།', bo_tr:'nga yikcha de download go'},
+  {id:'stem_52', cat:'tech', en:'The internet is very slow today.', zh:'今天网速很慢。', bo:'དེང་སང་དྲ་རྒྱ་ཧ་ཅང་དལ་བ་རེད།', bo_tr:'de sang internet ha chang dal'},
+  {id:'stem_53', cat:'tech', en:'My computer needs an update.', zh:'我的电脑需要更新。', bo:'ངའི་གློག་ཀླད་ལ་གསར་བརྗེ་དགོས།', bo_tr:'ngai computer la update go'},
+  {id:'stem_54', cat:'tech', en:'I forgot my password.', zh:'我忘记密码了。', bo:'ངས་གསང་གྲངས་བརྗེད་སོང་།', bo_tr:'nga password forget'},
+  {id:'stem_55', cat:'tech', en:'I need to create an account.', zh:'我需要创建一个账户。', bo:'ངས་རྩིས་ཁྲ་བཟོ་དགོས།', bo_tr:'nga account create go'},
+  {id:'stem_56', cat:'tech', en:'Please enter your username.', zh:'请输入您的用户名。', bo:'ཁྱེད་རང་གི་མིང་བླུགས་རོགས།', bo_tr:'khyerang gi username zhu'},
+  {id:'stem_57', cat:'tech', en:'The program is running slowly.', zh:'程序运行缓慢。', bo:'ལས་རིམ་དེ་འགོར་འགྱངས་འགྲོ་བཞིན་ཡོད།', bo_tr:'las rim de slow gyu'},
+  {id:'stem_58', cat:'tech', en:'I closed the wrong window.', zh:'我关错了窗口。', bo:'ངས་སྒེའུ་ཁུང་ནོར་བ་ཁ་རྒྱག་པ་རེད།', bo_tr:'nga wrong window kher'},
+  {id:'stem_59', cat:'tech', en:'Can you show me how this works?', zh:'你能给我演示一下这个是怎么工作的吗？', bo:'ཁྱེད་ཀྱིས་ང་ལ་འདི་གང་འདྲ་བྱེད་ཀྱི་ཡོད་མེད་སྟོན་ཐུབ་བམ།', bo_tr:'khyed kyis nga la de gi work show'},
+  {id:'stem_60', cat:'tech', en:'I am learning how to code.', zh:'我正在学习编程。', bo:'ངས་ཡིག་གཟུགས་བཟོ་སྟངས་སྦྱོང་གི་ཡོད།', bo_tr:'nga coding learn'},
+  {id:'stem_61', cat:'engineer', en:'The engineer designed a new machine.', zh:'这位工程师设计了一台新机器。', bo:'བཟོ་སྐྲུན་པས་འཕྲུལ་ཆས་གསར་པ་ཞིག་ཇུས་འགོད་བྱས།', bo_tr:'engineer nye machine'},
+  {id:'stem_62', cat:'engineer', en:'This machine uses electricity.', zh:'这台机器使用电力。', bo:'འཕྲུལ་ཆས་འདིས་གློག་བེད་སྤྱོད་བྱེད་ཀྱི་ཡོད།', bo_tr:'machine de chug jey'},
+  {id:'stem_63', cat:'engineer', en:'The motor is turning very quickly.', zh:'电机转速非常快。', bo:'འཕྲུལ་འཁོར་དེ་ཧ་ཅང་མགྱོགས་པོ་འཁོར་བཞིན་ཡོད།', bo_tr:'motor de ha chang mgyogs po'},
+  {id:'stem_64', cat:'engineer', en:'The wheels are moving together.', zh:'轮子一起转动。', bo:'འཁོར་ལོ་མཉམ་དུ་འགྲོ་བཞིན་ཡོད།', bo_tr:'khorlo nam du dro'},
+  {id:'stem_65', cat:'engineer', en:'We need to build a small model.', zh:'我们需要搭建一个小模型。', bo:'ང་ཚོས་དཔེ་སྟོན་ཆུང་ཆུང་ཞིག་བཟོ་དགོས།', bo_tr:'ngatsho demo chung chung'},
+  {id:'stem_66', cat:'engineer', en:'The bridge needs to be stronger.', zh:'这座桥需要更坚固。', bo:'ཟམ་པ་དེ་བརྟན་པོ་དགོས།', bo_tr:'zampa de tenpo go'},
+  {id:'stem_67', cat:'engineer', en:'We are testing the design.', zh:'我们正在测试这个设计。', bo:'ང་ཚོས་བཟོ་བཀོད་ཚོད་ལྟ་བྱེད་བཞིན་ཡོད།', bo_tr:'ngatsho design tsoda jey'},
+  {id:'stem_68', cat:'engineer', en:'This part is too heavy.', zh:'这个零件太重了。', bo:'ཆ་ཤས་འདི་ལྗིད་པོ་འདུག', bo_tr:'cha she de ji po'},
+  {id:'stem_69', cat:'engineer', en:'We need a lighter material.', zh:'我们需要一种更轻的材料。', bo:'ང་ཚོར་རྒྱུ་ཆ་འཇམ་པོ་དགོས།', bo_tr:'ngatsho gyu cha jam po go'},
+  {id:'stem_70', cat:'engineer', en:'The robot can move by itself.', zh:'机器人可以自主移动。', bo:'འཕྲུལ་ཆས་དེ་རང་ཉིད་ཀྱིས་འགུལ་ཐུབ།', bo_tr:'robot de rang nyi gyu'},
+  {id:'stem_71', cat:'engineer', en:'The robot has two arms.', zh:'机器人有两条手臂。', bo:'འཕྲུལ་ཆས་ལ་ལག་པ་གཉིས་ཡོད།', bo_tr:'robot la lagpa nyi yo'},
+  {id:'stem_72', cat:'engineer', en:'We programmed the robot to move forward.', zh:'我们编写了程序让机器人向前移动。', bo:'ང་ཚོས་འཕྲུལ་ཆས་དེ་མདུན་དུ་བསྐྱོད་པའི་ལས་རིམ་བཟོས་ཡོད།', bo_tr:'ngatsho robot de mdu du gyu program'},
+  {id:'stem_73', cat:'engineer', en:'The machine stopped suddenly.', zh:'机器突然停止了。', bo:'འཕྲུལ་ཆས་དེ་གློ་བུར་དུ་བཀག་སོང་།', bo_tr:'machine de gwa bur duk'},
+  {id:'stem_74', cat:'engineer', en:'We need to find the problem.', zh:'我们需要找出问题所在。', bo:'ང་ཚོས་དཀའ་ངལ་དེ་འཚོལ་དགོས།', bo_tr:'ngatsho kachal de tshol go'},
+  {id:'stem_75', cat:'engineer', en:'Please check the wires.', zh:'请检查电线。', bo:'གློག་སྐུད་ལ་ཞིབ་བཤེར་གནང་རོགས།', bo_tr:'lugguk la chek zhu'},
+  {id:'stem_76', cat:'engineer', en:'The battery powers the machine.', zh:'电池为机器供电。', bo:'གློག་རྫས་ཀྱིས་འཕྲུལ་ཆས་ལ་གློག་སྤྲོད་ཀྱི་ཡོད།', bo_tr:'chugja gyis machine la chug'},
+  {id:'stem_77', cat:'engineer', en:'This design is simple and strong.', zh:'这个设计简洁而坚固。', bo:'བཟོ་བཀོད་འདི་ལས་སླ་པོ་དང་ཤུགས་ཆེ་བ་རེད།', bo_tr:'design de las la po dang shuk che'},
+  {id:'stem_78', cat:'engineer', en:'We can improve the design.', zh:'我们可以改进这个设计。', bo:'ང་ཚོས་བཟོ་བཀོད་ཡར་རྒྱས་གཏོང་ཐུབ།', bo_tr:'ngatsho design yanggya tong'},
+  {id:'stem_79', cat:'engineer', en:'The model works very well.', zh:'这个模型运行良好。', bo:'དཔེ་སྟོན་དེ་ཧ་ཅང་ལེགས་པོ་འདུག', bo_tr:'demo de ha chang lekpo'},
+  {id:'stem_80', cat:'engineer', en:'Let’s test it one more time.', zh:'我们再测试一次。', bo:'དེ་ལ་ཐེངས་གཅིག་ཚོད་ལྟ་བྱེད།', bo_tr:'de la theng chik tsoda jey'},
+  {id:'stem_81', cat:'routine', en:'I usually open the curtains in the morning.', zh:'我通常早上拉开窗帘。', bo:'ང་ནམ་རྒྱུན་ཞོགས་པར་སྒོ་ཡོལ་ཕྱེ་གི་ཡོད།', bo_tr:'nga nam gyur shokpa go yol che'},
+  {id:'stem_82', cat:'routine', en:'My alarm rings at six thirty.', zh:'我的闹钟六点半响。', bo:'ངའི་ཉེན་བརྡ་ཆུ་ཚོད་དྲུག་དང་ཕྱེད་ཀ་ལ་སྒྲོག་གི་འདུག', bo_tr:'ngai alarm chu tso druk dang che la sro'},
+  {id:'stem_83', cat:'routine', en:'I turn off my alarm and get up.', zh:'我关掉闹钟起床。', bo:'ངས་དྲན་སྐུལ་ཁ་བརྒྱབ་ནས་ཡར་ལངས།', bo_tr:'nga dral ku khap na yang'},
+  {id:'stem_84', cat:'routine', en:'I put my clothes in the cupboard.', zh:'我把衣服放进衣柜。', bo:'ངས་ངའི་གྱོན་ཆས་ཆ་སྒམ་ནང་དུ་བཞག་ཡོད།', bo_tr:'nga ngai gyoncha chag nam du zhak'},
+  {id:'stem_85', cat:'routine', en:'I have a quick shower.', zh:'我快速冲个澡。', bo:'ང་ལ་ཆུ་ཁོལ་མགྱོགས་པོ་ཡོད།', bo_tr:'nga la chu khol mgyogs po'},
+  {id:'stem_86', cat:'routine', en:'I dry my hair with a towel.', zh:'我用毛巾擦干头发。', bo:'ངས་ངའི་སྐྲ་དེ་ཨ་ཅོར་གྱིས་སྐམ་པོ་བཟོས།', bo_tr:'nga ngai skra de ahchor gyis skam po'},
+  {id:'stem_87', cat:'routine', en:'I put some milk in my coffee.', zh:'我在咖啡里加了些牛奶。', bo:'ངས་ངའི་འཚིག་ཇའི་ནང་དུ་འོ་མ་ཁ་ཤས་བླུགས་ཡོད།', bo_tr:'nga ngai chukja na oma cha she lu'},
+  {id:'stem_88', cat:'routine', en:'I eat a banana before I leave.', zh:'我出门前吃一根香蕉。', bo:'ང་མ་ཐོན་སྔོན་ལ་ངང་ལག་ཟོས།', bo_tr:'nga ma thon ngen la anglak zo'},
+  {id:'stem_89', cat:'routine', en:'I check the weather every morning.', zh:'我每天早上都查看天气。', bo:'ངས་ཉིན་ལྟར་ཞོགས་པ་གནམ་གཤིས་ལ་ལྟ་ཞིབ་བྱེད་ཀྱི་ཡོད།', bo_tr:'nga nyin tar shokpa gnamshi la ta shep'},
+  {id:'stem_90', cat:'routine', en:'I take my keys with me.', zh:'我随身携带钥匙。', bo:'ངས་ངའི་ལྡེ་མིག་ང་དང་མཉམ་དུ་འཁྱེར་ཡོད།', bo_tr:'nga ngai de mig nga dang nyam du khyer yo'},
+  {id:'stem_91', cat:'routine', en:'My house is close to the station.', zh:'我家离车站很近。', bo:'ངའི་ཁང་པ་དེ་བབས་ཚུགས་དང་ཉེ་པོ་ཡོད།', bo_tr:'ngai khangpa de ba sgu dang nye po'},
+  {id:'stem_92', cat:'routine', en:'The train arrives at nine o’clock.', zh:'火车九点到站。', bo:'མེ་འཁོར་ཆུ་ཚོད་དགུ་པར་སླེབས་ཡོད།', bo_tr:'me khor chu tso gu par leb'},
+  {id:'stem_93', cat:'routine', en:'I sit next to the window.', zh:'我坐在靠窗的位置。', bo:'ང་སྒེའུ་ཁུང་གི་འགྲམ་དུ་བསྡད་ཡོད།', bo_tr:'nga geu khung gi dram du sdad'},
+  {id:'stem_94', cat:'routine', en:'There are many people on the train.', zh:'火车上人很多。', bo:'མེ་འཁོར་ནང་མི་མང་པོ་ཡོད།', bo_tr:'me khor na mi mang po'},
+  {id:'stem_95', cat:'routine', en:'I listen to music on my way to work.', zh:'我上班路上听音乐。', bo:'ང་ལས་ཀར་འགྲོ་བའི་ལམ་བར་དུ་རོལ་དབྱངས་ཉན་གྱི་ཡོད།', bo_tr:'nga les ka dro ba i lam bar ro lyang nyen'},
+  {id:'stem_96', cat:'routine', en:'I arrive at work on time.', zh:'我准时到达公司。', bo:'ང་ལས་ཀར་དུས་ཐོག་ཏུ་སླེབས་ཡོད།', bo_tr:'nga les ka tu der leb'},
+  {id:'stem_97', cat:'routine', en:'My friend sits next to me.', zh:'我的朋友坐在我旁边。', bo:'ངའི་གྲོགས་པོ་ངའི་འགྲམ་དུ་བསྡད་ཡོད།', bo_tr:'ngai drokpo ngai dram du sdad'},
+  {id:'stem_98', cat:'routine', en:'We talk during our lunch break.', zh:'我们午休时聊天。', bo:'ང་ཚོས་གུང་ཚིགས་བར་གསེང་སྐབས་སྐད་ཆ་བཤད་ཀྱི་ཡོད།', bo_tr:'ngatsho gung tik bar sngag tsa tak'},
+  {id:'stem_99', cat:'routine', en:'I have a sandwich for lunch.', zh:'我午餐吃的是三明治。', bo:'ང་ལ་གུང་ཚིགས་ལ་ཚེམ་བུ་ཞིག་ཡོད།', bo_tr:'nga la gung tik la sem bu'},
+  {id:'stem_100', cat:'routine', en:'I buy some fruit from the shop.', zh:'我从商店买了一些水果。', bo:'ངས་ཚོང་ཁང་ནས་ཤིང་ཏོག་ཁ་ཤས་ཉོས།', bo_tr:'nga tsong khang nas shingtok tsa she nyo'}
+];
+const byId = id => WORDBANK.find(w=>w.id===id) || PRACTICE_SENTENCE_BANK.find(w=>w.id===id);
+
+// ---- the 10 modules of Level 1 ("Base Camp") — fully built -----------------
+const LEVEL1_MODULES = [
+  {num:1,  key:'greetings', label:'Greetings & Introductions', icon:'🤝', ids:['hello','thankyou','yes','no','goodbye','sorry']},
+  {num:2,  key:'numbers',   label:'Numbers & Counting',        icon:'🔢', ids:['one','two','three','four','five','six','seven','eight','nine','ten']},
+  {num:3,  key:'family',    label:'Family & People',           icon:'👪', ids:['mother','father','son','daughter','family','friend']},
+  {num:4,  key:'colors',    label:'Colours & Descriptions',    icon:'🎨', ids:['red','blue','green','yellow','white','black']},
+  {num:5,  key:'food',      label:'Food & Drinks',             icon:'🍵', ids:['water','tea','foodw','milk','meat','fruit']},
+  {num:6,  key:'home',      label:'Home & Objects',            icon:'🏠', ids:['house','door','book','window','bed','table']},
+  {num:7,  key:'clothes',   label:'Clothes & Personal Items',  icon:'👕', ids:['clothes','shoes','hat','phone','money','watch']},
+  {num:8,  key:'time',      label:'Time & Dates',              icon:'🕐', ids:['today','tomorrow','yesterday','morning','night','week']},
+  {num:9,  key:'actions',   label:'Everyday Actions',          icon:'🏃', ids:['eat','drink','sleep','go','come','see']},
+  {num:10, key:'questions', label:'Questions & Answers',       icon:'❓', ids:['who','what','where','when','how']},
 ];
 
-// ---- the five worlds on the route -------------------------------------------
-const WORLD_META = [
-  {icon:'🏕️', title:'Base Camp',   subtitle:'Foundations',            built:true},
-  {icon:'⛺',  title:'Camp I',      subtitle:'Everyday Life',          built:false, topics:'Verbs, clothing, everyday objects'},
-  {icon:'🥾',  title:'Camp II',     subtitle:'Getting Around',         built:false, topics:'Directions, transport, places in town'},
-  {icon:'❄️',  title:'Camp III',    subtitle:'Time & Weather',         built:false, topics:'Days, seasons, weather, the mountain climate'},
-  {icon:'🏔️',  title:'Summit Push', subtitle:'Conversation & Culture', built:false, topics:'Full conversations, customs, festivals'},
+// ---- the 10 modules of Level 2 ("Camp I") — fully built --------------------
+// Vocabulary-scoped rather than free sentence-generation — see README
+// "Why Level 2 stayed vocabulary-based" for why full grammar drills (word
+// order, conjugation) weren't generated wholesale across 4 languages.
+const LEVEL2_MODULES = [
+  {num:11, key:'sentence',  label:'Sentence Building',        icon:'🧱', ids:['this','that','and','but','very','also']},
+  {num:12, key:'pronouns',  label:'Pronouns & Possession',    icon:'🙋', ids:['i','you','he','my','your','they']},
+  {num:13, key:'verbs2',    label:'Essential Verbs',          icon:'⚡', ids:['be','have','domake','want','give','need']},
+  {num:14, key:'places',    label:'Places & Directions',      icon:'🧭', ids:['here','there','left','right','near','far']},
+  {num:15, key:'transport', label:'Transport & Travel',       icon:'🚌', ids:['road','train','airport','car','bridge']},
+  {num:16, key:'shopping',  label:'Shopping & Money',         icon:'💰', ids:['buy','sell','price','expensive','cheap','shop']},
+  {num:17, key:'work',      label:'School & Work',            icon:'🏫', ids:['teacher','student','school','jobwork','office','classroom']},
+  {num:18, key:'feelings',  label:'Feelings & Opinions',      icon:'❤️', ids:['happy','sad','angry','tired','like2','think']},
+  {num:19, key:'weather',   label:'Weather & Nature',         icon:'🌦️', ids:['hot','cold','rain','sun','mountain','river']},
+  {num:20, key:'describe',  label:'Describing Things',        icon:'📏', ids:['big','small','long','short','good','bad']},
+];
+
+// ---- the 10 modules of Level 3 ("Camp II") — fully built -------------------
+// Full sentences rather than single words — the translations were supplied
+// directly rather than generated (see README "Level 3 content source").
+const LEVEL3_MODULES = [
+  {num:21, key:'morning',   label:'Morning Routine',        icon:'🌅', ids:['s_wake','s_brush','s_washface']},
+  {num:22, key:'breakfast', label:'Breakfast Time',         icon:'🍳', ids:['s_makebed','s_tea','s_cookbreakfast']},
+  {num:23, key:'weather2',  label:'Weather & Small Talk',   icon:'☀️', ids:['s_sunhat','s_birds','s_name']},
+  {num:24, key:'greetwell', label:'Greetings & Wellbeing',  icon:'👋', ids:['s_howareyou','s_doinggood','s_restroom']},
+  {num:25, key:'askhelp',   label:'Asking for Help',        icon:'🙏', ids:['s_needhelp','s_couldhelp','s_whattime']},
+  {num:26, key:'commbasic', label:'Communication Basics',   icon:'💬', ids:['s_dontunderstand','s_speakslowly','s_orangejuice']},
+  {num:27, key:'foodeve',   label:'Food & Evening Plans',   icon:'🍽️', ids:['s_foodgood','s_readbook','s_park']},
+  {num:28, key:'together',  label:'Together & Feelings',    icon:'🌆', ids:['s_dinner','s_dogbark','s_feelhappy']},
+  {num:29, key:'dailylife', label:'Daily Life',             icon:'🏡', ids:['s_busy','s_garden','s_thanks']},
+  {num:30, key:'farewell',  label:'Farewells',              icon:'🌙', ids:['s_later','s_tomorrow','s_wonderfulday']},
+];
+
+const LEVEL4_MODULES = [
+  {num:31, key:'science_basics', label:'Science Basics', icon:'🧬', ids:['stem_01','stem_02','stem_03','stem_04','stem_05','stem_06','stem_07','stem_08','stem_09','stem_10']},
+  {num:32, key:'science_lab', label:'Science Lab', icon:'🧪', ids:['stem_11','stem_12','stem_13','stem_14','stem_15','stem_16','stem_17','stem_18','stem_19','stem_20']},
+  {num:33, key:'experiments', label:'Experiments', icon:'🔬', ids:['stem_21','stem_22','stem_23','stem_24','stem_25','stem_26','stem_27','stem_28','stem_29','stem_30']},
+  {num:34, key:'lab_results', label:'Results & Review', icon:'📊', ids:['stem_31','stem_32','stem_33','stem_34','stem_35','stem_36','stem_37','stem_38','stem_39','stem_40']},
+  {num:35, key:'tech_everyday', label:'Tech Everyday', icon:'💻', ids:['stem_41','stem_42','stem_43','stem_44','stem_45','stem_46','stem_47','stem_48','stem_49','stem_50']},
+  {num:36, key:'tech_apps', label:'Files & Internet', icon:'🌐', ids:['stem_51','stem_52','stem_53','stem_54','stem_55','stem_56','stem_57','stem_58','stem_59','stem_60']},
+  {num:37, key:'engineering', label:'Engineering', icon:'🤖', ids:['stem_61','stem_62','stem_63','stem_64','stem_65','stem_66','stem_67','stem_68','stem_69','stem_70']},
+  {num:38, key:'machines', label:'Machines', icon:'⚙️', ids:['stem_71','stem_72','stem_73','stem_74','stem_75','stem_76','stem_77','stem_78','stem_79','stem_80']},
+  {num:39, key:'routine', label:'Daily Routine', icon:'🧭', ids:['stem_81','stem_82','stem_83','stem_84','stem_85','stem_86','stem_87','stem_88','stem_89','stem_90']},
+  {num:40, key:'daily_life', label:'Life & Travel', icon:'🚶', ids:['stem_91','stem_92','stem_93','stem_94','stem_95','stem_96','stem_97','stem_98','stem_99','stem_100']}
+];
+
+// ---- the 4 levels on the route: words → sentences → conversations → ideas --
+// Levels 1–3 have real exercises. Level 4 is now expanded with the science,
+// laboratory, computer, and engineering sentence sets provided by the user.
+const LEVELS = [
+  {
+    icon:'🏕️', title:'Base Camp', subtitle:'Survival Beginner', range:'Modules 1–10', built:true,
+    milestone:'Introduce yourself, name what’s around you, and ask simple questions.',
+    modules: LEVEL1_MODULES
+  },
+  {
+    icon:'⛺', title:'Camp I', subtitle:'Building Sentences', range:'Modules 11–20', built:true,
+    milestone:'Recognise the building-block words sentences are made of.',
+    modules: LEVEL2_MODULES
+  },
+  {
+    icon:'🥾', title:'Camp II', subtitle:'Everyday Conversation', range:'Modules 21–30', built:true,
+    milestone:'Recognise full everyday sentences, not just isolated words.',
+    modules: LEVEL3_MODULES
+  },
+  {
+    icon:'🏔️', title:'Summit Push', subtitle:'Advanced Practice', range:'Modules 31–40', built:true,
+    milestone:'Use science, technology and everyday real-world sentences in practice.',
+    modules: LEVEL4_MODULES
+  }
 ];
 
 // ---- the four courses, generated from one word bank -------------------------
@@ -331,7 +677,7 @@ const safeStorage = {
   }
 };
 
-const STORAGE_KEY = 'sangwa_state_v1';
+const STORAGE_KEY = 'sangwa_state_v2';
 const HEART_REGEN_MS = 30*60*1000; // 1 heart every 30 min
 const HEARTS_MAX = 5;
 
@@ -339,8 +685,14 @@ function defaultState(){
   return {
     xp:0, streak:0, lastActive:null,
     hearts:HEARTS_MAX, lastHeartTime: Date.now(),
-    tracks:{}, // trackId -> {completed:{ "world-groupkey": stars }}
-    screen:'home',
+    tracks:{}, // trackId -> {completed:{ "level-modulekey": stars }}
+    screen:'landing',
+    authenticated:false,
+    auth:{
+      email:'', password:'', confirmPassword:'', name:'', username:'', code:'', purpose:'Learning a language',
+      level:'Beginner', goals:'Travel', interests:'Conversation', language:'English', theme:'Midnight',
+      notifications:true, accessibility:'Standard'
+    },
     currentTrack:null, currentWorld:0,
     session:null
   };
@@ -348,10 +700,8 @@ function defaultState(){
 function loadState(){
   const raw = safeStorage.get(STORAGE_KEY);
   if(!raw) return defaultState();
-  try{
-    const parsed = JSON.parse(raw);
-    return Object.assign(defaultState(), parsed);
-  }catch(e){ return defaultState(); }
+  try{ return Object.assign(defaultState(), JSON.parse(raw)); }
+  catch(e){ return defaultState(); }
 }
 function saveState(){ safeStorage.set(STORAGE_KEY, JSON.stringify(state)); }
 
@@ -370,41 +720,32 @@ function regenHearts(){
 function nextHeartEta(){
   if(state.hearts>=HEARTS_MAX) return null;
   const remain = HEART_REGEN_MS - (Date.now()-state.lastHeartTime);
-  const mins = Math.max(1, Math.ceil(remain/60000));
-  return mins;
+  return Math.max(1, Math.ceil(remain/60000));
 }
 
 function trackProgress(trackId){
   if(!state.tracks[trackId]) state.tracks[trackId] = {completed:{}};
   return state.tracks[trackId];
 }
-function lessonKey(worldIdx, groupKey){ return worldIdx+'-'+groupKey; }
-function isLessonDone(trackId, worldIdx, groupKey){
-  const p = trackProgress(trackId);
-  return p.completed[lessonKey(worldIdx,groupKey)] || 0;
+function lessonKey(levelIdx, groupKey){ return levelIdx+'-'+groupKey; }
+function isLessonDone(trackId, levelIdx, groupKey){
+  return trackProgress(trackId).completed[lessonKey(levelIdx,groupKey)] || 0;
 }
-function worldStats(trackId, worldIdx){
-  if(worldIdx!==0) return {done:0,total:0};
+function levelStats(trackId, levelIdx){
+  const lvl = LEVELS[levelIdx];
+  if(!lvl.built) return {done:0,total:0};
   const p = trackProgress(trackId);
   let done=0;
-  LESSON_GROUPS.forEach(g=>{ if(p.completed[lessonKey(worldIdx,g.key)]) done++; });
-  return {done, total:LESSON_GROUPS.length};
-}
-function isWorldUnlocked(trackId, worldIdx){
-  if(worldIdx===0) return true;
-  const st = worldStats(trackId, worldIdx-1);
-  return WORLD_META[worldIdx-1].built ? st.done===st.total : false;
+  lvl.modules.forEach(g=>{ if(p.completed[lessonKey(levelIdx,g.key)]) done++; });
+  return {done, total:lvl.modules.length};
 }
 function touchStreak(){
   const today = new Date().toDateString();
   if(state.lastActive===today) return;
   if(state.lastActive){
     const y = new Date(); y.setDate(y.getDate()-1);
-    if(state.lastActive===y.toDateString()) state.streak += 1;
-    else state.streak = 1;
-  } else {
-    state.streak = 1;
-  }
+    state.streak = state.lastActive===y.toDateString() ? state.streak+1 : 1;
+  } else { state.streak = 1; }
   state.lastActive = today;
 }
 
@@ -414,10 +755,9 @@ function render(){ app.innerHTML = screens[state.screen](); saveState(); }
 
 function topbar(opts){
   opts = opts||{};
-  const heartsHtml = Array.from({length:HEARTS_MAX}).map((_,i)=>`<span>${i<state.hearts?'❤️':'🩶'}</span>`).join('');
   return `
   <div class="topbar">
-    ${opts.back ? `<button class="iconbtn" onclick="${opts.back}">←</button>` : `<div class="brand"><span>⛰️</span>Sangwa<span class="peak">·</span></div>`}
+    ${opts.back ? `<button class="iconbtn" onclick='${opts.back}'>←</button>` : `<div class="brand"><span>⛰️</span>Sangwa<span class="peak">·</span></div>`}
     <div style="display:flex; gap:8px; align-items:center;">
       <div class="stat" title="Day streak">🔥 ${state.streak}</div>
       <div class="stat" title="Total XP">⭐ ${state.xp}</div>
@@ -427,14 +767,322 @@ function topbar(opts){
 }
 
 const screens = {
+  landing: renderLanding,
+  login: renderLogin,
+  signup: renderSignup,
+  verify: renderVerify,
+  welcome: renderWelcome,
+  profileSetup: renderProfileSetup,
+  personalization: renderPersonalization,
+  permissions: renderPermissions,
+  preferences: renderPreferences,
+  forgotPassword: renderForgotPassword,
+  setupComplete: renderSetupComplete,
   home: renderHome,
   map: renderMap,
+  lessonlist: renderLessonList,
   world_locked: renderWorldLocked,
   lesson: renderLesson,
   complete: renderComplete,
   outofhearts: renderOutOfHearts,
   profile: renderProfile,
 };
+
+function setAuthField(key, value){
+  state.auth[key] = value;
+  render();
+}
+function setAuthChoice(key, value){
+  state.auth[key] = value;
+  render();
+}
+function renderAuthShell(title, subtitle, body, showSteps = false){
+  return `
+    <div class="auth-shell">
+      <div class="auth-card">
+        <div class="brand-badge">⛰️</div>
+        <div class="auth-header">
+          <h1>${title}</h1>
+          ${subtitle ? `<div class="auth-sub">${subtitle}</div>` : ''}
+        </div>
+        ${body}
+        ${showSteps ? `
+          <div class="steps">
+            <span class="active"></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>` : ''}
+      </div>
+    </div>`;
+}
+
+function renderLanding(){
+  return renderAuthShell(
+    'Sangwa',
+    'Learn English, Chinese and Tibetan through Tibetan with a guided route from Base Camp to the Summit.',
+    `
+      <div class="auth-actions">
+        <button class="btn btn-primary btn-block" onclick="state.screen='signup'; render();">Get Started</button>
+        <button class="btn btn-ghost btn-block" onclick="state.screen='login'; render();">Log In</button>
+      </div>
+      <div class="auth-social">
+        <button class="social-btn" onclick="state.authenticated=true; state.screen='home'; render();">Google</button>
+        <button class="social-btn" onclick="state.authenticated=true; state.screen='home'; render();">Apple</button>
+      </div>
+      <div class="helper">Already have an account? <a href="#" onclick="state.screen='login'; render(); return false;">Log in</a></div>
+    `
+  );
+}
+
+function renderLogin(){
+  return renderAuthShell(
+    'Welcome back',
+    'Sign in to continue your climb and pick up where you left off.',
+    `
+      <div class="auth-form">
+        <div class="field">
+          <label>Email</label>
+          <input class="input" type="email" placeholder="you@example.com" value="${state.auth.email || ''}" oninput="state.auth.email=this.value;">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input class="input" type="password" placeholder="••••••••" value="${state.auth.password || ''}" oninput="state.auth.password=this.value;">
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" checked>
+          <span>Remember me</span>
+        </div>
+        <div class="center"><button class="link-btn" onclick="state.screen='forgotPassword'; render();">Forgot password?</button></div>
+        <div class="auth-actions">
+          <button class="btn btn-primary btn-block" onclick="state.authenticated=true; state.screen='home'; render();">Log in</button>
+        </div>
+      </div>
+      <div class="auth-social">
+        <button class="social-btn" onclick="state.authenticated=true; state.screen='home'; render();">Google</button>
+        <button class="social-btn" onclick="state.authenticated=true; state.screen='home'; render();">Apple</button>
+      </div>
+      <div class="helper">New here? <a href="#" onclick="state.screen='signup'; render(); return false;">Create account</a></div>
+    `
+  );
+}
+
+function renderSignup(){
+  return renderAuthShell(
+    'Create your account',
+    'Start learning with a personal profile and your own route.',
+    `
+      <div class="auth-form">
+        <div class="field">
+          <label>Email</label>
+          <input class="input" type="email" placeholder="you@example.com" value="${state.auth.email || ''}" oninput="state.auth.email=this.value;">
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input class="input" type="password" placeholder="Create a password" value="${state.auth.password || ''}" oninput="state.auth.password=this.value;">
+        </div>
+        <div class="field">
+          <label>Confirm password</label>
+          <input class="input" type="password" placeholder="Confirm password" value="${state.auth.confirmPassword || ''}" oninput="state.auth.confirmPassword=this.value;">
+        </div>
+        <label class="checkbox-row">
+          <input type="checkbox" checked>
+          <span>I agree to the Terms &amp; Privacy Policy.</span>
+        </label>
+        <div class="auth-actions">
+          <button class="btn btn-primary btn-block" onclick="state.screen='verify'; render();">Create account</button>
+        </div>
+      </div>
+      <div class="auth-social">
+        <button class="social-btn" onclick="state.screen='verify'; render();">Google</button>
+        <button class="social-btn" onclick="state.screen='verify'; render();">Apple</button>
+      </div>
+      <div class="helper">Already have an account? <a href="#" onclick="state.screen='login'; render(); return false;">Log in</a></div>
+    `
+  );
+}
+
+function renderVerify(){
+  return renderAuthShell(
+    'Check your inbox',
+    'We sent a 6-digit verification code to ' + (state.auth.email || 'your email').toLowerCase() + '.',
+    `
+      <div class="auth-form">
+        <div class="code-row">
+          <input class="code-box" maxlength="1" inputmode="numeric" value="${(state.auth.code||'').charAt(0)||''}" oninput="state.auth.code=(state.auth.code||'').slice(0,1); this.value=this.value.replace(/\D/g,'');">
+          <input class="code-box" maxlength="1" inputmode="numeric" value="${(state.auth.code||'').charAt(1)||''}" oninput="state.auth.code=(state.auth.code||'').slice(0,1); this.value=this.value.replace(/\D/g,'');">
+          <input class="code-box" maxlength="1" inputmode="numeric" value="${(state.auth.code||'').charAt(2)||''}" oninput="state.auth.code=(state.auth.code||'').slice(0,1); this.value=this.value.replace(/\D/g,'');">
+          <input class="code-box" maxlength="1" inputmode="numeric" value="${(state.auth.code||'').charAt(3)||''}" oninput="state.auth.code=(state.auth.code||'').slice(0,1); this.value=this.value.replace(/\D/g,'');">
+          <input class="code-box" maxlength="1" inputmode="numeric" value="${(state.auth.code||'').charAt(4)||''}" oninput="state.auth.code=(state.auth.code||'').slice(0,1); this.value=this.value.replace(/\D/g,'');">
+          <input class="code-box" maxlength="1" inputmode="numeric" value="${(state.auth.code||'').charAt(5)||''}" oninput="state.auth.code=(state.auth.code||'').slice(0,1); this.value=this.value.replace(/\D/g,'');">
+        </div>
+        <div class="action-row">
+          <button class="btn btn-primary" style="flex:1" onclick="state.screen='welcome'; render();">Verify</button>
+          <button class="btn btn-ghost" style="flex:1" onclick="state.screen='signup'; render();">Change email</button>
+        </div>
+        <div class="center tiny">Didn't get it? <button class="link-btn" onclick="state.screen='verify'; render();">Resend code</button></div>
+      </div>
+    `
+  );
+}
+
+function renderWelcome(){
+  return renderAuthShell(
+    'Welcome to Sangwa 👋',
+    'Your learning path is ready. We’ll set up your profile, personalise your experience, and get you moving in a few quick steps.',
+    `
+      <div class="auth-actions">
+        <button class="btn btn-primary btn-block" onclick="state.screen='profileSetup'; render();">Continue</button>
+      </div>
+    `
+  );
+}
+
+function renderProfileSetup(){
+  return renderAuthShell(
+    'Profile setup',
+    'Tell us who you are so your learning journey feels personal.',
+    `
+      <div class="auth-form">
+        <div class="upload-box">📷</div>
+        <div class="field">
+          <label>Name</label>
+          <input class="input" type="text" placeholder="Your name" value="${state.auth.name || ''}" oninput="state.auth.name=this.value;">
+        </div>
+        <div class="field">
+          <label>Username</label>
+          <input class="input" type="text" placeholder="@yourname" value="${state.auth.username || ''}" oninput="state.auth.username=this.value;">
+        </div>
+        <div class="field">
+          <label>Bio</label>
+          <input class="input" type="text" placeholder="Optional personal details" value="${state.auth.bio || ''}" oninput="state.auth.bio=this.value;">
+        </div>
+        <button class="btn btn-primary btn-block" onclick="state.screen='personalization'; render();">Continue</button>
+      </div>
+    `
+  );
+}
+
+function renderPersonalization(){
+  const purposeOptions = ['Learning a language','Travel','Work','Study','Family & friends'];
+  const levelOptions = ['Beginner','Intermediate','Advanced'];
+  const goalOptions = ['Travel','Career','Conversation','Reading','Culture'];
+  const interestOptions = ['Conversation','Grammar','Vocabulary','Listening','Travel'];
+  return renderAuthShell(
+    'Personalisation',
+    'Help us shape your path and suggestions.',
+    `
+      <div class="auth-form">
+        <div class="field">
+          <label>What are you using the app for?</label>
+          <div class="pill-row">
+            ${purposeOptions.map(opt=>`<button class="choice-card ${state.auth.purpose===opt?'selected':''}" onclick="setAuthChoice('purpose','${opt}')">${opt}</button>`).join('')}
+          </div>
+        </div>
+        <div class="field">
+          <label>Experience level</label>
+          <div class="pill-row">
+            ${levelOptions.map(opt=>`<button class="choice-card ${state.auth.level===opt?'selected':''}" onclick="setAuthChoice('level','${opt}')">${opt}</button>`).join('')}
+          </div>
+        </div>
+        <div class="field">
+          <label>Goals</label>
+          <div class="pill-row">
+            ${goalOptions.map(opt=>`<button class="choice-card ${state.auth.goals===opt?'selected':''}" onclick="setAuthChoice('goals','${opt}')">${opt}</button>`).join('')}
+          </div>
+        </div>
+        <div class="field">
+          <label>Interests</label>
+          <div class="pill-row">
+            ${interestOptions.map(opt=>`<button class="choice-card ${state.auth.interests===opt?'selected':''}" onclick="setAuthChoice('interests','${opt}')">${opt}</button>`).join('')}
+          </div>
+        </div>
+        <button class="btn btn-primary btn-block" onclick="state.screen='permissions'; render();">Continue</button>
+      </div>
+    `
+  );
+}
+
+function renderPermissions(){
+  return renderAuthShell(
+    'Permissions',
+    'Only ask for access when it is necessary for the experience.',
+    `
+      <div class="auth-form">
+        <label class="checkbox-row"><input type="checkbox" checked onchange="state.auth.notifications=this.checked;"> <span>Notifications</span></label>
+        <label class="checkbox-row"><input type="checkbox"> <span>Microphone</span></label>
+        <label class="checkbox-row"><input type="checkbox"> <span>Camera</span></label>
+        <label class="checkbox-row"><input type="checkbox"> <span>Location</span></label>
+        <button class="btn btn-primary btn-block" onclick="state.screen='preferences'; render();">Continue</button>
+      </div>
+    `
+  );
+}
+
+function renderPreferences(){
+  return renderAuthShell(
+    'App preferences',
+    'Choose the settings that make the experience most comfortable for you.',
+    `
+      <div class="auth-form">
+        <div class="field">
+          <label>Language</label>
+          <select class="input-select" onchange="state.auth.language=this.value;">
+            <option ${state.auth.language==='English'?'selected':''}>English</option>
+            <option ${state.auth.language==='中文'?'selected':''}>中文</option>
+            <option ${state.auth.language==='བོད་སྐད།'?'selected':''}>བོད་སྐད།</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Theme</label>
+          <select class="input-select" onchange="state.auth.theme=this.value;">
+            <option ${state.auth.theme==='Midnight'?'selected':''}>Midnight</option>
+            <option ${state.auth.theme==='Sunrise'?'selected':''}>Sunrise</option>
+            <option ${state.auth.theme==='Light'?'selected':''}>Light</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Accessibility</label>
+          <select class="input-select" onchange="state.auth.accessibility=this.value;">
+            <option ${state.auth.accessibility==='Standard'?'selected':''}>Standard</option>
+            <option ${state.auth.accessibility==='High contrast'?'selected':''}>High contrast</option>
+            <option ${state.auth.accessibility==='Large text'?'selected':''}>Large text</option>
+          </select>
+        </div>
+        <button class="btn btn-primary btn-block" onclick="state.screen='setupComplete'; render();">Continue</button>
+      </div>
+    `
+  );
+}
+
+function renderForgotPassword(){
+  return renderAuthShell(
+    'Forgot password',
+    'Enter your email and we will send a reset link to get you back in.',
+    `
+      <div class="auth-form">
+        <div class="field">
+          <label>Email</label>
+          <input class="input" type="email" placeholder="you@example.com" value="${state.auth.email || ''}" oninput="state.auth.email=this.value;">
+        </div>
+        <button class="btn btn-primary btn-block" onclick="state.screen='login'; render();">Send reset link</button>
+      </div>
+    `
+  );
+}
+
+function renderSetupComplete(){
+  return renderAuthShell(
+    'You’re all set!',
+    'Your account is ready. We’ve prepared your personalised route and you can jump into your dashboard now.',
+    `
+      <div class="auth-actions">
+        <button class="btn btn-primary btn-block" onclick="state.authenticated=true; state.screen='home'; render();">Go to Dashboard</button>
+      </div>
+    `
+  );
+}
 
 function renderHome(){
   const cards = TRACKS.map(t=>{
@@ -448,7 +1096,7 @@ function renderHome(){
         <div class="tc-native ${scriptClass(t.nativeScript)}">${t.native}</div>
         <div class="tc-sub">${t.tagline}</div>
       </div>
-      <div class="tc-progress">${doneCount ? doneCount+' lessons done' : 'Start →'}</div>
+      <div class="tc-progress">${doneCount ? doneCount+' modules done' : 'Start →'}</div>
     </button>`;
   }).join('');
 
@@ -457,28 +1105,27 @@ function renderHome(){
   <div class="home">
     <div class="hero">
       <h1>སངས་བ <span style="color:var(--gold)">Sangwa</span></h1>
-      <div class="sub">Four routes up the same mountain — choose the language you already speak, and climb toward the one you're learning.</div>
+      <div class="sub">Four routes up the same mountain — choose the language you already speak, and climb a 40-module path toward the one you're learning: words → sentences → conversations → ideas.</div>
     </div>
     <div class="track-grid">${cards}</div>
     <button class="btn btn-ghost btn-block" onclick="goProfile()">⛺ My progress</button>
   </div>
-  <div class="footer-note">Base Camp is fully playable now. Camps I–III and the Summit are on the map as the next content drop.</div>
+  <div class="footer-note">Base Camp, Camp I and Camp II (Modules 1–30) are fully playable now. The Summit Push (Modules 31–40) is on the map as the next content drop — every level is open to explore any time, no prerequisites.</div>
   `;
 }
 
 function renderMap(){
   const track = trackById(state.currentTrack);
-  const blocks = WORLD_META.map((w, idx)=>{
-    const unlocked = isWorldUnlocked(track.id, idx);
-    const stats = idx===0 ? worldStats(track.id, idx) : {done:0,total:0};
-    const nodeClass = !unlocked ? 'locked' : (idx===0 && stats.done===stats.total ? 'done' : '');
-    const sub = idx===0 ? `${stats.done}/${stats.total} lessons` : (unlocked? 'Ready' : 'Locked');
+  const blocks = LEVELS.map((lvl, idx)=>{
+    const stats = lvl.built ? levelStats(track.id, idx) : {done:0,total:0};
+    const nodeClass = (lvl.built && stats.done===stats.total) ? 'done' : '';
+    const sub = lvl.built ? `${stats.done}/${stats.total} modules` : 'Coming soon';
     return `
     <div class="world-block">
-      <div class="world-title">${w.icon} ${w.title}</div>
-      <div class="world-subtitle">${w.subtitle}</div>
+      <div class="world-title">${lvl.icon} ${lvl.title}</div>
+      <div class="world-subtitle">${lvl.subtitle} · ${lvl.range}</div>
       <div class="node" style="align-self:center;">
-        <button class="node-btn ${nodeClass}" ${unlocked?`onclick="openWorld(${idx})"`:'disabled'}>${unlocked? (idx===0?'🚩':w.icon) : '🔒'}</button>
+        <button class="node-btn ${nodeClass}" onclick="openLevel(${idx})">${lvl.built?'🚩':lvl.icon}</button>
         <div class="node-label">${sub}</div>
       </div>
     </div>`;
@@ -498,35 +1145,43 @@ function renderMap(){
   `;
 }
 
+function openLevel(idx){
+  state.currentWorld = idx;
+  state.screen = LEVELS[idx].built ? 'lessonlist' : 'world_locked';
+  render();
+}
+
 function renderWorldLocked(){
   const track = trackById(state.currentTrack);
-  const w = WORLD_META[state.currentWorld];
+  const lvl = LEVELS[state.currentWorld];
+  const items = lvl.roadmap.map(m=>`
+    <div class="roadmap-row">
+      <span class="roadmap-num">${m.num}</span>
+      <span class="roadmap-label">${m.label}</span>
+    </div>`).join('');
   return `
   ${topbar({back:'openTrack("'+track.id+'")'})}
   <div class="home">
     <div class="locked-panel">
-      <h3>${w.icon} ${w.title} is on the roadmap</h3>
-      <p>This camp will cover: <strong>${w.topics}</strong>.<br>Finish Base Camp first — new camps unlock as the route is built out.</p>
+      <h3>${lvl.icon} ${lvl.title} — ${lvl.subtitle}</h3>
+      <p>${lvl.range}. No exercises here yet — this is the next content drop. Milestone once it's built: <em>${lvl.milestone}</em></p>
+      <div style="margin-top:14px;">${items}</div>
     </div>
     <button class="btn btn-primary btn-block" onclick="openTrack('${track.id}')">Back to the route</button>
   </div>`;
 }
 
-function openWorld(idx){
-  state.currentWorld = idx;
-  if(idx===0){ state.screen='lessonlist'; screens.lessonlist = renderLessonList; render(); }
-  else { state.screen='world_locked'; render(); }
-}
-
 function renderLessonList(){
   const track = trackById(state.currentTrack);
-  const nodes = LESSON_GROUPS.map((g,i)=>{
-    const stars = isLessonDone(track.id, 0, g.key);
+  const levelIdx = state.currentWorld;
+  const lvl = LEVELS[levelIdx];
+  const nodes = lvl.modules.map((g,i)=>{
+    const stars = isLessonDone(track.id, levelIdx, g.key);
     const side = i%2===0 ? 'left':'right';
     return `
     <div class="node ${side}">
       <button class="node-btn ${stars? 'done':''}" onclick="startLesson('${g.key}')">${stars? '✓' : g.icon}</button>
-      <div class="node-label">${g.label}</div>
+      <div class="node-label">${g.num}. ${g.label}</div>
       ${stars ? `<div class="node-stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>` : ''}
     </div>`;
   }).join('');
@@ -534,8 +1189,8 @@ function renderLessonList(){
   ${topbar({back:'openTrack("'+track.id+'")'})}
   <div class="map-wrap">
     <div style="text-align:center; padding:6px 20px 0;">
-      <h2 style="font-size:20px;">🏕️ Base Camp</h2>
-      <div style="color:var(--snow-dim); font-size:13px; margin-top:4px;">Foundations · 6 lessons</div>
+      <h2 style="font-size:20px;">${lvl.icon} ${lvl.title}</h2>
+      <div style="color:var(--snow-dim); font-size:13px; margin-top:4px;">${lvl.subtitle} · ${lvl.modules.length} modules</div>
     </div>
     <div class="map-scroll"><div class="route">${nodes}</div></div>
   </div>`;
@@ -543,9 +1198,10 @@ function renderLessonList(){
 
 function startLesson(groupKey){
   const track = trackById(state.currentTrack);
-  const group = LESSON_GROUPS.find(g=>g.key===groupKey);
+  const levelIdx = state.currentWorld;
+  const group = LEVELS[levelIdx].modules.find(g=>g.key===groupKey);
   state.session = {
-    trackId:track.id, worldIdx:0, groupKey,
+    trackId:track.id, worldIdx:levelIdx, groupKey,
     exercises: buildExercises(track, group),
     qIndex:0, mistakes:0, answered:false, xpEarned:0
   };
@@ -562,6 +1218,7 @@ function renderLesson(){
 
   const optsHtml = q.options.map(o=>{
     let cls = 'opt '+scriptClass(track.answerLang);
+    if(o.text.length>20) cls+=' long';
     if(s.answered){
       if(o.correct) cls+=' correct reveal';
       else if(o.id===s.picked && !o.correct) cls+=' wrong reveal';
@@ -593,7 +1250,7 @@ function renderLesson(){
     <div class="q-wrap">
       <div class="q-card">
         <div class="q-eyebrow">Translate</div>
-        <div class="q-prompt ${scriptClass(q.promptLang)}">${q.prompt}</div>
+        <div class="q-prompt ${scriptClass(q.promptLang)} ${q.prompt.length>20?'long':''}">${q.prompt}</div>
         ${q.promptSub?`<div class="q-translit">${q.promptSub}</div>`:''}
       </div>
       <div class="options">${optsHtml}</div>
@@ -611,7 +1268,9 @@ function answer(optId){
   if(opt.correct){
     s.xpEarned += 10; state.xp += 10;
   } else {
-    s.mistakes += 1; state.hearts = Math.max(0, state.hearts-1); state.lastHeartTime = state.hearts<HEARTS_MAX && state.hearts===HEARTS_MAX-1 ? Date.now() : state.lastHeartTime;
+    s.mistakes += 1;
+    if(state.hearts===HEARTS_MAX) state.lastHeartTime = Date.now();
+    state.hearts = Math.max(0, state.hearts-1);
     if(state.hearts===0){ render(); setTimeout(()=>{ state.screen='outofhearts'; render(); }, 550); return; }
   }
   render();
@@ -665,16 +1324,15 @@ function renderOutOfHearts(){
   <div class="complete">
     <div class="medal">💔</div>
     <h2>Out of hearts</h2>
-    <p style="color:var(--snow-dim); max-width:280px;">Hearts refill on their own — about 1 every 30 minutes. ${eta?`Next heart in ~${eta} min.`:''} Come back to keep climbing, or review this lesson right away with a fresh attempt.</p>
-    <button class="btn btn-primary btn-block" onclick="retrySameLesson()">Try this lesson again</button>
+    <p style="color:var(--snow-dim); max-width:280px;">Hearts refill on their own — about 1 every 30 minutes. ${eta?`Next heart in ~${eta} min.`:''} Come back to keep climbing, or review this module right away with a fresh attempt.</p>
+    <button class="btn btn-primary btn-block" onclick="retrySameLesson()">Try this module again</button>
     <button class="btn btn-ghost btn-block" onclick="backToLessonList()">Back to Base Camp</button>
   </div>`;
 }
 function retrySameLesson(){
-  if(state.hearts<=0){ regenHearts(); }
+  regenHearts();
   if(state.hearts<=0){ render(); return; }
-  const s = state.session;
-  startLesson(s.groupKey);
+  startLesson(state.session.groupKey);
 }
 function backToLessonList(){ state.screen='lessonlist'; render(); }
 function exitLesson(){ state.screen='lessonlist'; render(); }
@@ -682,20 +1340,24 @@ function exitLesson(){ state.screen='lessonlist'; render(); }
 function renderProfile(){
   const totalDone = Object.values(state.tracks).reduce((n,t)=>n+Object.keys(t.completed).length,0);
   const eta = nextHeartEta();
+  const displayName = state.auth.name || 'Basecamp Climber';
+  const username = state.auth.username ? '@' + state.auth.username : '@sangwa';
   return `
   ${topbar({back:'goHome()'})}
   <div class="profile">
     <div class="profile-card" style="text-align:center;">
       <div style="font-size:40px;">🏔️</div>
-      <h2 style="margin-top:6px;">Basecamp Climber</h2>
-      <div style="color:var(--snow-dim); font-size:13px; margin-top:2px;">${totalDone} lesson${totalDone===1?'':'s'} completed across all routes</div>
+      <h2 style="margin-top:6px;">${displayName}</h2>
+      <div style="color:var(--gold); font-size:13px; margin-top:2px;">${username}</div>
+      <div style="color:var(--snow-dim); font-size:13px; margin-top:8px;">${totalDone} module${totalDone===1?'':'s'} completed across all routes</div>
     </div>
     <div class="profile-grid">
       <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">⭐ ${state.xp}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">Total XP</div></div>
       <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">🔥 ${state.streak}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">Day streak</div></div>
       <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">${state.hearts}/${HEARTS_MAX}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">Hearts${eta?` · next in ~${eta}m`:''}</div></div>
-      <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">${totalDone}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">Lessons done</div></div>
+      <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">${totalDone}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">Modules done</div></div>
     </div>
+    <button class="btn btn-ghost btn-block" onclick="state.authenticated=false; state.screen='landing'; render();">Log out</button>
     <button class="btn btn-ghost btn-block" onclick="resetProgress()">Reset all progress</button>
   </div>`;
 }
