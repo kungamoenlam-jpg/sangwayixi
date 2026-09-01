@@ -1,0 +1,12 @@
+{
+  "users": [
+    {
+      "id": "kz1t4b9zmtib0hmo",
+      "email": "admin-demo@example.com",
+      "password": "demo123",
+      "name": "Demo User",
+      "username": "demo",
+      "createdAt": "2026-09-01T06:46:27.648Z"
+    }
+  ]
+}

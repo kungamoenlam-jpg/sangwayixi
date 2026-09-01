@@ -836,6 +836,62 @@ function renderLanding(){
   );
 }
 
+async function submitLogin(){
+  const email = String(state.auth.email || '').trim();
+  const password = String(state.auth.password || '').trim();
+  if(!email || !password){
+    alert('Please enter your email and password.');
+    return;
+  }
+  try {
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await response.json();
+    if(!response.ok) throw new Error(data.error || 'Login failed');
+    state.authenticated = true;
+    state.screen = 'home';
+    render();
+  } catch (err) {
+    alert(err.message || 'Unable to log in.');
+  }
+}
+
+async function submitSignup(){
+  const email = String(state.auth.email || '').trim();
+  const password = String(state.auth.password || '').trim();
+  const confirmPassword = String(state.auth.confirmPassword || '').trim();
+  if(!email || !password){
+    alert('Please enter an email and a password.');
+    return;
+  }
+  if(password !== confirmPassword){
+    alert('Passwords do not match.');
+    return;
+  }
+  try {
+    const response = await fetch('/api/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        password,
+        name: state.auth.name || '',
+        username: state.auth.username || ''
+      })
+    });
+    const data = await response.json();
+    if(!response.ok) throw new Error(data.error || 'Signup failed');
+    state.authenticated = true;
+    state.screen = 'verify';
+    render();
+  } catch (err) {
+    alert(err.message || 'Unable to create account.');
+  }
+}
+
 function renderLogin(){
   return renderAuthShell(
     'Welcome back',
@@ -856,7 +912,7 @@ function renderLogin(){
         </div>
         <div class="center"><button class="link-btn" onclick="state.screen='forgotPassword'; render();">Forgot password?</button></div>
         <div class="auth-actions">
-          <button class="btn btn-primary btn-block" onclick="state.authenticated=true; state.screen='home'; render();">Log in</button>
+          <button class="btn btn-primary btn-block" onclick="submitLogin();">Log in</button>
         </div>
       </div>
       <div class="auth-social">
@@ -891,7 +947,7 @@ function renderSignup(){
           <span>I agree to the Terms &amp; Privacy Policy.</span>
         </label>
         <div class="auth-actions">
-          <button class="btn btn-primary btn-block" onclick="state.screen='verify'; render();">Create account</button>
+          <button class="btn btn-primary btn-block" onclick="submitSignup();">Create account</button>
         </div>
       </div>
       <div class="auth-social">

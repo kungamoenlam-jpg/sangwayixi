@@ -1,9 +1,10 @@
 services:
   - type: web
     name: sangwayixi
-    env: static
-    staticPublishPath: ./
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: ADMIN_KEY
+        value: sangwa-admin-key

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sangwa Admin</title>
+  <style>
+    :root {
+      --bg: #0a0f1d;
+      --panel: #121b2f;
+      --panel-2: #1a2540;
+      --text: #eef3ff;
+      --muted: #9bb0d3;
+      --gold: #f4c95d;
+      --accent: #7cc7ff;
+      --danger: #ff7a7a;
+      --border: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #0a0f1d 0%, #0f172a 100%);
+      color: var(--text);
+    }
+    .shell {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 20px 80px;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .brand {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+    .brand span { color: var(--gold); }
+    .panel {
+      background: rgba(18, 27, 47, 0.9);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+      overflow: hidden;
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 16px 20px;
+      background: rgba(26, 37, 64, 0.75);
+      border-bottom: 1px solid var(--border);
+    }
+    .controls input {
+      flex: 1;
+      min-width: 220px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(10, 15, 29, 0.8);
+      color: var(--text);
+      font-size: 0.98rem;
+    }
+    button {
+      border: 0;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--gold), #e9b440);
+      color: #111827;
+      font-weight: 700;
+      padding: 12px 16px;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+    .stat {
+      background: rgba(18, 27, 47, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px 20px;
+    }
+    .stat .label {
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .stat .value {
+      margin-top: 8px;
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 14px 18px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      background: rgba(26, 37, 64, 0.8);
+      color: var(--muted);
+      font-size: 0.8rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    tbody tr:hover {
+      background: rgba(124, 199, 255, 0.04);
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(124, 199, 255, 0.12);
+      color: var(--accent);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .empty {
+      padding: 28px 20px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .error {
+      color: var(--danger);
+      font-weight: 600;
+      margin-top: 10px;
+    }
+    @media (max-width: 640px) {
+      th, td { padding: 12px 10px; }
+      .shell { padding-top: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">Sangwa <span>Admin</span></div>
+      <button class="secondary" id="refreshBtn" type="button">Refresh</button>
+    </div>
+
+    <div class="panel">
+      <div class="controls">
+        <input id="adminKeyInput" type="password" placeholder="Admin key" value="sangwa-admin-key" />
+        <button id="loadBtn" type="button">Load users</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="label">Total users</div>
+          <div class="value" id="totalUsers">0</div>
+        </div>
+        <div class="stat">
+          <div class="label">Last refresh</div>
+          <div class="value" id="lastRefresh">—</div>
+        </div>
+      </div>
+
+      <div id="errorBox" class="error" hidden></div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Joined</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody"></tbody>
+      </table>
+      <div id="emptyState" class="empty" hidden>No users yet.</div>
+    </div>
+  </div>
+
+  <script>
+    const usersTableBody = document.getElementById('usersTableBody');
+    const emptyState = document.getElementById('emptyState');
+    const totalUsers = document.getElementById('totalUsers');
+    const lastRefresh = document.getElementById('lastRefresh');
+    const adminKeyInput = document.getElementById('adminKeyInput');
+    const errorBox = document.getElementById('errorBox');
+
+    async function loadUsers() {
+      const key = adminKeyInput.value.trim();
+      if (!key) {
+        showError('Please enter the admin key.');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/admin/users', {
+          headers: {
+            'X-Admin-Key': key,
+          },
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || 'Unable to load users.');
+        }
+
+        usersTableBody.innerHTML = '';
+        const users = payload.users || [];
+        totalUsers.textContent = String(users.length);
+        lastRefresh.textContent = new Date().toLocaleTimeString();
+        hideError();
+
+        if (!users.length) {
+          emptyState.hidden = false;
+          return;
+        }
+
+        emptyState.hidden = true;
+        for (const user of users) {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${escapeHtml(user.name || '—')}</td>
+            <td>${escapeHtml(user.username || '—')}</td>
+            <td>${escapeHtml(user.email)}</td>
+            <td>${new Date(user.createdAt).toLocaleString()}</td>
+            <td><span class="status">Active</span></td>
+          `;
+          usersTableBody.appendChild(row);
+        }
+      } catch (error) {
+        showError(error.message || 'Something went wrong.');
+      }
+    }
+
+    function showError(message) {
+      errorBox.hidden = false;
+      errorBox.textContent = message;
+    }
+
+    function hideError() {
+      errorBox.hidden = true;
+      errorBox.textContent = '';
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    document.getElementById('loadBtn').addEventListener('click', loadUsers);
+    document.getElementById('refreshBtn').addEventListener('click', loadUsers);
+    loadUsers();
+  </script>
+</body>
+</html>
