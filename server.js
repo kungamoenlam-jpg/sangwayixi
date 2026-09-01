@@ -35,10 +35,10 @@ function createApp(overrides = {}) {
     await client.query(`
       create table if not exists public.users (
         id uuid primary key default gen_random_uuid(),
-        email text unique not null,
+        email text unique,
         password_hash text not null,
         full_name text,
-        username text,
+        username text not null unique,
         created_at timestamptz default now()
       );
     `);
@@ -102,34 +102,37 @@ function createApp(overrides = {}) {
 
   app.post('/api/signup', async (req, res) => {
     const { email, password, name, username } = req.body || {};
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required.' });
-    }
+    const trimmedPassword = String(password || '').trim();
+    const trimmedUsername = String(username || '').trim();
+    const trimmedEmail = email ? String(email).trim().toLowerCase() : '';
 
-    const trimmedEmail = String(email).trim().toLowerCase();
-    const trimmedPassword = String(password).trim();
-
-    if (!trimmedEmail || !trimmedPassword) {
-      return res.status(400).json({ error: 'Email and password cannot be empty.' });
+    if (!trimmedUsername || !trimmedPassword) {
+      return res.status(400).json({ error: 'Username and password are required.' });
     }
 
     const client = await getDbClient();
 
     if (client) {
       try {
-        const existing = await client.query('select id from public.users where lower(email) = $1', [trimmedEmail]);
-        if (existing.rows.length) {
-          return res.status(409).json({ error: 'A user with that email already exists.' });
+        const usernameCheck = await client.query('select id from public.users where lower(username) = $1', [trimmedUsername.toLowerCase()]);
+        if (usernameCheck.rows.length) {
+          return res.status(409).json({ error: 'That username is already taken.' });
+        }
+
+        if (trimmedEmail) {
+          const emailCheck = await client.query('select id from public.users where lower(email) = $1', [trimmedEmail]);
+          if (emailCheck.rows.length) {
+            return res.status(409).json({ error: 'A user with that email already exists.' });
+          }
         }
 
         const fullName = String(name || '').trim();
-        const userName = String(username || '').trim() || trimmedEmail.split('@')[0];
 
         const result = await client.query(
           `insert into public.users (email, password_hash, full_name, username)
            values ($1, $2, $3, $4)
            returning id, email, full_name, username, created_at`,
-          [trimmedEmail, hashPassword(trimmedPassword), fullName, userName]
+          [trimmedEmail || null, hashPassword(trimmedPassword), fullName, trimmedUsername]
         );
 
         const saved = result.rows[0];
@@ -149,17 +152,24 @@ function createApp(overrides = {}) {
     }
 
     const users = readUsers();
-    const existing = users.find((user) => user.email === trimmedEmail);
-    if (existing) {
-      return res.status(409).json({ error: 'A user with that email already exists.' });
+    const usernameTaken = users.some((user) => String(user.username || '').trim().toLowerCase() === trimmedUsername.toLowerCase());
+    if (usernameTaken) {
+      return res.status(409).json({ error: 'That username is already taken.' });
+    }
+
+    if (trimmedEmail) {
+      const emailTaken = users.some((user) => String(user.email || '').trim().toLowerCase() === trimmedEmail);
+      if (emailTaken) {
+        return res.status(409).json({ error: 'A user with that email already exists.' });
+      }
     }
 
     const newUser = {
       id: Math.random().toString(36).slice(2, 10) + Date.now().toString(36),
-      email: trimmedEmail,
+      email: trimmedEmail || null,
       password: hashPassword(trimmedPassword),
       name: String(name || '').trim(),
-      username: String(username || '').trim() || trimmedEmail.split('@')[0],
+      username: trimmedUsername,
       createdAt: new Date().toISOString(),
     };
 
@@ -173,23 +183,32 @@ function createApp(overrides = {}) {
   });
 
   app.post('/api/login', async (req, res) => {
-    const { email, password } = req.body || {};
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required.' });
-    }
+    const { email, username, password } = req.body || {};
+    const trimmedPassword = String(password || '').trim();
+    const trimmedUsername = username ? String(username).trim() : '';
+    const trimmedEmail = email ? String(email).trim().toLowerCase() : '';
 
-    const trimmedEmail = String(email).trim().toLowerCase();
-    const trimmedPassword = String(password).trim();
+    if ((!trimmedUsername && !trimmedEmail) || !trimmedPassword) {
+      return res.status(400).json({ error: 'Username or email and password are required.' });
+    }
 
     const client = await getDbClient();
     if (client) {
-      const result = await client.query(
-        'select id, email, full_name, username, created_at from public.users where lower(email) = $1 and password_hash = $2',
-        [trimmedEmail, hashPassword(trimmedPassword)]
-      );
+      let result;
+      if (trimmedUsername) {
+        result = await client.query(
+          'select id, email, full_name, username, created_at from public.users where lower(username) = $1 and password_hash = $2',
+          [trimmedUsername.toLowerCase(), hashPassword(trimmedPassword)]
+        );
+      } else {
+        result = await client.query(
+          'select id, email, full_name, username, created_at from public.users where lower(email) = $1 and password_hash = $2',
+          [trimmedEmail, hashPassword(trimmedPassword)]
+        );
+      }
 
       if (!result.rows.length) {
-        return res.status(401).json({ error: 'Invalid email or password.' });
+        return res.status(401).json({ error: 'Invalid username/email or password.' });
       }
 
       const user = result.rows[0];
@@ -206,12 +225,14 @@ function createApp(overrides = {}) {
     }
 
     const users = readUsers();
-    const user = users.find(
-      (entry) => entry.email === trimmedEmail && entry.password === hashPassword(trimmedPassword)
-    );
+    const user = users.find((entry) => {
+      const matchesUsername = trimmedUsername && String(entry.username || '').trim().toLowerCase() === trimmedUsername.toLowerCase();
+      const matchesEmail = trimmedEmail && String(entry.email || '').trim().toLowerCase() === trimmedEmail;
+      return (matchesUsername || matchesEmail) && entry.password === hashPassword(trimmedPassword);
+    });
 
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
+      return res.status(401).json({ error: 'Invalid username/email or password.' });
     }
 
     return res.json({

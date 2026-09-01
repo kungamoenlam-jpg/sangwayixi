@@ -837,17 +837,18 @@ function renderLanding(){
 }
 
 async function submitLogin(){
+  const username = String(state.auth.username || '').trim();
   const email = String(state.auth.email || '').trim();
   const password = String(state.auth.password || '').trim();
-  if(!email || !password){
-    alert('Please enter your email and password.');
+  if((!username && !email) || !password){
+    alert('Please enter your username or email and password.');
     return;
   }
   try {
     const response = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ username, email, password })
     });
     const data = await response.json();
     if(!response.ok) throw new Error(data.error || 'Login failed');
@@ -861,10 +862,11 @@ async function submitLogin(){
 
 async function submitSignup(){
   const email = String(state.auth.email || '').trim();
+  const username = String(state.auth.username || '').trim();
   const password = String(state.auth.password || '').trim();
   const confirmPassword = String(state.auth.confirmPassword || '').trim();
-  if(!email || !password){
-    alert('Please enter an email and a password.');
+  if(!username || !password){
+    alert('Please create a unique username and password.');
     return;
   }
   if(password !== confirmPassword){
@@ -876,10 +878,10 @@ async function submitSignup(){
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        email,
+        email: email || '',
         password,
         name: state.auth.name || '',
-        username: state.auth.username || ''
+        username
       })
     });
     const data = await response.json();
@@ -899,8 +901,8 @@ function renderLogin(){
     `
       <div class="auth-form">
         <div class="field">
-          <label>Email</label>
-          <input class="input" type="email" placeholder="you@example.com" value="${state.auth.email || ''}" oninput="state.auth.email=this.value;">
+          <label>Username or email</label>
+          <input class="input" type="text" placeholder="your username or email" value="${state.auth.username || state.auth.email || ''}" oninput="state.auth.username=this.value; state.auth.email='';">
         </div>
         <div class="field">
           <label>Password</label>
@@ -927,11 +929,15 @@ function renderLogin(){
 function renderSignup(){
   return renderAuthShell(
     'Create your account',
-    'Start learning with a personal profile and your own route.',
+    'Choose a unique username and password. Email is optional.',
     `
       <div class="auth-form">
         <div class="field">
-          <label>Email</label>
+          <label>Username</label>
+          <input class="input" type="text" placeholder="Choose a unique username" value="${state.auth.username || ''}" oninput="state.auth.username=this.value;">
+        </div>
+        <div class="field">
+          <label>Email (optional)</label>
           <input class="input" type="email" placeholder="you@example.com" value="${state.auth.email || ''}" oninput="state.auth.email=this.value;">
         </div>
         <div class="field">
