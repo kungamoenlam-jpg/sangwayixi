@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -177,43 +178,19 @@
   .profile-card{background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:18px;}
   .profile-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
 
-  .auth-shell{min-height:100vh; display:flex; align-items:center; justify-content:center; padding:30px 18px 40px;}
-  .auth-card{width:min(100%, 420px); background:rgba(11,20,35,.72); border:1px solid rgba(255,255,255,.12); border-radius:26px; box-shadow:var(--shadow); padding:22px 20px 18px; backdrop-filter:blur(12px);}
-  .brand-badge{display:inline-flex; align-items:center; justify-content:center; width:54px; height:54px; border-radius:16px; background:linear-gradient(160deg, rgba(232,163,61,.2), rgba(79,180,216,.12)); border:1px solid rgba(232,163,61,.2); font-size:26px; margin-bottom:10px;}
-  .auth-header{margin-bottom:18px;}
-  .auth-header h1{font-size:30px; line-height:1.1;}
-  .auth-sub{color:var(--snow-dim); font-size:14px; line-height:1.55; margin-top:8px;}
-  .auth-form{display:flex; flex-direction:column; gap:14px;}
-  .field{display:flex; flex-direction:column; gap:8px;}
-  .field label{font-size:12px; color:var(--snow-dim); letter-spacing:.08em; text-transform:uppercase;}
-  .input, .input-select{width:100%; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--snow); border-radius:12px; padding:14px 14px; font-size:15px; outline:none;}
-  .input::placeholder{color:rgba(245,248,252,.5);}
-  .input:focus, .input-select:focus{border-color:rgba(232,163,61,.8); box-shadow:0 0 0 3px rgba(232,163,61,.18);}
-  .input-select{appearance:none;}
-  .checkbox-row{display:flex; align-items:flex-start; gap:10px; color:var(--snow-dim); font-size:13px; line-height:1.45;}
-  .checkbox-row input{margin-top:2px; accent-color:var(--gold);}
-  .auth-actions{display:flex; flex-direction:column; gap:10px; margin-top:8px;}
-  .action-row{display:flex; gap:10px;}
-  .pill-row{display:flex; flex-wrap:wrap; gap:8px;}
-  .choice-card{flex:1; min-height:52px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.12); color:var(--snow); border-radius:12px; padding:12px 12px; font-size:14px; font-weight:600; text-align:left;}
-  .choice-card.selected{background:rgba(232,163,61,.18); border-color:rgba(232,163,61,.8);}
-  .choice-card.wide{flex-basis:100%;}
-  .auth-social{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px;}
-  .social-btn{background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.12); color:var(--snow); border-radius:12px; padding:11px 12px; font-weight:600;}
-  .helper{font-size:12px; color:var(--snow-dim); text-align:center; margin-top:8px;}
-  .helper a{color:var(--gold); text-decoration:none;}
-  .code-row{display:grid; grid-template-columns:repeat(6, 1fr); gap:8px; margin-top:12px;}
-  .code-box{width:100%; aspect-ratio:1 / 1.3; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.12); border-radius:12px; color:var(--snow); text-align:center; font-size:22px; font-weight:700; font-family:var(--font-display);}
-  .mini{font-size:11px; color:var(--snow-dim); text-transform:uppercase; letter-spacing:.08em;}
-  .upload-box{height:74px; border:1px dashed rgba(255,255,255,.18); border-radius:16px; background:rgba(255,255,255,.02); display:flex; align-items:center; justify-content:center; font-size:42px; color:var(--gold);}
-  .steps{display:flex; justify-content:center; gap:8px; margin-top:16px;}
-  .steps span{display:block; width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.18);}
-  .steps span.active{background:var(--gold);}
-  .center{display:flex; justify-content:center;}
-  .link-btn{background:none; border:none; color:var(--gold); font-weight:600; font-size:14px; padding:0;}
-  .muted{color:var(--snow-dim);}
-  .tiny{font-size:12px; color:var(--snow-dim);}
   .footer-note{text-align:center; font-size:11px; color:rgba(245,248,252,.4); padding:10px 30px 26px;}
+
+  .auth-tabs{display:flex; gap:8px; background:rgba(255,255,255,.06); border-radius:12px; padding:4px; margin:4px 0 6px;}
+  .auth-tab{flex:1; border:none; background:transparent; color:var(--snow-dim); font-family:var(--font-display); font-weight:700; font-size:14px; padding:10px 0; border-radius:9px;}
+  .auth-tab.active{background:var(--gold); color:#241704;}
+  .field{display:flex; flex-direction:column; gap:6px;}
+  .field label{font-size:12.5px; color:var(--snow-dim); font-weight:600;}
+  .field input{
+    background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.14); border-radius:12px;
+    padding:12px 14px; color:var(--snow); font-size:15px; font-family:var(--font-body);
+  }
+  .field input:focus{outline:2px solid var(--gold); outline-offset:1px;}
+  .auth-error{background:rgba(225,88,75,.18); border:1px solid rgba(225,88,75,.5); color:var(--snow); border-radius:10px; padding:10px 12px; font-size:13px;}
 
   @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
   ::selection{background:var(--gold); color:#241704;}
@@ -267,7 +244,7 @@ const WORDBANK = [
   {id:'mother',   cat:'family', en:'Mother',   zh:'妈妈', zh_py:'māma',    bo:'ཨ་མ',    bo_tr:'ama'},
   {id:'father',   cat:'family', en:'Father',   zh:'爸爸', zh_py:'bàba',    bo:'ཨ་ཕ',    bo_tr:'apa'},
   {id:'son',      cat:'family', en:'Son',      zh:'儿子', zh_py:'érzi',    bo:'བུ',     bo_tr:'bu'},
-  {id:'daughter', cat:'family', en:'Daughter', zh:'女儿', zh_py:'nǚ’ér', bo:'བུ་མོ', bo_tr:'bumo'},
+  {id:'daughter', cat:'family', en:'Daughter', zh:'女儿', zh_py:'nǚ\u2019ér', bo:'བུ་མོ', bo_tr:'bumo'},
   {id:'family',   cat:'family', en:'Family',   zh:'家人', zh_py:'jiārén',  bo:'ནང་མི',  bo_tr:'nangmi'},
   {id:'friend',   cat:'family', en:'Friend',   zh:'朋友', zh_py:'péngyou', bo:'གྲོགས་པོ', bo_tr:'drokpo'},
   // module 04 — colours & descriptions
@@ -423,110 +400,7 @@ const WORDBANK = [
   {id:'s_tomorrow',      cat:'conv', en:'See you tomorrow.', zh:'明天见。', bo:'སང་ཉིན་མཇལ་ཡོང།'},
   {id:'s_wonderfulday',  cat:'conv', en:'Have a wonderful day!', zh:'祝你今天过得愉快！', bo:'ཉིན་མོ་ཡག་པོ་ཤོག'},
 ];
-
-const PRACTICE_SENTENCE_BANK = [
-  {id:'stem_01', cat:'science', en:'I am studying science at school.', zh:'我在学校学习科学。', bo:'ང་སློབ་གྲྭར་ཚན་རིག་སློབ་སྦྱོང་བྱེད་བཞིན་ཡོད།', bo_tr:'nga skola la rig slob chug gi'},
-  {id:'stem_02', cat:'science', en:'We have a science class this morning.', zh:'我们今天上午有一节科学课。', bo:'དེ་རིང་ཞོགས་པ་ང་ཚོས་ཚན་རིག་འཛིན་གྲྭ་ཞིག་ཡོད།', bo_tr:'de ring shokpa ngatsho la rig dzin dra'},
-  {id:'stem_03', cat:'science', en:'The teacher is doing an experiment.', zh:'老师正在做实验。', bo:'དགེ་རྒན་གྱིས་ཚོད་ལྟ་བྱེད་བཞིན་ཡོད།', bo_tr:'gegen gi tshoda jey'},
-  {id:'stem_04', cat:'science', en:'We need to wear safety glasses.', zh:'我们需要戴安全眼镜。', bo:'ང་ཚོས་བདེ་འཇགས་མིག་ཤེལ་གྱོན་དགོས།', bo_tr:'ngatsho dekyi mik shel gyon'},
-  {id:'stem_05', cat:'science', en:'Please do not touch the chemicals.', zh:'请不要触摸化学药品。', bo:'རྫས་རིགས་ལ་ལག་པ་མ་འཆང་བར་ཞུ།', bo_tr:'raji la lagpa ma chang war zhu'},
-  {id:'stem_06', cat:'science', en:'The water is getting warmer.', zh:'水温正在升高。', bo:'ཆུ་དྲོ་རུ་འགྲོ་བཞིན་ཡོད།', bo_tr:'chu dro ru dro'},
-  {id:'stem_07', cat:'science', en:'The ice is slowly melting.', zh:'冰正在慢慢融化。', bo:'འཁྱགས་རོམ་རིམ་བཞིན་བཞུ་བཞིན་ཡོད།', bo_tr:'chakram rimpa shu ju'},
-  {id:'stem_08', cat:'science', en:'The plant needs sunlight to grow.', zh:'植物需要阳光才能生长。', bo:'རྩི་ཤིང་དེ་འཚར་ལོངས་བྱེད་པར་ཉི་མའི་འོད་དགོས།', bo_tr:'tsing shing de tsar long jepa nyi ma i od go'},
-  {id:'stem_09', cat:'science', en:'Plants need water and air.', zh:'植物需要水和空气。', bo:'རྩི་ཤིང་ལ་ཆུ་དང་རླུང་དགོས།', bo_tr:'tsing shing la chu dang lung go'},
-  {id:'stem_10', cat:'science', en:'The leaves are turning green.', zh:'叶子正在变绿。', bo:'ལོ་མ་ལྗང་ཁུ་ཆགས་བཞིན་ཡོད།', bo_tr:'lo ma jangku chag'},
-  {id:'stem_11', cat:'science', en:'The experiment is very interesting.', zh:'这个实验很有趣。', bo:'ཚོད་ལྟ་དེ་ཧ་ཅང་སྤྲོ་སྣང་ལྡན་པ་ཞིག་རེད།', bo_tr:'tsoda de ha chang tro nang den pa'},
-  {id:'stem_12', cat:'science', en:'We need to measure the temperature.', zh:'我们需要测量温度。', bo:'ང་ཚོས་དྲོད་ཚད་འཇལ་དགོས།', bo_tr:'ngatsho drow tsel jel go'},
-  {id:'stem_13', cat:'science', en:'The thermometer shows twenty degrees.', zh:'温度计显示20度。', bo:'ཚ་དྲོད་ཚད་འཇལ་ཆས་ཀྱིས་དྲོད་ཚད་ཉི་ཤུ་སྟོན་གྱི་ཡོད།', bo_tr:'cha row tse jel cha gi dro tsel nyishu'},
-  {id:'stem_14', cat:'science', en:'The water is boiling now.', zh:'水现在沸腾了。', bo:'ད་ལྟ་ཆུ་སྐོལ་འདུག', bo_tr:'da ta chu kol du'},
-  {id:'stem_15', cat:'science', en:'The liquid changed colour.', zh:'液体变色了。', bo:'ཁུ་བ་དེའི་ཁ་དོག་བརྗེ་སྒྱུར་བྱས།', bo_tr:'ku ba de i ka dok jey'},
-  {id:'stem_16', cat:'science', en:'We put the sample under the microscope.', zh:'我们把样本放在显微镜下。', bo:'ང་ཚོས་དཔེ་ཚད་དེ་ཕྲ་མཐོང་ཆེ་ཤེལ་གྱི་འོག་ལ་འཇོག་དགོས།', bo_tr:'ngatsho sample de tra thon che shel'},
-  {id:'stem_17', cat:'science', en:'I can see small cells.', zh:'我可以看到小细胞。', bo:'ངས་ཁམས་ཕྲན་ཆུང་ཆུང་མཐོང་ཐུབ།', bo_tr:'nga kham trin chung chung tong'},
-  {id:'stem_18', cat:'science', en:'The microscope makes things look bigger.', zh:'显微镜使物体看起来更大。', bo:'ཕྲ་མཐོང་ཆེ་ཤེལ་གྱིས་དངོས་པོ་ཆེ་རུ་གཏོང་བ་རེད།', bo_tr:'tra thon che shel gi dongpo che ru tong'},
-  {id:'stem_19', cat:'science', en:'The moon moves around the Earth.', zh:'月球绕着地球转。', bo:'ཟླ་བ་འཛམ་གླིང་གི་མཐའ་འཁོར་དུ་འགུལ་བསྐྱོད་བྱེད་ཀྱི་ཡོད།', bo_tr:'dawa dzamling gi tha khor du gyu'},
-  {id:'stem_20', cat:'science', en:'The Earth moves around the sun.', zh:'地球绕着太阳转。', bo:'འཛམ་གླིང་ཉི་མའི་མཐའ་འཁོར་དུ་འགུལ་བསྐྱོད་བྱེད་ཀྱི་ཡོད།', bo_tr:'dzamling nyi ma i tha khor du gyu'},
-  {id:'stem_21', cat:'lab', en:'We need to follow the instructions.', zh:'我们需要按照说明操作。', bo:'ང་ཚོས་བཀའ་སློབ་ལྟར་བྱེད་དགོས།', bo_tr:'ngatsho kashab tar jey go'},
-  {id:'stem_22', cat:'lab', en:'Please write down your results.', zh:'请写下你的实验结果。', bo:'ཁྱེད་རང་གི་གྲུབ་འབྲས་བྲིས་རོགས།', bo_tr:'khyerang gi drub dra bi'},
-  {id:'stem_23', cat:'lab', en:'I need a clean test tube.', zh:'我需要一个干净的试管。', bo:'ང་ལ་ཚོད་ལྟའི་དུང་ཅུང་གཙང་མ་ཞིག་དགོས།', bo_tr:'nga la tsoda i dung chung zhangma'},
-  {id:'stem_24', cat:'lab', en:'The bottle is on the table.', zh:'瓶子在桌子上。', bo:'དམ་བི་དེ་ལྕོག་རྩེ་སྟེང་ལ་ཡོད།', bo_tr:'bottle de chok tse thang la yo'},
-  {id:'stem_25', cat:'lab', en:'Be careful with the glass.', zh:'小心玻璃杯。', bo:'ཤེལ་ཕོར་ལ་གཟབ་གཟབ་བྱེད་དགོས།', bo_tr:'shel por la zhab zhab jey'},
-  {id:'stem_26', cat:'lab', en:'We need to use a measuring cup.', zh:'我们需要使用量杯。', bo:'ང་ཚོས་ཚད་འཇལ་ཕོར་པ་བེད་སྤྱོད་གཏོང་དགོས།', bo_tr:'ngatsho tse jel porba jey go'},
-  {id:'stem_27', cat:'lab', en:'Add some water to the container.', zh:'向容器中加一些水。', bo:'སྣོད་ནང་དུ་ཆུ་ཁ་ཤས་བླུགས་དགོས།', bo_tr:'nang du chu cha she lug go'},
-  {id:'stem_28', cat:'lab', en:'Mix the two liquids together.', zh:'将两种液体混合在一起。', bo:'ཁུ་བ་གཉིས་མཉམ་དུ་བསྲེས་དགོས།', bo_tr:'ku ba nyi nam du resh go'},
-  {id:'stem_29', cat:'lab', en:'The mixture is changing colour.', zh:'混合物的颜色发生了变化。', bo:'སྲེག་རྫས་དེ་ཚོས་མདོག་འགྱུར་བཞིན་ཡོད།', bo_tr:'sreja de cho dok drang'},
-  {id:'stem_30', cat:'lab', en:'We need to repeat the experiment.', zh:'我们需要重复这个实验。', bo:'ང་ཚོས་ཚོད་ལྟ་དེ་བསྐྱར་དུ་བྱེད་དགོས།', bo_tr:'ngatsho tsoda de kyap du jey go'},
-  {id:'stem_31', cat:'lab', en:'Our results are different this time.', zh:'这次我们的结果不一样。', bo:'ང་ཚོའི་གྲུབ་འབྲས་ཐེངས་འདིར་མི་འདྲ་བ་རེད།', bo_tr:'ngatsho drub dra thi rer mi dra'},
-  {id:'stem_32', cat:'lab', en:'Let’s check the numbers again.', zh:'让我们再检查一下数据。', bo:'ཡང་བསྐྱར་ཨང་གྲངས་བརྟག་དཔྱད་བྱེད།', bo_tr:'yangkyap angdrang truk chad'},
-  {id:'stem_33', cat:'lab', en:'I think we made a mistake.', zh:'我觉得我们做错了。', bo:'ངས་བསམ་ན་ང་ཚོས་ནོར་འཁྲུལ་བཟོས་ཡོད།', bo_tr:'nga sam na ngatsho nor trul cho'},
-  {id:'stem_34', cat:'lab', en:'Can you help me with this experiment?', zh:'你能帮我做这个实验吗？', bo:'ཁྱེད་ཀྱིས་ང་ལ་ཚོད་ལྟ་འདི་ལ་རོགས་པ་བྱེད་ཐུབ་བམ།', bo_tr:'khyed kyis nga la tsoda de la rokpa jey thu'},
-  {id:'stem_35', cat:'lab', en:'What do you think will happen?', zh:'你认为会发生什么？', bo:'ཁྱེད་རང་གིས་བསམ་ན་གང་འབྱུང་རྒྱུ་རེད་དམ།', bo_tr:'khyerang gi sam na gang jung gyu re'},
-  {id:'stem_36', cat:'lab', en:'I want to test my idea.', zh:'我想验证我的想法。', bo:'ངས་ངའི་བསམ་ཚུལ་ཚོད་ལྟ་བྱེད་འདོད་ཡོད།', bo_tr:'nga ngai samtsul tsoda jey do'},
-  {id:'stem_37', cat:'lab', en:'We need to collect more data.', zh:'我们需要收集更多数据。', bo:'ང་ཚོས་གནས་ཚུལ་མང་བ་བསྡུ་རུབ་བྱེད་དགོས།', bo_tr:'ngatsho nyi kyal jang du drub go'},
-  {id:'stem_38', cat:'lab', en:'The results look very interesting.', zh:'结果看起来很有趣。', bo:'གྲུབ་འབྲས་དེ་ཧ་ཅང་སྤྲོ་སྣང་ལྡན་པ་ཞིག་འདུག', bo_tr:'drub dra de ha chang tro nang denpa'},
-  {id:'stem_39', cat:'lab', en:'We can see a clear difference.', zh:'我们可以看到明显的区别。', bo:'ང་ཚོས་ཁྱད་པར་གསལ་པོ་མཐོང་ཐུབ།', bo_tr:'ngatsho khyapa selpo tong'},
-  {id:'stem_40', cat:'lab', en:'Let’s write our conclusion.', zh:'让我们写下结论。', bo:'ང་ཚོའི་མཇུག་སྡོམ་བྲིས།', bo_tr:'ngatsho mejuk dom bi'},
-  {id:'stem_41', cat:'tech', en:'I use a computer every day.', zh:'我每天都使用电脑。', bo:'ངས་ཉིན་ལྟར་གློག་ཀླད་བེད་སྤྱོད་བྱེད་ཀྱི་ཡོད།', bo_tr:'nga nyin tar laptop jey'},
-  {id:'stem_42', cat:'tech', en:'My laptop is on the desk.', zh:'我的笔记本电脑在桌子上。', bo:'ངའི་གློག་ཀླད་དེ་ཡིག་ཅོག་སྟེང་ལ་ཡོད།', bo_tr:'ngai laptop de yi chok thang la yo'},
-  {id:'stem_43', cat:'tech', en:'I need to charge my laptop.', zh:'我的笔记本电脑需要充电。', bo:'ངས་གློག་ཀླད་ལ་གློག་བླུགས་དགོས།', bo_tr:'nga laptop la chug go'},
-  {id:'stem_44', cat:'tech', en:'The battery is almost empty.', zh:'电池快没电了。', bo:'གློག་རྫས་ཕལ་ཆེར་སྟོང་པ་རེད།', bo_tr:'chugja pal che tsong pa'},
-  {id:'stem_45', cat:'tech', en:'Please turn on the computer.', zh:'请打开电脑。', bo:'གློག་ཀླད་ཁ་ཕྱེ་རོགས།', bo_tr:'laptop khap zhu'},
-  {id:'stem_46', cat:'tech', en:'The screen is very bright.', zh:'屏幕太亮了。', bo:'བརྙན་ཤེལ་ཧ་ཅང་འོད་མདངས་ལྡན་པ་རེད།', bo_tr:'screen ha chang od dang den'},
-  {id:'stem_47', cat:'tech', en:'My keyboard is not working.', zh:'我的键盘坏了。', bo:'ངའི་མཐེབ་གཞོང་ལས་ཀ་བྱེད་ཀྱི་མེད།', bo_tr:'ngai keyboard la work ma'},
-  {id:'stem_48', cat:'tech', en:'I cannot find the file.', zh:'我找不到这个文件。', bo:'ངས་ཡིག་ཆ་དེ་རྙེད་མ་ཐུབ།', bo_tr:'nga yikcha de find ma thub'},
-  {id:'stem_49', cat:'tech', en:'I saved the document on my computer.', zh:'我把文档保存到电脑上了。', bo:'ངས་ཡིག་ཆ་དེ་ངའི་གློག་ཀླད་ནང་དུ་ཉར་ཚགས་བྱས།', bo_tr:'nga yikcha de ngai laptop na tsuk'},
-  {id:'stem_50', cat:'tech', en:'Please open the website.', zh:'请打开这个网站。', bo:'དྲ་ཚིགས་ཁ་ཕྱེ་རོགས།', bo_tr:'website khap zhu'},
-  {id:'stem_51', cat:'tech', en:'I need to download this file.', zh:'我需要下载这个文件。', bo:'ངས་ཡིག་ཆ་འདི་ཕབ་ལེན་བྱེད་དགོས།', bo_tr:'nga yikcha de download go'},
-  {id:'stem_52', cat:'tech', en:'The internet is very slow today.', zh:'今天网速很慢。', bo:'དེང་སང་དྲ་རྒྱ་ཧ་ཅང་དལ་བ་རེད།', bo_tr:'de sang internet ha chang dal'},
-  {id:'stem_53', cat:'tech', en:'My computer needs an update.', zh:'我的电脑需要更新。', bo:'ངའི་གློག་ཀླད་ལ་གསར་བརྗེ་དགོས།', bo_tr:'ngai computer la update go'},
-  {id:'stem_54', cat:'tech', en:'I forgot my password.', zh:'我忘记密码了。', bo:'ངས་གསང་གྲངས་བརྗེད་སོང་།', bo_tr:'nga password forget'},
-  {id:'stem_55', cat:'tech', en:'I need to create an account.', zh:'我需要创建一个账户。', bo:'ངས་རྩིས་ཁྲ་བཟོ་དགོས།', bo_tr:'nga account create go'},
-  {id:'stem_56', cat:'tech', en:'Please enter your username.', zh:'请输入您的用户名。', bo:'ཁྱེད་རང་གི་མིང་བླུགས་རོགས།', bo_tr:'khyerang gi username zhu'},
-  {id:'stem_57', cat:'tech', en:'The program is running slowly.', zh:'程序运行缓慢。', bo:'ལས་རིམ་དེ་འགོར་འགྱངས་འགྲོ་བཞིན་ཡོད།', bo_tr:'las rim de slow gyu'},
-  {id:'stem_58', cat:'tech', en:'I closed the wrong window.', zh:'我关错了窗口。', bo:'ངས་སྒེའུ་ཁུང་ནོར་བ་ཁ་རྒྱག་པ་རེད།', bo_tr:'nga wrong window kher'},
-  {id:'stem_59', cat:'tech', en:'Can you show me how this works?', zh:'你能给我演示一下这个是怎么工作的吗？', bo:'ཁྱེད་ཀྱིས་ང་ལ་འདི་གང་འདྲ་བྱེད་ཀྱི་ཡོད་མེད་སྟོན་ཐུབ་བམ།', bo_tr:'khyed kyis nga la de gi work show'},
-  {id:'stem_60', cat:'tech', en:'I am learning how to code.', zh:'我正在学习编程。', bo:'ངས་ཡིག་གཟུགས་བཟོ་སྟངས་སྦྱོང་གི་ཡོད།', bo_tr:'nga coding learn'},
-  {id:'stem_61', cat:'engineer', en:'The engineer designed a new machine.', zh:'这位工程师设计了一台新机器。', bo:'བཟོ་སྐྲུན་པས་འཕྲུལ་ཆས་གསར་པ་ཞིག་ཇུས་འགོད་བྱས།', bo_tr:'engineer nye machine'},
-  {id:'stem_62', cat:'engineer', en:'This machine uses electricity.', zh:'这台机器使用电力。', bo:'འཕྲུལ་ཆས་འདིས་གློག་བེད་སྤྱོད་བྱེད་ཀྱི་ཡོད།', bo_tr:'machine de chug jey'},
-  {id:'stem_63', cat:'engineer', en:'The motor is turning very quickly.', zh:'电机转速非常快。', bo:'འཕྲུལ་འཁོར་དེ་ཧ་ཅང་མགྱོགས་པོ་འཁོར་བཞིན་ཡོད།', bo_tr:'motor de ha chang mgyogs po'},
-  {id:'stem_64', cat:'engineer', en:'The wheels are moving together.', zh:'轮子一起转动。', bo:'འཁོར་ལོ་མཉམ་དུ་འགྲོ་བཞིན་ཡོད།', bo_tr:'khorlo nam du dro'},
-  {id:'stem_65', cat:'engineer', en:'We need to build a small model.', zh:'我们需要搭建一个小模型。', bo:'ང་ཚོས་དཔེ་སྟོན་ཆུང་ཆུང་ཞིག་བཟོ་དགོས།', bo_tr:'ngatsho demo chung chung'},
-  {id:'stem_66', cat:'engineer', en:'The bridge needs to be stronger.', zh:'这座桥需要更坚固。', bo:'ཟམ་པ་དེ་བརྟན་པོ་དགོས།', bo_tr:'zampa de tenpo go'},
-  {id:'stem_67', cat:'engineer', en:'We are testing the design.', zh:'我们正在测试这个设计。', bo:'ང་ཚོས་བཟོ་བཀོད་ཚོད་ལྟ་བྱེད་བཞིན་ཡོད།', bo_tr:'ngatsho design tsoda jey'},
-  {id:'stem_68', cat:'engineer', en:'This part is too heavy.', zh:'这个零件太重了。', bo:'ཆ་ཤས་འདི་ལྗིད་པོ་འདུག', bo_tr:'cha she de ji po'},
-  {id:'stem_69', cat:'engineer', en:'We need a lighter material.', zh:'我们需要一种更轻的材料。', bo:'ང་ཚོར་རྒྱུ་ཆ་འཇམ་པོ་དགོས།', bo_tr:'ngatsho gyu cha jam po go'},
-  {id:'stem_70', cat:'engineer', en:'The robot can move by itself.', zh:'机器人可以自主移动。', bo:'འཕྲུལ་ཆས་དེ་རང་ཉིད་ཀྱིས་འགུལ་ཐུབ།', bo_tr:'robot de rang nyi gyu'},
-  {id:'stem_71', cat:'engineer', en:'The robot has two arms.', zh:'机器人有两条手臂。', bo:'འཕྲུལ་ཆས་ལ་ལག་པ་གཉིས་ཡོད།', bo_tr:'robot la lagpa nyi yo'},
-  {id:'stem_72', cat:'engineer', en:'We programmed the robot to move forward.', zh:'我们编写了程序让机器人向前移动。', bo:'ང་ཚོས་འཕྲུལ་ཆས་དེ་མདུན་དུ་བསྐྱོད་པའི་ལས་རིམ་བཟོས་ཡོད།', bo_tr:'ngatsho robot de mdu du gyu program'},
-  {id:'stem_73', cat:'engineer', en:'The machine stopped suddenly.', zh:'机器突然停止了。', bo:'འཕྲུལ་ཆས་དེ་གློ་བུར་དུ་བཀག་སོང་།', bo_tr:'machine de gwa bur duk'},
-  {id:'stem_74', cat:'engineer', en:'We need to find the problem.', zh:'我们需要找出问题所在。', bo:'ང་ཚོས་དཀའ་ངལ་དེ་འཚོལ་དགོས།', bo_tr:'ngatsho kachal de tshol go'},
-  {id:'stem_75', cat:'engineer', en:'Please check the wires.', zh:'请检查电线。', bo:'གློག་སྐུད་ལ་ཞིབ་བཤེར་གནང་རོགས།', bo_tr:'lugguk la chek zhu'},
-  {id:'stem_76', cat:'engineer', en:'The battery powers the machine.', zh:'电池为机器供电。', bo:'གློག་རྫས་ཀྱིས་འཕྲུལ་ཆས་ལ་གློག་སྤྲོད་ཀྱི་ཡོད།', bo_tr:'chugja gyis machine la chug'},
-  {id:'stem_77', cat:'engineer', en:'This design is simple and strong.', zh:'这个设计简洁而坚固。', bo:'བཟོ་བཀོད་འདི་ལས་སླ་པོ་དང་ཤུགས་ཆེ་བ་རེད།', bo_tr:'design de las la po dang shuk che'},
-  {id:'stem_78', cat:'engineer', en:'We can improve the design.', zh:'我们可以改进这个设计。', bo:'ང་ཚོས་བཟོ་བཀོད་ཡར་རྒྱས་གཏོང་ཐུབ།', bo_tr:'ngatsho design yanggya tong'},
-  {id:'stem_79', cat:'engineer', en:'The model works very well.', zh:'这个模型运行良好。', bo:'དཔེ་སྟོན་དེ་ཧ་ཅང་ལེགས་པོ་འདུག', bo_tr:'demo de ha chang lekpo'},
-  {id:'stem_80', cat:'engineer', en:'Let’s test it one more time.', zh:'我们再测试一次。', bo:'དེ་ལ་ཐེངས་གཅིག་ཚོད་ལྟ་བྱེད།', bo_tr:'de la theng chik tsoda jey'},
-  {id:'stem_81', cat:'routine', en:'I usually open the curtains in the morning.', zh:'我通常早上拉开窗帘。', bo:'ང་ནམ་རྒྱུན་ཞོགས་པར་སྒོ་ཡོལ་ཕྱེ་གི་ཡོད།', bo_tr:'nga nam gyur shokpa go yol che'},
-  {id:'stem_82', cat:'routine', en:'My alarm rings at six thirty.', zh:'我的闹钟六点半响。', bo:'ངའི་ཉེན་བརྡ་ཆུ་ཚོད་དྲུག་དང་ཕྱེད་ཀ་ལ་སྒྲོག་གི་འདུག', bo_tr:'ngai alarm chu tso druk dang che la sro'},
-  {id:'stem_83', cat:'routine', en:'I turn off my alarm and get up.', zh:'我关掉闹钟起床。', bo:'ངས་དྲན་སྐུལ་ཁ་བརྒྱབ་ནས་ཡར་ལངས།', bo_tr:'nga dral ku khap na yang'},
-  {id:'stem_84', cat:'routine', en:'I put my clothes in the cupboard.', zh:'我把衣服放进衣柜。', bo:'ངས་ངའི་གྱོན་ཆས་ཆ་སྒམ་ནང་དུ་བཞག་ཡོད།', bo_tr:'nga ngai gyoncha chag nam du zhak'},
-  {id:'stem_85', cat:'routine', en:'I have a quick shower.', zh:'我快速冲个澡。', bo:'ང་ལ་ཆུ་ཁོལ་མགྱོགས་པོ་ཡོད།', bo_tr:'nga la chu khol mgyogs po'},
-  {id:'stem_86', cat:'routine', en:'I dry my hair with a towel.', zh:'我用毛巾擦干头发。', bo:'ངས་ངའི་སྐྲ་དེ་ཨ་ཅོར་གྱིས་སྐམ་པོ་བཟོས།', bo_tr:'nga ngai skra de ahchor gyis skam po'},
-  {id:'stem_87', cat:'routine', en:'I put some milk in my coffee.', zh:'我在咖啡里加了些牛奶。', bo:'ངས་ངའི་འཚིག་ཇའི་ནང་དུ་འོ་མ་ཁ་ཤས་བླུགས་ཡོད།', bo_tr:'nga ngai chukja na oma cha she lu'},
-  {id:'stem_88', cat:'routine', en:'I eat a banana before I leave.', zh:'我出门前吃一根香蕉。', bo:'ང་མ་ཐོན་སྔོན་ལ་ངང་ལག་ཟོས།', bo_tr:'nga ma thon ngen la anglak zo'},
-  {id:'stem_89', cat:'routine', en:'I check the weather every morning.', zh:'我每天早上都查看天气。', bo:'ངས་ཉིན་ལྟར་ཞོགས་པ་གནམ་གཤིས་ལ་ལྟ་ཞིབ་བྱེད་ཀྱི་ཡོད།', bo_tr:'nga nyin tar shokpa gnamshi la ta shep'},
-  {id:'stem_90', cat:'routine', en:'I take my keys with me.', zh:'我随身携带钥匙。', bo:'ངས་ངའི་ལྡེ་མིག་ང་དང་མཉམ་དུ་འཁྱེར་ཡོད།', bo_tr:'nga ngai de mig nga dang nyam du khyer yo'},
-  {id:'stem_91', cat:'routine', en:'My house is close to the station.', zh:'我家离车站很近。', bo:'ངའི་ཁང་པ་དེ་བབས་ཚུགས་དང་ཉེ་པོ་ཡོད།', bo_tr:'ngai khangpa de ba sgu dang nye po'},
-  {id:'stem_92', cat:'routine', en:'The train arrives at nine o’clock.', zh:'火车九点到站。', bo:'མེ་འཁོར་ཆུ་ཚོད་དགུ་པར་སླེབས་ཡོད།', bo_tr:'me khor chu tso gu par leb'},
-  {id:'stem_93', cat:'routine', en:'I sit next to the window.', zh:'我坐在靠窗的位置。', bo:'ང་སྒེའུ་ཁུང་གི་འགྲམ་དུ་བསྡད་ཡོད།', bo_tr:'nga geu khung gi dram du sdad'},
-  {id:'stem_94', cat:'routine', en:'There are many people on the train.', zh:'火车上人很多。', bo:'མེ་འཁོར་ནང་མི་མང་པོ་ཡོད།', bo_tr:'me khor na mi mang po'},
-  {id:'stem_95', cat:'routine', en:'I listen to music on my way to work.', zh:'我上班路上听音乐。', bo:'ང་ལས་ཀར་འགྲོ་བའི་ལམ་བར་དུ་རོལ་དབྱངས་ཉན་གྱི་ཡོད།', bo_tr:'nga les ka dro ba i lam bar ro lyang nyen'},
-  {id:'stem_96', cat:'routine', en:'I arrive at work on time.', zh:'我准时到达公司。', bo:'ང་ལས་ཀར་དུས་ཐོག་ཏུ་སླེབས་ཡོད།', bo_tr:'nga les ka tu der leb'},
-  {id:'stem_97', cat:'routine', en:'My friend sits next to me.', zh:'我的朋友坐在我旁边。', bo:'ངའི་གྲོགས་པོ་ངའི་འགྲམ་དུ་བསྡད་ཡོད།', bo_tr:'ngai drokpo ngai dram du sdad'},
-  {id:'stem_98', cat:'routine', en:'We talk during our lunch break.', zh:'我们午休时聊天。', bo:'ང་ཚོས་གུང་ཚིགས་བར་གསེང་སྐབས་སྐད་ཆ་བཤད་ཀྱི་ཡོད།', bo_tr:'ngatsho gung tik bar sngag tsa tak'},
-  {id:'stem_99', cat:'routine', en:'I have a sandwich for lunch.', zh:'我午餐吃的是三明治。', bo:'ང་ལ་གུང་ཚིགས་ལ་ཚེམ་བུ་ཞིག་ཡོད།', bo_tr:'nga la gung tik la sem bu'},
-  {id:'stem_100', cat:'routine', en:'I buy some fruit from the shop.', zh:'我从商店买了一些水果。', bo:'ངས་ཚོང་ཁང་ནས་ཤིང་ཏོག་ཁ་ཤས་ཉོས།', bo_tr:'nga tsong khang nas shingtok tsa she nyo'}
-];
-const byId = id => WORDBANK.find(w=>w.id===id) || PRACTICE_SENTENCE_BANK.find(w=>w.id===id);
+const byId = id => WORDBANK.find(w=>w.id===id);
 
 // ---- the 10 modules of Level 1 ("Base Camp") — fully built -----------------
 const LEVEL1_MODULES = [
@@ -575,26 +449,15 @@ const LEVEL3_MODULES = [
   {num:30, key:'farewell',  label:'Farewells',              icon:'🌙', ids:['s_later','s_tomorrow','s_wonderfulday']},
 ];
 
-const LEVEL4_MODULES = [
-  {num:31, key:'science_basics', label:'Science Basics', icon:'🧬', ids:['stem_01','stem_02','stem_03','stem_04','stem_05','stem_06','stem_07','stem_08','stem_09','stem_10']},
-  {num:32, key:'science_lab', label:'Science Lab', icon:'🧪', ids:['stem_11','stem_12','stem_13','stem_14','stem_15','stem_16','stem_17','stem_18','stem_19','stem_20']},
-  {num:33, key:'experiments', label:'Experiments', icon:'🔬', ids:['stem_21','stem_22','stem_23','stem_24','stem_25','stem_26','stem_27','stem_28','stem_29','stem_30']},
-  {num:34, key:'lab_results', label:'Results & Review', icon:'📊', ids:['stem_31','stem_32','stem_33','stem_34','stem_35','stem_36','stem_37','stem_38','stem_39','stem_40']},
-  {num:35, key:'tech_everyday', label:'Tech Everyday', icon:'💻', ids:['stem_41','stem_42','stem_43','stem_44','stem_45','stem_46','stem_47','stem_48','stem_49','stem_50']},
-  {num:36, key:'tech_apps', label:'Files & Internet', icon:'🌐', ids:['stem_51','stem_52','stem_53','stem_54','stem_55','stem_56','stem_57','stem_58','stem_59','stem_60']},
-  {num:37, key:'engineering', label:'Engineering', icon:'🤖', ids:['stem_61','stem_62','stem_63','stem_64','stem_65','stem_66','stem_67','stem_68','stem_69','stem_70']},
-  {num:38, key:'machines', label:'Machines', icon:'⚙️', ids:['stem_71','stem_72','stem_73','stem_74','stem_75','stem_76','stem_77','stem_78','stem_79','stem_80']},
-  {num:39, key:'routine', label:'Daily Routine', icon:'🧭', ids:['stem_81','stem_82','stem_83','stem_84','stem_85','stem_86','stem_87','stem_88','stem_89','stem_90']},
-  {num:40, key:'daily_life', label:'Life & Travel', icon:'🚶', ids:['stem_91','stem_92','stem_93','stem_94','stem_95','stem_96','stem_97','stem_98','stem_99','stem_100']}
-];
-
 // ---- the 4 levels on the route: words → sentences → conversations → ideas --
-// Levels 1–3 have real exercises. Level 4 is now expanded with the science,
-// laboratory, computer, and engineering sentence sets provided by the user.
+// Levels 1–3 have real exercises. Level 4 shows a numbered roadmap (no
+// exercises yet) — see README for why, and how to build it out. There is no
+// prerequisite/locking between levels — every level is open from the start;
+// an unbuilt level just shows its roadmap instead of exercises.
 const LEVELS = [
   {
     icon:'🏕️', title:'Base Camp', subtitle:'Survival Beginner', range:'Modules 1–10', built:true,
-    milestone:'Introduce yourself, name what’s around you, and ask simple questions.',
+    milestone:'Introduce yourself, name what\u2019s around you, and ask simple questions.',
     modules: LEVEL1_MODULES
   },
   {
@@ -608,9 +471,14 @@ const LEVELS = [
     modules: LEVEL3_MODULES
   },
   {
-    icon:'🏔️', title:'Summit Push', subtitle:'Advanced Practice', range:'Modules 31–40', built:true,
-    milestone:'Use science, technology and everyday real-world sentences in practice.',
-    modules: LEVEL4_MODULES
+    icon:'🏔️', title:'Summit Push', subtitle:'Levelling Up', range:'Modules 31–40', built:false,
+    milestone:'Share opinions, tell stories, and talk about ideas.',
+    roadmap:[
+      {num:31,label:'Expressing Opinions'},{num:32,label:'Comparing & Choosing'},{num:33,label:'Explaining Why'},
+      {num:34,label:'Telling Stories'},{num:35,label:'Goals & Plans'},{num:36,label:'Abstract Ideas'},
+      {num:37,label:'Nuance & Emotion'},{num:38,label:'Debate & Discussion'},{num:39,label:'Culture & Society'},
+      {num:40,label:'Real-World Fluency'}
+    ]
   }
 ];
 
@@ -677,55 +545,108 @@ const safeStorage = {
   }
 };
 
-const STORAGE_KEY = 'sangwa_state_v2';
 const HEART_REGEN_MS = 30*60*1000; // 1 heart every 30 min
 const HEARTS_MAX = 5;
+const ACCOUNTS_KEY = 'sangwa_accounts_v1';
+const SESSION_KEY = 'sangwa_session_v1';
+const gameKey = username => 'sangwa_progress_v1__' + username;
 
-function defaultState(){
+// ---- accounts (local to this browser — see README "About the sign-in
+//      system" for why this is a demo gate, not real production auth) -------
+function loadAccounts(){
+  const raw = safeStorage.get(ACCOUNTS_KEY);
+  if(!raw) return {};
+  try{ return JSON.parse(raw); } catch(e){ return {}; }
+}
+function saveAccounts(accounts){ safeStorage.set(ACCOUNTS_KEY, JSON.stringify(accounts)); }
+
+function loadSession(){
+  const raw = safeStorage.get(SESSION_KEY);
+  if(!raw) return {currentUser:null};
+  try{ return JSON.parse(raw); } catch(e){ return {currentUser:null}; }
+}
+function saveSession(session){ safeStorage.set(SESSION_KEY, JSON.stringify(session)); }
+
+// Client-side hashing only — there is no server, so this is NOT secure
+// production authentication, just a way to avoid storing raw passwords in
+// this local demo. See README "About the sign-in system."
+function hashPassword(pw){
+  // Use a simple deterministic hash that works everywhere — not crypto secure,
+  // but consistent for this demo auth system.
+  let h = 5381; const s = 'sangwa-salt::' + pw;
+  for(let i=0;i<s.length;i++){ h = ((h << 5) + h) ^ s.charCodeAt(i); }
+  return 'hash_' + Math.abs(h).toString(36);
+}
+
+// ---- per-user game progress --------------------------------------------------
+function defaultGame(){
   return {
     xp:0, streak:0, lastActive:null,
     hearts:HEARTS_MAX, lastHeartTime: Date.now(),
-    tracks:{}, // trackId -> {completed:{ "level-modulekey": stars }}
-    screen:'landing',
-    authenticated:false,
-    auth:{
-      email:'', password:'', confirmPassword:'', name:'', username:'', code:'', purpose:'Learning a language',
-      level:'Beginner', goals:'Travel', interests:'Conversation', language:'English', theme:'Midnight',
-      notifications:true, accessibility:'Standard'
-    },
+    tracks:{} // trackId -> {completed:{ "level-modulekey": stars }}
+  };
+}
+function loadGame(username){
+  const raw = safeStorage.get(gameKey(username));
+  if(!raw) return defaultGame();
+  try{ return Object.assign(defaultGame(), JSON.parse(raw)); }
+  catch(e){ return defaultGame(); }
+}
+function saveGame(){
+  if(!state.currentUser) return;
+  safeStorage.set(gameKey(state.currentUser), JSON.stringify(state.game));
+}
+
+// ---- app state (navigation + auth are in-memory only; only per-user game
+//      progress and accounts persist — see boot() below) ---------------------
+function defaultAppState(){
+  return {
+    screen:'auth', authMode:'login', authError:'',
+    currentUser:null,
+    game: defaultGame(),
     currentTrack:null, currentWorld:0,
     session:null
   };
 }
-function loadState(){
-  const raw = safeStorage.get(STORAGE_KEY);
-  if(!raw) return defaultState();
-  try{ return Object.assign(defaultState(), JSON.parse(raw)); }
-  catch(e){ return defaultState(); }
-}
-function saveState(){ safeStorage.set(STORAGE_KEY, JSON.stringify(state)); }
 
-let state = loadState();
-regenHearts();
+let state = defaultAppState();
+
+function boot(){
+  const accounts = loadAccounts();
+  if(Object.keys(accounts).length===0) state.authMode = 'signup';
+  const sess = loadSession();
+  if(sess.currentUser && accounts[sess.currentUser]){
+    state.currentUser = sess.currentUser;
+    state.game = loadGame(sess.currentUser);
+    regenHearts();
+    // Always land on the language-picker after a fresh page load, rather
+    // than resuming whatever screen was open before — this is the fix for
+    // "why does it open straight into Base Camp."
+    state.screen = 'pick_language';
+  } else {
+    state.screen = 'auth';
+  }
+}
+boot();
 
 function regenHearts(){
-  if(state.hearts >= HEARTS_MAX) { state.lastHeartTime = Date.now(); return; }
-  const elapsed = Date.now() - state.lastHeartTime;
+  if(state.game.hearts >= HEARTS_MAX) { state.game.lastHeartTime = Date.now(); return; }
+  const elapsed = Date.now() - state.game.lastHeartTime;
   const gained = Math.floor(elapsed / HEART_REGEN_MS);
   if(gained > 0){
-    state.hearts = Math.min(HEARTS_MAX, state.hearts + gained);
-    state.lastHeartTime = state.hearts >= HEARTS_MAX ? Date.now() : state.lastHeartTime + gained*HEART_REGEN_MS;
+    state.game.hearts = Math.min(HEARTS_MAX, state.game.hearts + gained);
+    state.game.lastHeartTime = state.game.hearts >= HEARTS_MAX ? Date.now() : state.game.lastHeartTime + gained*HEART_REGEN_MS;
   }
 }
 function nextHeartEta(){
-  if(state.hearts>=HEARTS_MAX) return null;
-  const remain = HEART_REGEN_MS - (Date.now()-state.lastHeartTime);
+  if(state.game.hearts>=HEARTS_MAX) return null;
+  const remain = HEART_REGEN_MS - (Date.now()-state.game.lastHeartTime);
   return Math.max(1, Math.ceil(remain/60000));
 }
 
 function trackProgress(trackId){
-  if(!state.tracks[trackId]) state.tracks[trackId] = {completed:{}};
-  return state.tracks[trackId];
+  if(!state.game.tracks[trackId]) state.game.tracks[trackId] = {completed:{}};
+  return state.game.tracks[trackId];
 }
 function lessonKey(levelIdx, groupKey){ return levelIdx+'-'+groupKey; }
 function isLessonDone(trackId, levelIdx, groupKey){
@@ -741,17 +662,17 @@ function levelStats(trackId, levelIdx){
 }
 function touchStreak(){
   const today = new Date().toDateString();
-  if(state.lastActive===today) return;
-  if(state.lastActive){
+  if(state.game.lastActive===today) return;
+  if(state.game.lastActive){
     const y = new Date(); y.setDate(y.getDate()-1);
-    state.streak = state.lastActive===y.toDateString() ? state.streak+1 : 1;
-  } else { state.streak = 1; }
-  state.lastActive = today;
+    state.game.streak = state.game.lastActive===y.toDateString() ? state.game.streak+1 : 1;
+  } else { state.game.streak = 1; }
+  state.game.lastActive = today;
 }
 
 // ---- rendering ----------------------------------------------------------------
 const app = document.getElementById('app');
-function render(){ app.innerHTML = screens[state.screen](); saveState(); }
+function render(){ app.innerHTML = screens[state.screen](); if(state.currentUser) saveGame(); }
 
 function topbar(opts){
   opts = opts||{};
@@ -759,25 +680,17 @@ function topbar(opts){
   <div class="topbar">
     ${opts.back ? `<button class="iconbtn" onclick='${opts.back}'>←</button>` : `<div class="brand"><span>⛰️</span>Sangwa<span class="peak">·</span></div>`}
     <div style="display:flex; gap:8px; align-items:center;">
-      <div class="stat" title="Day streak">🔥 ${state.streak}</div>
-      <div class="stat" title="Total XP">⭐ ${state.xp}</div>
-      <button class="iconbtn" title="Hearts" onclick="goProfile()">${state.hearts<=1?'💔':'❤️'} ${state.hearts}</button>
+      <div class="stat" title="Day streak">🔥 ${state.game.streak}</div>
+      <div class="stat" title="Total XP">⭐ ${state.game.xp}</div>
+      <button class="iconbtn" title="Hearts" onclick="goProfile()">${state.game.hearts<=1?'💔':'❤️'} ${state.game.hearts}</button>
     </div>
   </div>`;
 }
 
 const screens = {
-  landing: renderLanding,
-  login: renderLogin,
-  signup: renderSignup,
-  verify: renderVerify,
-  welcome: renderWelcome,
-  profileSetup: renderProfileSetup,
-  personalization: renderPersonalization,
-  permissions: renderPermissions,
-  preferences: renderPreferences,
-  forgotPassword: renderForgotPassword,
-  setupComplete: renderSetupComplete,
+  auth: renderAuth,
+  pick_language: renderPickLanguage,
+  pick_bo_source: renderPickBoSource,
   home: renderHome,
   map: renderMap,
   lessonlist: renderLessonList,
@@ -788,362 +701,154 @@ const screens = {
   profile: renderProfile,
 };
 
-function setAuthField(key, value){
-  state.auth[key] = value;
-  render();
-}
-function setAuthChoice(key, value){
-  state.auth[key] = value;
-  render();
-}
-function renderAuthShell(title, subtitle, body, showSteps = false){
+// ---- auth screens -------------------------------------------------------------
+function setAuthMode(mode){ state.authMode = mode; state.authError=''; render(); }
+
+function renderAuth(){
+  const mode = state.authMode;
   return `
-    <div class="auth-shell">
-      <div class="auth-card">
-        <div class="brand-badge">⛰️</div>
-        <div class="auth-header">
-          <h1>${title}</h1>
-          ${subtitle ? `<div class="auth-sub">${subtitle}</div>` : ''}
-        </div>
-        ${body}
-        ${showSteps ? `
-          <div class="steps">
-            <span class="active"></span>
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>` : ''}
-      </div>
-    </div>`;
+  <div class="home" style="padding-top:40px;">
+    <div class="hero">
+      <h1>སངས་བ <span style="color:var(--gold)">Sangwa</span></h1>
+      <div class="sub">Create an account to save your progress on this device.</div>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab ${mode==='login'?'active':''}" onclick="setAuthMode('login')">Log In</button>
+      <button class="auth-tab ${mode==='signup'?'active':''}" onclick="setAuthMode('signup')">Sign Up</button>
+    </div>
+    <div class="field">
+      <label>Username</label>
+      <input id="auth_username" type="text" autocomplete="username" placeholder="e.g. tenzin_k">
+    </div>
+    ${mode==='signup' ? `
+    <div class="field">
+      <label>Email <span style="color:var(--snow-dim); font-weight:400;">(optional)</span></label>
+      <input id="auth_email" type="email" autocomplete="email" placeholder="you@example.com">
+    </div>` : ''}
+    <div class="field">
+      <label>Password</label>
+      <input id="auth_password" type="password" autocomplete="${mode==='signup'?'new-password':'current-password'}" placeholder="At least 4 characters">
+    </div>
+    ${mode==='signup' ? `
+    <div class="field">
+      <label>Confirm Password</label>
+      <input id="auth_password2" type="password">
+    </div>` : ''}
+    ${state.authError ? `<div class="auth-error">${state.authError}</div>` : ''}
+    <button class="btn btn-primary btn-block" onclick="${mode==='signup'?'doSignup()':'doLogin()'}">${mode==='signup'?'Create account':'Log in'}</button>
+  </div>
+  <div class="footer-note">Accounts are saved on this device/browser only — see the README for what that does and doesn't mean for your data.</div>
+  `;
 }
 
-function renderLanding(){
-  return renderAuthShell(
-    'Sangwa',
-    'Learn English, Chinese and Tibetan through Tibetan with a guided route from Base Camp to the Summit.',
-    `
-      <div class="auth-actions">
-        <button class="btn btn-primary btn-block" onclick="state.screen='signup'; render();">Get Started</button>
-        <button class="btn btn-ghost btn-block" onclick="state.screen='login'; render();">Log In</button>
-      </div>
-      <div class="auth-social">
-        <button class="social-btn" onclick="state.authenticated=true; state.screen='home'; render();">Google</button>
-        <button class="social-btn" onclick="state.authenticated=true; state.screen='home'; render();">Apple</button>
-      </div>
-      <div class="helper">Already have an account? <a href="#" onclick="state.screen='login'; render(); return false;">Log in</a></div>
-    `
-  );
+function readVal(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+
+async function doSignup(){
+  const username = readVal('auth_username');
+  const email = readVal('auth_email');
+  const password = readVal('auth_password');
+  const password2 = readVal('auth_password2');
+  if(!username || username.length<3){ state.authError='Username must be at least 3 characters.'; render(); return; }
+  if(!/^[a-zA-Z0-9_.-]+$/.test(username)){ state.authError='Username can only use letters, numbers, _ . -'; render(); return; }
+  if(!password || password.length<4){ state.authError='Password must be at least 4 characters.'; render(); return; }
+  if(password!==password2){ state.authError='Passwords do not match.'; render(); return; }
+  const accounts = loadAccounts();
+  const key = username.toLowerCase();
+  if(accounts[key]){ state.authError='That username is already taken.'; render(); return; }
+  const passwordHash = hashPassword(password);
+  accounts[key] = {username, email: email||null, passwordHash, createdAt: Date.now()};
+  saveAccounts(accounts);
+  saveSession({currentUser:key});
+  state.currentUser = key;
+  state.game = loadGame(key);
+  state.authError = '';
+  state.screen = 'pick_language';
+  render();
 }
 
-async function submitLogin(){
-  const username = String(state.auth.username || '').trim();
-  const email = String(state.auth.email || '').trim();
-  const password = String(state.auth.password || '').trim();
-  if((!username && !email) || !password){
-    alert('Please enter your username or email and password.');
-    return;
-  }
-  try {
-    const response = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email, password })
-    });
-    const data = await response.json();
-    if(!response.ok) throw new Error(data.error || 'Login failed');
-    state.authenticated = true;
-    state.screen = 'home';
-    render();
-  } catch (err) {
-    alert(err.message || 'Unable to log in.');
-  }
+async function doLogin(){
+  const username = readVal('auth_username');
+  const password = readVal('auth_password');
+  if(!username || !password){ state.authError='Enter your username and password.'; render(); return; }
+  const accounts = loadAccounts();
+  const key = username.toLowerCase();
+  const account = accounts[key];
+  if(!account){ state.authError='No account with that username — try signing up instead.'; render(); return; }
+  const passwordHash = hashPassword(password);
+  if(passwordHash!==account.passwordHash){ state.authError='Incorrect password.'; render(); return; }
+  saveSession({currentUser:key});
+  state.currentUser = key;
+  state.game = loadGame(key);
+  state.authError = '';
+  state.screen = 'pick_language';
+  render();
 }
 
-async function submitSignup(){
-  const email = String(state.auth.email || '').trim();
-  const username = String(state.auth.username || '').trim();
-  const password = String(state.auth.password || '').trim();
-  const confirmPassword = String(state.auth.confirmPassword || '').trim();
-  if(!username || !password){
-    alert('Please create a unique username and password.');
-    return;
-  }
-  if(password !== confirmPassword){
-    alert('Passwords do not match.');
-    return;
-  }
-  try {
-    const response = await fetch('/api/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: email || '',
-        password,
-        name: state.auth.name || '',
-        username
-      })
-    });
-    const data = await response.json();
-    if(!response.ok) throw new Error(data.error || 'Signup failed');
-    state.authenticated = true;
-    state.screen = 'verify';
-    render();
-  } catch (err) {
-    alert(err.message || 'Unable to create account.');
-  }
+function doLogout(){
+  saveSession({currentUser:null});
+  state = defaultAppState();
+  const accounts = loadAccounts();
+  if(Object.keys(accounts).length===0) state.authMode='signup';
+  render();
 }
 
-function renderLogin(){
-  return renderAuthShell(
-    'Welcome back',
-    'Sign in to continue your climb and pick up where you left off.',
-    `
-      <div class="auth-form">
-        <div class="field">
-          <label>Username or email</label>
-          <input class="input" type="text" placeholder="your username or email" value="${state.auth.username || state.auth.email || ''}" oninput="state.auth.username=this.value; state.auth.email='';">
-        </div>
-        <div class="field">
-          <label>Password</label>
-          <input class="input" type="password" placeholder="••••••••" value="${state.auth.password || ''}" oninput="state.auth.password=this.value;">
-        </div>
-        <div class="checkbox-row">
-          <input type="checkbox" checked>
-          <span>Remember me</span>
-        </div>
-        <div class="center"><button class="link-btn" onclick="state.screen='forgotPassword'; render();">Forgot password?</button></div>
-        <div class="auth-actions">
-          <button class="btn btn-primary btn-block" onclick="submitLogin();">Log in</button>
-        </div>
-      </div>
-      <div class="auth-social">
-        <button class="social-btn" onclick="state.authenticated=true; state.screen='home'; render();">Google</button>
-        <button class="social-btn" onclick="state.authenticated=true; state.screen='home'; render();">Apple</button>
-      </div>
-      <div class="helper">New here? <a href="#" onclick="state.screen='signup'; render(); return false;">Create account</a></div>
-    `
-  );
+// ---- first page after login: pick a language, or browse everything --------
+function renderPickLanguage(){
+  return `
+  <div class="topbar">
+    <div class="brand"><span>⛰️</span>Sangwa<span class="peak">·</span></div>
+    <button class="iconbtn" title="Log out" onclick="doLogout()">⎋</button>
+  </div>
+  <div class="home">
+    <div class="hero">
+      <h1>Which language would you like to study?</h1>
+      <div class="sub">Welcome back, ${state.currentUser}. Pick one to jump in — you can switch anytime.</div>
+    </div>
+    <div class="track-grid">
+      <button class="track-card" onclick="chooseLanguage('en')">
+        <div class="glyph">🇬🇧</div>
+        <div><div class="tc-title">English</div><div class="tc-sub">Learn English using Tibetan</div></div>
+      </button>
+      <button class="track-card" onclick="chooseLanguage('zh')">
+        <div class="glyph">🇨🇳</div>
+        <div><div class="tc-title">中文 (Chinese)</div><div class="tc-sub">Learn Chinese using Tibetan</div></div>
+      </button>
+      <button class="track-card" onclick="chooseLanguage('bo')">
+        <div class="glyph">⛰️</div>
+        <div><div class="tc-title lang-bo">བོད་སྐད (Tibetan)</div><div class="tc-sub">Learn Tibetan using Chinese or English</div></div>
+      </button>
+    </div>
+    <button class="btn btn-ghost btn-block" onclick="goHome()">Browse all 4 courses instead</button>
+  </div>`;
 }
 
-function renderSignup(){
-  return renderAuthShell(
-    'Create your account',
-    'Choose a unique username and password. Email is optional.',
-    `
-      <div class="auth-form">
-        <div class="field">
-          <label>Username</label>
-          <input class="input" type="text" placeholder="Choose a unique username" value="${state.auth.username || ''}" oninput="state.auth.username=this.value;">
-        </div>
-        <div class="field">
-          <label>Email (optional)</label>
-          <input class="input" type="email" placeholder="you@example.com" value="${state.auth.email || ''}" oninput="state.auth.email=this.value;">
-        </div>
-        <div class="field">
-          <label>Password</label>
-          <input class="input" type="password" placeholder="Create a password" value="${state.auth.password || ''}" oninput="state.auth.password=this.value;">
-        </div>
-        <div class="field">
-          <label>Confirm password</label>
-          <input class="input" type="password" placeholder="Confirm password" value="${state.auth.confirmPassword || ''}" oninput="state.auth.confirmPassword=this.value;">
-        </div>
-        <label class="checkbox-row">
-          <input type="checkbox" checked>
-          <span>I agree to the Terms &amp; Privacy Policy.</span>
-        </label>
-        <div class="auth-actions">
-          <button class="btn btn-primary btn-block" onclick="submitSignup();">Create account</button>
-        </div>
-      </div>
-      <div class="auth-social">
-        <button class="social-btn" onclick="state.screen='verify'; render();">Google</button>
-        <button class="social-btn" onclick="state.screen='verify'; render();">Apple</button>
-      </div>
-      <div class="helper">Already have an account? <a href="#" onclick="state.screen='login'; render(); return false;">Log in</a></div>
-    `
-  );
+function chooseLanguage(lang){
+  if(lang==='bo'){ state.screen='pick_bo_source'; render(); return; }
+  openTrack(lang==='en' ? 'en_bo' : 'zh_bo');
 }
 
-function renderVerify(){
-  return renderAuthShell(
-    'Check your inbox',
-    'We sent a 6-digit verification code to ' + (state.auth.email || 'your email').toLowerCase() + '.',
-    `
-      <div class="auth-form">
-        <div class="code-row">
-          <input class="code-box" maxlength="1" inputmode="numeric" value="${(state.auth.code||'').charAt(0)||''}" oninput="state.auth.code=(state.auth.code||'').slice(0,1); this.value=this.value.replace(/\D/g,'');">
-          <input class="code-box" maxlength="1" inputmode="numeric" value="${(state.auth.code||'').charAt(1)||''}" oninput="state.auth.code=(state.auth.code||'').slice(0,1); this.value=this.value.replace(/\D/g,'');">
-          <input class="code-box" maxlength="1" inputmode="numeric" value="${(state.auth.code||'').charAt(2)||''}" oninput="state.auth.code=(state.auth.code||'').slice(0,1); this.value=this.value.replace(/\D/g,'');">
-          <input class="code-box" maxlength="1" inputmode="numeric" value="${(state.auth.code||'').charAt(3)||''}" oninput="state.auth.code=(state.auth.code||'').slice(0,1); this.value=this.value.replace(/\D/g,'');">
-          <input class="code-box" maxlength="1" inputmode="numeric" value="${(state.auth.code||'').charAt(4)||''}" oninput="state.auth.code=(state.auth.code||'').slice(0,1); this.value=this.value.replace(/\D/g,'');">
-          <input class="code-box" maxlength="1" inputmode="numeric" value="${(state.auth.code||'').charAt(5)||''}" oninput="state.auth.code=(state.auth.code||'').slice(0,1); this.value=this.value.replace(/\D/g,'');">
-        </div>
-        <div class="action-row">
-          <button class="btn btn-primary" style="flex:1" onclick="state.screen='welcome'; render();">Verify</button>
-          <button class="btn btn-ghost" style="flex:1" onclick="state.screen='signup'; render();">Change email</button>
-        </div>
-        <div class="center tiny">Didn't get it? <button class="link-btn" onclick="state.screen='verify'; render();">Resend code</button></div>
-      </div>
-    `
-  );
-}
-
-function renderWelcome(){
-  return renderAuthShell(
-    'Welcome to Sangwa 👋',
-    'Your learning path is ready. We’ll set up your profile, personalise your experience, and get you moving in a few quick steps.',
-    `
-      <div class="auth-actions">
-        <button class="btn btn-primary btn-block" onclick="state.screen='profileSetup'; render();">Continue</button>
-      </div>
-    `
-  );
-}
-
-function renderProfileSetup(){
-  return renderAuthShell(
-    'Profile setup',
-    'Tell us who you are so your learning journey feels personal.',
-    `
-      <div class="auth-form">
-        <div class="upload-box">📷</div>
-        <div class="field">
-          <label>Name</label>
-          <input class="input" type="text" placeholder="Your name" value="${state.auth.name || ''}" oninput="state.auth.name=this.value;">
-        </div>
-        <div class="field">
-          <label>Username</label>
-          <input class="input" type="text" placeholder="@yourname" value="${state.auth.username || ''}" oninput="state.auth.username=this.value;">
-        </div>
-        <div class="field">
-          <label>Bio</label>
-          <input class="input" type="text" placeholder="Optional personal details" value="${state.auth.bio || ''}" oninput="state.auth.bio=this.value;">
-        </div>
-        <button class="btn btn-primary btn-block" onclick="state.screen='personalization'; render();">Continue</button>
-      </div>
-    `
-  );
-}
-
-function renderPersonalization(){
-  const purposeOptions = ['Learning a language','Travel','Work','Study','Family & friends'];
-  const levelOptions = ['Beginner','Intermediate','Advanced'];
-  const goalOptions = ['Travel','Career','Conversation','Reading','Culture'];
-  const interestOptions = ['Conversation','Grammar','Vocabulary','Listening','Travel'];
-  return renderAuthShell(
-    'Personalisation',
-    'Help us shape your path and suggestions.',
-    `
-      <div class="auth-form">
-        <div class="field">
-          <label>What are you using the app for?</label>
-          <div class="pill-row">
-            ${purposeOptions.map(opt=>`<button class="choice-card ${state.auth.purpose===opt?'selected':''}" onclick="setAuthChoice('purpose','${opt}')">${opt}</button>`).join('')}
-          </div>
-        </div>
-        <div class="field">
-          <label>Experience level</label>
-          <div class="pill-row">
-            ${levelOptions.map(opt=>`<button class="choice-card ${state.auth.level===opt?'selected':''}" onclick="setAuthChoice('level','${opt}')">${opt}</button>`).join('')}
-          </div>
-        </div>
-        <div class="field">
-          <label>Goals</label>
-          <div class="pill-row">
-            ${goalOptions.map(opt=>`<button class="choice-card ${state.auth.goals===opt?'selected':''}" onclick="setAuthChoice('goals','${opt}')">${opt}</button>`).join('')}
-          </div>
-        </div>
-        <div class="field">
-          <label>Interests</label>
-          <div class="pill-row">
-            ${interestOptions.map(opt=>`<button class="choice-card ${state.auth.interests===opt?'selected':''}" onclick="setAuthChoice('interests','${opt}')">${opt}</button>`).join('')}
-          </div>
-        </div>
-        <button class="btn btn-primary btn-block" onclick="state.screen='permissions'; render();">Continue</button>
-      </div>
-    `
-  );
-}
-
-function renderPermissions(){
-  return renderAuthShell(
-    'Permissions',
-    'Only ask for access when it is necessary for the experience.',
-    `
-      <div class="auth-form">
-        <label class="checkbox-row"><input type="checkbox" checked onchange="state.auth.notifications=this.checked;"> <span>Notifications</span></label>
-        <label class="checkbox-row"><input type="checkbox"> <span>Microphone</span></label>
-        <label class="checkbox-row"><input type="checkbox"> <span>Camera</span></label>
-        <label class="checkbox-row"><input type="checkbox"> <span>Location</span></label>
-        <button class="btn btn-primary btn-block" onclick="state.screen='preferences'; render();">Continue</button>
-      </div>
-    `
-  );
-}
-
-function renderPreferences(){
-  return renderAuthShell(
-    'App preferences',
-    'Choose the settings that make the experience most comfortable for you.',
-    `
-      <div class="auth-form">
-        <div class="field">
-          <label>Language</label>
-          <select class="input-select" onchange="state.auth.language=this.value;">
-            <option ${state.auth.language==='English'?'selected':''}>English</option>
-            <option ${state.auth.language==='中文'?'selected':''}>中文</option>
-            <option ${state.auth.language==='བོད་སྐད།'?'selected':''}>བོད་སྐད།</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Theme</label>
-          <select class="input-select" onchange="state.auth.theme=this.value;">
-            <option ${state.auth.theme==='Midnight'?'selected':''}>Midnight</option>
-            <option ${state.auth.theme==='Sunrise'?'selected':''}>Sunrise</option>
-            <option ${state.auth.theme==='Light'?'selected':''}>Light</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Accessibility</label>
-          <select class="input-select" onchange="state.auth.accessibility=this.value;">
-            <option ${state.auth.accessibility==='Standard'?'selected':''}>Standard</option>
-            <option ${state.auth.accessibility==='High contrast'?'selected':''}>High contrast</option>
-            <option ${state.auth.accessibility==='Large text'?'selected':''}>Large text</option>
-          </select>
-        </div>
-        <button class="btn btn-primary btn-block" onclick="state.screen='setupComplete'; render();">Continue</button>
-      </div>
-    `
-  );
-}
-
-function renderForgotPassword(){
-  return renderAuthShell(
-    'Forgot password',
-    'Enter your email and we will send a reset link to get you back in.',
-    `
-      <div class="auth-form">
-        <div class="field">
-          <label>Email</label>
-          <input class="input" type="email" placeholder="you@example.com" value="${state.auth.email || ''}" oninput="state.auth.email=this.value;">
-        </div>
-        <button class="btn btn-primary btn-block" onclick="state.screen='login'; render();">Send reset link</button>
-      </div>
-    `
-  );
-}
-
-function renderSetupComplete(){
-  return renderAuthShell(
-    'You’re all set!',
-    'Your account is ready. We’ve prepared your personalised route and you can jump into your dashboard now.',
-    `
-      <div class="auth-actions">
-        <button class="btn btn-primary btn-block" onclick="state.authenticated=true; state.screen='home'; render();">Go to Dashboard</button>
-      </div>
-    `
-  );
+function renderPickBoSource(){
+  return `
+  <div class="topbar">
+    <button class="iconbtn" onclick="state.screen='pick_language'; render();">←</button>
+    <div class="brand"><span>⛰️</span>Sangwa<span class="peak">·</span></div>
+  </div>
+  <div class="home">
+    <div class="hero">
+      <h1 class="lang-bo">བོད་སྐད</h1>
+      <div class="sub">Which language do you already know?</div>
+    </div>
+    <div class="track-grid">
+      <button class="track-card" onclick="openTrack('bo_zh')">
+        <div class="glyph">🇨🇳</div>
+        <div><div class="tc-title">从中文学习</div><div class="tc-sub">I know Chinese</div></div>
+      </button>
+      <button class="track-card" onclick="openTrack('bo_en')">
+        <div class="glyph">🇬🇧</div>
+        <div><div class="tc-title">From English</div><div class="tc-sub">I know English</div></div>
+      </button>
+    </div>
+  </div>`;
 }
 
 function renderHome(){
@@ -1163,7 +868,7 @@ function renderHome(){
   }).join('');
 
   return `
-  ${topbar()}
+  ${topbar({back:'state.screen="pick_language"; render();'})}
   <div class="home">
     <div class="hero">
       <h1>སངས་བ <span style="color:var(--gold)">Sangwa</span></h1>
@@ -1306,7 +1011,7 @@ function renderLesson(){
   <div class="lesson">
     <div class="progressbar"><div class="progressbar-fill" style="width:${pct}%"></div></div>
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-      <div class="hearts-row">${Array.from({length:HEARTS_MAX}).map((_,i)=>`<span>${i<state.hearts?'❤️':'🩶'}</span>`).join('')}</div>
+      <div class="hearts-row">${Array.from({length:HEARTS_MAX}).map((_,i)=>`<span>${i<state.game.hearts?'❤️':'🩶'}</span>`).join('')}</div>
       <div style="font-size:12px; color:var(--snow-dim);">${s.qIndex+1} / ${total}</div>
     </div>
     <div class="q-wrap">
@@ -1328,19 +1033,19 @@ function answer(optId){
   const opt = q.options.find(o=>o.id===optId);
   s.answered = true; s.picked = optId; s.lastCorrect = opt.correct;
   if(opt.correct){
-    s.xpEarned += 10; state.xp += 10;
+    s.xpEarned += 10; state.game.xp += 10;
   } else {
     s.mistakes += 1;
-    if(state.hearts===HEARTS_MAX) state.lastHeartTime = Date.now();
-    state.hearts = Math.max(0, state.hearts-1);
-    if(state.hearts===0){ render(); setTimeout(()=>{ state.screen='outofhearts'; render(); }, 550); return; }
+    if(state.game.hearts===HEARTS_MAX) state.game.lastHeartTime = Date.now();
+    state.game.hearts = Math.max(0, state.game.hearts-1);
+    if(state.game.hearts===0){ render(); setTimeout(()=>{ state.screen='outofhearts'; render(); }, 550); return; }
   }
   render();
 }
 
 function nextQuestion(){
   const s = state.session;
-  if(state.hearts<=0){ state.screen='outofhearts'; render(); return; }
+  if(state.game.hearts<=0){ state.screen='outofhearts'; render(); return; }
   s.qIndex += 1; s.answered=false; s.picked=null;
   if(s.qIndex>=s.exercises.length){ finishLesson(); return; }
   render();
@@ -1354,7 +1059,7 @@ function finishLesson(){
   const p = trackProgress(s.trackId);
   const key = lessonKey(s.worldIdx, s.groupKey);
   p.completed[key] = Math.max(p.completed[key]||0, stars);
-  if(stars===3) { state.xp += 20; s.xpEarned += 20; }
+  if(stars===3) { state.game.xp += 20; s.xpEarned += 20; }
   touchStreak();
   state.screen='complete';
   render();
@@ -1373,7 +1078,7 @@ function renderComplete(){
     <div class="stat-row">
       <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">XP earned</div></div>
       <div class="stat-box"><div class="val">${total-s.mistakes}/${total}</div><div class="lab">First-try correct</div></div>
-      <div class="stat-box"><div class="val">🔥 ${state.streak}</div><div class="lab">Day streak</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">Day streak</div></div>
     </div>
     <button class="btn btn-primary btn-block" onclick="backToLessonList()">Continue climbing</button>
   </div>`;
@@ -1393,40 +1098,37 @@ function renderOutOfHearts(){
 }
 function retrySameLesson(){
   regenHearts();
-  if(state.hearts<=0){ render(); return; }
+  if(state.game.hearts<=0){ render(); return; }
   startLesson(state.session.groupKey);
 }
 function backToLessonList(){ state.screen='lessonlist'; render(); }
 function exitLesson(){ state.screen='lessonlist'; render(); }
 
 function renderProfile(){
-  const totalDone = Object.values(state.tracks).reduce((n,t)=>n+Object.keys(t.completed).length,0);
+  const totalDone = Object.values(state.game.tracks).reduce((n,t)=>n+Object.keys(t.completed).length,0);
   const eta = nextHeartEta();
-  const displayName = state.auth.name || 'Basecamp Climber';
-  const username = state.auth.username ? '@' + state.auth.username : '@sangwa';
   return `
   ${topbar({back:'goHome()'})}
   <div class="profile">
     <div class="profile-card" style="text-align:center;">
       <div style="font-size:40px;">🏔️</div>
-      <h2 style="margin-top:6px;">${displayName}</h2>
-      <div style="color:var(--gold); font-size:13px; margin-top:2px;">${username}</div>
-      <div style="color:var(--snow-dim); font-size:13px; margin-top:8px;">${totalDone} module${totalDone===1?'':'s'} completed across all routes</div>
+      <h2 style="margin-top:6px;">Basecamp Climber</h2>
+      <div style="color:var(--snow-dim); font-size:13px; margin-top:2px;">Signed in as <strong>${state.currentUser}</strong> · ${totalDone} module${totalDone===1?'':'s'} completed across all routes</div>
     </div>
     <div class="profile-grid">
-      <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">⭐ ${state.xp}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">Total XP</div></div>
-      <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">🔥 ${state.streak}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">Day streak</div></div>
-      <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">${state.hearts}/${HEARTS_MAX}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">Hearts${eta?` · next in ~${eta}m`:''}</div></div>
+      <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">⭐ ${state.game.xp}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">Total XP</div></div>
+      <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">🔥 ${state.game.streak}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">Day streak</div></div>
+      <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">${state.game.hearts}/${HEARTS_MAX}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">Hearts${eta?` · next in ~${eta}m`:''}</div></div>
       <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">${totalDone}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">Modules done</div></div>
     </div>
-    <button class="btn btn-ghost btn-block" onclick="state.authenticated=false; state.screen='landing'; render();">Log out</button>
     <button class="btn btn-ghost btn-block" onclick="resetProgress()">Reset all progress</button>
+    <button class="btn btn-ghost btn-block" onclick="doLogout()">Log out</button>
   </div>`;
 }
 function resetProgress(){
-  if(!confirm('Reset all XP, streaks and lesson progress? This cannot be undone.')) return;
-  state = defaultState();
-  saveState();
+  if(!confirm('Reset all XP, streaks and lesson progress for this account? This cannot be undone.')) return;
+  state.game = defaultGame();
+  saveGame();
   render();
 }
 
