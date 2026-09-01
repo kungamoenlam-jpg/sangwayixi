@@ -1,12 +1,48 @@
 const express = require('express');
 const fs = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
+const { Client } = require('pg');
+
+function hashPassword(value) {
+  return crypto.createHash('sha256').update(String(value)).digest('hex');
+}
 
 function createApp(overrides = {}) {
   const app = express();
   const PORT = overrides.port || Number(process.env.PORT) || 3000;
   const DATA_FILE = overrides.dataFile || path.join(__dirname, 'data', 'users.json');
   const ADMIN_KEY = overrides.adminKey || process.env.ADMIN_KEY || 'sangwa-admin-key';
+  const DATABASE_URL = overrides.databaseUrl || process.env.DATABASE_URL || null;
+
+  let dbClient = null;
+
+  async function getDbClient() {
+    if (!DATABASE_URL) return null;
+    if (!dbClient) {
+      dbClient = new Client({
+        connectionString: DATABASE_URL,
+        ssl: DATABASE_URL.includes('supabase.co') ? { rejectUnauthorized: false } : undefined,
+      });
+      await dbClient.connect();
+    }
+    return dbClient;
+  }
+
+  async function initDatabase() {
+    const client = await getDbClient();
+    if (!client) return;
+    await client.query(`
+      create table if not exists public.users (
+        id uuid primary key default gen_random_uuid(),
+        email text unique not null,
+        password_hash text not null,
+        full_name text,
+        username text,
+        created_at timestamptz default now()
+      );
+    `);
+  }
 
   function ensureDataFile() {
     const dir = path.dirname(DATA_FILE);
@@ -36,10 +72,25 @@ function createApp(overrides = {}) {
     return {
       id: user.id,
       email: user.email,
-      name: user.name || '',
+      name: user.name || user.full_name || '',
       username: user.username || '',
-      createdAt: user.createdAt,
+      createdAt: user.createdAt || user.created_at,
     };
+  }
+
+  async function listUsersFromDb() {
+    const client = await getDbClient();
+    if (!client) return readUsers().map(sanitizeUser);
+    const result = await client.query(
+      'select id, email, full_name, username, created_at from public.users order by created_at desc'
+    );
+    return result.rows.map((row) => ({
+      id: row.id,
+      email: row.email,
+      name: row.full_name || '',
+      username: row.username || '',
+      createdAt: row.created_at,
+    }));
   }
 
   app.use(express.json({ limit: '1mb' }));
@@ -49,7 +100,7 @@ function createApp(overrides = {}) {
     res.json({ ok: true, time: new Date().toISOString() });
   });
 
-  app.post('/api/signup', (req, res) => {
+  app.post('/api/signup', async (req, res) => {
     const { email, password, name, username } = req.body || {};
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required.' });
@@ -62,6 +113,41 @@ function createApp(overrides = {}) {
       return res.status(400).json({ error: 'Email and password cannot be empty.' });
     }
 
+    const client = await getDbClient();
+
+    if (client) {
+      try {
+        const existing = await client.query('select id from public.users where lower(email) = $1', [trimmedEmail]);
+        if (existing.rows.length) {
+          return res.status(409).json({ error: 'A user with that email already exists.' });
+        }
+
+        const fullName = String(name || '').trim();
+        const userName = String(username || '').trim() || trimmedEmail.split('@')[0];
+
+        const result = await client.query(
+          `insert into public.users (email, password_hash, full_name, username)
+           values ($1, $2, $3, $4)
+           returning id, email, full_name, username, created_at`,
+          [trimmedEmail, hashPassword(trimmedPassword), fullName, userName]
+        );
+
+        const saved = result.rows[0];
+        return res.status(201).json({
+          message: 'Account created successfully.',
+          user: sanitizeUser({
+            id: saved.id,
+            email: saved.email,
+            name: saved.full_name,
+            username: saved.username,
+            createdAt: saved.created_at,
+          }),
+        });
+      } catch (error) {
+        return res.status(500).json({ error: 'Database signup failed.', details: error.message });
+      }
+    }
+
     const users = readUsers();
     const existing = users.find((user) => user.email === trimmedEmail);
     if (existing) {
@@ -71,7 +157,7 @@ function createApp(overrides = {}) {
     const newUser = {
       id: Math.random().toString(36).slice(2, 10) + Date.now().toString(36),
       email: trimmedEmail,
-      password: trimmedPassword,
+      password: hashPassword(trimmedPassword),
       name: String(name || '').trim(),
       username: String(username || '').trim() || trimmedEmail.split('@')[0],
       createdAt: new Date().toISOString(),
@@ -86,15 +172,42 @@ function createApp(overrides = {}) {
     });
   });
 
-  app.post('/api/login', (req, res) => {
+  app.post('/api/login', async (req, res) => {
     const { email, password } = req.body || {};
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required.' });
     }
 
+    const trimmedEmail = String(email).trim().toLowerCase();
+    const trimmedPassword = String(password).trim();
+
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        'select id, email, full_name, username, created_at from public.users where lower(email) = $1 and password_hash = $2',
+        [trimmedEmail, hashPassword(trimmedPassword)]
+      );
+
+      if (!result.rows.length) {
+        return res.status(401).json({ error: 'Invalid email or password.' });
+      }
+
+      const user = result.rows[0];
+      return res.json({
+        message: 'Login successful.',
+        user: sanitizeUser({
+          id: user.id,
+          email: user.email,
+          name: user.full_name,
+          username: user.username,
+          createdAt: user.created_at,
+        }),
+      });
+    }
+
     const users = readUsers();
     const user = users.find(
-      (entry) => entry.email === String(email).trim().toLowerCase() && entry.password === String(password).trim()
+      (entry) => entry.email === trimmedEmail && entry.password === hashPassword(trimmedPassword)
     );
 
     if (!user) {
@@ -107,13 +220,13 @@ function createApp(overrides = {}) {
     });
   });
 
-  app.get('/api/admin/users', (req, res) => {
+  app.get('/api/admin/users', async (req, res) => {
     const incomingKey = req.headers['x-admin-key'];
     if (incomingKey !== ADMIN_KEY) {
       return res.status(401).json({ error: 'Unauthorized admin access.' });
     }
 
-    const users = readUsers().map(sanitizeUser);
+    const users = await listUsersFromDb();
     return res.json({ count: users.length, users });
   });
 
@@ -135,15 +248,24 @@ function createApp(overrides = {}) {
     return express.application.listen.call(this, ...args);
   };
 
-  return { app, PORT, DATA_FILE, ADMIN_KEY };
+  return { app, PORT, DATA_FILE, ADMIN_KEY, DATABASE_URL, initDatabase: initDatabase };
 }
 
 if (require.main === module) {
-  const { app } = createApp();
+  const appState = createApp();
   const port = Number(process.env.PORT) || 3000;
-  app.listen(port, () => {
-    console.log(`Sangwa backend running at http://localhost:${port}`);
-  });
+  appState.initDatabase()
+    .then(() => {
+      appState.app.listen(port, () => {
+        console.log(`Sangwa backend running at http://localhost:${port}`);
+      });
+    })
+    .catch((error) => {
+      console.error('Database init failed:', error.message);
+      appState.app.listen(port, () => {
+        console.log(`Sangwa backend running at http://localhost:${port} (JSON fallback mode)`);
+      });
+    });
 }
 
 module.exports = { createApp };
