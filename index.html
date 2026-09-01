@@ -602,6 +602,7 @@ function saveGame(){
 function defaultAppState(){
   return {
     screen:'auth', authMode:'login', authError:'',
+    appLang:'en',
     currentUser:null,
     game: defaultGame(),
     currentTrack:null, currentWorld:0,
@@ -625,6 +626,7 @@ function boot(){
     state.screen = 'pick_language';
   } else {
     state.screen = 'auth';
+    state.appLang = 'en'; // default app language
   }
 }
 boot();
@@ -711,6 +713,14 @@ function renderAuth(){
     <div class="hero">
       <h1>སངས་བ <span style="color:var(--gold)">Sangwa</span></h1>
       <div class="sub">Create an account to save your progress on this device.</div>
+    </div>
+    <div style="padding:0 20px; margin-bottom:16px;">
+      <div style="font-size:12px; color:var(--snow-dim); font-weight:600; margin-bottom:8px;">App Language</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
+        <button class="btn ${state.appLang==='en'?'btn-primary':'btn-ghost'}" style="font-size:13px;" onclick="state.appLang='en'; render();">English</button>
+        <button class="btn ${state.appLang==='zh'?'btn-primary':'btn-ghost'}" style="font-size:13px;" onclick="state.appLang='zh'; render();">中文</button>
+        <button class="btn ${state.appLang==='bo'?'btn-primary':'btn-ghost'}" style="font-size:13px;" onclick="state.appLang='bo'; render();">བོད་སྐད</button>
+      </div>
     </div>
     <div class="auth-tabs">
       <button class="auth-tab ${mode==='login'?'active':''}" onclick="setAuthMode('login')">Log In</button>
