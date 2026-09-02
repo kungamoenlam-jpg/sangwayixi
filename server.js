@@ -97,7 +97,18 @@ function createApp(overrides = {}) {
   app.use(express.static(__dirname));
 
   app.get('/api/health', (req, res) => {
-    res.json({ ok: true, time: new Date().toISOString() });
+    res.json({ ok: true, time: new Date().toISOString(), database: !!DATABASE_URL });
+  });
+
+  app.get('/api/db-test', async (req, res) => {
+    try {
+      const client = await getDbClient();
+      if (!client) return res.json({ database: 'using file system', ok: true });
+      const result = await client.query('select now()');
+      res.json({ database: 'connected', time: result.rows[0].now, ok: true });
+    } catch (error) {
+      res.status(500).json({ error: error.message, ok: false });
+    }
   });
 
   app.post('/api/signup', async (req, res) => {
@@ -147,7 +158,8 @@ function createApp(overrides = {}) {
           }),
         });
       } catch (error) {
-        return res.status(500).json({ error: 'Database signup failed.', details: error.message });
+        console.error('Database signup error:', error.message);
+        return res.status(500).json({ error: 'Database error: ' + error.message });
       }
     }
 

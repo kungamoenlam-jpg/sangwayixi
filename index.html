@@ -745,7 +745,11 @@ async function doSignup(){
       body: JSON.stringify({username, email: email||null, password, name:''})
     });
     const data = await res.json();
-    if(!res.ok){ state.authError = data.error || 'Signup failed'; render(); return; }
+    if(!res.ok){ 
+      state.authError = (data.error || 'Signup failed') + (data.details ? ' — ' + data.details : '');
+      render(); 
+      return; 
+    }
     
     saveSession({currentUser: username});
     state.currentUser = username;
@@ -754,7 +758,7 @@ async function doSignup(){
     state.screen = 'pick_language';
     render();
   } catch(e) {
-    state.authError = 'Network error: ' + e.message;
+    state.authError = 'Connection error: ' + e.message;
     render();
   }
 }
@@ -771,7 +775,11 @@ async function doLogin(){
       body: JSON.stringify({username, password})
     });
     const data = await res.json();
-    if(!res.ok){ state.authError = data.error || 'Login failed'; render(); return; }
+    if(!res.ok){ 
+      state.authError = (data.error || 'Login failed') + (data.details ? ' — ' + data.details : '');
+      render(); 
+      return; 
+    }
     
     saveSession({currentUser: username});
     state.currentUser = username;
@@ -780,7 +788,7 @@ async function doLogin(){
     state.screen = 'pick_language';
     render();
   } catch(e) {
-    state.authError = 'Network error: ' + e.message;
+    state.authError = 'Connection error: ' + e.message;
     render();
   }
 }
