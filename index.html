@@ -547,36 +547,16 @@ const safeStorage = {
 
 const HEART_REGEN_MS = 30*60*1000; // 1 heart every 30 min
 const HEARTS_MAX = 5;
-const ACCOUNTS_KEY = 'sangwa_accounts_v1';
 const SESSION_KEY = 'sangwa_session_v1';
 const gameKey = username => 'sangwa_progress_v1__' + username;
 
-// ---- accounts (local to this browser — see README "About the sign-in
-//      system" for why this is a demo gate, not real production auth) -------
-function loadAccounts(){
-  const raw = safeStorage.get(ACCOUNTS_KEY);
-  if(!raw) return {};
-  try{ return JSON.parse(raw); } catch(e){ return {}; }
-}
-function saveAccounts(accounts){ safeStorage.set(ACCOUNTS_KEY, JSON.stringify(accounts)); }
-
+// ---- accounts (backend via Supabase API) -------
 function loadSession(){
   const raw = safeStorage.get(SESSION_KEY);
-  if(!raw) return {currentUser:null};
-  try{ return JSON.parse(raw); } catch(e){ return {currentUser:null}; }
+  if(!raw) return {currentUser:null, token:null};
+  try{ return JSON.parse(raw); } catch(e){ return {currentUser:null, token:null}; }
 }
 function saveSession(session){ safeStorage.set(SESSION_KEY, JSON.stringify(session)); }
-
-// Client-side hashing only — there is no server, so this is NOT secure
-// production authentication, just a way to avoid storing raw passwords in
-// this local demo. See README "About the sign-in system."
-function hashPassword(pw){
-  // Use a simple deterministic hash that works everywhere — not crypto secure,
-  // but consistent for this demo auth system.
-  let h = 5381; const s = 'sangwa-salt::' + pw;
-  for(let i=0;i<s.length;i++){ h = ((h << 5) + h) ^ s.charCodeAt(i); }
-  return 'hash_' + Math.abs(h).toString(36);
-}
 
 // ---- per-user game progress --------------------------------------------------
 function defaultGame(){
@@ -613,20 +593,15 @@ function defaultAppState(){
 let state = defaultAppState();
 
 function boot(){
-  const accounts = loadAccounts();
-  if(Object.keys(accounts).length===0) state.authMode = 'signup';
   const sess = loadSession();
-  if(sess.currentUser && accounts[sess.currentUser]){
+  if(sess.currentUser){
     state.currentUser = sess.currentUser;
     state.game = loadGame(sess.currentUser);
     regenHearts();
-    // Always land on the language-picker after a fresh page load, rather
-    // than resuming whatever screen was open before — this is the fix for
-    // "why does it open straight into Base Camp."
     state.screen = 'pick_language';
   } else {
     state.screen = 'auth';
-    state.appLang = 'en'; // default app language
+    state.appLang = 'en';
   }
 }
 boot();
@@ -762,43 +737,59 @@ async function doSignup(){
   if(!/^[a-zA-Z0-9_.-]+$/.test(username)){ state.authError='Username can only use letters, numbers, _ . -'; render(); return; }
   if(!password || password.length<4){ state.authError='Password must be at least 4 characters.'; render(); return; }
   if(password!==password2){ state.authError='Passwords do not match.'; render(); return; }
-  const accounts = loadAccounts();
-  const key = username.toLowerCase();
-  if(accounts[key]){ state.authError='That username is already taken.'; render(); return; }
-  const passwordHash = hashPassword(password);
-  accounts[key] = {username, email: email||null, passwordHash, createdAt: Date.now()};
-  saveAccounts(accounts);
-  saveSession({currentUser:key});
-  state.currentUser = key;
-  state.game = loadGame(key);
-  state.authError = '';
-  state.screen = 'pick_language';
-  render();
+  
+  try {
+    const res = await fetch('/api/signup', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username, email: email||null, password, name:''})
+    });
+    const data = await res.json();
+    if(!res.ok){ state.authError = data.error || 'Signup failed'; render(); return; }
+    
+    saveSession({currentUser: username});
+    state.currentUser = username;
+    state.game = loadGame(username);
+    state.authError = '';
+    state.screen = 'pick_language';
+    render();
+  } catch(e) {
+    state.authError = 'Network error: ' + e.message;
+    render();
+  }
 }
 
 async function doLogin(){
   const username = readVal('auth_username');
   const password = readVal('auth_password');
   if(!username || !password){ state.authError='Enter your username and password.'; render(); return; }
-  const accounts = loadAccounts();
-  const key = username.toLowerCase();
-  const account = accounts[key];
-  if(!account){ state.authError='No account with that username — try signing up instead.'; render(); return; }
-  const passwordHash = hashPassword(password);
-  if(passwordHash!==account.passwordHash){ state.authError='Incorrect password.'; render(); return; }
-  saveSession({currentUser:key});
-  state.currentUser = key;
-  state.game = loadGame(key);
-  state.authError = '';
-  state.screen = 'pick_language';
-  render();
+  
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username, password})
+    });
+    const data = await res.json();
+    if(!res.ok){ state.authError = data.error || 'Login failed'; render(); return; }
+    
+    saveSession({currentUser: username});
+    state.currentUser = username;
+    state.game = loadGame(username);
+    state.authError = '';
+    state.screen = 'pick_language';
+    render();
+  } catch(e) {
+    state.authError = 'Network error: ' + e.message;
+    render();
+  }
 }
 
 function doLogout(){
-  saveSession({currentUser:null});
+  saveSession({currentUser:null, token:null});
   state = defaultAppState();
-  const accounts = loadAccounts();
-  if(Object.keys(accounts).length===0) state.authMode='signup';
+  state.screen = 'auth';
+  state.authMode = 'login';
   render();
 }
 

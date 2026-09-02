@@ -23,7 +23,7 @@ explain select * from orders where status = 'pending';
 
 ```sql
 -- Manually analyze after large data changes
-analyze orders;
+analyze order;s
 
 -- Analyze specific columns used in WHERE clauses
 analyze orders (status, created_at);
