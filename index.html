@@ -687,7 +687,7 @@ function renderAuth(){
   <div class="home" style="padding-top:40px;">
     <div class="hero">
       <h1>སངས་བ <span style="color:var(--gold)">Sangwa</span></h1>
-      <div class="sub">Create an account to save your progress on this device.</div>
+      <div class="sub">Create an account to save your progress across devices.</div>
     </div>
     <div style="padding:0 20px; margin-bottom:16px;">
       <div style="font-size:12px; color:var(--snow-dim); font-weight:600; margin-bottom:8px;">App Language</div>
@@ -722,7 +722,7 @@ function renderAuth(){
     ${state.authError ? `<div class="auth-error">${state.authError}</div>` : ''}
     <button class="btn btn-primary btn-block" onclick="${mode==='signup'?'doSignup()':'doLogin()'}">${mode==='signup'?'Create account':'Log in'}</button>
   </div>
-  <div class="footer-note">Accounts are saved on this device/browser only — see the README for what that does and doesn't mean for your data.</div>
+  <div class="footer-note">Accounts are stored in Supabase. Lesson progress is saved on this device.</div>
   `;
 }
 
@@ -751,9 +751,10 @@ async function doSignup(){
       return; 
     }
     
-    saveSession({currentUser: username});
-    state.currentUser = username;
-    state.game = loadGame(username);
+    const usernameKey = (data.user.username || username).toLowerCase();
+    saveSession({currentUser: usernameKey});
+    state.currentUser = usernameKey;
+    state.game = loadGame(usernameKey);
     state.authError = '';
     state.screen = 'pick_language';
     render();
@@ -781,9 +782,10 @@ async function doLogin(){
       return; 
     }
     
-    saveSession({currentUser: username});
-    state.currentUser = username;
-    state.game = loadGame(username);
+    const usernameKey = (data.user.username || username).toLowerCase();
+    saveSession({currentUser: usernameKey});
+    state.currentUser = usernameKey;
+    state.game = loadGame(usernameKey);
     state.authError = '';
     state.screen = 'pick_language';
     render();
