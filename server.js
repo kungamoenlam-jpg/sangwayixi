@@ -181,13 +181,15 @@ function createApp(overrides = {}) {
       }
     }
 
+    console.log('Fallback to file system - creating user:', { email: trimmedEmail, username: trimmedUsername });
+
     const newUser = {
       id: Math.random().toString(36).slice(2, 10) + Date.now().toString(36),
       email: trimmedEmail || null,
-      password: hashPassword(trimmedPassword),
-      name: String(name || '').trim(),
+      password_hash: hashPassword(trimmedPassword),
       username: trimmedUsername,
-      createdAt: new Date().toISOString(),
+      full_name: fullName,
+      created_at: new Date().toISOString(),
     };
 
     users.push(newUser);
@@ -211,41 +213,48 @@ function createApp(overrides = {}) {
 
     const client = await getDbClient();
     if (client) {
-      let result;
-      if (trimmedUsername) {
-        result = await client.query(
-          'select id, email, full_name, username, created_at from public.users where lower(username) = $1 and password_hash = $2',
-          [trimmedUsername.toLowerCase(), hashPassword(trimmedPassword)]
-        );
-      } else {
-        result = await client.query(
-          'select id, email, full_name, username, created_at from public.users where lower(email) = $1 and password_hash = $2',
-          [trimmedEmail, hashPassword(trimmedPassword)]
-        );
-      }
+      try {
+        console.log('Attempting database login for:', trimmedUsername || trimmedEmail);
+        let result;
+        if (trimmedUsername) {
+          result = await client.query(
+            'select id, email, full_name, username, created_at from public.users where lower(username) = $1 and password_hash = $2',
+            [trimmedUsername.toLowerCase(), hashPassword(trimmedPassword)]
+          );
+        } else {
+          result = await client.query(
+            'select id, email, full_name, username, created_at from public.users where lower(email) = $1 and password_hash = $2',
+            [trimmedEmail, hashPassword(trimmedPassword)]
+          );
+        }
 
-      if (!result.rows.length) {
-        return res.status(401).json({ error: 'Invalid username/email or password.' });
-      }
+        if (!result.rows.length) {
+          return res.status(401).json({ error: 'Invalid username/email or password.' });
+        }
 
-      const user = result.rows[0];
-      return res.json({
-        message: 'Login successful.',
-        user: sanitizeUser({
-          id: user.id,
-          email: user.email,
-          name: user.full_name,
-          username: user.username,
-          createdAt: user.created_at,
-        }),
-      });
+        const user = result.rows[0];
+        return res.json({
+          message: 'Login successful.',
+          user: sanitizeUser({
+            id: user.id,
+            email: user.email,
+            name: user.full_name,
+            username: user.username,
+            createdAt: user.created_at,
+          }),
+        });
+      } catch (error) {
+        console.error('Database login error:', error.message);
+        console.log('Falling back to file system auth');
+      }
     }
 
     const users = readUsers();
     const user = users.find((entry) => {
       const matchesUsername = trimmedUsername && String(entry.username || '').trim().toLowerCase() === trimmedUsername.toLowerCase();
       const matchesEmail = trimmedEmail && String(entry.email || '').trim().toLowerCase() === trimmedEmail;
-      return (matchesUsername || matchesEmail) && entry.password === hashPassword(trimmedPassword);
+      const passwordMatches = entry.password_hash === hashPassword(trimmedPassword) || entry.password === hashPassword(trimmedPassword);
+      return (matchesUsername || matchesEmail) && passwordMatches;
     });
 
     if (!user) {
