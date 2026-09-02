@@ -125,12 +125,14 @@ function createApp(overrides = {}) {
 
     if (client) {
       try {
+        console.log('Checking if username exists:', trimmedUsername);
         const usernameCheck = await client.query('select id from public.users where lower(username) = $1', [trimmedUsername.toLowerCase()]);
         if (usernameCheck.rows.length) {
           return res.status(409).json({ error: 'That username is already taken.' });
         }
 
         if (trimmedEmail) {
+          console.log('Checking if email exists:', trimmedEmail);
           const emailCheck = await client.query('select id from public.users where lower(email) = $1', [trimmedEmail]);
           if (emailCheck.rows.length) {
             return res.status(409).json({ error: 'A user with that email already exists.' });
@@ -138,12 +140,15 @@ function createApp(overrides = {}) {
         }
 
         const fullName = String(name || '').trim();
+        const passwordHash = hashPassword(trimmedPassword);
+
+        console.log('Attempting signup with:', { email: trimmedEmail, username: trimmedUsername, fullName });
 
         const result = await client.query(
           `insert into public.users (email, password_hash, full_name, username)
            values ($1, $2, $3, $4)
            returning id, email, full_name, username, created_at`,
-          [trimmedEmail || null, hashPassword(trimmedPassword), fullName, trimmedUsername]
+          [trimmedEmail || null, passwordHash, fullName, trimmedUsername]
         );
 
         const saved = result.rows[0];
@@ -158,7 +163,7 @@ function createApp(overrides = {}) {
           }),
         });
       } catch (error) {
-        console.error('Database signup error:', error.message);
+        console.error('Database signup error:', error);
         return res.status(500).json({ error: 'Database error: ' + error.message });
       }
     }
