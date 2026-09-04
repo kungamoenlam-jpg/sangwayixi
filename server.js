@@ -333,18 +333,18 @@ if (require.main === module) {
     .then((status) => {
       appState.app.listen(port, () => {
         if (status.connected) {
-          console.log(`Sangwa backend running at http://localhost:${port} (Supabase connected)`);
+          console.log(`Yeshe backend running at http://localhost:${port} (Supabase connected)`);
         } else if (appState.DATABASE_URL) {
-          console.log(`Sangwa backend running at http://localhost:${port} (Supabase configured but not ready — using file fallback)`);
+          console.log(`Yeshe backend running at http://localhost:${port} (Supabase configured but not ready — using file fallback)`);
         } else {
-          console.log(`Sangwa backend running at http://localhost:${port} (file storage — set DATABASE_URL for Supabase)`);
+          console.log(`Yeshe backend running at http://localhost:${port} (file storage — set DATABASE_URL for Supabase)`);
         }
       });
     })
     .catch((error) => {
       console.error('Database init failed:', error.message);
       appState.app.listen(port, () => {
-        console.log(`Sangwa backend running at http://localhost:${port} (JSON fallback mode)`);
+        console.log(`Yeshe backend running at http://localhost:${port} (JSON fallback mode)`);
       });
     });
 }

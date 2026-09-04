@@ -1,8 +1,8 @@
 {
-  "name": "sangwa-backend",
+  "name": "yeshe-backend",
   "version": "1.0.0",
   "private": true,
-  "description": "Sangwa app backend with admin panel for viewing signed-up users.",
+  "description": "Yeshe app backend with admin panel for viewing signed-up users.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

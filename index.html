@@ -4,8 +4,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Sangwa · སངས་བ · 桑瓦</title>
-<meta name="description" content="Sangwa — learn English, Chinese and Tibetan through Tibetan. A gamified 40-module route from Base Camp to the Summit.">
+<title>Yeshe · ཡེ་ཤེས་ · 耶喜</title>
+<meta name="description" content="Yeshe — learn English, Chinese and Tibetan through Tibetan. A gamified 40-module route from Base Camp to the Summit.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231B2A47'/%3E%3Cpath d='M15 72 L38 34 L50 52 L60 38 L85 72 Z' fill='%23F3F7FB'/%3E%3Ccircle cx='60' cy='26' r='7' fill='%23E8A33D'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -202,7 +202,7 @@
 
 <script>
 /* =========================================================================
-   SANGWA — data + engine
+   YESHE — data + engine
    Content lives in three places:
      WORDBANK      — one entry per vocabulary item (en / zh / bo + bo_tr / zh_py)
      LESSON_GROUPS — the 10 modules that make up Level 1 ("Base Camp"), fully built
@@ -821,7 +821,7 @@ function topbar(opts){
   opts = opts||{};
   return `
   <div class="topbar">
-    ${opts.back ? `<button class="iconbtn" onclick='${opts.back}'>←</button>` : `<div class="brand"><span>⛰️</span>Sangwa<span class="peak">·</span></div>`}
+    ${opts.back ? `<button class="iconbtn" onclick='${opts.back}'>←</button>` : `<div class="brand"><span>⛰️</span>Yeshe<span class="peak">·</span></div>`}
     <div style="display:flex; gap:8px; align-items:center;">
       <div class="stat" title="${t('dayStreak')}">🔥 ${state.game.streak}</div>
       <div class="stat" title="${t('totalXP')}">⭐ ${state.game.xp}</div>
@@ -856,7 +856,7 @@ function renderAuth(){
   return `
   <div class="home ${cls}" style="padding-top:40px;">
     <div class="hero">
-      <h1>སངས་བ <span style="color:var(--gold)">Sangwa</span></h1>
+      <h1>ཡེ་ཤེས་ <span style="color:var(--gold)">Yeshe</span></h1>
       <div class="sub">${t('heroSub')}</div>
     </div>
     <div style="padding:0 20px; margin-bottom:16px;">
@@ -979,7 +979,7 @@ function doLogout(){
 function renderPickLanguage(){
   return `
   <div class="topbar">
-    <div class="brand"><span>⛰️</span>Sangwa<span class="peak">·</span></div>
+    <div class="brand"><span>⛰️</span>Yeshe<span class="peak">·</span></div>
     <button class="iconbtn" title="${t('logOutTitle')}" onclick="doLogout()">⎋</button>
   </div>
   <div class="home ${appLangClass()}">
@@ -1014,7 +1014,7 @@ function renderPickBoSource(){
   return `
   <div class="topbar">
     <button class="iconbtn" onclick="state.screen='pick_language'; render();">←</button>
-    <div class="brand"><span>⛰️</span>Sangwa<span class="peak">·</span></div>
+    <div class="brand"><span>⛰️</span>Yeshe<span class="peak">·</span></div>
   </div>
   <div class="home ${appLangClass()}">
     <div class="hero">
@@ -1054,7 +1054,7 @@ function renderHome(){
   ${topbar({back:'state.screen="pick_language"; render();'})}
   <div class="home ${appLangClass()}">
     <div class="hero">
-      <h1>སངས་བ <span style="color:var(--gold)">Sangwa</span></h1>
+      <h1>ཡེ་ཤེས་ <span style="color:var(--gold)">Yeshe</span></h1>
       <div class="sub">${t('homeSub')}</div>
     </div>
     <div class="track-grid">${cards}</div>
