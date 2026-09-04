@@ -1,2 +1,5 @@
 # Local environment (Supabase keys, DATABASE_URL, etc.)
 .env
+
+# Test run artifacts
+tests/tmp-data/
