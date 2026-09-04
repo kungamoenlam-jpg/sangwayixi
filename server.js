@@ -116,6 +116,7 @@ function createApp(overrides = {}) {
     const trimmedPassword = String(password || '').trim();
     const trimmedUsername = String(username || '').trim();
     const trimmedEmail = email ? String(email).trim().toLowerCase() : '';
+    const fullName = String(name || '').trim();
 
     if (!trimmedUsername || !trimmedPassword) {
       return res.status(400).json({ error: 'Username and password are required.' });
@@ -139,7 +140,6 @@ function createApp(overrides = {}) {
           }
         }
 
-        const fullName = String(name || '').trim();
         const passwordHash = hashPassword(trimmedPassword);
 
         console.log('Attempting signup with:', { email: trimmedEmail, username: trimmedUsername, fullName });

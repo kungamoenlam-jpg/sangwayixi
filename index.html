@@ -548,6 +548,7 @@ const safeStorage = {
 const HEART_REGEN_MS = 30*60*1000; // 1 heart every 30 min
 const HEARTS_MAX = 5;
 const SESSION_KEY = 'sangwa_session_v1';
+const LANG_KEY = 'sangwa_lang_v1';
 const gameKey = username => 'sangwa_progress_v1__' + username;
 
 // ---- accounts (backend via Supabase API) -------
@@ -593,6 +594,8 @@ function defaultAppState(){
 let state = defaultAppState();
 
 function boot(){
+  const savedLang = safeStorage.get(LANG_KEY);
+  if(savedLang==='en' || savedLang==='zh' || savedLang==='bo') state.appLang = savedLang;
   const sess = loadSession();
   if(sess.currentUser){
     state.currentUser = sess.currentUser;
@@ -601,7 +604,6 @@ function boot(){
     state.screen = 'pick_language';
   } else {
     state.screen = 'auth';
-    state.appLang = 'en';
   }
 }
 boot();
@@ -647,6 +649,170 @@ function touchStreak(){
   state.game.lastActive = today;
 }
 
+// ---- i18n: app chrome (nav, buttons, labels, errors) — NOT lesson content -----
+// Tibetan strings are a best-effort UI translation; flag for native-speaker review,
+// same as the exercise content noted above.
+const I18N = {
+  en: {
+    heroSub: "Create an account to save your progress on this device.",
+    appLanguageLabel: "App Language",
+    tabLogin: "Log In", tabSignup: "Sign Up",
+    labelUsername: "Username", usernamePlaceholder: "e.g. tenzin_k",
+    labelEmail: "Email", optional: "(optional)", emailPlaceholder: "you@example.com",
+    labelPassword: "Password", passwordPlaceholder: "At least 4 characters",
+    labelConfirmPassword: "Confirm Password",
+    btnCreateAccount: "Create account", btnLogIn: "Log in",
+    footerNoteAuth: "Accounts are saved on this device/browser only — see the README for what that does and doesn't mean for your data.",
+    errUsernameLength: "Username must be at least 3 characters.",
+    errUsernameChars: "Username can only use letters, numbers, _ . -",
+    errPasswordLength: "Password must be at least 4 characters.",
+    errPasswordMismatch: "Passwords do not match.",
+    errSignupFailed: "Signup failed", errLoginFailed: "Login failed",
+    errEnterCreds: "Enter your username and password.",
+    errConnection: "Connection error: ",
+    logOutTitle: "Log out",
+    pickLangTitle: "Which language would you like to study?",
+    pickLangWelcome: "Welcome back, {user}. Pick one to jump in — you can switch anytime.",
+    cardEnglishTitle: "English", cardEnglishSub: "Learn English using Tibetan",
+    cardChineseTitle: "中文 (Chinese)", cardChineseSub: "Learn Chinese using Tibetan",
+    cardTibetanTitle: "བོད་སྐད (Tibetan)", cardTibetanSub: "Learn Tibetan using Chinese or English",
+    browseAllBtn: "Browse all 4 courses instead",
+    pickBoSourceSub: "Which language do you already know?",
+    knowChineseTitle: "From Chinese", knowChineseSub: "I know Chinese",
+    knowEnglishTitle: "From English", knowEnglishSub: "I know English",
+    homeSub: "Four routes up the same mountain — choose the language you already speak, and climb a 40-module path toward the one you're learning: words → sentences → conversations → ideas.",
+    modulesDone: "{n} modules done", startArrow: "Start →",
+    myProgress: "⛺ My progress",
+    homeFooter: "Base Camp, Camp I and Camp II (Modules 1–30) are fully playable now. The Summit Push (Modules 31–40) is on the map as the next content drop — every level is open to explore any time, no prerequisites.",
+    comingSoon: "Coming soon", modulesCount: "{n} modules", modulesWord: "modules",
+    lockedBody: "{range}. No exercises here yet — this is the next content drop. Milestone once it's built: {milestone}",
+    backToRoute: "Back to the route",
+    translateEyebrow: "Translate",
+    correctFeedback: "Correct! +10 XP", notQuiteFeedback: "Not quite", answerPrefix: "Answer: ",
+    finishBtn: "Finish", continueBtn: "Continue",
+    checkpointReached: "Checkpoint reached!", xpEarnedLabel: "XP earned",
+    firstTryCorrect: "First-try correct", dayStreak: "Day streak",
+    continueClimbing: "Continue climbing",
+    outOfHearts: "Out of hearts",
+    heartsRefillText: "Hearts refill on their own — about 1 every 30 minutes.",
+    heartsRefillTail: "Come back to keep climbing, or review this module right away with a fresh attempt.",
+    nextHeartIn: "Next heart in ~{n} min.",
+    tryAgainBtn: "Try this module again", backToBaseCamp: "Back to Base Camp",
+    basecampClimber: "Basecamp Climber",
+    signedInAs: "Signed in as {user} · {n} module{s} completed across all routes",
+    totalXP: "Total XP", heartsLabel: "Hearts", nextInM: " · next in ~{n}m",
+    modulesDoneLabel: "Modules done", resetAllProgress: "Reset all progress", logOut: "Log out",
+    resetConfirm: "Reset all XP, streaks and lesson progress for this account? This cannot be undone.",
+  },
+  zh: {
+    heroSub: "创建账户，将学习进度保存在本设备上。",
+    appLanguageLabel: "应用语言",
+    tabLogin: "登录", tabSignup: "注册",
+    labelUsername: "用户名", usernamePlaceholder: "例如 tenzin_k",
+    labelEmail: "邮箱", optional: "(选填)", emailPlaceholder: "you@example.com",
+    labelPassword: "密码", passwordPlaceholder: "至少4个字符",
+    labelConfirmPassword: "确认密码",
+    btnCreateAccount: "创建账户", btnLogIn: "登录",
+    footerNoteAuth: "账户信息仅保存在本设备/浏览器中 — 有关这对你的数据意味着什么，请参阅 README。",
+    errUsernameLength: "用户名至少需要3个字符。",
+    errUsernameChars: "用户名只能使用字母、数字、_ . -",
+    errPasswordLength: "密码至少需要4个字符。",
+    errPasswordMismatch: "两次输入的密码不一致。",
+    errSignupFailed: "注册失败", errLoginFailed: "登录失败",
+    errEnterCreds: "请输入用户名和密码。",
+    errConnection: "连接错误：",
+    logOutTitle: "退出登录",
+    pickLangTitle: "你想学习哪种语言？",
+    pickLangWelcome: "欢迎回来，{user}。选择一项开始学习 — 你可以随时切换。",
+    cardEnglishTitle: "英语", cardEnglishSub: "用藏语学习英语",
+    cardChineseTitle: "中文", cardChineseSub: "用藏语学习中文",
+    cardTibetanTitle: "藏语 (བོད་སྐད)", cardTibetanSub: "用中文或英文学习藏语",
+    browseAllBtn: "浏览全部 4 门课程",
+    pickBoSourceSub: "你已经会哪种语言？",
+    knowChineseTitle: "从中文", knowChineseSub: "我会中文",
+    knowEnglishTitle: "从英文", knowEnglishSub: "我会英文",
+    homeSub: "同一座山，四条路线 — 选择你已经会说的语言，沿着40个单元攀登，学习一门新语言：单词 → 句子 → 对话 → 思想。",
+    modulesDone: "已完成 {n} 个单元", startArrow: "开始 →",
+    myProgress: "⛺ 我的进度",
+    homeFooter: "大本营、一号营地和二号营地（第1–30单元）现已全部开放。冲顶阶段（第31–40单元）是下一次内容更新 — 任何等级都可随时探索，没有先修要求。",
+    comingSoon: "即将推出", modulesCount: "{n} 个单元", modulesWord: "个单元",
+    lockedBody: "{range}。此处暂无练习 — 这是下一次内容更新。建成后的里程碑：{milestone}",
+    backToRoute: "返回路线",
+    translateEyebrow: "翻译",
+    correctFeedback: "回答正确！+10 经验值", notQuiteFeedback: "不太对", answerPrefix: "答案：",
+    finishBtn: "完成", continueBtn: "继续",
+    checkpointReached: "到达检查点！", xpEarnedLabel: "获得经验值",
+    firstTryCorrect: "首次正确率", dayStreak: "连续天数",
+    continueClimbing: "继续攀登",
+    outOfHearts: "生命值用完了",
+    heartsRefillText: "生命值会自动恢复 — 大约每30分钟恢复1个。",
+    heartsRefillTail: "回来继续攀登，或立即重新挑战这个单元。",
+    nextHeartIn: "下一个生命值约 {n} 分钟后恢复。",
+    tryAgainBtn: "重新尝试此单元", backToBaseCamp: "返回大本营",
+    basecampClimber: "大本营攀登者",
+    signedInAs: "以 {user} 身份登录 · 所有路线共完成 {n} 个单元",
+    totalXP: "总经验值", heartsLabel: "生命值", nextInM: " · 约{n}分钟后恢复",
+    modulesDoneLabel: "已完成单元", resetAllProgress: "重置全部进度", logOut: "退出登录",
+    resetConfirm: "确定要重置此账户的全部经验值、连续天数和课程进度吗？此操作无法撤销。",
+  },
+  bo: {
+    heroSub: "འཕྲུལ་ཆས་འདིའི་ནང་ཁྱེད་ཀྱི་ཡར་རྒྱས་ཉར་ཚགས་བྱེད་ཆེད་རྩིས་ཐོ་ཞིག་གསར་སྐྲུན་གྱིས།",
+    appLanguageLabel: "འཕྲུལ་ཆས་ཀྱི་སྐད་ཡིག",
+    tabLogin: "ནང་འཛུལ", tabSignup: "ཐོ་འགོད",
+    labelUsername: "སྤྱོད་མིང་", usernamePlaceholder: "དཔེར་ན tenzin_k",
+    labelEmail: "གློག་འཕྲིན་", optional: "(དགོས་མཁོ་མེད)", emailPlaceholder: "you@example.com",
+    labelPassword: "གསང་ཚིག", passwordPlaceholder: "ཡིག་འབྲུ་4ལས་མི་ཉུང་བ",
+    labelConfirmPassword: "གསང་ཚིག་ཡང་བསྐྱར་འཇུག",
+    btnCreateAccount: "རྩིས་ཐོ་གསར་སྐྲུན", btnLogIn: "ནང་འཛུལ",
+    footerNoteAuth: "རྩིས་ཐོ་ནི་འཕྲུལ་ཆས་འདིའི་ནང་གཅིག་པུར་ཉར་ཡོད། ཁྱེད་ཀྱི་གནས་ཚུལ་ལ་དོན་དག་གང་ཡིན་མིན་ལ་ README ལ་གཟིགས་རོགས།",
+    errUsernameLength: "སྤྱོད་མིང་ལ་ཡིག་འབྲུ་3ལས་མི་ཉུང་བ་དགོས།",
+    errUsernameChars: "སྤྱོད་མིང་ལ་ཡིག་འབྲུ་(a-z), ཨང་ཀི, _ . - འདི་དག་གཅིག་པུ་བེད་སྤྱོད་ཆོག",
+    errPasswordLength: "གསང་ཚིག་ལ་ཡིག་འབྲུ་4ལས་མི་ཉུང་བ་དགོས།",
+    errPasswordMismatch: "གསང་ཚིག་གཉིས་མི་མཐུན།",
+    errSignupFailed: "ཐོ་འགོད་མ་གྲུབ།", errLoginFailed: "ནང་འཛུལ་མ་གྲུབ།",
+    errEnterCreds: "སྤྱོད་མིང་དང་གསང་ཚིག་འཇུག་རོགས།",
+    errConnection: "མཐུད་ལམ་ནོར་འཁྲུལ། ",
+    logOutTitle: "ཕྱིར་འཐོན",
+    pickLangTitle: "ཁྱེད་ཀྱིས་སྐད་ཡིག་གང་སློབ་སྦྱོང་བྱེད་འདོད་དམ།",
+    pickLangWelcome: "ཡང་བསྐྱར་ཕེབས་པར་དགའ་བསུ་ཞུ། {user} ལགས། གཅིག་འདེམས་ནས་འགོ་འཛུགས་གྱིས — ནམ་ཡང་བརྗེ་ཆོག",
+    cardEnglishTitle: "དབྱིན་ཇི།", cardEnglishSub: "བོད་སྐད་བརྒྱུད་དབྱིན་ཇི་སློབ་སྦྱོང་",
+    cardChineseTitle: "རྒྱ་སྐད (中文)", cardChineseSub: "བོད་སྐད་བརྒྱུད་རྒྱ་སྐད་སློབ་སྦྱོང་",
+    cardTibetanTitle: "བོད་སྐད", cardTibetanSub: "རྒྱ་སྐད་དམ་དབྱིན་ཇི་བརྒྱུད་བོད་སྐད་སློབ་སྦྱོང་",
+    browseAllBtn: "སློབ་ཚན་4ཀ་ཆར་ལ་བལྟ།",
+    pickBoSourceSub: "ཁྱེད་ཀྱིས་སྐད་ཡིག་གང་ཤེས་ཡོད་དམ།",
+    knowChineseTitle: "རྒྱ་སྐད་ནས།", knowChineseSub: "ང་ལ་རྒྱ་སྐད་ཤེས།",
+    knowEnglishTitle: "དབྱིན་ཇིའི་ནས།", knowEnglishSub: "ང་ལ་དབྱིན་ཇི་ཤེས།",
+    homeSub: "རི་བོ་གཅིག་ལ་ལམ་བཞི། ད་ལྟ་ཤེས་པའི་སྐད་ཡིག་འདེམས་ནས་, ཚན་པ་40ཡི་ལམ་ནས་སྐད་ཡིག་གསར་པ་ཞིག་སློབ་སྦྱོང་གྱིས: ཚིག → ཚིག་གྲུབ → གླེང་མོལ → བསམ་ཚུལ།",
+    modulesDone: "ཚན་པ་{n}གྲུབ་ཟིན།", startArrow: "འགོ་འཛུགས →",
+    myProgress: "⛺ ངའི་ཡར་རྒྱས།",
+    homeFooter: "རྩ་གནས་སྒར་དང་སྒར་དང་པོ, སྒར་གཉིས་པ (ཚན་པ 1–30) ད་ལྟ་ཡོངས་སུ་སྐྱོན་ཐུབ། རྩེ་མོར་འཛེགས་པ (ཚན་པ 31–40) ནི་རྗེས་མའི་ནང་དོན་ཡིན། གནས་རིམ་ཚང་མ་ནམ་ཡང་བརྟག་དཔྱད་བྱེད་ཆོག, སྔོན་འགྲོའི་དགོས་མཁོ་མེད།",
+    comingSoon: "མ་འོངས་པར་འབྱོར་འོང་།", modulesCount: "ཚན་པ་{n}།", modulesWord: "ཚན་པ།",
+    lockedBody: "{range}། འདིར་ད་དུང་ལག་རྩལ་སྦྱོང་བརྡར་མེད། འདི་ནི་རྗེས་མའི་ནང་དོན་ཡིན། བཟོས་ཟིན་རྗེས་ཀྱི་དོན་ཚན: {milestone}",
+    backToRoute: "ལམ་ལ་ལོག",
+    translateEyebrow: "སྒྱུར།",
+    correctFeedback: "ལེགས་སོ! +10 XP", notQuiteFeedback: "འདི་མིན།", answerPrefix: "ལན། ",
+    finishBtn: "མཇུག", continueBtn: "མུ་མཐུད།",
+    checkpointReached: "ཚད་གནས་སླེབས་སོང་།", xpEarnedLabel: "XP ཐོབ་པ།",
+    firstTryCorrect: "ཐེངས་དང་པོར་ལེགས་པ།", dayStreak: "ཉིན་གྲངས་རྒྱུན་མཐུད།",
+    continueClimbing: "འཛེགས་བཞིན་མུ་མཐུད།",
+    outOfHearts: "སྙིང་ཏིག་ཟད་སོང་།",
+    heartsRefillText: "སྙིང་ཏིག་རང་འགུལ་གྱིས་ཡང་བསྐྱར་གང་འགྱུར། སྐར་མ་30རེར་1རེ་འཕར།",
+    heartsRefillTail: "ཡང་བསྐྱར་ཕེབས་ནས་འཛེགས་མུ་མཐུད་གྱིས། ཡང་ན་ཚན་པ་འདི་ད་ལྟ་ཉིད་ནས་ཡང་བསྐྱར་ཚོད་ལྟ་གྱིས།",
+    nextHeartIn: "སྙིང་ཏིག་རྗེས་མ་སྐར་མ་~{n}ནང་འབྱོར།",
+    tryAgainBtn: "ཚན་པ་འདི་ཡང་བསྐྱར་ཚོད་ལྟ།", backToBaseCamp: "རྩ་གནས་སྒར་ལ་ལོག",
+    basecampClimber: "རྩ་གནས་སྒར་གྱི་འཛེགས་མཁན།",
+    signedInAs: "{user}གི་མིང་ཐོག་ནང་འཛུལ་བྱས་ཡོད། ལམ་ཚང་མའི་ཐོག་ཚན་པ་{n}གྲུབ་ཟིན།",
+    totalXP: "XP བསྡོམས།", heartsLabel: "སྙིང་ཏིག", nextInM: " · སྐར་མ་~{n}ནང་འབྱོར",
+    modulesDoneLabel: "ཚན་པ་གྲུབ་ཟིན།", resetAllProgress: "ཡར་རྒྱས་ཚང་མ་སླར་གསོ།", logOut: "ཕྱིར་འཐོན",
+    resetConfirm: "རྩིས་ཐོ་འདིའི་XP, ཉིན་གྲངས་རྒྱུན་མཐུད་དང་སློབ་ཚན་ཡར་རྒྱས་ཚང་མ་སླར་གསོ་བྱེད་དམ། འདི་ཕྱིར་ལོག་མི་ཐུབ།",
+  },
+};
+function t(key, vars){
+  let s = (I18N[state.appLang] && I18N[state.appLang][key]) || I18N.en[key] || key;
+  if(vars) Object.keys(vars).forEach(k=>{ s = s.split('{'+k+'}').join(vars[k]); });
+  return s;
+}
+
 // ---- rendering ----------------------------------------------------------------
 const app = document.getElementById('app');
 function render(){ app.innerHTML = screens[state.screen](); if(state.currentUser) saveGame(); }
@@ -657,9 +823,9 @@ function topbar(opts){
   <div class="topbar">
     ${opts.back ? `<button class="iconbtn" onclick='${opts.back}'>←</button>` : `<div class="brand"><span>⛰️</span>Sangwa<span class="peak">·</span></div>`}
     <div style="display:flex; gap:8px; align-items:center;">
-      <div class="stat" title="Day streak">🔥 ${state.game.streak}</div>
-      <div class="stat" title="Total XP">⭐ ${state.game.xp}</div>
-      <button class="iconbtn" title="Hearts" onclick="goProfile()">${state.game.hearts<=1?'💔':'❤️'} ${state.game.hearts}</button>
+      <div class="stat" title="${t('dayStreak')}">🔥 ${state.game.streak}</div>
+      <div class="stat" title="${t('totalXP')}">⭐ ${state.game.xp}</div>
+      <button class="iconbtn" title="${t('heartsLabel')}" onclick="goProfile()">${state.game.hearts<=1?'💔':'❤️'} ${state.game.hearts}</button>
     </div>
   </div>`;
 }
@@ -681,48 +847,52 @@ const screens = {
 // ---- auth screens -------------------------------------------------------------
 function setAuthMode(mode){ state.authMode = mode; state.authError=''; render(); }
 
+function setAppLang(lang){ state.appLang = lang; safeStorage.set(LANG_KEY, lang); render(); }
+function appLangClass(){ return state.appLang==='bo' ? 'lang-bo' : state.appLang==='zh' ? 'lang-zh' : ''; }
+
 function renderAuth(){
   const mode = state.authMode;
+  const cls = appLangClass();
   return `
-  <div class="home" style="padding-top:40px;">
+  <div class="home ${cls}" style="padding-top:40px;">
     <div class="hero">
       <h1>སངས་བ <span style="color:var(--gold)">Sangwa</span></h1>
-      <div class="sub">Create an account to save your progress on this device.</div>
+      <div class="sub">${t('heroSub')}</div>
     </div>
     <div style="padding:0 20px; margin-bottom:16px;">
-      <div style="font-size:12px; color:var(--snow-dim); font-weight:600; margin-bottom:8px;">App Language</div>
+      <div style="font-size:12px; color:var(--snow-dim); font-weight:600; margin-bottom:8px;">${t('appLanguageLabel')}</div>
       <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
-        <button class="btn ${state.appLang==='en'?'btn-primary':'btn-ghost'}" style="font-size:13px;" onclick="state.appLang='en'; render();">English</button>
-        <button class="btn ${state.appLang==='zh'?'btn-primary':'btn-ghost'}" style="font-size:13px;" onclick="state.appLang='zh'; render();">中文</button>
-        <button class="btn ${state.appLang==='bo'?'btn-primary':'btn-ghost'}" style="font-size:13px;" onclick="state.appLang='bo'; render();">བོད་སྐད</button>
+        <button class="btn ${state.appLang==='en'?'btn-primary':'btn-ghost'}" style="font-size:13px;" onclick="setAppLang('en')">English</button>
+        <button class="btn ${state.appLang==='zh'?'btn-primary':'btn-ghost'}" style="font-size:13px;" onclick="setAppLang('zh')">中文</button>
+        <button class="btn lang-bo ${state.appLang==='bo'?'btn-primary':'btn-ghost'}" style="font-size:13px;" onclick="setAppLang('bo')">བོད་སྐད</button>
       </div>
     </div>
     <div class="auth-tabs">
-      <button class="auth-tab ${mode==='login'?'active':''}" onclick="setAuthMode('login')">Log In</button>
-      <button class="auth-tab ${mode==='signup'?'active':''}" onclick="setAuthMode('signup')">Sign Up</button>
+      <button class="auth-tab ${mode==='login'?'active':''}" onclick="setAuthMode('login')">${t('tabLogin')}</button>
+      <button class="auth-tab ${mode==='signup'?'active':''}" onclick="setAuthMode('signup')">${t('tabSignup')}</button>
     </div>
     <div class="field">
-      <label>Username</label>
-      <input id="auth_username" type="text" autocomplete="username" placeholder="e.g. tenzin_k">
+      <label>${t('labelUsername')}</label>
+      <input id="auth_username" type="text" autocomplete="username" placeholder="${t('usernamePlaceholder')}">
     </div>
     ${mode==='signup' ? `
     <div class="field">
-      <label>Email <span style="color:var(--snow-dim); font-weight:400;">(optional)</span></label>
-      <input id="auth_email" type="email" autocomplete="email" placeholder="you@example.com">
+      <label>${t('labelEmail')} <span style="color:var(--snow-dim); font-weight:400;">${t('optional')}</span></label>
+      <input id="auth_email" type="email" autocomplete="email" placeholder="${t('emailPlaceholder')}">
     </div>` : ''}
     <div class="field">
-      <label>Password</label>
-      <input id="auth_password" type="password" autocomplete="${mode==='signup'?'new-password':'current-password'}" placeholder="At least 4 characters">
+      <label>${t('labelPassword')}</label>
+      <input id="auth_password" type="password" autocomplete="${mode==='signup'?'new-password':'current-password'}" placeholder="${t('passwordPlaceholder')}">
     </div>
     ${mode==='signup' ? `
     <div class="field">
-      <label>Confirm Password</label>
+      <label>${t('labelConfirmPassword')}</label>
       <input id="auth_password2" type="password">
     </div>` : ''}
     ${state.authError ? `<div class="auth-error">${state.authError}</div>` : ''}
-    <button class="btn btn-primary btn-block" onclick="${mode==='signup'?'doSignup()':'doLogin()'}">${mode==='signup'?'Create account':'Log in'}</button>
+    <button class="btn btn-primary btn-block" onclick="${mode==='signup'?'doSignup()':'doLogin()'}">${mode==='signup'?t('btnCreateAccount'):t('btnLogIn')}</button>
   </div>
-  <div class="footer-note">Accounts are saved on this device/browser only — see the README for what that does and doesn't mean for your data.</div>
+  <div class="footer-note">${t('footerNoteAuth')}</div>
   `;
 }
 
@@ -733,11 +903,11 @@ async function doSignup(){
   const email = readVal('auth_email');
   const password = readVal('auth_password');
   const password2 = readVal('auth_password2');
-  if(!username || username.length<3){ state.authError='Username must be at least 3 characters.'; render(); return; }
-  if(!/^[a-zA-Z0-9_.-]+$/.test(username)){ state.authError='Username can only use letters, numbers, _ . -'; render(); return; }
-  if(!password || password.length<4){ state.authError='Password must be at least 4 characters.'; render(); return; }
-  if(password!==password2){ state.authError='Passwords do not match.'; render(); return; }
-  
+  if(!username || username.length<3){ state.authError=t('errUsernameLength'); render(); return; }
+  if(!/^[a-zA-Z0-9_.-]+$/.test(username)){ state.authError=t('errUsernameChars'); render(); return; }
+  if(!password || password.length<4){ state.authError=t('errPasswordLength'); render(); return; }
+  if(password!==password2){ state.authError=t('errPasswordMismatch'); render(); return; }
+
   try {
     const res = await fetch('/api/signup', {
       method: 'POST',
@@ -745,12 +915,12 @@ async function doSignup(){
       body: JSON.stringify({username, email: email||null, password, name:''})
     });
     const data = await res.json();
-    if(!res.ok){ 
-      state.authError = (data.error || 'Signup failed') + (data.details ? ' — ' + data.details : '');
-      render(); 
-      return; 
+    if(!res.ok){
+      state.authError = (data.error || t('errSignupFailed')) + (data.details ? ' — ' + data.details : '');
+      render();
+      return;
     }
-    
+
     saveSession({currentUser: username});
     state.currentUser = username;
     state.game = loadGame(username);
@@ -758,7 +928,7 @@ async function doSignup(){
     state.screen = 'pick_language';
     render();
   } catch(e) {
-    state.authError = 'Connection error: ' + e.message;
+    state.authError = t('errConnection') + e.message;
     render();
   }
 }
@@ -766,8 +936,8 @@ async function doSignup(){
 async function doLogin(){
   const username = readVal('auth_username');
   const password = readVal('auth_password');
-  if(!username || !password){ state.authError='Enter your username and password.'; render(); return; }
-  
+  if(!username || !password){ state.authError=t('errEnterCreds'); render(); return; }
+
   try {
     const res = await fetch('/api/login', {
       method: 'POST',
@@ -775,12 +945,12 @@ async function doLogin(){
       body: JSON.stringify({username, password})
     });
     const data = await res.json();
-    if(!res.ok){ 
-      state.authError = (data.error || 'Login failed') + (data.details ? ' — ' + data.details : '');
-      render(); 
-      return; 
+    if(!res.ok){
+      state.authError = (data.error || t('errLoginFailed')) + (data.details ? ' — ' + data.details : '');
+      render();
+      return;
     }
-    
+
     saveSession({currentUser: username});
     state.currentUser = username;
     state.game = loadGame(username);
@@ -788,14 +958,16 @@ async function doLogin(){
     state.screen = 'pick_language';
     render();
   } catch(e) {
-    state.authError = 'Connection error: ' + e.message;
+    state.authError = t('errConnection') + e.message;
     render();
   }
 }
 
 function doLogout(){
   saveSession({currentUser:null, token:null});
+  const lang = state.appLang;
   state = defaultAppState();
+  state.appLang = lang;
   state.screen = 'auth';
   state.authMode = 'login';
   render();
@@ -806,28 +978,28 @@ function renderPickLanguage(){
   return `
   <div class="topbar">
     <div class="brand"><span>⛰️</span>Sangwa<span class="peak">·</span></div>
-    <button class="iconbtn" title="Log out" onclick="doLogout()">⎋</button>
+    <button class="iconbtn" title="${t('logOutTitle')}" onclick="doLogout()">⎋</button>
   </div>
-  <div class="home">
+  <div class="home ${appLangClass()}">
     <div class="hero">
-      <h1>Which language would you like to study?</h1>
-      <div class="sub">Welcome back, ${state.currentUser}. Pick one to jump in — you can switch anytime.</div>
+      <h1>${t('pickLangTitle')}</h1>
+      <div class="sub">${t('pickLangWelcome', {user: state.currentUser})}</div>
     </div>
     <div class="track-grid">
       <button class="track-card" onclick="chooseLanguage('en')">
         <div class="glyph">🇬🇧</div>
-        <div><div class="tc-title">English</div><div class="tc-sub">Learn English using Tibetan</div></div>
+        <div><div class="tc-title">${t('cardEnglishTitle')}</div><div class="tc-sub">${t('cardEnglishSub')}</div></div>
       </button>
       <button class="track-card" onclick="chooseLanguage('zh')">
         <div class="glyph">🇨🇳</div>
-        <div><div class="tc-title">中文 (Chinese)</div><div class="tc-sub">Learn Chinese using Tibetan</div></div>
+        <div><div class="tc-title">${t('cardChineseTitle')}</div><div class="tc-sub">${t('cardChineseSub')}</div></div>
       </button>
       <button class="track-card" onclick="chooseLanguage('bo')">
         <div class="glyph">⛰️</div>
-        <div><div class="tc-title lang-bo">བོད་སྐད (Tibetan)</div><div class="tc-sub">Learn Tibetan using Chinese or English</div></div>
+        <div><div class="tc-title lang-bo">${t('cardTibetanTitle')}</div><div class="tc-sub">${t('cardTibetanSub')}</div></div>
       </button>
     </div>
-    <button class="btn btn-ghost btn-block" onclick="goHome()">Browse all 4 courses instead</button>
+    <button class="btn btn-ghost btn-block" onclick="goHome()">${t('browseAllBtn')}</button>
   </div>`;
 }
 
@@ -842,51 +1014,51 @@ function renderPickBoSource(){
     <button class="iconbtn" onclick="state.screen='pick_language'; render();">←</button>
     <div class="brand"><span>⛰️</span>Sangwa<span class="peak">·</span></div>
   </div>
-  <div class="home">
+  <div class="home ${appLangClass()}">
     <div class="hero">
       <h1 class="lang-bo">བོད་སྐད</h1>
-      <div class="sub">Which language do you already know?</div>
+      <div class="sub">${t('pickBoSourceSub')}</div>
     </div>
     <div class="track-grid">
       <button class="track-card" onclick="openTrack('bo_zh')">
         <div class="glyph">🇨🇳</div>
-        <div><div class="tc-title">从中文学习</div><div class="tc-sub">I know Chinese</div></div>
+        <div><div class="tc-title">${t('knowChineseTitle')}</div><div class="tc-sub">${t('knowChineseSub')}</div></div>
       </button>
       <button class="track-card" onclick="openTrack('bo_en')">
         <div class="glyph">🇬🇧</div>
-        <div><div class="tc-title">From English</div><div class="tc-sub">I know English</div></div>
+        <div><div class="tc-title">${t('knowEnglishTitle')}</div><div class="tc-sub">${t('knowEnglishSub')}</div></div>
       </button>
     </div>
   </div>`;
 }
 
 function renderHome(){
-  const cards = TRACKS.map(t=>{
-    const p = trackProgress(t.id);
+  const cards = TRACKS.map(track=>{
+    const p = trackProgress(track.id);
     const doneCount = Object.keys(p.completed).length;
     return `
-    <button class="track-card" onclick="openTrack('${t.id}')">
-      <div class="glyph">${t.glyph}</div>
+    <button class="track-card" onclick="openTrack('${track.id}')">
+      <div class="glyph">${track.glyph}</div>
       <div>
-        <div class="tc-title">${t.title}</div>
-        <div class="tc-native ${scriptClass(t.nativeScript)}">${t.native}</div>
-        <div class="tc-sub">${t.tagline}</div>
+        <div class="tc-title">${track.title}</div>
+        <div class="tc-native ${scriptClass(track.nativeScript)}">${track.native}</div>
+        <div class="tc-sub">${track.tagline}</div>
       </div>
-      <div class="tc-progress">${doneCount ? doneCount+' modules done' : 'Start →'}</div>
+      <div class="tc-progress">${doneCount ? t('modulesDone',{n:doneCount}) : t('startArrow')}</div>
     </button>`;
   }).join('');
 
   return `
   ${topbar({back:'state.screen="pick_language"; render();'})}
-  <div class="home">
+  <div class="home ${appLangClass()}">
     <div class="hero">
       <h1>སངས་བ <span style="color:var(--gold)">Sangwa</span></h1>
-      <div class="sub">Four routes up the same mountain — choose the language you already speak, and climb a 40-module path toward the one you're learning: words → sentences → conversations → ideas.</div>
+      <div class="sub">${t('homeSub')}</div>
     </div>
     <div class="track-grid">${cards}</div>
-    <button class="btn btn-ghost btn-block" onclick="goProfile()">⛺ My progress</button>
+    <button class="btn btn-ghost btn-block" onclick="goProfile()">${t('myProgress')}</button>
   </div>
-  <div class="footer-note">Base Camp, Camp I and Camp II (Modules 1–30) are fully playable now. The Summit Push (Modules 31–40) is on the map as the next content drop — every level is open to explore any time, no prerequisites.</div>
+  <div class="footer-note">${t('homeFooter')}</div>
   `;
 }
 
@@ -895,7 +1067,7 @@ function renderMap(){
   const blocks = LEVELS.map((lvl, idx)=>{
     const stats = lvl.built ? levelStats(track.id, idx) : {done:0,total:0};
     const nodeClass = (lvl.built && stats.done===stats.total) ? 'done' : '';
-    const sub = lvl.built ? `${stats.done}/${stats.total} modules` : 'Coming soon';
+    const sub = lvl.built ? `${stats.done}/${stats.total} ${t('modulesWord')}` : t('comingSoon');
     return `
     <div class="world-block">
       <div class="world-title">${lvl.icon} ${lvl.title}</div>
@@ -937,13 +1109,13 @@ function renderWorldLocked(){
     </div>`).join('');
   return `
   ${topbar({back:'openTrack("'+track.id+'")'})}
-  <div class="home">
+  <div class="home ${appLangClass()}">
     <div class="locked-panel">
       <h3>${lvl.icon} ${lvl.title} — ${lvl.subtitle}</h3>
-      <p>${lvl.range}. No exercises here yet — this is the next content drop. Milestone once it's built: <em>${lvl.milestone}</em></p>
+      <p>${t('lockedBody', {range: lvl.range, milestone: ''})}<em>${lvl.milestone}</em></p>
       <div style="margin-top:14px;">${items}</div>
     </div>
-    <button class="btn btn-primary btn-block" onclick="openTrack('${track.id}')">Back to the route</button>
+    <button class="btn btn-primary btn-block" onclick="openTrack('${track.id}')">${t('backToRoute')}</button>
   </div>`;
 }
 
@@ -966,7 +1138,7 @@ function renderLessonList(){
   <div class="map-wrap">
     <div style="text-align:center; padding:6px 20px 0;">
       <h2 style="font-size:20px;">${lvl.icon} ${lvl.title}</h2>
-      <div style="color:var(--snow-dim); font-size:13px; margin-top:4px;">${lvl.subtitle} · ${lvl.modules.length} modules</div>
+      <div style="color:var(--snow-dim); font-size:13px; margin-top:4px;">${lvl.subtitle} · ${lvl.modules.length} ${t('modulesWord')}</div>
     </div>
     <div class="map-scroll"><div class="route">${nodes}</div></div>
   </div>`;
@@ -1009,10 +1181,10 @@ function renderLesson(){
   const feedback = s.answered ? `
     <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
       <div class="fb-text">
-        <div class="fb-title">${s.lastCorrect? 'Correct! +10 XP' : 'Not quite'}</div>
-        ${!s.lastCorrect ? `<div class="fb-sub">Answer: ${q.options.find(o=>o.correct).text}</div>` : ''}
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback') : t('notQuiteFeedback')}</div>
+        ${!s.lastCorrect ? `<div class="fb-sub">${t('answerPrefix')}${q.options.find(o=>o.correct).text}</div>` : ''}
       </div>
-      <button class="btn btn-light" onclick="nextQuestion()">${s.qIndex+1>=total ? 'Finish':'Continue'}</button>
+      <button class="btn btn-light" onclick="nextQuestion()">${s.qIndex+1>=total ? t('finishBtn'):t('continueBtn')}</button>
     </div>` : '';
 
   return `
@@ -1025,7 +1197,7 @@ function renderLesson(){
     </div>
     <div class="q-wrap">
       <div class="q-card">
-        <div class="q-eyebrow">Translate</div>
+        <div class="q-eyebrow">${t('translateEyebrow')}</div>
         <div class="q-prompt ${scriptClass(q.promptLang)} ${q.prompt.length>20?'long':''}">${q.prompt}</div>
         ${q.promptSub?`<div class="q-translit">${q.promptSub}</div>`:''}
       </div>
@@ -1080,16 +1252,16 @@ function renderComplete(){
   const stars = trackProgress(s.trackId).completed[lessonKey(s.worldIdx,s.groupKey)];
   return `
   ${topbar()}
-  <div class="complete">
+  <div class="complete ${appLangClass()}">
     <div class="medal">${stars===3?'🏆':stars===2?'🥈':'🥉'}</div>
-    <h2>Checkpoint reached!</h2>
+    <h2>${t('checkpointReached')}</h2>
     <div class="stars-final">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
     <div class="stat-row">
-      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">XP earned</div></div>
-      <div class="stat-box"><div class="val">${total-s.mistakes}/${total}</div><div class="lab">First-try correct</div></div>
-      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">Day streak</div></div>
+      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
+      <div class="stat-box"><div class="val">${total-s.mistakes}/${total}</div><div class="lab">${t('firstTryCorrect')}</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
     </div>
-    <button class="btn btn-primary btn-block" onclick="backToLessonList()">Continue climbing</button>
+    <button class="btn btn-primary btn-block" onclick="backToLessonList()">${t('continueClimbing')}</button>
   </div>`;
 }
 
@@ -1097,12 +1269,12 @@ function renderOutOfHearts(){
   const eta = nextHeartEta();
   return `
   ${topbar()}
-  <div class="complete">
+  <div class="complete ${appLangClass()}">
     <div class="medal">💔</div>
-    <h2>Out of hearts</h2>
-    <p style="color:var(--snow-dim); max-width:280px;">Hearts refill on their own — about 1 every 30 minutes. ${eta?`Next heart in ~${eta} min.`:''} Come back to keep climbing, or review this module right away with a fresh attempt.</p>
-    <button class="btn btn-primary btn-block" onclick="retrySameLesson()">Try this module again</button>
-    <button class="btn btn-ghost btn-block" onclick="backToLessonList()">Back to Base Camp</button>
+    <h2>${t('outOfHearts')}</h2>
+    <p style="color:var(--snow-dim); max-width:280px;">${t('heartsRefillText')} ${eta?t('nextHeartIn',{n:eta}):''} ${t('heartsRefillTail')}</p>
+    <button class="btn btn-primary btn-block" onclick="retrySameLesson()">${t('tryAgainBtn')}</button>
+    <button class="btn btn-ghost btn-block" onclick="backToLessonList()">${t('backToBaseCamp')}</button>
   </div>`;
 }
 function retrySameLesson(){
@@ -1118,24 +1290,24 @@ function renderProfile(){
   const eta = nextHeartEta();
   return `
   ${topbar({back:'goHome()'})}
-  <div class="profile">
+  <div class="profile ${appLangClass()}">
     <div class="profile-card" style="text-align:center;">
       <div style="font-size:40px;">🏔️</div>
-      <h2 style="margin-top:6px;">Basecamp Climber</h2>
-      <div style="color:var(--snow-dim); font-size:13px; margin-top:2px;">Signed in as <strong>${state.currentUser}</strong> · ${totalDone} module${totalDone===1?'':'s'} completed across all routes</div>
+      <h2 style="margin-top:6px;">${t('basecampClimber')}</h2>
+      <div style="color:var(--snow-dim); font-size:13px; margin-top:2px;">${t('signedInAs', {user: '<strong>'+state.currentUser+'</strong>', n: totalDone, s: totalDone===1?'':'s'})}</div>
     </div>
     <div class="profile-grid">
-      <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">⭐ ${state.game.xp}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">Total XP</div></div>
-      <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">🔥 ${state.game.streak}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">Day streak</div></div>
-      <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">${state.game.hearts}/${HEARTS_MAX}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">Hearts${eta?` · next in ~${eta}m`:''}</div></div>
-      <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">${totalDone}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">Modules done</div></div>
+      <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">⭐ ${state.game.xp}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">${t('totalXP')}</div></div>
+      <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">🔥 ${state.game.streak}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">${t('dayStreak')}</div></div>
+      <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">${state.game.hearts}/${HEARTS_MAX}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">${t('heartsLabel')}${eta?t('nextInM',{n:eta}):''}</div></div>
+      <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">${totalDone}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">${t('modulesDoneLabel')}</div></div>
     </div>
-    <button class="btn btn-ghost btn-block" onclick="resetProgress()">Reset all progress</button>
-    <button class="btn btn-ghost btn-block" onclick="doLogout()">Log out</button>
+    <button class="btn btn-ghost btn-block" onclick="resetProgress()">${t('resetAllProgress')}</button>
+    <button class="btn btn-ghost btn-block" onclick="doLogout()">${t('logOut')}</button>
   </div>`;
 }
 function resetProgress(){
-  if(!confirm('Reset all XP, streaks and lesson progress for this account? This cannot be undone.')) return;
+  if(!confirm(t('resetConfirm'))) return;
   state.game = defaultGame();
   saveGame();
   render();
