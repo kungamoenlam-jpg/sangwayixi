@@ -654,7 +654,7 @@ function touchStreak(){
 // same as the exercise content noted above.
 const I18N = {
   en: {
-    heroSub: "Create an account to save your progress on this device.",
+    heroSub: "Create an account to save your progress across devices.",
     appLanguageLabel: "App Language",
     tabLogin: "Log In", tabSignup: "Sign Up",
     labelUsername: "Username", usernamePlaceholder: "e.g. tenzin_k",
@@ -662,7 +662,7 @@ const I18N = {
     labelPassword: "Password", passwordPlaceholder: "At least 4 characters",
     labelConfirmPassword: "Confirm Password",
     btnCreateAccount: "Create account", btnLogIn: "Log in",
-    footerNoteAuth: "Accounts are saved on this device/browser only — see the README for what that does and doesn't mean for your data.",
+    footerNoteAuth: "Accounts are stored in Supabase. Lesson progress is saved on this device.",
     errUsernameLength: "Username must be at least 3 characters.",
     errUsernameChars: "Username can only use letters, numbers, _ . -",
     errPasswordLength: "Password must be at least 4 characters.",
@@ -705,7 +705,7 @@ const I18N = {
     resetConfirm: "Reset all XP, streaks and lesson progress for this account? This cannot be undone.",
   },
   zh: {
-    heroSub: "创建账户，将学习进度保存在本设备上。",
+    heroSub: "创建账户，在所有设备上保存你的学习进度。",
     appLanguageLabel: "应用语言",
     tabLogin: "登录", tabSignup: "注册",
     labelUsername: "用户名", usernamePlaceholder: "例如 tenzin_k",
@@ -713,7 +713,7 @@ const I18N = {
     labelPassword: "密码", passwordPlaceholder: "至少4个字符",
     labelConfirmPassword: "确认密码",
     btnCreateAccount: "创建账户", btnLogIn: "登录",
-    footerNoteAuth: "账户信息仅保存在本设备/浏览器中 — 有关这对你的数据意味着什么，请参阅 README。",
+    footerNoteAuth: "账户信息保存在 Supabase 中。学习进度保存在本设备上。",
     errUsernameLength: "用户名至少需要3个字符。",
     errUsernameChars: "用户名只能使用字母、数字、_ . -",
     errPasswordLength: "密码至少需要4个字符。",
@@ -756,7 +756,7 @@ const I18N = {
     resetConfirm: "确定要重置此账户的全部经验值、连续天数和课程进度吗？此操作无法撤销。",
   },
   bo: {
-    heroSub: "འཕྲུལ་ཆས་འདིའི་ནང་ཁྱེད་ཀྱི་ཡར་རྒྱས་ཉར་ཚགས་བྱེད་ཆེད་རྩིས་ཐོ་ཞིག་གསར་སྐྲུན་གྱིས།",
+    heroSub: "འཕྲུལ་ཆས་སོ་སོའི་ཐོག་ཁྱེད་ཀྱི་ཡར་རྒྱས་ཉར་ཚགས་བྱེད་ཆེད་རྩིས་ཐོ་ཞིག་གསར་སྐྲུན་གྱིས།",
     appLanguageLabel: "འཕྲུལ་ཆས་ཀྱི་སྐད་ཡིག",
     tabLogin: "ནང་འཛུལ", tabSignup: "ཐོ་འགོད",
     labelUsername: "སྤྱོད་མིང་", usernamePlaceholder: "དཔེར་ན tenzin_k",
@@ -764,7 +764,7 @@ const I18N = {
     labelPassword: "གསང་ཚིག", passwordPlaceholder: "ཡིག་འབྲུ་4ལས་མི་ཉུང་བ",
     labelConfirmPassword: "གསང་ཚིག་ཡང་བསྐྱར་འཇུག",
     btnCreateAccount: "རྩིས་ཐོ་གསར་སྐྲུན", btnLogIn: "ནང་འཛུལ",
-    footerNoteAuth: "རྩིས་ཐོ་ནི་འཕྲུལ་ཆས་འདིའི་ནང་གཅིག་པུར་ཉར་ཡོད། ཁྱེད་ཀྱི་གནས་ཚུལ་ལ་དོན་དག་གང་ཡིན་མིན་ལ་ README ལ་གཟིགས་རོགས།",
+    footerNoteAuth: "རྩིས་ཐོ་ནི་ Supabase ནང་ཉར་ཡོད། སློབ་ཚན་གྱི་ཡར་རྒྱས་ནི་འཕྲུལ་ཆས་འདིའི་ཐོག་ཉར་ཡོད།",
     errUsernameLength: "སྤྱོད་མིང་ལ་ཡིག་འབྲུ་3ལས་མི་ཉུང་བ་དགོས།",
     errUsernameChars: "སྤྱོད་མིང་ལ་ཡིག་འབྲུ་(a-z), ཨང་ཀི, _ . - འདི་དག་གཅིག་པུ་བེད་སྤྱོད་ཆོག",
     errPasswordLength: "གསང་ཚིག་ལ་ཡིག་འབྲུ་4ལས་མི་ཉུང་བ་དགོས།",
@@ -921,9 +921,10 @@ async function doSignup(){
       return;
     }
 
-    saveSession({currentUser: username});
-    state.currentUser = username;
-    state.game = loadGame(username);
+    const usernameKey = (data.user.username || username).toLowerCase();
+    saveSession({currentUser: usernameKey});
+    state.currentUser = usernameKey;
+    state.game = loadGame(usernameKey);
     state.authError = '';
     state.screen = 'pick_language';
     render();
@@ -951,9 +952,10 @@ async function doLogin(){
       return;
     }
 
-    saveSession({currentUser: username});
-    state.currentUser = username;
-    state.game = loadGame(username);
+    const usernameKey = (data.user.username || username).toLowerCase();
+    saveSession({currentUser: usernameKey});
+    state.currentUser = usernameKey;
+    state.game = loadGame(usernameKey);
     state.authError = '';
     state.screen = 'pick_language';
     render();

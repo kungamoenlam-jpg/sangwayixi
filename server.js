@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -14,15 +16,21 @@ function createApp(overrides = {}) {
   const DATA_FILE = overrides.dataFile || path.join(__dirname, 'data', 'users.json');
   const ADMIN_KEY = overrides.adminKey || process.env.ADMIN_KEY || 'sangwa-admin-key';
   const DATABASE_URL = overrides.databaseUrl || process.env.DATABASE_URL || null;
+  const SUPABASE_URL = process.env.SUPABASE_URL || null;
 
   let dbClient = null;
+  let databaseReady = false;
+
+  function usesSupabase() {
+    return Boolean(DATABASE_URL && DATABASE_URL.includes('supabase'));
+  }
 
   async function getDbClient() {
     if (!DATABASE_URL) return null;
     if (!dbClient) {
       dbClient = new Client({
         connectionString: DATABASE_URL,
-        ssl: DATABASE_URL.includes('supabase.co') ? { rejectUnauthorized: false } : undefined,
+        ssl: usesSupabase() ? { rejectUnauthorized: false } : undefined,
       });
       await dbClient.connect();
     }
@@ -31,7 +39,11 @@ function createApp(overrides = {}) {
 
   async function initDatabase() {
     const client = await getDbClient();
-    if (!client) return;
+    if (!client) {
+      databaseReady = false;
+      return { connected: false, mode: 'file' };
+    }
+
     await client.query(`
       create table if not exists public.users (
         id uuid primary key default gen_random_uuid(),
@@ -42,6 +54,8 @@ function createApp(overrides = {}) {
         created_at timestamptz default now()
       );
     `);
+    databaseReady = true;
+    return { connected: true, mode: 'supabase', url: SUPABASE_URL };
   }
 
   function ensureDataFile() {
@@ -96,18 +110,32 @@ function createApp(overrides = {}) {
   app.use(express.json({ limit: '1mb' }));
   app.use(express.static(__dirname));
 
-  app.get('/api/health', (req, res) => {
-    res.json({ ok: true, time: new Date().toISOString(), database: !!DATABASE_URL });
-  });
+  app.get('/api/health', async (req, res) => {
+    const payload = {
+      ok: true,
+      time: new Date().toISOString(),
+      storage: databaseReady ? 'supabase' : (DATABASE_URL ? 'supabase-pending' : 'file'),
+      supabaseUrl: SUPABASE_URL || null,
+    };
 
-  app.get('/api/db-test', async (req, res) => {
+    if (!DATABASE_URL) {
+      return res.json(payload);
+    }
+
     try {
       const client = await getDbClient();
-      if (!client) return res.json({ database: 'using file system', ok: true });
-      const result = await client.query('select now()');
-      res.json({ database: 'connected', time: result.rows[0].now, ok: true });
+      const result = await client.query('select now() as now');
+      payload.storage = 'supabase';
+      payload.databaseTime = result.rows[0].now;
+      return res.json(payload);
     } catch (error) {
-      res.status(500).json({ error: error.message, ok: false });
+      return res.status(503).json({
+        ok: false,
+        time: payload.time,
+        storage: 'error',
+        supabaseUrl: SUPABASE_URL || null,
+        error: error.message,
+      });
     }
   });
 
@@ -126,14 +154,12 @@ function createApp(overrides = {}) {
 
     if (client) {
       try {
-        console.log('Checking if username exists:', trimmedUsername);
         const usernameCheck = await client.query('select id from public.users where lower(username) = $1', [trimmedUsername.toLowerCase()]);
         if (usernameCheck.rows.length) {
           return res.status(409).json({ error: 'That username is already taken.' });
         }
 
         if (trimmedEmail) {
-          console.log('Checking if email exists:', trimmedEmail);
           const emailCheck = await client.query('select id from public.users where lower(email) = $1', [trimmedEmail]);
           if (emailCheck.rows.length) {
             return res.status(409).json({ error: 'A user with that email already exists.' });
@@ -141,8 +167,6 @@ function createApp(overrides = {}) {
         }
 
         const passwordHash = hashPassword(trimmedPassword);
-
-        console.log('Attempting signup with:', { email: trimmedEmail, username: trimmedUsername, fullName });
 
         const result = await client.query(
           `insert into public.users (email, password_hash, full_name, username)
@@ -163,8 +187,7 @@ function createApp(overrides = {}) {
           }),
         });
       } catch (error) {
-        console.error('Database signup error:', error);
-        return res.status(500).json({ error: 'Database error: ' + error.message });
+        return res.status(500).json({ error: 'Database signup failed.', details: error.message });
       }
     }
 
@@ -180,8 +203,6 @@ function createApp(overrides = {}) {
         return res.status(409).json({ error: 'A user with that email already exists.' });
       }
     }
-
-    console.log('Fallback to file system - creating user:', { email: trimmedEmail, username: trimmedUsername });
 
     const newUser = {
       id: Math.random().toString(36).slice(2, 10) + Date.now().toString(36),
@@ -214,7 +235,6 @@ function createApp(overrides = {}) {
     const client = await getDbClient();
     if (client) {
       try {
-        console.log('Attempting database login for:', trimmedUsername || trimmedEmail);
         let result;
         if (trimmedUsername) {
           result = await client.query(
@@ -244,8 +264,7 @@ function createApp(overrides = {}) {
           }),
         });
       } catch (error) {
-        console.error('Database login error:', error.message);
-        console.log('Falling back to file system auth');
+        return res.status(500).json({ error: 'Database login failed.', details: error.message });
       }
     }
 
@@ -295,16 +314,31 @@ function createApp(overrides = {}) {
     return express.application.listen.call(this, ...args);
   };
 
-  return { app, PORT, DATA_FILE, ADMIN_KEY, DATABASE_URL, initDatabase: initDatabase };
+  return {
+    app,
+    PORT,
+    DATA_FILE,
+    ADMIN_KEY,
+    DATABASE_URL,
+    SUPABASE_URL,
+    initDatabase,
+    getDbClient,
+  };
 }
 
 if (require.main === module) {
   const appState = createApp();
   const port = Number(process.env.PORT) || 3000;
   appState.initDatabase()
-    .then(() => {
+    .then((status) => {
       appState.app.listen(port, () => {
-        console.log(`Sangwa backend running at http://localhost:${port}`);
+        if (status.connected) {
+          console.log(`Sangwa backend running at http://localhost:${port} (Supabase connected)`);
+        } else if (appState.DATABASE_URL) {
+          console.log(`Sangwa backend running at http://localhost:${port} (Supabase configured but not ready — using file fallback)`);
+        } else {
+          console.log(`Sangwa backend running at http://localhost:${port} (file storage — set DATABASE_URL for Supabase)`);
+        }
       });
     })
     .catch((error) => {

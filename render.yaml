@@ -8,3 +8,7 @@ services:
     envVars:
       - key: ADMIN_KEY
         value: sangwa-admin-key
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
