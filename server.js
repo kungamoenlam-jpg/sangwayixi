@@ -17,6 +17,17 @@ function createApp(overrides = {}) {
   const ADMIN_KEY = overrides.adminKey || process.env.ADMIN_KEY || 'sangwa-admin-key';
   const DATABASE_URL = overrides.databaseUrl || process.env.DATABASE_URL || null;
   const SUPABASE_URL = process.env.SUPABASE_URL || null;
+  const AZURE_SPEECH_KEY = process.env.AZURE_SPEECH_KEY || null;
+  const AZURE_SPEECH_REGION = process.env.AZURE_SPEECH_REGION || null;
+  const TTS_CACHE_DIR = overrides.ttsCacheDir || path.join(__dirname, 'data', 'tts-cache');
+  const AUDIO_BO_DIR = overrides.audioBoDir || path.join(__dirname, 'audio', 'bo');
+
+  // High-quality neural voices: British English + Beijing-standard Mandarin, one
+  // male and one female each. See https://learn.microsoft.com/azure/ai-services/speech-service/language-support
+  const AZURE_VOICES = {
+    en: { female: 'en-GB-SoniaNeural', male: 'en-GB-RyanNeural' },
+    zh: { female: 'zh-CN-XiaoxiaoNeural', male: 'zh-CN-YunxiNeural' },
+  };
 
   let dbClient = null;
   let databaseReady = false;
@@ -108,6 +119,11 @@ function createApp(overrides = {}) {
   }
 
   app.use(express.json({ limit: '1mb' }));
+  app.use('/audio', express.static(path.join(__dirname, 'audio'), {
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.webm')) res.setHeader('Content-Type', 'audio/webm');
+    },
+  }));
   app.use(express.static(__dirname));
 
   app.get('/api/health', async (req, res) => {
@@ -302,6 +318,116 @@ function createApp(overrides = {}) {
 
   app.get('/admin.html', (req, res) => {
     return res.sendFile(path.join(__dirname, 'admin.html'));
+  });
+
+  app.get('/record', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'record.html'));
+  });
+
+  app.get('/record.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'record.html'));
+  });
+
+  // ---- text-to-speech proxy (Azure AI Speech): English + Chinese only ---------
+  // Tibetan has no usable TTS voice on any provider, so it is not handled here —
+  // see the /api/admin/audio routes below for the real-recording approach.
+  app.get('/api/tts', async (req, res) => {
+    const lang = String(req.query.lang || '');
+    const voice = String(req.query.voice || 'female');
+    const text = String(req.query.text || '').slice(0, 500);
+
+    const voiceName = AZURE_VOICES[lang] && AZURE_VOICES[lang][voice];
+    if (!voiceName || !text.trim()) {
+      return res.status(400).json({ error: 'Unsupported lang/voice or empty text.' });
+    }
+    if (!AZURE_SPEECH_KEY || !AZURE_SPEECH_REGION) {
+      return res.status(503).json({ error: 'Azure Speech is not configured on this server yet.' });
+    }
+
+    const cacheKey = crypto.createHash('sha256').update(voiceName + '|' + text).digest('hex');
+    const cacheFile = path.join(TTS_CACHE_DIR, cacheKey + '.mp3');
+
+    try {
+      if (fs.existsSync(cacheFile)) {
+        res.setHeader('Content-Type', 'audio/mpeg');
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        return fs.createReadStream(cacheFile).pipe(res);
+      }
+
+      const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const langTag = lang === 'zh' ? 'zh-CN' : 'en-GB';
+      const ssml = `<speak version="1.0" xml:lang="${langTag}"><voice name="${voiceName}">${escaped}</voice></speak>`;
+
+      const azureRes = await fetch(
+        `https://${AZURE_SPEECH_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`,
+        {
+          method: 'POST',
+          headers: {
+            'Ocp-Apim-Subscription-Key': AZURE_SPEECH_KEY,
+            'Content-Type': 'application/ssml+xml',
+            'X-Microsoft-OutputFormat': 'audio-16khz-64kbitrate-mono-mp3',
+            'User-Agent': 'yeshe-app',
+          },
+          body: ssml,
+        }
+      );
+
+      if (!azureRes.ok) {
+        const details = await azureRes.text().catch(() => '');
+        return res.status(502).json({ error: 'Azure Speech request failed.', details: details.slice(0, 300) });
+      }
+
+      const audioBuffer = Buffer.from(await azureRes.arrayBuffer());
+      fs.mkdirSync(TTS_CACHE_DIR, { recursive: true });
+      fs.writeFileSync(cacheFile, audioBuffer);
+
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      return res.send(audioBuffer);
+    } catch (error) {
+      return res.status(500).json({ error: 'TTS synthesis failed.', details: error.message });
+    }
+  });
+
+  // ---- Tibetan audio: real recordings uploaded via the /record admin tool -----
+  // Files live at audio/bo/<wordId>.webm under the repo root (served statically
+  // below) so they survive a redeploy once committed to git — see /record.html.
+  function isSafeWordId(id) {
+    return /^[a-zA-Z0-9_]{1,64}$/.test(id);
+  }
+
+  app.post('/api/admin/audio/:wordId', express.raw({ type: '*/*', limit: '5mb' }), (req, res) => {
+    const incomingKey = req.headers['x-admin-key'];
+    if (incomingKey !== ADMIN_KEY) {
+      return res.status(401).json({ error: 'Unauthorized admin access.' });
+    }
+    const wordId = req.params.wordId;
+    if (!isSafeWordId(wordId)) {
+      return res.status(400).json({ error: 'Invalid word id.' });
+    }
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+      return res.status(400).json({ error: 'No audio data received.' });
+    }
+
+    fs.mkdirSync(AUDIO_BO_DIR, { recursive: true });
+    fs.writeFileSync(path.join(AUDIO_BO_DIR, wordId + '.webm'), req.body);
+    return res.json({ ok: true, wordId });
+  });
+
+  app.get('/api/admin/audio-status', (req, res) => {
+    const incomingKey = req.headers['x-admin-key'];
+    if (incomingKey !== ADMIN_KEY) {
+      return res.status(401).json({ error: 'Unauthorized admin access.' });
+    }
+    let recorded = [];
+    try {
+      recorded = fs.readdirSync(AUDIO_BO_DIR)
+        .filter((f) => f.endsWith('.webm'))
+        .map((f) => f.slice(0, -'.webm'.length));
+    } catch (error) {
+      recorded = [];
+    }
+    return res.json({ recorded });
   });
 
   app.use((req, res, next) => {

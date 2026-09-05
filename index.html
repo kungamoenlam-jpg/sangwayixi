@@ -549,6 +549,7 @@ const HEART_REGEN_MS = 30*60*1000; // 1 heart every 30 min
 const HEARTS_MAX = 5;
 const SESSION_KEY = 'sangwa_session_v1';
 const LANG_KEY = 'sangwa_lang_v1';
+const VOICE_PREF_KEY = 'yeshe_voice_pref_v1';
 const gameKey = username => 'sangwa_progress_v1__' + username;
 
 // ---- accounts (backend via Supabase API) -------
@@ -584,6 +585,7 @@ function defaultAppState(){
   return {
     screen:'auth', authMode:'login', authError:'',
     appLang:'en',
+    voicePref: {en:'female', zh:'female'},
     currentUser:null,
     game: defaultGame(),
     currentTrack:null, currentWorld:0,
@@ -596,6 +598,7 @@ let state = defaultAppState();
 function boot(){
   const savedLang = safeStorage.get(LANG_KEY);
   if(savedLang==='en' || savedLang==='zh' || savedLang==='bo') state.appLang = savedLang;
+  state.voicePref = loadVoicePref();
   const sess = loadSession();
   if(sess.currentUser){
     state.currentUser = sess.currentUser;
@@ -688,6 +691,8 @@ const I18N = {
     lockedBody: "{range}. No exercises here yet — this is the next content drop. Milestone once it's built: {milestone}",
     backToRoute: "Back to the route",
     translateEyebrow: "Translate", playAudio: "Play audio",
+    voiceSettings: "Voice settings", englishVoice: "English voice", chineseVoice: "Chinese voice",
+    voiceFemale: "Female", voiceMale: "Male",
     correctFeedback: "Correct! +10 XP", notQuiteFeedback: "Not quite", answerPrefix: "Answer: ",
     finishBtn: "Finish", continueBtn: "Continue",
     checkpointReached: "Checkpoint reached!", xpEarnedLabel: "XP earned",
@@ -739,6 +744,8 @@ const I18N = {
     lockedBody: "{range}。此处暂无练习 — 这是下一次内容更新。建成后的里程碑：{milestone}",
     backToRoute: "返回路线",
     translateEyebrow: "翻译", playAudio: "播放语音",
+    voiceSettings: "语音设置", englishVoice: "英语语音", chineseVoice: "中文语音",
+    voiceFemale: "女声", voiceMale: "男声",
     correctFeedback: "回答正确！+10 经验值", notQuiteFeedback: "不太对", answerPrefix: "答案：",
     finishBtn: "完成", continueBtn: "继续",
     checkpointReached: "到达检查点！", xpEarnedLabel: "获得经验值",
@@ -790,6 +797,8 @@ const I18N = {
     lockedBody: "{range}། འདིར་ད་དུང་ལག་རྩལ་སྦྱོང་བརྡར་མེད། འདི་ནི་རྗེས་མའི་ནང་དོན་ཡིན། བཟོས་ཟིན་རྗེས་ཀྱི་དོན་ཚན: {milestone}",
     backToRoute: "ལམ་ལ་ལོག",
     translateEyebrow: "སྒྱུར།", playAudio: "སྒྲ་ཉན།",
+    voiceSettings: "སྐད་སྒྲའི་སྒྲིག་འགོད", englishVoice: "དབྱིན་ཇིའི་སྐད་སྒྲ", chineseVoice: "རྒྱ་སྐད་ཀྱི་སྐད་སྒྲ",
+    voiceFemale: "བུད་མེད།", voiceMale: "སྐྱེས་པ།",
     correctFeedback: "ལེགས་སོ! +10 XP", notQuiteFeedback: "འདི་མིན།", answerPrefix: "ལན། ",
     finishBtn: "མཇུག", continueBtn: "མུ་མཐུད།",
     checkpointReached: "ཚད་གནས་སླེབས་སོང་།", xpEarnedLabel: "XP ཐོབ་པ།",
@@ -1147,11 +1156,25 @@ function renderLessonList(){
 }
 
 // ---- text-to-speech: reads quiz prompts aloud in bo/zh/en ---------------------
-// Browser/OS voice support for Tibetan (bo) is spotty — most platforms have no
-// Tibetan voice installed, so this degrades silently to no audio for bo on those.
-// Chinese (zh-CN) and English (en-US) are broadly supported.
+// English + Chinese use high-quality Azure neural voices (server-side proxy at
+// /api/tts, cached on disk) with a male/female choice saved per device. Tibetan
+// has no usable TTS voice on any provider, so it plays a real human recording
+// from audio/bo/<wordId>.webm (made via /record.html) when one exists; if that
+// file is missing, or Azure isn't configured yet, everything falls back to the
+// browser's built-in speechSynthesis so the app still says *something*.
 const TTS_LANG = { bo: 'bo-CN', zh: 'zh-CN', en: 'en-US' };
-function pickVoice(bcp47){
+function loadVoicePref(){
+  const fallback = {en:'female', zh:'female'};
+  try{
+    const raw = safeStorage.get(VOICE_PREF_KEY);
+    if(raw) return Object.assign(fallback, JSON.parse(raw));
+  } catch(e){}
+  return fallback;
+}
+function saveVoicePref(){ safeStorage.set(VOICE_PREF_KEY, JSON.stringify(state.voicePref)); }
+function setVoicePref(lang, gender){ state.voicePref[lang] = gender; saveVoicePref(); render(); }
+
+function pickBrowserVoice(bcp47){
   if(!('speechSynthesis' in window)) return null;
   const voices = window.speechSynthesis.getVoices();
   const base = bcp47.split('-')[0].toLowerCase();
@@ -1159,22 +1182,44 @@ function pickVoice(bcp47){
       || voices.find(v=>v.lang && v.lang.toLowerCase().startsWith(base))
       || null;
 }
-function speak(text, lang){
+function speakBrowserFallback(text, lang){
   if(!('speechSynthesis' in window) || !text) return;
   try{
     window.speechSynthesis.cancel();
     const bcp47 = TTS_LANG[lang] || lang;
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = bcp47;
-    const voice = pickVoice(bcp47);
+    const voice = pickBrowserVoice(bcp47);
     if(voice) utter.voice = voice;
     window.speechSynthesis.speak(utter);
   } catch(e){ /* speech synthesis unsupported or blocked on this device */ }
 }
+
+const ttsAudio = new Audio();
+function speak(text, lang, wordId){
+  if(!text) return;
+  try{ ttsAudio.pause(); }catch(e){}
+
+  let src = null;
+  if(lang==='bo' && wordId){
+    src = '/audio/bo/'+encodeURIComponent(wordId)+'.webm';
+  } else if(lang==='en' || lang==='zh'){
+    const gender = (state.voicePref && state.voicePref[lang]) || 'female';
+    src = '/api/tts?text='+encodeURIComponent(text)+'&lang='+lang+'&voice='+gender;
+  }
+  if(!src){ speakBrowserFallback(text, lang); return; }
+
+  let fellBack = false;
+  const fallback = () => { if(fellBack) return; fellBack = true; speakBrowserFallback(text, lang); };
+  ttsAudio.onerror = fallback;
+  ttsAudio.src = src;
+  const playPromise = ttsAudio.play();
+  if(playPromise && playPromise.catch) playPromise.catch(fallback);
+}
 function speakPrompt(){
   const s = state.session;
   const q = s && s.exercises[s.qIndex];
-  if(q) speak(q.prompt, q.promptLang);
+  if(q) speak(q.prompt, q.promptLang, q.wordId);
 }
 
 function startLesson(groupKey){
@@ -1339,6 +1384,19 @@ function renderProfile(){
       <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">🔥 ${state.game.streak}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">${t('dayStreak')}</div></div>
       <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">${state.game.hearts}/${HEARTS_MAX}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">${t('heartsLabel')}${eta?t('nextInM',{n:eta}):''}</div></div>
       <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">${totalDone}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">${t('modulesDoneLabel')}</div></div>
+    </div>
+    <div class="profile-card">
+      <div style="font-weight:600; margin-bottom:12px;">${t('voiceSettings')}</div>
+      <div style="font-size:12px; color:var(--snow-dim); margin-bottom:6px;">${t('englishVoice')}</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;">
+        <button class="btn ${state.voicePref.en==='female'?'btn-primary':'btn-ghost'}" style="font-size:13px;" onclick="setVoicePref('en','female')">${t('voiceFemale')}</button>
+        <button class="btn ${state.voicePref.en==='male'?'btn-primary':'btn-ghost'}" style="font-size:13px;" onclick="setVoicePref('en','male')">${t('voiceMale')}</button>
+      </div>
+      <div style="font-size:12px; color:var(--snow-dim); margin-bottom:6px;">${t('chineseVoice')}</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+        <button class="btn ${state.voicePref.zh==='female'?'btn-primary':'btn-ghost'}" style="font-size:13px;" onclick="setVoicePref('zh','female')">${t('voiceFemale')}</button>
+        <button class="btn ${state.voicePref.zh==='male'?'btn-primary':'btn-ghost'}" style="font-size:13px;" onclick="setVoicePref('zh','male')">${t('voiceMale')}</button>
+      </div>
     </div>
     <button class="btn btn-ghost btn-block" onclick="resetProgress()">${t('resetAllProgress')}</button>
     <button class="btn btn-ghost btn-block" onclick="doLogout()">${t('logOut')}</button>

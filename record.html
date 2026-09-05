@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yeshe Tibetan Voice Recorder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tibetan:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0a0f1d;
+      --panel: #121b2f;
+      --panel-2: #1a2540;
+      --text: #eef3ff;
+      --muted: #9bb0d3;
+      --gold: #f4c95d;
+      --accent: #7cc7ff;
+      --danger: #ff7a7a;
+      --good: #6ee7a8;
+      --border: rgba(255,255,255,0.08);
+      --font-bo: 'Noto Sans Tibetan', sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #0a0f1d 0%, #0f172a 100%);
+      color: var(--text);
+    }
+    .shell { max-width: 900px; margin: 0 auto; padding: 32px 20px 80px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+    .brand { font-size: 1.4rem; font-weight: 700; letter-spacing: 0.04em; }
+    .brand span { color: var(--gold); }
+    .panel { background: rgba(18, 27, 47, 0.9); border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 8px 30px rgba(0,0,0,0.25); overflow: hidden; margin-bottom: 20px; }
+    .controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; padding: 16px 20px; background: rgba(26, 37, 64, 0.75); border-bottom: 1px solid var(--border); }
+    .controls input, .controls select { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: rgba(10, 15, 29, 0.8); color: var(--text); font-size: 0.95rem; }
+    .controls input#adminKeyInput { flex: 1; min-width: 200px; }
+    .controls input#searchInput { flex: 1; min-width: 160px; }
+    button { border: 0; border-radius: 12px; background: linear-gradient(135deg, var(--gold), #e9b440); color: #111827; font-weight: 700; padding: 10px 14px; cursor: pointer; font-size: 0.9rem; }
+    button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    button.danger { background: var(--danger); color: #2a0a0a; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .stats { display: flex; gap: 16px; padding: 16px 20px; flex-wrap: wrap; }
+    .stat { background: rgba(18, 27, 47, 0.8); border: 1px solid var(--border); border-radius: 14px; padding: 12px 18px; }
+    .stat .label { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+    .stat .value { margin-top: 4px; font-size: 1.4rem; font-weight: 700; color: var(--gold); }
+    .error { color: var(--danger); font-weight: 600; padding: 0 20px 16px; }
+    .row { display: flex; align-items: center; gap: 14px; padding: 14px 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .row:last-child { border-bottom: none; }
+    .row-text { flex: 1; min-width: 180px; }
+    .row-bo { font-family: var(--font-bo); font-size: 22px; }
+    .row-sub { color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
+    .row-actions { display: flex; align-items: center; gap: 8px; }
+    .badge { display: inline-flex; align-items: center; padding: 5px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 700; white-space: nowrap; }
+    .badge.done { background: rgba(110, 231, 168, 0.15); color: var(--good); }
+    .badge.pending { background: rgba(255,255,255,0.08); color: var(--muted); }
+    audio { height: 32px; max-width: 160px; }
+    .empty { padding: 28px 20px; color: var(--muted); text-align: center; }
+    .note { color: var(--muted); font-size: 0.85rem; padding: 0 20px 16px; line-height: 1.5; }
+    @media (max-width: 640px) {
+      .row { flex-direction: column; align-items: flex-start; }
+      .row-actions { width: 100%; justify-content: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">Yeshe <span>Voice Recorder</span></div>
+      <button class="secondary" id="refreshBtn" type="button">Refresh status</button>
+    </div>
+
+    <div class="panel">
+      <div class="controls">
+        <input id="adminKeyInput" type="password" placeholder="Admin key" />
+        <button id="loadBtn" type="button">Load words</button>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="label">Recorded</div><div class="value" id="recordedCount">0 / 0</div></div>
+      </div>
+      <div class="controls">
+        <input id="searchInput" type="text" placeholder="Search English or Tibetan..." />
+        <select id="categoryFilter"><option value="">All categories</option></select>
+        <select id="statusFilter">
+          <option value="">All</option>
+          <option value="pending">Not yet recorded</option>
+          <option value="done">Already recorded</option>
+        </select>
+      </div>
+      <div id="errorBox" class="error" hidden></div>
+      <div class="note">Record each Tibetan word/phrase once in your own voice. This tool saves files to <code>audio/bo/&lt;id&gt;.webm</code> on whatever machine is running the server — run this locally (<code>node server.js</code>), record your batch, then <code>git add audio/bo</code>, commit, and push so the recordings are baked into the next deploy. Recordings made against the live kunga.me server will NOT survive the next deploy, since Render's disk is wiped on every redeploy.</div>
+      <div id="wordList"></div>
+      <div id="emptyState" class="empty" hidden>No words match your filter.</div>
+    </div>
+  </div>
+
+  <script>
+    const WORDS = [
+  {
+    "id": "hello",
+    "bo": "བཀྲ་ཤིས་བདེ་ལེགས",
+    "bo_tr": "tashi delek",
+    "en": "Hello",
+    "cat": "greetings"
+  },
+  {
+    "id": "thankyou",
+    "bo": "ཐུགས་རྗེ་ཆེ",
+    "bo_tr": "thuk-je-che",
+    "en": "Thank you",
+    "cat": "greetings"
+  },
+  {
+    "id": "yes",
+    "bo": "ཡིན",
+    "bo_tr": "yin",
+    "en": "Yes",
+    "cat": "greetings"
+  },
+  {
+    "id": "no",
+    "bo": "མིན",
+    "bo_tr": "min",
+    "en": "No",
+    "cat": "greetings"
+  },
+  {
+    "id": "goodbye",
+    "bo": "བདེ་མོ་གནང་",
+    "bo_tr": "de-mo nang",
+    "en": "Goodbye",
+    "cat": "greetings"
+  },
+  {
+    "id": "sorry",
+    "bo": "དགོངས་དག",
+    "bo_tr": "gong-dak",
+    "en": "Sorry",
+    "cat": "greetings"
+  },
+  {
+    "id": "one",
+    "bo": "གཅིག",
+    "bo_tr": "chik",
+    "en": "One",
+    "cat": "numbers"
+  },
+  {
+    "id": "two",
+    "bo": "གཉིས",
+    "bo_tr": "nyi",
+    "en": "Two",
+    "cat": "numbers"
+  },
+  {
+    "id": "three",
+    "bo": "གསུམ",
+    "bo_tr": "sum",
+    "en": "Three",
+    "cat": "numbers"
+  },
+  {
+    "id": "four",
+    "bo": "བཞི",
+    "bo_tr": "zhi",
+    "en": "Four",
+    "cat": "numbers"
+  },
+  {
+    "id": "five",
+    "bo": "ལྔ",
+    "bo_tr": "nga",
+    "en": "Five",
+    "cat": "numbers"
+  },
+  {
+    "id": "six",
+    "bo": "དྲུག",
+    "bo_tr": "druk",
+    "en": "Six",
+    "cat": "numbers"
+  },
+  {
+    "id": "seven",
+    "bo": "བདུན",
+    "bo_tr": "dün",
+    "en": "Seven",
+    "cat": "numbers"
+  },
+  {
+    "id": "eight",
+    "bo": "བརྒྱད",
+    "bo_tr": "gyé",
+    "en": "Eight",
+    "cat": "numbers"
+  },
+  {
+    "id": "nine",
+    "bo": "དགུ",
+    "bo_tr": "gu",
+    "en": "Nine",
+    "cat": "numbers"
+  },
+  {
+    "id": "ten",
+    "bo": "བཅུ",
+    "bo_tr": "chu",
+    "en": "Ten",
+    "cat": "numbers"
+  },
+  {
+    "id": "mother",
+    "bo": "ཨ་མ",
+    "bo_tr": "ama",
+    "en": "Mother",
+    "cat": "family"
+  },
+  {
+    "id": "father",
+    "bo": "ཨ་ཕ",
+    "bo_tr": "apa",
+    "en": "Father",
+    "cat": "family"
+  },
+  {
+    "id": "son",
+    "bo": "བུ",
+    "bo_tr": "bu",
+    "en": "Son",
+    "cat": "family"
+  },
+  {
+    "id": "daughter",
+    "bo": "བུ་མོ",
+    "bo_tr": "bumo",
+    "en": "Daughter",
+    "cat": "family"
+  },
+  {
+    "id": "family",
+    "bo": "ནང་མི",
+    "bo_tr": "nangmi",
+    "en": "Family",
+    "cat": "family"
+  },
+  {
+    "id": "friend",
+    "bo": "གྲོགས་པོ",
+    "bo_tr": "drokpo",
+    "en": "Friend",
+    "cat": "family"
+  },
+  {
+    "id": "red",
+    "bo": "དམར་པོ",
+    "bo_tr": "marpo",
+    "en": "Red",
+    "cat": "colors"
+  },
+  {
+    "id": "blue",
+    "bo": "སྔོན་པོ",
+    "bo_tr": "ngönpo",
+    "en": "Blue",
+    "cat": "colors"
+  },
+  {
+    "id": "green",
+    "bo": "ལྗང་ཁུ",
+    "bo_tr": "jangku",
+    "en": "Green",
+    "cat": "colors"
+  },
+  {
+    "id": "yellow",
+    "bo": "སེར་པོ",
+    "bo_tr": "serpo",
+    "en": "Yellow",
+    "cat": "colors"
+  },
+  {
+    "id": "white",
+    "bo": "དཀར་པོ",
+    "bo_tr": "karpo",
+    "en": "White",
+    "cat": "colors"
+  },
+  {
+    "id": "black",
+    "bo": "ནག་པོ",
+    "bo_tr": "nakpo",
+    "en": "Black",
+    "cat": "colors"
+  },
+  {
+    "id": "water",
+    "bo": "ཆུ",
+    "bo_tr": "chu",
+    "en": "Water",
+    "cat": "food"
+  },
+  {
+    "id": "tea",
+    "bo": "ཇ",
+    "bo_tr": "ja",
+    "en": "Tea",
+    "cat": "food"
+  },
+  {
+    "id": "foodw",
+    "bo": "ཁ་ལག",
+    "bo_tr": "khalak",
+    "en": "Food",
+    "cat": "food"
+  },
+  {
+    "id": "milk",
+    "bo": "འོ་མ",
+    "bo_tr": "oma",
+    "en": "Milk",
+    "cat": "food"
+  },
+  {
+    "id": "meat",
+    "bo": "ཤ",
+    "bo_tr": "sha",
+    "en": "Meat",
+    "cat": "food"
+  },
+  {
+    "id": "fruit",
+    "bo": "ཤིང་ཏོག",
+    "bo_tr": "shingtok",
+    "en": "Fruit",
+    "cat": "food"
+  },
+  {
+    "id": "house",
+    "bo": "ཁང་པ",
+    "bo_tr": "khangpa",
+    "en": "House",
+    "cat": "home"
+  },
+  {
+    "id": "door",
+    "bo": "སྒོ",
+    "bo_tr": "go",
+    "en": "Door",
+    "cat": "home"
+  },
+  {
+    "id": "book",
+    "bo": "དཔེ་ཆ",
+    "bo_tr": "pecha",
+    "en": "Book",
+    "cat": "home"
+  },
+  {
+    "id": "window",
+    "bo": "སྒེའུ་ཁུང",
+    "bo_tr": "geu-khung",
+    "en": "Window",
+    "cat": "home"
+  },
+  {
+    "id": "bed",
+    "bo": "ཉལ་ཁྲི",
+    "bo_tr": "nyal-tri",
+    "en": "Bed",
+    "cat": "home"
+  },
+  {
+    "id": "table",
+    "bo": "ཅོག་ཙེ",
+    "bo_tr": "choktse",
+    "en": "Table",
+    "cat": "home"
+  },
+  {
+    "id": "clothes",
+    "bo": "གོས",
+    "bo_tr": "gö",
+    "en": "Clothes",
+    "cat": "clothes"
+  },
+  {
+    "id": "shoes",
+    "bo": "ལྷམ",
+    "bo_tr": "lham",
+    "en": "Shoes",
+    "cat": "clothes"
+  },
+  {
+    "id": "hat",
+    "bo": "ཞྭ་མོ",
+    "bo_tr": "zhamo",
+    "en": "Hat",
+    "cat": "clothes"
+  },
+  {
+    "id": "phone",
+    "bo": "ཁ་པར",
+    "bo_tr": "khapar",
+    "en": "Phone",
+    "cat": "clothes"
+  },
+  {
+    "id": "money",
+    "bo": "དངུལ",
+    "bo_tr": "ngül",
+    "en": "Money",
+    "cat": "clothes"
+  },
+  {
+    "id": "watch",
+    "bo": "ཆུ་ཚོད",
+    "bo_tr": "chutsö",
+    "en": "Watch",
+    "cat": "clothes"
+  },
+  {
+    "id": "today",
+    "bo": "དེ་རིང",
+    "bo_tr": "dering",
+    "en": "Today",
+    "cat": "time"
+  },
+  {
+    "id": "tomorrow",
+    "bo": "སང་ཉིན",
+    "bo_tr": "sang-nyin",
+    "en": "Tomorrow",
+    "cat": "time"
+  },
+  {
+    "id": "yesterday",
+    "bo": "ཁ་སང",
+    "bo_tr": "khasang",
+    "en": "Yesterday",
+    "cat": "time"
+  },
+  {
+    "id": "morning",
+    "bo": "ཞོགས་པ",
+    "bo_tr": "zhokpa",
+    "en": "Morning",
+    "cat": "time"
+  },
+  {
+    "id": "night",
+    "bo": "མཚན་མོ",
+    "bo_tr": "tsenmo",
+    "en": "Night",
+    "cat": "time"
+  },
+  {
+    "id": "week",
+    "bo": "གཟའ་འཁོར",
+    "bo_tr": "za-khor",
+    "en": "Week",
+    "cat": "time"
+  },
+  {
+    "id": "eat",
+    "bo": "ཟ",
+    "bo_tr": "za",
+    "en": "Eat",
+    "cat": "actions"
+  },
+  {
+    "id": "drink",
+    "bo": "འཐུང",
+    "bo_tr": "thung",
+    "en": "Drink",
+    "cat": "actions"
+  },
+  {
+    "id": "sleep",
+    "bo": "ཉལ",
+    "bo_tr": "nyal",
+    "en": "Sleep",
+    "cat": "actions"
+  },
+  {
+    "id": "go",
+    "bo": "འགྲོ",
+    "bo_tr": "dro",
+    "en": "Go",
+    "cat": "actions"
+  },
+  {
+    "id": "come",
+    "bo": "ཡོང",
+    "bo_tr": "yong",
+    "en": "Come",
+    "cat": "actions"
+  },
+  {
+    "id": "see",
+    "bo": "ལྟ",
+    "bo_tr": "ta",
+    "en": "See",
+    "cat": "actions"
+  },
+  {
+    "id": "who",
+    "bo": "སུ",
+    "bo_tr": "su",
+    "en": "Who",
+    "cat": "questions"
+  },
+  {
+    "id": "what",
+    "bo": "ག་རེ",
+    "bo_tr": "kare",
+    "en": "What",
+    "cat": "questions"
+  },
+  {
+    "id": "where",
+    "bo": "ག་པར",
+    "bo_tr": "kapar",
+    "en": "Where",
+    "cat": "questions"
+  },
+  {
+    "id": "when",
+    "bo": "ནམ",
+    "bo_tr": "nam",
+    "en": "When",
+    "cat": "questions"
+  },
+  {
+    "id": "how",
+    "bo": "ག་འདྲ",
+    "bo_tr": "kandra",
+    "en": "How",
+    "cat": "questions"
+  },
+  {
+    "id": "this",
+    "bo": "འདི",
+    "bo_tr": "di",
+    "en": "This",
+    "cat": "sentence"
+  },
+  {
+    "id": "that",
+    "bo": "དེ",
+    "bo_tr": "de",
+    "en": "That",
+    "cat": "sentence"
+  },
+  {
+    "id": "and",
+    "bo": "དང",
+    "bo_tr": "dang",
+    "en": "And",
+    "cat": "sentence"
+  },
+  {
+    "id": "but",
+    "bo": "འོན་ཀྱང",
+    "bo_tr": "ön-kyang",
+    "en": "But",
+    "cat": "sentence"
+  },
+  {
+    "id": "very",
+    "bo": "ཧ་ཅང",
+    "bo_tr": "ha-chang",
+    "en": "Very",
+    "cat": "sentence"
+  },
+  {
+    "id": "also",
+    "bo": "ཡང",
+    "bo_tr": "yang",
+    "en": "Also",
+    "cat": "sentence"
+  },
+  {
+    "id": "i",
+    "bo": "ང",
+    "bo_tr": "nga",
+    "en": "I",
+    "cat": "pronouns"
+  },
+  {
+    "id": "you",
+    "bo": "ཁྱེད་རང",
+    "bo_tr": "khyerang",
+    "en": "You",
+    "cat": "pronouns"
+  },
+  {
+    "id": "he",
+    "bo": "ཁོང",
+    "bo_tr": "khong",
+    "en": "He / She",
+    "cat": "pronouns"
+  },
+  {
+    "id": "my",
+    "bo": "ངའི",
+    "bo_tr": "ngai",
+    "en": "My",
+    "cat": "pronouns"
+  },
+  {
+    "id": "your",
+    "bo": "ཁྱེད་རང་གི",
+    "bo_tr": "khyerang-gi",
+    "en": "Your",
+    "cat": "pronouns"
+  },
+  {
+    "id": "they",
+    "bo": "ཁོང་ཚོ",
+    "bo_tr": "khong-tso",
+    "en": "They",
+    "cat": "pronouns"
+  },
+  {
+    "id": "be",
+    "bo": "ཡིན",
+    "bo_tr": "yin",
+    "en": "To be",
+    "cat": "verbs2"
+  },
+  {
+    "id": "have",
+    "bo": "ཡོད",
+    "bo_tr": "yö",
+    "en": "To have",
+    "cat": "verbs2"
+  },
+  {
+    "id": "domake",
+    "bo": "བྱེད",
+    "bo_tr": "che",
+    "en": "To do / make",
+    "cat": "verbs2"
+  },
+  {
+    "id": "want",
+    "bo": "འདོད",
+    "bo_tr": "dö",
+    "en": "To want",
+    "cat": "verbs2"
+  },
+  {
+    "id": "give",
+    "bo": "སྦྱིན",
+    "bo_tr": "jin",
+    "en": "To give",
+    "cat": "verbs2"
+  },
+  {
+    "id": "need",
+    "bo": "དགོས",
+    "bo_tr": "gö",
+    "en": "To need",
+    "cat": "verbs2"
+  },
+  {
+    "id": "here",
+    "bo": "འདིར",
+    "bo_tr": "dir",
+    "en": "Here",
+    "cat": "places"
+  },
+  {
+    "id": "there",
+    "bo": "དེར",
+    "bo_tr": "der",
+    "en": "There",
+    "cat": "places"
+  },
+  {
+    "id": "left",
+    "bo": "གཡོན",
+    "bo_tr": "yön",
+    "en": "Left",
+    "cat": "places"
+  },
+  {
+    "id": "right",
+    "bo": "གཡས",
+    "bo_tr": "yé",
+    "en": "Right",
+    "cat": "places"
+  },
+  {
+    "id": "near",
+    "bo": "ཉེ་བ",
+    "bo_tr": "nyewa",
+    "en": "Near",
+    "cat": "places"
+  },
+  {
+    "id": "far",
+    "bo": "ཐག་རིང",
+    "bo_tr": "thagring",
+    "en": "Far",
+    "cat": "places"
+  },
+  {
+    "id": "road",
+    "bo": "ལམ",
+    "bo_tr": "lam",
+    "en": "Road",
+    "cat": "transport"
+  },
+  {
+    "id": "train",
+    "bo": "མེ་འཁོར",
+    "bo_tr": "me-khor",
+    "en": "Train",
+    "cat": "transport"
+  },
+  {
+    "id": "airport",
+    "bo": "གནམ་ཐང",
+    "bo_tr": "namthang",
+    "en": "Airport",
+    "cat": "transport"
+  },
+  {
+    "id": "car",
+    "bo": "མོ་ཊ",
+    "bo_tr": "mota",
+    "en": "Car",
+    "cat": "transport"
+  },
+  {
+    "id": "bridge",
+    "bo": "ཟམ་པ",
+    "bo_tr": "zampa",
+    "en": "Bridge",
+    "cat": "transport"
+  },
+  {
+    "id": "buy",
+    "bo": "ཉོ",
+    "bo_tr": "nyo",
+    "en": "Buy",
+    "cat": "shopping"
+  },
+  {
+    "id": "sell",
+    "bo": "བཙོང",
+    "bo_tr": "tsong",
+    "en": "Sell",
+    "cat": "shopping"
+  },
+  {
+    "id": "price",
+    "bo": "རིན",
+    "bo_tr": "rin",
+    "en": "Price",
+    "cat": "shopping"
+  },
+  {
+    "id": "expensive",
+    "bo": "གོང་ཆེ",
+    "bo_tr": "gong-che",
+    "en": "Expensive",
+    "cat": "shopping"
+  },
+  {
+    "id": "cheap",
+    "bo": "གོང་ཆུང",
+    "bo_tr": "gong-chung",
+    "en": "Cheap",
+    "cat": "shopping"
+  },
+  {
+    "id": "shop",
+    "bo": "ཚོང་ཁང",
+    "bo_tr": "tsongkhang",
+    "en": "Shop",
+    "cat": "shopping"
+  },
+  {
+    "id": "teacher",
+    "bo": "དགེ་རྒན",
+    "bo_tr": "gegen",
+    "en": "Teacher",
+    "cat": "work"
+  },
+  {
+    "id": "student",
+    "bo": "སློབ་ཕྲུག",
+    "bo_tr": "lobtruk",
+    "en": "Student",
+    "cat": "work"
+  },
+  {
+    "id": "school",
+    "bo": "སློབ་གྲྭ",
+    "bo_tr": "lobdra",
+    "en": "School",
+    "cat": "work"
+  },
+  {
+    "id": "jobwork",
+    "bo": "ལས་ཀ",
+    "bo_tr": "lenka",
+    "en": "Work / Job",
+    "cat": "work"
+  },
+  {
+    "id": "office",
+    "bo": "ལས་ཁུངས",
+    "bo_tr": "lekhung",
+    "en": "Office",
+    "cat": "work"
+  },
+  {
+    "id": "classroom",
+    "bo": "སློབ་ཁང",
+    "bo_tr": "lobkhang",
+    "en": "Classroom",
+    "cat": "work"
+  },
+  {
+    "id": "happy",
+    "bo": "སྐྱིད་པོ",
+    "bo_tr": "kyipo",
+    "en": "Happy",
+    "cat": "feelings"
+  },
+  {
+    "id": "sad",
+    "bo": "སྐྱོ་པོ",
+    "bo_tr": "kyopo",
+    "en": "Sad",
+    "cat": "feelings"
+  },
+  {
+    "id": "angry",
+    "bo": "ཁྲོས་པ",
+    "bo_tr": "thröpa",
+    "en": "Angry",
+    "cat": "feelings"
+  },
+  {
+    "id": "tired",
+    "bo": "ངལ་བ",
+    "bo_tr": "ngalwa",
+    "en": "Tired",
+    "cat": "feelings"
+  },
+  {
+    "id": "like2",
+    "bo": "དགའ་པོ",
+    "bo_tr": "gawpo",
+    "en": "Like",
+    "cat": "feelings"
+  },
+  {
+    "id": "think",
+    "bo": "བསམ",
+    "bo_tr": "sam",
+    "en": "Think",
+    "cat": "feelings"
+  },
+  {
+    "id": "hot",
+    "bo": "ཚ་པོ",
+    "bo_tr": "tshapo",
+    "en": "Hot",
+    "cat": "weather"
+  },
+  {
+    "id": "cold",
+    "bo": "གྲང་མོ",
+    "bo_tr": "drangmo",
+    "en": "Cold",
+    "cat": "weather"
+  },
+  {
+    "id": "rain",
+    "bo": "ཆར་པ",
+    "bo_tr": "charpa",
+    "en": "Rain",
+    "cat": "weather"
+  },
+  {
+    "id": "sun",
+    "bo": "ཉི་མ",
+    "bo_tr": "nyima",
+    "en": "Sun",
+    "cat": "weather"
+  },
+  {
+    "id": "mountain",
+    "bo": "རི",
+    "bo_tr": "ri",
+    "en": "Mountain",
+    "cat": "weather"
+  },
+  {
+    "id": "river",
+    "bo": "ཆུ་བོ",
+    "bo_tr": "chuwo",
+    "en": "River",
+    "cat": "weather"
+  },
+  {
+    "id": "big",
+    "bo": "ཆེན་པོ",
+    "bo_tr": "chenpo",
+    "en": "Big",
+    "cat": "describe"
+  },
+  {
+    "id": "small",
+    "bo": "ཆུང་ཆུང",
+    "bo_tr": "chungchung",
+    "en": "Small",
+    "cat": "describe"
+  },
+  {
+    "id": "long",
+    "bo": "རིང་པོ",
+    "bo_tr": "ringpo",
+    "en": "Long",
+    "cat": "describe"
+  },
+  {
+    "id": "short",
+    "bo": "ཐུང་ཐུང",
+    "bo_tr": "thungthung",
+    "en": "Short",
+    "cat": "describe"
+  },
+  {
+    "id": "good",
+    "bo": "ཡག་པོ",
+    "bo_tr": "yakpo",
+    "en": "Good",
+    "cat": "describe"
+  },
+  {
+    "id": "bad",
+    "bo": "ངན་པ",
+    "bo_tr": "ngenpa",
+    "en": "Bad",
+    "cat": "describe"
+  },
+  {
+    "id": "s_wake",
+    "bo": "ང་ཞོགས་པ་སྔ་པོ་ནས་ལངས་པ་ཡིན།",
+    "bo_tr": "",
+    "en": "I wake up quite early in the morning.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_brush",
+    "bo": "ངས་ཉིན་རེར་སོ་ཐེངས་གཉིས་བཀྲུ་གི་ཡོད།",
+    "bo_tr": "",
+    "en": "I brush my teeth twice a day.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_washface",
+    "bo": "ངས་ཉིན་ལྟར་གདོང་བཀྲུ་གི་ཡོད།",
+    "bo_tr": "",
+    "en": "I wash my face everyday.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_makebed",
+    "bo": "ངས་ཉིན་ལྟར་ཉལ་ཁྲི་བཟོས།",
+    "bo_tr": "",
+    "en": "I make my bed everyday.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_tea",
+    "bo": "ངས་ཞོགས་ཇ་དང་མཉམ་དུ་ཇ་ཕོར་གང་འཐུང་གི་ཡོད།",
+    "bo_tr": "",
+    "en": "I drink a cup of tea with breakfast.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_cookbreakfast",
+    "bo": "ངས་ཁ་ལག་བཟོས་ནས་ཞོགས་ཇ་ཟོས།",
+    "bo_tr": "",
+    "en": "I cook and eat breakfast.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_sunhat",
+    "bo": "དེ་རིང་ཉི་མ་ཤིན་ཏུ་འོད་ཆེམ་ཆེམ་ཆེ། ཞྭ་མོ་གྱོན་རྒྱུ་ཡིན།",
+    "bo_tr": "",
+    "en": "The sun is very bright today. I'm going to wear a hat.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_birds",
+    "bo": "བྱིའུ་རྣམས་ཀྱིས་སྐད་སྒྲ་སྒྲོག་བཞིན་འདུག",
+    "bo_tr": "",
+    "en": "The birds are chirping.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_name",
+    "bo": "ཁྱོད་ཀྱི་མིང་ལ་ཅི་ཟེར?",
+    "bo_tr": "",
+    "en": "What is your name?",
+    "cat": "conv"
+  },
+  {
+    "id": "s_howareyou",
+    "bo": "ཁྱེད་རང་དེ་རིང་གང་འདྲ་བྱུང་ངམ?",
+    "bo_tr": "",
+    "en": "How are you today?",
+    "cat": "conv"
+  },
+  {
+    "id": "s_doinggood",
+    "bo": "ངས་ཧ་ཅང་བཟང་། ཐུགས་རྗེ་ཆེ།",
+    "bo_tr": "",
+    "en": "I am doing pretty good, thank you.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_restroom",
+    "bo": "གཙང་སྦྲ་ཁང་གང་དུ་ཡོད་དམ།",
+    "bo_tr": "",
+    "en": "Where is the restroom?",
+    "cat": "conv"
+  },
+  {
+    "id": "s_needhelp",
+    "bo": "ང་ལ་རོགས་རམ་ཅུང་ཟད་དགོས།",
+    "bo_tr": "",
+    "en": "I need a little help.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_couldhelp",
+    "bo": "ཁྱོད་ཀྱིས་ང་ལ་རོགས་པ་བྱེད་ཐུབ་བམ།",
+    "bo_tr": "",
+    "en": "Could you help me with this?",
+    "cat": "conv"
+  },
+  {
+    "id": "s_whattime",
+    "bo": "ཁྱེད་རང་ལ་དུས་ཚོད་ག་ཚོད་ཡག་པོ་འདུག་གམ།",
+    "bo_tr": "",
+    "en": "What time works for you?",
+    "cat": "conv"
+  },
+  {
+    "id": "s_dontunderstand",
+    "bo": "ངས་གོ་བ་ལེན་ཐུབ་མ་སོང།",
+    "bo_tr": "",
+    "en": "I do not understand.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_speakslowly",
+    "bo": "གསུང་དལ་གྱིས་གསུང་རོགས།",
+    "bo_tr": "",
+    "en": "Please speak slowly.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_orangejuice",
+    "bo": "ང་ཚ་ལུ་མའི་ཁུ་བ་ལ་དགའ།",
+    "bo_tr": "",
+    "en": "I love orange juice.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_foodgood",
+    "bo": "ཁ་ལག་འདི་དངོས་གནས་ཡག་པོ་འདུག ཡུམ།",
+    "bo_tr": "",
+    "en": "This food is really good. Yum.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_readbook",
+    "bo": "ངས་ཉིན་ལྟར་དགོང་མོ་མ་ཉལ་བའི་སྔོན་ལ་དེབ་གཅིག་ཀློག་གི་ཡོད།",
+    "bo_tr": "",
+    "en": "I read a book every night before bed.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_park",
+    "bo": "ཁོ་ཚོ་གླིང་གར་སོང་།",
+    "bo_tr": "",
+    "en": "They go to the park.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_dinner",
+    "bo": "ང་ཚོས་དགོང་ཟས་མཉམ་དུ་ཟོས།",
+    "bo_tr": "",
+    "en": "We eat dinner together.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_dogbark",
+    "bo": "ངའི་ཁྱི་སྐད་ཆེན་པོས་སྐད་རྒྱག་གི་འདུག",
+    "bo_tr": "",
+    "en": "My dog barks loudly.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_feelhappy",
+    "bo": "དེ་རིང་སྐྱིད་པའི་ཚོར་སྣང་བྱུང་།",
+    "bo_tr": "",
+    "en": "I feel happy today.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_busy",
+    "bo": "ང་ད་ལྟ་བྲེལ་བ་ཆེ།",
+    "bo_tr": "",
+    "en": "I am busy right now.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_garden",
+    "bo": "ང་ལ་ལྡུམ་ར་མཛེས་པོ་ཞིག་ཡོད།",
+    "bo_tr": "",
+    "en": "I have a beautiful garden.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_thanks",
+    "bo": "རོགས་རམ་གནང་བར་ཐུགས་རྗེ་ཆེ།",
+    "bo_tr": "",
+    "en": "Thank you for your help.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_later",
+    "bo": "རྗེས་སུ་སྐད་ཆ་བཤད།",
+    "bo_tr": "",
+    "en": "Talk to you later.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_tomorrow",
+    "bo": "སང་ཉིན་མཇལ་ཡོང།",
+    "bo_tr": "",
+    "en": "See you tomorrow.",
+    "cat": "conv"
+  },
+  {
+    "id": "s_wonderfulday",
+    "bo": "ཉིན་མོ་ཡག་པོ་ཤོག",
+    "bo_tr": "",
+    "en": "Have a wonderful day!",
+    "cat": "conv"
+  }
+];
+
+    const adminKeyInput = document.getElementById('adminKeyInput');
+    const errorBox = document.getElementById('errorBox');
+    const wordList = document.getElementById('wordList');
+    const emptyState = document.getElementById('emptyState');
+    const recordedCount = document.getElementById('recordedCount');
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const statusFilter = document.getElementById('statusFilter');
+
+    let recordedSet = new Set();
+    let mediaStream = null;
+    let activeRecorder = null;
+    let activeWordId = null;
+
+    function showError(msg){ errorBox.hidden = false; errorBox.textContent = msg; }
+    function hideError(){ errorBox.hidden = true; errorBox.textContent = ''; }
+    function adminKey(){ return adminKeyInput.value.trim(); }
+    function escapeHtml(v){ return String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function populateCategories(){
+      const cats = Array.from(new Set(WORDS.map(w=>w.cat))).sort();
+      categoryFilter.innerHTML = '<option value="">All categories</option>' +
+        cats.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    }
+
+    async function loadStatus(){
+      const key = adminKey();
+      if(!key){ showError('Please enter the admin key.'); return; }
+      try {
+        const res = await fetch('/api/admin/audio-status', { headers: { 'X-Admin-Key': key } });
+        const data = await res.json().catch(()=>({}));
+        if(!res.ok) throw new Error(data.error || 'Unable to load status.');
+        recordedSet = new Set(data.recorded || []);
+        hideError();
+        renderList();
+      } catch(e){
+        showError(e.message || 'Something went wrong.');
+      }
+    }
+
+    function matchesFilters(w){
+      const q = searchInput.value.trim().toLowerCase();
+      if(q && !(w.en.toLowerCase().includes(q) || w.bo.includes(q) || (w.bo_tr||'').toLowerCase().includes(q))) return false;
+      if(categoryFilter.value && w.cat !== categoryFilter.value) return false;
+      const done = recordedSet.has(w.id);
+      if(statusFilter.value === 'pending' && done) return false;
+      if(statusFilter.value === 'done' && !done) return false;
+      return true;
+    }
+
+    function renderList(){
+      recordedCount.textContent = recordedSet.size + ' / ' + WORDS.length;
+      const filtered = WORDS.filter(matchesFilters);
+      wordList.innerHTML = '';
+      emptyState.hidden = filtered.length > 0;
+      filtered.forEach(w => wordList.appendChild(renderRow(w)));
+    }
+
+    function renderRow(w){
+      const done = recordedSet.has(w.id);
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.dataset.id = w.id;
+      row.innerHTML = `
+        <div class="row-text">
+          <div class="row-bo">${escapeHtml(w.bo)}</div>
+          <div class="row-sub">${escapeHtml(w.bo_tr || '')} &middot; ${escapeHtml(w.en)}</div>
+        </div>
+        <span class="badge ${done ? 'done' : 'pending'}">${done ? '✅ Recorded' : '⬜ Not yet'}</span>
+        <div class="row-actions">
+          <audio controls preload="none" src="${done ? '/audio/bo/' + encodeURIComponent(w.id) + '.webm?t=' + Date.now() : ''}" ${done ? '' : 'style="display:none"'}></audio>
+          <button type="button" class="record-btn secondary">\u{1F3A4} Record</button>
+        </div>
+      `;
+      row.querySelector('.record-btn').addEventListener('click', () => toggleRecord(w.id, row));
+      return row;
+    }
+
+    async function toggleRecord(wordId, row){
+      const key = adminKey();
+      if(!key){ showError('Please enter the admin key.'); return; }
+      hideError();
+
+      if(activeRecorder && activeWordId === wordId){
+        activeRecorder.stop();
+        return;
+      }
+      if(activeRecorder){
+        showError('Finish the recording in progress first.');
+        return;
+      }
+
+      try {
+        mediaStream = mediaStream || await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch(e){
+        showError('Could not access the microphone: ' + e.message);
+        return;
+      }
+
+      const btn = row.querySelector('.record-btn');
+      const chunks = [];
+      const recorder = new MediaRecorder(mediaStream);
+      activeRecorder = recorder;
+      activeWordId = wordId;
+      btn.textContent = '⏹ Stop';
+
+      recorder.ondataavailable = (e) => { if(e.data.size > 0) chunks.push(e.data); };
+      recorder.onstop = async () => {
+        activeRecorder = null;
+        activeWordId = null;
+        btn.textContent = 'Uploading...';
+        btn.disabled = true;
+        const blob = new Blob(chunks, { type: 'audio/webm' });
+        try {
+          const res = await fetch('/api/admin/audio/' + encodeURIComponent(wordId), {
+            method: 'POST',
+            headers: { 'X-Admin-Key': key, 'Content-Type': 'audio/webm' },
+            body: blob,
+          });
+          const data = await res.json().catch(()=>({}));
+          if(!res.ok) throw new Error(data.error || 'Upload failed.');
+          recordedSet.add(wordId);
+          const audioEl = row.querySelector('audio');
+          audioEl.src = '/audio/bo/' + encodeURIComponent(wordId) + '.webm?t=' + Date.now();
+          audioEl.style.display = '';
+          row.querySelector('.badge').className = 'badge done';
+          row.querySelector('.badge').textContent = '✅ Recorded';
+          recordedCount.textContent = recordedSet.size + ' / ' + WORDS.length;
+        } catch(e){
+          showError('Upload failed for "' + wordId + '": ' + e.message);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = '\u{1F3A4} Record';
+        }
+      };
+
+      recorder.start();
+    }
+
+    document.getElementById('loadBtn').addEventListener('click', loadStatus);
+    document.getElementById('refreshBtn').addEventListener('click', loadStatus);
+    searchInput.addEventListener('input', renderList);
+    categoryFilter.addEventListener('change', renderList);
+    statusFilter.addEventListener('change', renderList);
+
+    populateCategories();
+    renderList();
+  </script>
+</body>
+</html>

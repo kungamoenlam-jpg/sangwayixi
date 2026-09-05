@@ -3,3 +3,8 @@
 
 # Test run artifacts
 tests/tmp-data/
+
+# Cached Azure TTS audio — regenerated on demand, not source content.
+# (audio/bo/ is NOT ignored: those are real recordings and must be committed
+# so they survive a redeploy — see record.html.)
+data/tts-cache/
