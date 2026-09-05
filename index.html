@@ -662,7 +662,7 @@ const I18N = {
     labelPassword: "Password", passwordPlaceholder: "At least 4 characters",
     labelConfirmPassword: "Confirm Password",
     btnCreateAccount: "Create account", btnLogIn: "Log in",
-    footerNoteAuth: "Accounts are stored in Supabase. Lesson progress is saved on this device.",
+    footerNoteAuth: "Your account is saved securely. Lesson progress is saved on this device.",
     errUsernameLength: "Username must be at least 3 characters.",
     errUsernameChars: "Username can only use letters, numbers, _ . -",
     errPasswordLength: "Password must be at least 4 characters.",
@@ -687,7 +687,7 @@ const I18N = {
     comingSoon: "Coming soon", modulesCount: "{n} modules", modulesWord: "modules",
     lockedBody: "{range}. No exercises here yet — this is the next content drop. Milestone once it's built: {milestone}",
     backToRoute: "Back to the route",
-    translateEyebrow: "Translate",
+    translateEyebrow: "Translate", playAudio: "Play audio",
     correctFeedback: "Correct! +10 XP", notQuiteFeedback: "Not quite", answerPrefix: "Answer: ",
     finishBtn: "Finish", continueBtn: "Continue",
     checkpointReached: "Checkpoint reached!", xpEarnedLabel: "XP earned",
@@ -713,7 +713,7 @@ const I18N = {
     labelPassword: "密码", passwordPlaceholder: "至少4个字符",
     labelConfirmPassword: "确认密码",
     btnCreateAccount: "创建账户", btnLogIn: "登录",
-    footerNoteAuth: "账户信息保存在 Supabase 中。学习进度保存在本设备上。",
+    footerNoteAuth: "你的账户已安全保存。学习进度保存在本设备上。",
     errUsernameLength: "用户名至少需要3个字符。",
     errUsernameChars: "用户名只能使用字母、数字、_ . -",
     errPasswordLength: "密码至少需要4个字符。",
@@ -738,7 +738,7 @@ const I18N = {
     comingSoon: "即将推出", modulesCount: "{n} 个单元", modulesWord: "个单元",
     lockedBody: "{range}。此处暂无练习 — 这是下一次内容更新。建成后的里程碑：{milestone}",
     backToRoute: "返回路线",
-    translateEyebrow: "翻译",
+    translateEyebrow: "翻译", playAudio: "播放语音",
     correctFeedback: "回答正确！+10 经验值", notQuiteFeedback: "不太对", answerPrefix: "答案：",
     finishBtn: "完成", continueBtn: "继续",
     checkpointReached: "到达检查点！", xpEarnedLabel: "获得经验值",
@@ -764,7 +764,7 @@ const I18N = {
     labelPassword: "གསང་ཚིག", passwordPlaceholder: "ཡིག་འབྲུ་4ལས་མི་ཉུང་བ",
     labelConfirmPassword: "གསང་ཚིག་ཡང་བསྐྱར་འཇུག",
     btnCreateAccount: "རྩིས་ཐོ་གསར་སྐྲུན", btnLogIn: "ནང་འཛུལ",
-    footerNoteAuth: "རྩིས་ཐོ་ནི་ Supabase ནང་ཉར་ཡོད། སློབ་ཚན་གྱི་ཡར་རྒྱས་ནི་འཕྲུལ་ཆས་འདིའི་ཐོག་ཉར་ཡོད།",
+    footerNoteAuth: "ཁྱེད་ཀྱི་རྩིས་ཐོ་བདེ་འཇགས་ངང་ཉར་ཡོད། སློབ་ཚན་གྱི་ཡར་རྒྱས་ནི་འཕྲུལ་ཆས་འདིའི་ཐོག་ཉར་ཡོད།",
     errUsernameLength: "སྤྱོད་མིང་ལ་ཡིག་འབྲུ་3ལས་མི་ཉུང་བ་དགོས།",
     errUsernameChars: "སྤྱོད་མིང་ལ་ཡིག་འབྲུ་(a-z), ཨང་ཀི, _ . - འདི་དག་གཅིག་པུ་བེད་སྤྱོད་ཆོག",
     errPasswordLength: "གསང་ཚིག་ལ་ཡིག་འབྲུ་4ལས་མི་ཉུང་བ་དགོས།",
@@ -789,7 +789,7 @@ const I18N = {
     comingSoon: "མ་འོངས་པར་འབྱོར་འོང་།", modulesCount: "ཚན་པ་{n}།", modulesWord: "ཚན་པ།",
     lockedBody: "{range}། འདིར་ད་དུང་ལག་རྩལ་སྦྱོང་བརྡར་མེད། འདི་ནི་རྗེས་མའི་ནང་དོན་ཡིན། བཟོས་ཟིན་རྗེས་ཀྱི་དོན་ཚན: {milestone}",
     backToRoute: "ལམ་ལ་ལོག",
-    translateEyebrow: "སྒྱུར།",
+    translateEyebrow: "སྒྱུར།", playAudio: "སྒྲ་ཉན།",
     correctFeedback: "ལེགས་སོ! +10 XP", notQuiteFeedback: "འདི་མིན།", answerPrefix: "ལན། ",
     finishBtn: "མཇུག", continueBtn: "མུ་མཐུད།",
     checkpointReached: "ཚད་གནས་སླེབས་སོང་།", xpEarnedLabel: "XP ཐོབ་པ།",
@@ -1146,6 +1146,37 @@ function renderLessonList(){
   </div>`;
 }
 
+// ---- text-to-speech: reads quiz prompts aloud in bo/zh/en ---------------------
+// Browser/OS voice support for Tibetan (bo) is spotty — most platforms have no
+// Tibetan voice installed, so this degrades silently to no audio for bo on those.
+// Chinese (zh-CN) and English (en-US) are broadly supported.
+const TTS_LANG = { bo: 'bo-CN', zh: 'zh-CN', en: 'en-US' };
+function pickVoice(bcp47){
+  if(!('speechSynthesis' in window)) return null;
+  const voices = window.speechSynthesis.getVoices();
+  const base = bcp47.split('-')[0].toLowerCase();
+  return voices.find(v=>v.lang && v.lang.toLowerCase()===bcp47.toLowerCase())
+      || voices.find(v=>v.lang && v.lang.toLowerCase().startsWith(base))
+      || null;
+}
+function speak(text, lang){
+  if(!('speechSynthesis' in window) || !text) return;
+  try{
+    window.speechSynthesis.cancel();
+    const bcp47 = TTS_LANG[lang] || lang;
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = bcp47;
+    const voice = pickVoice(bcp47);
+    if(voice) utter.voice = voice;
+    window.speechSynthesis.speak(utter);
+  } catch(e){ /* speech synthesis unsupported or blocked on this device */ }
+}
+function speakPrompt(){
+  const s = state.session;
+  const q = s && s.exercises[s.qIndex];
+  if(q) speak(q.prompt, q.promptLang);
+}
+
 function startLesson(groupKey){
   const track = trackById(state.currentTrack);
   const levelIdx = state.currentWorld;
@@ -1157,6 +1188,7 @@ function startLesson(groupKey){
   };
   state.screen='lesson';
   render();
+  speakPrompt();
 }
 
 function renderLesson(){
@@ -1200,7 +1232,10 @@ function renderLesson(){
     <div class="q-wrap">
       <div class="q-card">
         <div class="q-eyebrow">${t('translateEyebrow')}</div>
-        <div class="q-prompt ${scriptClass(q.promptLang)} ${q.prompt.length>20?'long':''}">${q.prompt}</div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:10px;">
+          <div class="q-prompt ${scriptClass(q.promptLang)} ${q.prompt.length>20?'long':''}">${q.prompt}</div>
+          <button class="iconbtn" style="width:32px; height:32px; font-size:15px; flex-shrink:0;" title="${t('playAudio')}" onclick="speakPrompt()">🔊</button>
+        </div>
         ${q.promptSub?`<div class="q-translit">${q.promptSub}</div>`:''}
       </div>
       <div class="options">${optsHtml}</div>
@@ -1232,6 +1267,7 @@ function nextQuestion(){
   s.qIndex += 1; s.answered=false; s.picked=null;
   if(s.qIndex>=s.exercises.length){ finishLesson(); return; }
   render();
+  speakPrompt();
 }
 
 function finishLesson(){
