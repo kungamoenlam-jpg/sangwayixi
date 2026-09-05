@@ -5,6 +5,8 @@
 tests/tmp-data/
 
 # Cached Azure TTS audio — regenerated on demand, not source content.
-# (audio/bo/ is NOT ignored: those are real recordings and must be committed
-# so they survive a redeploy — see record.html.)
 data/tts-cache/
+
+# Own-voice recordings made via /record.html now live in Supabase Storage, not
+# this repo — nothing under audio/ should ever be committed.
+audio/

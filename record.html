@@ -1181,8 +1181,8 @@
     const langTabs = Array.from(document.querySelectorAll('.lang-tab'));
 
     const LANG_NOTES = {
-      bo: 'Record each Tibetan word/phrase once in your own voice. This tool saves files to <code>audio/bo/&lt;id&gt;.webm</code> on whatever machine is running the server — run this locally (<code>node server.js</code>), record your batch, then <code>git add audio/bo</code>, commit, and push so the recordings are baked into the next deploy. Recordings made against the live kunga.me server will NOT survive the next deploy, since Render’s disk is wiped on every redeploy.',
-      en: 'Record each English word/phrase once in your own voice. Any word you record here is used instead of the Azure voice for that word — words you haven’t recorded still fall back to the Female/Male Azure voice picked in Profile > Voice settings. Files save to <code>audio/en/&lt;id&gt;.webm</code> — same rule as Tibetan: run this locally, record your batch, then <code>git add audio/en</code>, commit, and push so it survives the next deploy.',
+      bo: 'Record each Tibetan word/phrase once in your own voice. Recordings upload straight to Supabase Storage and are permanent immediately — no need to run this locally or commit anything to git. Safe to use directly on kunga.me/record.',
+      en: 'Record each English word/phrase once in your own voice. Any word you record here is used instead of the Azure voice for that word — words you haven’t recorded still fall back to the Female/Male Azure voice picked in Profile > Voice settings. Uploads go straight to Supabase Storage and are permanent immediately.',
     };
 
     let currentLang = 'bo';
