@@ -389,19 +389,27 @@ function createApp(overrides = {}) {
     }
   });
 
-  // ---- Tibetan audio: real recordings uploaded via the /record admin tool -----
-  // Files live at audio/bo/<wordId>.webm under the repo root (served statically
-  // below) so they survive a redeploy once committed to git — see /record.html.
+  // ---- own-voice audio: real recordings uploaded via the /record admin tool ---
+  // Files live at audio/<lang>/<wordId>.webm under the repo root (served
+  // statically above) so they survive a redeploy once committed to git — see
+  // /record.html. Tibetan has no usable TTS voice on any provider, so bo always
+  // relies on this; English uses it only when you've recorded that word
+  // yourself, falling back to Azure otherwise.
+  const RECORDABLE_LANGS = { bo: AUDIO_BO_DIR, en: path.join(__dirname, 'audio', 'en') };
   function isSafeWordId(id) {
     return /^[a-zA-Z0-9_]{1,64}$/.test(id);
   }
 
-  app.post('/api/admin/audio/:wordId', express.raw({ type: '*/*', limit: '5mb' }), (req, res) => {
+  app.post('/api/admin/audio/:lang/:wordId', express.raw({ type: '*/*', limit: '5mb' }), (req, res) => {
     const incomingKey = req.headers['x-admin-key'];
     if (incomingKey !== ADMIN_KEY) {
       return res.status(401).json({ error: 'Unauthorized admin access.' });
     }
+    const dir = RECORDABLE_LANGS[req.params.lang];
     const wordId = req.params.wordId;
+    if (!dir) {
+      return res.status(400).json({ error: 'Unsupported language.' });
+    }
     if (!isSafeWordId(wordId)) {
       return res.status(400).json({ error: 'Invalid word id.' });
     }
@@ -409,19 +417,23 @@ function createApp(overrides = {}) {
       return res.status(400).json({ error: 'No audio data received.' });
     }
 
-    fs.mkdirSync(AUDIO_BO_DIR, { recursive: true });
-    fs.writeFileSync(path.join(AUDIO_BO_DIR, wordId + '.webm'), req.body);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, wordId + '.webm'), req.body);
     return res.json({ ok: true, wordId });
   });
 
-  app.get('/api/admin/audio-status', (req, res) => {
+  app.get('/api/admin/audio-status/:lang', (req, res) => {
     const incomingKey = req.headers['x-admin-key'];
     if (incomingKey !== ADMIN_KEY) {
       return res.status(401).json({ error: 'Unauthorized admin access.' });
     }
+    const dir = RECORDABLE_LANGS[req.params.lang];
+    if (!dir) {
+      return res.status(400).json({ error: 'Unsupported language.' });
+    }
     let recorded = [];
     try {
-      recorded = fs.readdirSync(AUDIO_BO_DIR)
+      recorded = fs.readdirSync(dir)
         .filter((f) => f.endsWith('.webm'))
         .map((f) => f.slice(0, -'.webm'.length));
     } catch (error) {

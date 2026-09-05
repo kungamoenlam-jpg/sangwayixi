@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Yeshe Tibetan Voice Recorder</title>
+  <title>Yeshe Voice Recorder</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tibetan:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
@@ -40,6 +40,9 @@
     button.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
     button.danger { background: var(--danger); color: #2a0a0a; }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .lang-tabs { display: flex; gap: 8px; padding: 16px 20px 0; }
+    .lang-tab { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+    .lang-tab.active { background: linear-gradient(135deg, var(--gold), #e9b440); color: #111827; border-color: transparent; }
     .stats { display: flex; gap: 16px; padding: 16px 20px; flex-wrap: wrap; }
     .stat { background: rgba(18, 27, 47, 0.8); border: 1px solid var(--border); border-radius: 14px; padding: 12px 18px; }
     .stat .label { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
@@ -75,6 +78,10 @@
         <input id="adminKeyInput" type="password" placeholder="Admin key" />
         <button id="loadBtn" type="button">Load words</button>
       </div>
+      <div class="lang-tabs">
+        <button type="button" class="lang-tab active" data-lang="bo">🏔️ Tibetan</button>
+        <button type="button" class="lang-tab" data-lang="en">🇬🇧 English</button>
+      </div>
       <div class="stats">
         <div class="stat"><div class="label">Recorded</div><div class="value" id="recordedCount">0 / 0</div></div>
       </div>
@@ -88,7 +95,7 @@
         </select>
       </div>
       <div id="errorBox" class="error" hidden></div>
-      <div class="note">Record each Tibetan word/phrase once in your own voice. This tool saves files to <code>audio/bo/&lt;id&gt;.webm</code> on whatever machine is running the server — run this locally (<code>node server.js</code>), record your batch, then <code>git add audio/bo</code>, commit, and push so the recordings are baked into the next deploy. Recordings made against the live kunga.me server will NOT survive the next deploy, since Render's disk is wiped on every redeploy.</div>
+      <div class="note" id="noteText"></div>
       <div id="wordList"></div>
       <div id="emptyState" class="empty" hidden>No words match your filter.</div>
     </div>
@@ -1170,7 +1177,15 @@
     const searchInput = document.getElementById('searchInput');
     const categoryFilter = document.getElementById('categoryFilter');
     const statusFilter = document.getElementById('statusFilter');
+    const noteText = document.getElementById('noteText');
+    const langTabs = Array.from(document.querySelectorAll('.lang-tab'));
 
+    const LANG_NOTES = {
+      bo: 'Record each Tibetan word/phrase once in your own voice. This tool saves files to <code>audio/bo/&lt;id&gt;.webm</code> on whatever machine is running the server — run this locally (<code>node server.js</code>), record your batch, then <code>git add audio/bo</code>, commit, and push so the recordings are baked into the next deploy. Recordings made against the live kunga.me server will NOT survive the next deploy, since Render’s disk is wiped on every redeploy.',
+      en: 'Record each English word/phrase once in your own voice. Any word you record here is used instead of the Azure voice for that word — words you haven’t recorded still fall back to the Female/Male Azure voice picked in Profile > Voice settings. Files save to <code>audio/en/&lt;id&gt;.webm</code> — same rule as Tibetan: run this locally, record your batch, then <code>git add audio/en</code>, commit, and push so it survives the next deploy.',
+    };
+
+    let currentLang = 'bo';
     let recordedSet = new Set();
     let mediaStream = null;
     let activeRecorder = null;
@@ -1187,11 +1202,20 @@
         cats.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
     }
 
+    function setLang(lang){
+      currentLang = lang;
+      langTabs.forEach(btn => btn.classList.toggle('active', btn.dataset.lang === lang));
+      noteText.innerHTML = LANG_NOTES[lang];
+      recordedSet = new Set();
+      renderList();
+      if(adminKey()) loadStatus();
+    }
+
     async function loadStatus(){
       const key = adminKey();
       if(!key){ showError('Please enter the admin key.'); return; }
       try {
-        const res = await fetch('/api/admin/audio-status', { headers: { 'X-Admin-Key': key } });
+        const res = await fetch('/api/admin/audio-status/' + currentLang, { headers: { 'X-Admin-Key': key } });
         const data = await res.json().catch(()=>({}));
         if(!res.ok) throw new Error(data.error || 'Unable to load status.');
         recordedSet = new Set(data.recorded || []);
@@ -1225,14 +1249,14 @@
       const row = document.createElement('div');
       row.className = 'row';
       row.dataset.id = w.id;
+      const mainText = currentLang === 'bo'
+        ? `<div class="row-bo">${escapeHtml(w.bo)}</div><div class="row-sub">${escapeHtml(w.bo_tr || '')} &middot; ${escapeHtml(w.en)}</div>`
+        : `<div class="row-bo" style="font-family:inherit;">${escapeHtml(w.en)}</div><div class="row-sub">${escapeHtml(w.bo)}</div>`;
       row.innerHTML = `
-        <div class="row-text">
-          <div class="row-bo">${escapeHtml(w.bo)}</div>
-          <div class="row-sub">${escapeHtml(w.bo_tr || '')} &middot; ${escapeHtml(w.en)}</div>
-        </div>
+        <div class="row-text">${mainText}</div>
         <span class="badge ${done ? 'done' : 'pending'}">${done ? '✅ Recorded' : '⬜ Not yet'}</span>
         <div class="row-actions">
-          <audio controls preload="none" src="${done ? '/audio/bo/' + encodeURIComponent(w.id) + '.webm?t=' + Date.now() : ''}" ${done ? '' : 'style="display:none"'}></audio>
+          <audio controls preload="none" src="${done ? '/audio/' + currentLang + '/' + encodeURIComponent(w.id) + '.webm?t=' + Date.now() : ''}" ${done ? '' : 'style="display:none"'}></audio>
           <button type="button" class="record-btn secondary">\u{1F3A4} Record</button>
         </div>
       `;
@@ -1261,6 +1285,7 @@
         return;
       }
 
+      const lang = currentLang;
       const btn = row.querySelector('.record-btn');
       const chunks = [];
       const recorder = new MediaRecorder(mediaStream);
@@ -1276,7 +1301,7 @@
         btn.disabled = true;
         const blob = new Blob(chunks, { type: 'audio/webm' });
         try {
-          const res = await fetch('/api/admin/audio/' + encodeURIComponent(wordId), {
+          const res = await fetch('/api/admin/audio/' + lang + '/' + encodeURIComponent(wordId), {
             method: 'POST',
             headers: { 'X-Admin-Key': key, 'Content-Type': 'audio/webm' },
             body: blob,
@@ -1285,7 +1310,7 @@
           if(!res.ok) throw new Error(data.error || 'Upload failed.');
           recordedSet.add(wordId);
           const audioEl = row.querySelector('audio');
-          audioEl.src = '/audio/bo/' + encodeURIComponent(wordId) + '.webm?t=' + Date.now();
+          audioEl.src = '/audio/' + lang + '/' + encodeURIComponent(wordId) + '.webm?t=' + Date.now();
           audioEl.style.display = '';
           row.querySelector('.badge').className = 'badge done';
           row.querySelector('.badge').textContent = '✅ Recorded';
@@ -1301,6 +1326,8 @@
       recorder.start();
     }
 
+    langTabs.forEach(btn => btn.addEventListener('click', () => setLang(btn.dataset.lang)));
+
     document.getElementById('loadBtn').addEventListener('click', loadStatus);
     document.getElementById('refreshBtn').addEventListener('click', loadStatus);
     searchInput.addEventListener('input', renderList);
@@ -1308,6 +1335,7 @@
     statusFilter.addEventListener('change', renderList);
 
     populateCategories();
+    noteText.innerHTML = LANG_NOTES[currentLang];
     renderList();
   </script>
 </body>

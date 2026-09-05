@@ -693,6 +693,7 @@ const I18N = {
     translateEyebrow: "Translate", playAudio: "Play audio",
     voiceSettings: "Voice settings", englishVoice: "English voice", chineseVoice: "Chinese voice",
     voiceFemale: "Female", voiceMale: "Male",
+    englishVoiceNote: "Words recorded in your own voice play automatically instead.",
     correctFeedback: "Correct! +10 XP", notQuiteFeedback: "Not quite", answerPrefix: "Answer: ",
     finishBtn: "Finish", continueBtn: "Continue",
     checkpointReached: "Checkpoint reached!", xpEarnedLabel: "XP earned",
@@ -746,6 +747,7 @@ const I18N = {
     translateEyebrow: "翻译", playAudio: "播放语音",
     voiceSettings: "语音设置", englishVoice: "英语语音", chineseVoice: "中文语音",
     voiceFemale: "女声", voiceMale: "男声",
+    englishVoiceNote: "已用你自己声音录制的单词会自动优先播放。",
     correctFeedback: "回答正确！+10 经验值", notQuiteFeedback: "不太对", answerPrefix: "答案：",
     finishBtn: "完成", continueBtn: "继续",
     checkpointReached: "到达检查点！", xpEarnedLabel: "获得经验值",
@@ -799,6 +801,7 @@ const I18N = {
     translateEyebrow: "སྒྱུར།", playAudio: "སྒྲ་ཉན།",
     voiceSettings: "སྐད་སྒྲའི་སྒྲིག་འགོད", englishVoice: "དབྱིན་ཇིའི་སྐད་སྒྲ", chineseVoice: "རྒྱ་སྐད་ཀྱི་སྐད་སྒྲ",
     voiceFemale: "བུད་མེད།", voiceMale: "སྐྱེས་པ།",
+    englishVoiceNote: "ཁྱེད་རང་གི་སྐད་སྒྲས་བཟོས་པའི་ཚིག་རྣམས་རང་འགུལ་གྱིས་སྒྲོག",
     correctFeedback: "ལེགས་སོ! +10 XP", notQuiteFeedback: "འདི་མིན།", answerPrefix: "ལན། ",
     finishBtn: "མཇུག", continueBtn: "མུ་མཐུད།",
     checkpointReached: "ཚད་གནས་སླེབས་སོང་།", xpEarnedLabel: "XP ཐོབ་པ།",
@@ -1196,25 +1199,35 @@ function speakBrowserFallback(text, lang){
 }
 
 const ttsAudio = new Audio();
+// Each language tries its candidate sources in order, falling through on any
+// failure (file missing, Azure not configured, network error) until it hits
+// the last-resort browser speechSynthesis. bo and en can have a real
+// recording (see /record.html); en and zh can fall back to Azure; every
+// language ends at the browser fallback so something always plays.
 function speak(text, lang, wordId){
   if(!text) return;
   try{ ttsAudio.pause(); }catch(e){}
 
-  let src = null;
-  if(lang==='bo' && wordId){
-    src = '/audio/bo/'+encodeURIComponent(wordId)+'.webm';
-  } else if(lang==='en' || lang==='zh'){
-    const gender = (state.voicePref && state.voicePref[lang]) || 'female';
-    src = '/api/tts?text='+encodeURIComponent(text)+'&lang='+lang+'&voice='+gender;
+  const candidates = [];
+  if(wordId && (lang==='bo' || lang==='en')){
+    candidates.push('/audio/'+lang+'/'+encodeURIComponent(wordId)+'.webm');
   }
-  if(!src){ speakBrowserFallback(text, lang); return; }
+  if(lang==='en' || lang==='zh'){
+    const gender = (state.voicePref && state.voicePref[lang]) || 'female';
+    candidates.push('/api/tts?text='+encodeURIComponent(text)+'&lang='+lang+'&voice='+gender);
+  }
 
-  let fellBack = false;
-  const fallback = () => { if(fellBack) return; fellBack = true; speakBrowserFallback(text, lang); };
-  ttsAudio.onerror = fallback;
-  ttsAudio.src = src;
-  const playPromise = ttsAudio.play();
-  if(playPromise && playPromise.catch) playPromise.catch(fallback);
+  function tryNext(){
+    const src = candidates.shift();
+    if(!src){ speakBrowserFallback(text, lang); return; }
+    let moved = false;
+    const advance = () => { if(moved) return; moved = true; tryNext(); };
+    ttsAudio.onerror = advance;
+    ttsAudio.src = src;
+    const playPromise = ttsAudio.play();
+    if(playPromise && playPromise.catch) playPromise.catch(advance);
+  }
+  tryNext();
 }
 function speakPrompt(){
   const s = state.session;
@@ -1388,10 +1401,11 @@ function renderProfile(){
     <div class="profile-card">
       <div style="font-weight:600; margin-bottom:12px;">${t('voiceSettings')}</div>
       <div style="font-size:12px; color:var(--snow-dim); margin-bottom:6px;">${t('englishVoice')}</div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:4px;">
         <button class="btn ${state.voicePref.en==='female'?'btn-primary':'btn-ghost'}" style="font-size:13px;" onclick="setVoicePref('en','female')">${t('voiceFemale')}</button>
         <button class="btn ${state.voicePref.en==='male'?'btn-primary':'btn-ghost'}" style="font-size:13px;" onclick="setVoicePref('en','male')">${t('voiceMale')}</button>
       </div>
+      <div style="font-size:11px; color:var(--snow-dim); opacity:.8; margin-bottom:14px;">${t('englishVoiceNote')}</div>
       <div style="font-size:12px; color:var(--snow-dim); margin-bottom:6px;">${t('chineseVoice')}</div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
         <button class="btn ${state.voicePref.zh==='female'?'btn-primary':'btn-ghost'}" style="font-size:13px;" onclick="setVoicePref('zh','female')">${t('voiceFemale')}</button>
