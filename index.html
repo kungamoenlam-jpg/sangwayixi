@@ -399,6 +399,135 @@ const WORDBANK = [
   {id:'s_later',         cat:'conv', en:'Talk to you later.', zh:'回头再聊。', bo:'རྗེས་སུ་སྐད་ཆ་བཤད།'},
   {id:'s_tomorrow',      cat:'conv', en:'See you tomorrow.', zh:'明天见。', bo:'སང་ཉིན་མཇལ་ཡོང།'},
   {id:'s_wonderfulday',  cat:'conv', en:'Have a wonderful day!', zh:'祝你今天过得愉快！', bo:'ཉིན་མོ་ཡག་པོ་ཤོག'},
+  // ===== Level 4 ("Summit Push") vocabulary — from the Summit Push content
+  // pack (modules 31-42); Tibetan is a first-content draft, not yet reviewed
+  // by a native speaker — see the pack's "Content Notes & Review". =====
+  // module 31 — expressing opinions
+  {id:'opinion',     cat:'opinions', en:'opinion',             zh:'观点',   zh_py:'guāndiǎn', bo:'བསམ་ཚུལ',   bo_tr:'samtsul'},
+  {id:'tothink',     cat:'opinions', en:'to think / believe',  zh:'觉得',   zh_py:'juéde',     bo:'བསམ་',      bo_tr:'sam'},
+  {id:'toagree',     cat:'opinions', en:'to agree',            zh:'同意',   zh_py:'tóngyì',    bo:'མོས་མཐུན',  bo_tr:'mötün'},
+  {id:'todisagree',  cat:'opinions', en:'to disagree',         zh:'不同意', zh_py:'bù tóngyì', bo:'མི་མོས',    bo_tr:'mimö'},
+  {id:'reason',      cat:'opinions', en:'reason',              zh:'理由',   zh_py:'lǐyóu',     bo:'རྒྱུ་མཚན',  bo_tr:'gyutsen'},
+  {id:'correct',     cat:'opinions', en:'correct / true',      zh:'对',     zh_py:'duì',       bo:'ཡང་དག',     bo_tr:'yangdak'},
+  {id:'wrong',       cat:'opinions', en:'wrong / mistake',     zh:'错',     zh_py:'cuò',       bo:'ནོར་བ',     bo_tr:'norwa'},
+  {id:'maybe',       cat:'opinions', en:'maybe / possibly',    zh:'也许',   zh_py:'yěxǔ',      bo:'ཡོང་སྲིད',  bo_tr:'yongsi'},
+  {id:'definitely',  cat:'opinions', en:'definitely',          zh:'一定',   zh_py:'yídìng',    bo:'ངེས་པར',    bo_tr:'ngepar'},
+  {id:'feeling',     cat:'opinions', en:'feeling',             zh:'感觉',   zh_py:'gǎnjué',    bo:'ཚོར་སྣང',   bo_tr:'tsornang'},
+  // module 32 — comparing & choosing
+  {id:'compare',    cat:'compare', en:'to compare',      zh:'比较',   zh_py:'bǐjiào',      bo:'འགྲན་ཞིབ',     bo_tr:'drenzhib'},
+  {id:'choose',     cat:'compare', en:'to choose',       zh:'选择',   zh_py:'xuǎnzé',      bo:'གདམ་ག',        bo_tr:'damga'},
+  {id:'better',     cat:'compare', en:'better',          zh:'更好',   zh_py:'gèng hǎo',    bo:'ལེགས་པ',       bo_tr:'lekpa'},
+  {id:'best',       cat:'compare', en:'best',            zh:'最好',   zh_py:'zuì hǎo',     bo:'ཡག་ཤོས',       bo_tr:'yaksho'},
+  {id:'same',       cat:'compare', en:'the same',        zh:'一样',   zh_py:'yíyàng',      bo:'འདྲ་མཉམ',      bo_tr:'dramnyam'},
+  {id:'different',  cat:'compare', en:'different',       zh:'不一样', zh_py:'bù yíyàng',   bo:'མི་འདྲ',       bo_tr:'mindra'},
+  {id:'prefer',     cat:'compare', en:'to prefer',       zh:'更喜欢', zh_py:'gèng xǐhuan', bo:'ཧ་ཅང་དགའ་པོ',  bo_tr:'hachang gapo'},
+  {id:'or',         cat:'compare', en:'or',              zh:'或者',   zh_py:'huòzhě',      bo:'ཡང་ན',         bo_tr:'yangna'},
+  {id:'choiceopt',  cat:'compare', en:'choice / option', zh:'选项',   zh_py:'xuǎnxiàng',   bo:'གདམ་ག',        bo_tr:'damga'},
+  {id:'more',       cat:'compare', en:'more',            zh:'更多',   zh_py:'gèng duō',    bo:'མང་བ',         bo_tr:'mangwa'},
+  // module 33 — explaining why
+  {id:'cause',        cat:'explain', en:'reason / cause',   zh:'原因', zh_py:'yuányīn',  bo:'རྒྱུ་མཚན',     bo_tr:'gyutsen'},
+  {id:'therefore',    cat:'explain', en:'therefore / so',   zh:'所以', zh_py:'suǒyǐ',    bo:'དེའི་ཕྱིར',     bo_tr:'deiphyir'},
+  {id:'purpose',      cat:'explain', en:'purpose',          zh:'目的', zh_py:'mùdì',     bo:'དམིགས་ཡུལ',     bo_tr:'mikyul'},
+  {id:'result',       cat:'explain', en:'result',           zh:'结果', zh_py:'jiéguǒ',   bo:'འབྲས་བུ',       bo_tr:'drebu'},
+  {id:'explain',      cat:'explain', en:'to explain',       zh:'解释', zh_py:'jiěshì',   bo:'གསལ་བཤད',       bo_tr:'salshe'},
+  {id:'example',      cat:'explain', en:'example',          zh:'例子', zh_py:'lìzi',     bo:'དཔེ',           bo_tr:'pe'},
+  {id:'forexample',   cat:'explain', en:'for example',      zh:'比如', zh_py:'bǐrú',     bo:'དཔེར་ན',        bo_tr:'perna'},
+  {id:'important',    cat:'explain', en:'important',        zh:'重要', zh_py:'zhòngyào', bo:'གལ་ཆེན་པོ',     bo_tr:'gal chenpo'},
+  {id:'simple',       cat:'explain', en:'simple / easy',    zh:'简单', zh_py:'jiǎndān',  bo:'སླ་པོ',         bo_tr:'lapo'},
+  {id:'tohappen',     cat:'explain', en:'to happen',        zh:'发生', zh_py:'fāshēng',  bo:'བྱུང',          bo_tr:'jung'},
+  // module 34 — telling stories ('tohappen' above is shared with this module)
+  {id:'story',          cat:'stories', en:'story',                         zh:'故事', zh_py:'gùshi',    bo:'སྒྲུང',        bo_tr:'drung'},
+  {id:'onceuponatime',  cat:'stories', en:'once upon a time / long ago',   zh:'从前', zh_py:'cóngqián', bo:'སྔོན་མ',       bo_tr:'ngönma'},
+  {id:'then',           cat:'stories', en:'then / after that',            zh:'然后', zh_py:'ránhòu',   bo:'དེ་ནས',        bo_tr:'denä'},
+  {id:'suddenly',       cat:'stories', en:'suddenly',                     zh:'突然', zh_py:'tūrán',    bo:'གློ་བུར་དུ',   bo_tr:'loburdu'},
+  {id:'finally',        cat:'stories', en:'finally / in the end',         zh:'最后', zh_py:'zuìhòu',   bo:'མཐར',          bo_tr:'tar'},
+  {id:'beginning',      cat:'stories', en:'beginning',                    zh:'开始', zh_py:'kāishǐ',   bo:'འགོ',          bo_tr:'go'},
+  {id:'end',            cat:'stories', en:'end',                          zh:'结束', zh_py:'jiéshù',   bo:'མཇུག',         bo_tr:'juk'},
+  {id:'onetime',        cat:'stories', en:'one time / once',              zh:'一次', zh_py:'yícì',     bo:'ཐེངས་གཅིག',    bo_tr:'thengchik'},
+  {id:'mainchar',       cat:'stories', en:'main character',               zh:'主角', zh_py:'zhǔjué',   bo:'གཙོ་བོའི་མི',  bo_tr:'tsowö mi'},
+  // module 35 — goals & plans ('want' below reuses the existing Level 2 entry)
+  {id:'goal',      cat:'goals', en:'goal',                  zh:'目标',   zh_py:'mùbiāo',     bo:'དམིགས་ཡུལ',     bo_tr:'mikyul'},
+  {id:'plan',      cat:'goals', en:'plan',                  zh:'计划',   zh_py:'jìhuà',      bo:'ཐབས་བྱུས',      bo_tr:'thabjü'},
+  {id:'future',    cat:'goals', en:'future',                zh:'未来',   zh_py:'wèilái',     bo:'མ་འོངས་པ',      bo_tr:'ma-ongpa'},
+  {id:'dream',     cat:'goals', en:'dream / aspiration',    zh:'梦想',   zh_py:'mèngxiǎng',  bo:'རྨི་ལམ',        bo_tr:'milam'},
+  {id:'nextyear',  cat:'goals', en:'next year',             zh:'明年',   zh_py:'míngnián',   bo:'སང་ལོ',         bo_tr:'sanglo'},
+  {id:'someday',   cat:'goals', en:'someday / one day',     zh:'有一天', zh_py:'yǒu yìtiān', bo:'ཉིན་ཞིག',       bo_tr:'nyinzhik'},
+  {id:'hope',      cat:'goals', en:'hope',                  zh:'希望',   zh_py:'xīwàng',     bo:'རེ་བ',          bo_tr:'rewa'},
+  {id:'succeed',   cat:'goals', en:'to succeed',            zh:'成功',   zh_py:'chénggōng',  bo:'འགྲུབ་པ',       bo_tr:'drubpa'},
+  {id:'intend',    cat:'goals', en:'to intend / plan to',   zh:'打算',   zh_py:'dǎsuàn',     bo:'ཐབས་བྱུས་འགོད', bo_tr:'thabjü gö'},
+  // module 36 — abstract ideas
+  {id:'idea',       cat:'abstract', en:'idea',           zh:'想法', zh_py:'xiǎngfǎ',              bo:'བསམ་བློ',   bo_tr:'samlo'},
+  {id:'freedom',    cat:'abstract', en:'freedom',        zh:'自由', zh_py:'zìyóu',                bo:'རང་དབང',    bo_tr:'rangwang'},
+  {id:'truth',      cat:'abstract', en:'truth',          zh:'真相 / 事实', zh_py:'zhēnxiàng / shìshí', bo:'བདེན་དོན',  bo_tr:'dendön'},
+  {id:'time',       cat:'abstract', en:'time',           zh:'时间', zh_py:'shíjiān',              bo:'དུས་ཚོད',   bo_tr:'dütsö'},
+  {id:'knowledge',  cat:'abstract', en:'knowledge',      zh:'知识', zh_py:'zhīshi',               bo:'ཤེས་བྱ',    bo_tr:'sheja'},
+  {id:'peace',      cat:'abstract', en:'peace',          zh:'和平', zh_py:'hépíng',               bo:'ཞི་བདེ',    bo_tr:'zhide'},
+  {id:'change',     cat:'abstract', en:'change',         zh:'变化', zh_py:'biànhuà',              bo:'འགྱུར་བ',   bo_tr:'gyurwa'},
+  {id:'meaning',    cat:'abstract', en:'meaning',        zh:'意义', zh_py:'yìyì',                 bo:'དོན',       bo_tr:'dön'},
+  {id:'value',      cat:'abstract', en:'value / worth',  zh:'价值', zh_py:'jiàzhí',               bo:'རིན་ཐང',    bo_tr:'rintang'},
+  {id:'world',      cat:'abstract', en:'world',          zh:'世界', zh_py:'shìjiè',               bo:'འཛམ་གླིང',  bo_tr:'dzamling'},
+  // module 37 — nuance & emotion
+  {id:'excited',       cat:'nuance', en:'excited',           zh:'兴奋',       zh_py:'xīngfèn',              bo:'སྤྲོ་བ',       bo_tr:'trowa'},
+  {id:'nervous',       cat:'nuance', en:'nervous / worried', zh:'紧张',       zh_py:'jǐnzhāng',             bo:'སེམས་ཁྲལ',      bo_tr:'semtral'},
+  {id:'relieved',      cat:'nuance', en:'relieved',          zh:'放心',       zh_py:'fàngxīn',              bo:'སེམས་ཁྲལ་བྲལ', bo_tr:'semtral-dral'},
+  {id:'disappointed',  cat:'nuance', en:'disappointed',      zh:'失望',       zh_py:'shīwàng',              bo:'ཡིད་ཆད',       bo_tr:'yiche'},
+  {id:'proud',         cat:'nuance', en:'proud',             zh:'骄傲 / 自豪', zh_py:"jiāo'ào / zìháo",     bo:'ང་རྒྱལ',       bo_tr:'ngagyel'},
+  {id:'grateful',      cat:'nuance', en:'grateful',          zh:'感激',       zh_py:'gǎnjī',                bo:'དྲིན་གཟོ',      bo_tr:'drinzo'},
+  {id:'lonely',        cat:'nuance', en:'lonely',            zh:'孤独',       zh_py:'gūdú',                 bo:'གྲོགས་མེད་པ',  bo_tr:'drokmepa'},
+  {id:'curious',       cat:'nuance', en:'curious',           zh:'好奇',       zh_py:'hàoqí',                bo:'ཀུན་སློང',      bo_tr:'kunlong'},
+  {id:'calm',          cat:'nuance', en:'calm',              zh:'平静',       zh_py:'píngjìng',             bo:'ཞི་ཞིང',       bo_tr:'zhizhing'},
+  {id:'embarrassed',   cat:'nuance', en:'embarrassed',       zh:'尴尬',       zh_py:'gāngà',                bo:'ངོ་ཚ',         bo_tr:'ngotsa'},
+  // module 38 — debate & discussion
+  {id:'discussion',  cat:'debate', en:'discussion',          zh:'讨论', zh_py:'tǎolùn',   bo:'གྲོས་མོལ',       bo_tr:'trömöl'},
+  {id:'debate',      cat:'debate', en:'to debate / argue',   zh:'辩论', zh_py:'biànlùn',  bo:'རྩོད་པ',         bo_tr:'tsöpa'},
+  {id:'point',       cat:'debate', en:'point (of view)',     zh:'论点', zh_py:'lùndiǎn',  bo:'དོན་ཚན',         bo_tr:'döntsen'},
+  {id:'evidence',    cat:'debate', en:'evidence / proof',    zh:'证据', zh_py:'zhèngjù',  bo:'དཔང་རྟགས',       bo_tr:'pangtak'},
+  {id:'support',     cat:'debate', en:'to support',          zh:'支持', zh_py:'zhīchí',   bo:'རྒྱབ་སྐྱོར',     bo_tr:'gyabkyor'},
+  {id:'oppose',      cat:'debate', en:'to oppose',           zh:'反对', zh_py:'fǎnduì',   bo:'ངོ་རྒོལ',        bo_tr:'ngogöl'},
+  {id:'question',    cat:'debate', en:'question',            zh:'问题', zh_py:'wèntí',    bo:'དྲི་བ',          bo_tr:'driwa'},
+  {id:'answer',      cat:'debate', en:'answer',              zh:'答案', zh_py:"dá'àn",    bo:'ལན',             bo_tr:'len'},
+  {id:'convince',    cat:'debate', en:'to convince',         zh:'说服', zh_py:'shuōfú',   bo:'ཡིད་ཆེས་བསྐྱེད', bo_tr:'yiche kye'},
+  {id:'fair',        cat:'debate', en:'fair / reasonable',   zh:'公平', zh_py:'gōngpíng', bo:'དྲང་པོ',         bo_tr:'drangpo'},
+  // module 39 — culture & society
+  {id:'culture',    cat:'culture', en:'culture',        zh:'文化', zh_py:'wénhuà',   bo:'རིག་གནས',       bo_tr:'rignä'},
+  {id:'tradition',  cat:'culture', en:'tradition',      zh:'传统', zh_py:'chuántǒng', bo:'སྲོལ་རྒྱུན',   bo_tr:'sölgyün'},
+  {id:'festival',   cat:'culture', en:'festival',       zh:'节日', zh_py:'jiérì',    bo:'དུས་ཆེན',       bo_tr:'dütshen'},
+  {id:'society',    cat:'culture', en:'society',        zh:'社会', zh_py:'shèhuì',   bo:'སྤྱི་ཚོགས',     bo_tr:'chitsok'},
+  {id:'custom',     cat:'culture', en:'custom / habit', zh:'习俗', zh_py:'xísú',     bo:'གོམས་གཤིས',     bo_tr:'gomshi'},
+  {id:'religion',   cat:'culture', en:'religion',       zh:'宗教', zh_py:'zōngjiào', bo:'ཆོས',           bo_tr:'chö'},
+  {id:'language',   cat:'culture', en:'language',       zh:'语言', zh_py:'yǔyán',    bo:'སྐད་ཡིག',       bo_tr:'kayig'},
+  {id:'community',  cat:'culture', en:'community',      zh:'社区', zh_py:'shèqū',    bo:'སྡེ་ཚན',        bo_tr:'detsen'},
+  {id:'celebrate',  cat:'culture', en:'to celebrate',   zh:'庆祝', zh_py:'qìngzhù',  bo:'དགའ་སྟོན་རྒྱག', bo_tr:'gatön gyak'},
+  {id:'respect',    cat:'culture', en:'respect',        zh:'尊重', zh_py:'zūnzhòng', bo:'གུས་བརྩི',      bo_tr:'güntsi'},
+  // module 40 — real-world fluency
+  {id:'bytheway',    cat:'fluency', en:'by the way',                zh:'对了',     zh_py:'duìle',           bo:'ཡང་ཞིག',                bo_tr:'yang-zhik'},
+  {id:'actually',    cat:'fluency', en:'actually / really',         zh:'其实',     zh_py:'qíshí',           bo:'དངོས་གནས',              bo_tr:'ngönä'},
+  {id:'noproblem',   cat:'fluency', en:'no problem',                zh:'没问题',   zh_py:'méi wèntí',       bo:'དཀའ་ངལ་མེད',            bo_tr:'kangel-mé'},
+  {id:'itdepends',   cat:'fluency', en:'it depends',                zh:'看情况',   zh_py:'kàn qíngkuàng',   bo:'གནས་སྟངས་ལ་རག་ལས',      bo_tr:'nästang-la raklä'},
+  {id:'notsure',     cat:'fluency', en:"I'm not sure",              zh:'我不确定', zh_py:'wǒ bú quèdìng',   bo:'ང་ངེས་གཏན་མིན',         bo_tr:'nga ngeten-min'},
+  {id:'letmethink',  cat:'fluency', en:'let me think',              zh:'让我想想', zh_py:'ràng wǒ xiǎngxiang', bo:'ང་ཅུང་ཙམ་བསམ་གྱི་ཡིན', bo_tr:'nga chungtsam sam-gyi-yin'},
+  {id:'thatsright',  cat:'fluency', en:"that's right / exactly",    zh:'没错',     zh_py:'méicuò',          bo:'ངོ་མ་རེད',              bo_tr:'ngoma-re'},
+  {id:'uptoyou',     cat:'fluency', en:"it's up to you",            zh:'你决定',   zh_py:'nǐ juédìng',      bo:'ཁྱེད་རང་གིས་ཐག་གཅོད་གྱིས', bo_tr:'khyerang-gi thakche gyi'},
+  {id:'goodluck',    cat:'fluency', en:'good luck',                 zh:'祝你好运', zh_py:'zhù nǐ hǎoyùn',   bo:'སྐལ་བ་བཟང་པོ་ཤོག',      bo_tr:'kalwa zangpo shok'},
+  {id:'takecare',    cat:'fluency', en:'take care',                 zh:'保重',     zh_py:'bǎozhòng',        bo:'སྐུ་ལུས་ལ་གྲིམ་འཛིན་གྱིས', bo_tr:'kulu-la drimdzin-gyi'},
+  // ===== Bonus modules 41-42 — beyond the 40-module roadmap; paraphrased
+  // sayings/slang, needs native-speaker review even more than the rest. =====
+  // module 41 — idioms & proverbs (sentence-style entries, like Level 3)
+  {id:'idiom_practice',   cat:'idioms', en:'Practice makes perfect.',                      zh:'熟能生巧',       zh_py:'shú néng shēng qiǎo',        bo:'ལས་ལ་གོམས་ན་མཁས་པར་འགྱུར', bo_tr:'lä-la gom-na khepar gyur'},
+  {id:'idiom_actions',    cat:'idioms', en:'Actions speak louder than words.',             zh:'行胜于言',       zh_py:'xíng shèng yú yán',          bo:'ཚིག་ལས་བྱ་བ་གལ་ཆེ',        bo_tr:'tsik-lä chawa gal-che'},
+  {id:'idiom_will',       cat:'idioms', en:"Where there's a will, there's a way.",         zh:'有志者事竟成',   zh_py:'yǒu zhì zhě shì jìng chéng', bo:'འདུན་པ་ཡོད་ན་ཐབས་ཡོད',      bo_tr:'dünpa yö-na thab-yö'},
+  {id:'idiom_late',       cat:'idioms', en:'Better late than never.',                      zh:'亡羊补牢，为时未晚', zh_py:'wáng yáng bǔ láo, wéi shí wèi wǎn', bo:'ཕྱི་ཡང་མེད་པ་ལས་ལེགས', bo_tr:'chiyang mepa-lä lek'},
+  {id:'idiom_cloud',      cat:'idioms', en:'Every cloud has a silver lining.',             zh:'塞翁失马，焉知非福', zh_py:'sài wēng shī mǎ, yān zhī fēi fú', bo:'སྐྱོན་ནང་ཡོན་ཏན་ཡང་སྦས་ཡོད', bo_tr:'kyön-nang yönten yang bä-yö'},
+  {id:'idiom_knowledge',  cat:'idioms', en:'Knowledge is power.',                          zh:'知识就是力量',   zh_py:'zhīshi jiùshì lìliàng',      bo:'ཤེས་བྱ་ནི་མཐུ་རེད',        bo_tr:'sheja-ni thu-re'},
+  // module 42 — slang & casual expressions
+  {id:'great',          cat:'slang', en:'great / the best',        zh:'厉害 / 酷',   zh_py:'lìhài / kù',      bo:'ཡག་པོ་ཤོས',        bo_tr:'yakpo-shö'},
+  {id:'reallynoway',    cat:'slang', en:'really? / no way!',       zh:'真的假的？',  zh_py:'zhēn de jiǎ de?', bo:'ངོ་མ་རེད་པས',      bo_tr:'ngoma-repä'},
+  {id:'soso',           cat:'slang', en:'so-so / okay-ish',        zh:'一般般',      zh_py:'yìbānbān',        bo:'འགྲིགས་འགྲིགས',    bo_tr:'drik-drik'},
+  {id:'whatever',       cat:'slang', en:"whatever / it's fine",    zh:'随便',        zh_py:'suíbiàn',         bo:'ག་རེ་ཡིན་ཡང་འགྲིག', bo_tr:'kare-yin-yang drik'},
+  {id:'letsgo',         cat:'slang', en:"let's go!",               zh:'走吧！',      zh_py:'zǒu ba!',         bo:'འགྲོ་ཡས',          bo_tr:'dro-yä'},
+  {id:'mybad',          cat:'slang', en:'my bad / oops',           zh:'我的错',      zh_py:'wǒ de cuò',       bo:'ངའི་ནོར་བ་རེད',    bo_tr:'ngai norwa-re'},
+  {id:'forreal',        cat:'slang', en:'literally / for real',    zh:'真的',        zh_py:'zhēn de',         bo:'ངོ་མ',             bo_tr:'ngoma'},
+  {id:'fyi',            cat:'slang', en:'just so you know (FYI)',  zh:'顺便说一下',  zh_py:'shùnbiàn shuō yíxià', bo:'ཡང་ཞིག་ཤོད་ན',  bo_tr:'yang-zhik shö-na'},
 ];
 const byId = id => WORDBANK.find(w=>w.id===id);
 
@@ -449,11 +578,33 @@ const LEVEL3_MODULES = [
   {num:30, key:'farewell',  label:'Farewells',              icon:'🌙', ids:['s_later','s_tomorrow','s_wonderfulday']},
 ];
 
-// ---- the 4 levels on the route: words → sentences → conversations → ideas --
-// Levels 1–3 have real exercises. Level 4 shows a numbered roadmap (no
-// exercises yet) — see README for why, and how to build it out. There is no
-// prerequisite/locking between levels — every level is open from the start;
-// an unbuilt level just shows its roadmap instead of exercises.
+// ---- the 10 modules of Level 4 ("Summit Push") — fully built ---------------
+// From the Summit Push content pack — see the WORDBANK comment above module
+// 31 for the native-speaker-review note that applies to all of this level.
+const LEVEL4_MODULES = [
+  {num:31, key:'opinions', label:'Expressing Opinions',   icon:'💭', ids:['opinion','tothink','toagree','todisagree','reason','correct','wrong','maybe','definitely','feeling']},
+  {num:32, key:'compare',  label:'Comparing & Choosing',   icon:'⚖️', ids:['compare','choose','better','best','same','different','prefer','or','choiceopt','more']},
+  {num:33, key:'explain',  label:'Explaining Why',         icon:'💡', ids:['cause','therefore','purpose','result','explain','example','forexample','important','simple','tohappen']},
+  {num:34, key:'stories',  label:'Telling Stories',        icon:'📖', ids:['story','onceuponatime','then','suddenly','finally','tohappen','beginning','end','onetime','mainchar']},
+  {num:35, key:'goals',    label:'Goals & Plans',          icon:'🎯', ids:['goal','plan','future','dream','nextyear','someday','hope','succeed','intend','want']},
+  {num:36, key:'abstract', label:'Abstract Ideas',         icon:'🌐', ids:['idea','freedom','truth','time','knowledge','peace','change','meaning','value','world']},
+  {num:37, key:'nuance',   label:'Nuance & Emotion',       icon:'❤️', ids:['excited','nervous','relieved','disappointed','proud','grateful','lonely','curious','calm','embarrassed']},
+  {num:38, key:'debate',   label:'Debate & Discussion',    icon:'🎤', ids:['discussion','debate','point','evidence','support','oppose','question','answer','convince','fair']},
+  {num:39, key:'culture',  label:'Culture & Society',      icon:'🏮', ids:['culture','tradition','festival','society','custom','religion','language','community','celebrate','respect']},
+  {num:40, key:'fluency',  label:'Real-World Fluency',     icon:'🚀', ids:['bytheway','actually','noproblem','itdepends','notsure','letmethink','thatsright','uptoyou','goodluck','takecare']},
+];
+
+// ---- the 2 bonus modules of Level 5 ("Bonus Round") — fully built ----------
+// Beyond the original 40-module roadmap. Module 41's entries are
+// sentence-style (a whole idiom per WORDBANK item, like Level 3) rather than
+// single words, since a proverb doesn't reduce to a word-for-word gloss.
+const LEVEL5_MODULES = [
+  {num:41, key:'idioms', label:'Idioms & Proverbs',            icon:'🏷️', ids:['idiom_practice','idiom_actions','idiom_will','idiom_late','idiom_cloud','idiom_knowledge']},
+  {num:42, key:'slang',  label:'Slang & Casual Expressions',   icon:'💬', ids:['great','reallynoway','soso','whatever','letsgo','mybad','forreal','fyi']},
+];
+
+// ---- the 5 levels on the route: words → sentences → conversations → ideas →
+//      idioms/slang — every level is open from the start, no prerequisites.
 const LEVELS = [
   {
     icon:'🏕️', title:'Base Camp', subtitle:'Survival Beginner', range:'Modules 1–10', built:true,
@@ -471,14 +622,14 @@ const LEVELS = [
     modules: LEVEL3_MODULES
   },
   {
-    icon:'🏔️', title:'Summit Push', subtitle:'Levelling Up', range:'Modules 31–40', built:false,
+    icon:'🏔️', title:'Summit Push', subtitle:'Levelling Up', range:'Modules 31–40', built:true,
     milestone:'Share opinions, tell stories, and talk about ideas.',
-    roadmap:[
-      {num:31,label:'Expressing Opinions'},{num:32,label:'Comparing & Choosing'},{num:33,label:'Explaining Why'},
-      {num:34,label:'Telling Stories'},{num:35,label:'Goals & Plans'},{num:36,label:'Abstract Ideas'},
-      {num:37,label:'Nuance & Emotion'},{num:38,label:'Debate & Discussion'},{num:39,label:'Culture & Society'},
-      {num:40,label:'Real-World Fluency'}
-    ]
+    modules: LEVEL4_MODULES
+  },
+  {
+    icon:'🎁', title:'Bonus Round', subtitle:'Idioms & Slang', range:'Modules 41–42', built:true,
+    milestone:'Recognise common sayings and casual everyday expressions.',
+    modules: LEVEL5_MODULES
   }
 ];
 
@@ -686,7 +837,7 @@ const I18N = {
     homeSub: "Four routes up the same mountain — choose the language you already speak, and climb a 40-module path toward the one you're learning: words → sentences → conversations → ideas.",
     modulesDone: "{n} modules done", startArrow: "Start →",
     myProgress: "⛺ My progress",
-    homeFooter: "Base Camp, Camp I and Camp II (Modules 1–30) are fully playable now. The Summit Push (Modules 31–40) is on the map as the next content drop — every level is open to explore any time, no prerequisites.",
+    homeFooter: "All 42 modules — Base Camp through Summit Push, plus the Idioms & Slang bonus round — are fully playable now. Every level is open to explore any time, no prerequisites.",
     comingSoon: "Coming soon", modulesCount: "{n} modules", modulesWord: "modules",
     lockedBody: "{range}. No exercises here yet — this is the next content drop. Milestone once it's built: {milestone}",
     backToRoute: "Back to the route",
@@ -740,7 +891,7 @@ const I18N = {
     homeSub: "同一座山，四条路线 — 选择你已经会说的语言，沿着40个单元攀登，学习一门新语言：单词 → 句子 → 对话 → 思想。",
     modulesDone: "已完成 {n} 个单元", startArrow: "开始 →",
     myProgress: "⛺ 我的进度",
-    homeFooter: "大本营、一号营地和二号营地（第1–30单元）现已全部开放。冲顶阶段（第31–40单元）是下一次内容更新 — 任何等级都可随时探索，没有先修要求。",
+    homeFooter: "全部42个单元 — 从大本营到冲顶阶段，以及成语与俚语加分关卡 — 现已全部开放。任何等级都可随时探索，没有先修要求。",
     comingSoon: "即将推出", modulesCount: "{n} 个单元", modulesWord: "个单元",
     lockedBody: "{range}。此处暂无练习 — 这是下一次内容更新。建成后的里程碑：{milestone}",
     backToRoute: "返回路线",
@@ -794,7 +945,7 @@ const I18N = {
     homeSub: "རི་བོ་གཅིག་ལ་ལམ་བཞི། ད་ལྟ་ཤེས་པའི་སྐད་ཡིག་འདེམས་ནས་, ཚན་པ་40ཡི་ལམ་ནས་སྐད་ཡིག་གསར་པ་ཞིག་སློབ་སྦྱོང་གྱིས: ཚིག → ཚིག་གྲུབ → གླེང་མོལ → བསམ་ཚུལ།",
     modulesDone: "ཚན་པ་{n}གྲུབ་ཟིན།", startArrow: "འགོ་འཛུགས →",
     myProgress: "⛺ ངའི་ཡར་རྒྱས།",
-    homeFooter: "རྩ་གནས་སྒར་དང་སྒར་དང་པོ, སྒར་གཉིས་པ (ཚན་པ 1–30) ད་ལྟ་ཡོངས་སུ་སྐྱོན་ཐུབ། རྩེ་མོར་འཛེགས་པ (ཚན་པ 31–40) ནི་རྗེས་མའི་ནང་དོན་ཡིན། གནས་རིམ་ཚང་མ་ནམ་ཡང་བརྟག་དཔྱད་བྱེད་ཆོག, སྔོན་འགྲོའི་དགོས་མཁོ་མེད།",
+    homeFooter: "ཚན་པ 42 ཧྲིལ་པོ — རྩ་གནས་སྒར་ནས་རྩེ་མོར་འཛེགས་པའི་བར་དང་, གཏམ་དཔེ་དང་ཀུན་སྤྱོད་ཐ་སྙད་ཀྱི་ཁ་སྣོན་ཐེངས་བཅས་ — ད་ལྟ་ཡོངས་སུ་སྐྱོན་ཐུབ། གནས་རིམ་ཚང་མ་ནམ་ཡང་བརྟག་དཔྱད་བྱེད་ཆོག, སྔོན་འགྲོའི་དགོས་མཁོ་མེད།",
     comingSoon: "མ་འོངས་པར་འབྱོར་འོང་།", modulesCount: "ཚན་པ་{n}།", modulesWord: "ཚན་པ།",
     lockedBody: "{range}། འདིར་ད་དུང་ལག་རྩལ་སྦྱོང་བརྡར་མེད། འདི་ནི་རྗེས་མའི་ནང་དོན་ཡིན། བཟོས་ཟིན་རྗེས་ཀྱི་དོན་ཚན: {milestone}",
     backToRoute: "ལམ་ལ་ལོག",
