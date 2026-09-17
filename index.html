@@ -187,25 +187,17 @@
   .avatar-circle.animated{animation:avatarBob 3s ease-in-out infinite;}
   .avatar-circle img{width:100%; height:100%; object-fit:cover;}
   .avatar-circle .avatar-base{display:flex; align-items:center; justify-content:center; width:100%; height:100%;}
-  .avatar-circle .avatar-badge{
-    position:absolute; right:-2%; bottom:-2%; background:var(--ink); border-radius:50%;
-    display:flex; align-items:center; justify-content:center; border:2px solid rgba(255,255,255,.25);
-  }
-  .avatar-bg-gold{background:linear-gradient(160deg,#F3C673,var(--gold-dim));}
-  .avatar-bg-good{background:linear-gradient(160deg,#6BC98F,var(--good));}
-  .avatar-bg-red{background:linear-gradient(160deg,#EB8177,var(--bad));}
-  .avatar-bg-blue{background:linear-gradient(160deg,#6E9BDB,var(--flag-blue));}
-  .avatar-bg-purple{background:linear-gradient(160deg,#B08AE0,#6E4FA3);}
-  .avatar-bg-teal{background:linear-gradient(160deg,#7FD3EC,var(--ice));}
-  .avatar-bg-pink{background:linear-gradient(160deg,#F0A0C4,#C94E86);}
   .avatar-bg-gray{background:linear-gradient(160deg,#8B95A6,#5B6576);}
 
   .avatar-picker-row{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;}
   .avatar-swatch{
-    width:44px; height:44px; border-radius:50%; border:2px solid transparent; background:rgba(255,255,255,.08);
-    display:flex; align-items:center; justify-content:center; font-size:20px; cursor:pointer;
+    width:40px; height:40px; border-radius:50%; border:2px solid transparent; background:rgba(255,255,255,.08);
+    display:flex; align-items:center; justify-content:center; font-size:20px; cursor:pointer; color:var(--snow);
   }
-  .avatar-swatch.selected{border-color:var(--gold); box-shadow:0 0 0 2px rgba(232,163,61,.3);}
+  .avatar-swatch.avatar-swatch-wide{
+    width:auto; min-width:56px; height:34px; border-radius:17px; padding:0 10px;
+  }
+  .avatar-swatch.selected{border-color:var(--gold); box-shadow:0 0 0 2px rgba(232,163,61,.3); background:rgba(232,163,61,.15);}
   .avatar-tabs{display:flex; gap:8px; background:rgba(255,255,255,.06); border-radius:12px; padding:4px; margin-bottom:16px;}
   .avatar-tab{flex:1; border:none; background:transparent; color:var(--snow-dim); font-family:var(--font-display); font-weight:700; font-size:13px; padding:9px 0; border-radius:9px;}
   .avatar-tab.active{background:var(--gold); color:#241704;}
@@ -3662,12 +3654,57 @@ const SESSION_KEY = 'sangwa_session_v1';
 const LANG_KEY = 'sangwa_lang_v1';
 const VOICE_PREF_KEY = 'yeshe_voice_pref_v1';
 
-// ---- mascot avatars: mirrors the whitelist in server.js — the server is the
-// real source of truth/validation, this just drives the picker UI. ----------
-const AVATAR_BASES = ['🧑','👨','👩','🧔','👴','👵','🥷','🧙','🦸','🧚'];
-const AVATAR_SKINS = ['default','🏻','🏼','🏽','🏾','🏿'];
-const AVATAR_BACKGROUNDS = ['gold','good','red','blue','purple','teal','pink','gray'];
-const AVATAR_ACCESSORIES = ['none','🎩','🧢','👑','🎓','😎','🕶️','🌟','✨','🎧'];
+// ---- character avatars: DiceBear's open-source "Avataaars" style
+// (api.dicebear.com, MIT licensed) — illustrated human-like characters
+// rendered as SVG from plain query params, no AI generation, no photos sent
+// anywhere. Mirrors the whitelist in server.js, which is the real source of
+// truth/validation — this copy just drives the picker UI. -------------------
+const DICEBEAR_BASE = 'https://api.dicebear.com/9.x/avataaars/svg';
+const AVATAAAR_OPTIONS = {
+  top: ['hat','hijab','turban','winterHat1','winterHat02','winterHat03','winterHat04','bob','bun','curly','curvy','dreads','frida','fro','froBand','longButNotTooLong','miaWallace','shavedSides','straight02','straight01','straightAndStrand','dreads01','dreads02','frizzle','shaggy','shaggyMullet','shortCurly','shortFlat','shortRound','shortWaved','sides','theCaesar','theCaesarAndSidePart','bigHair'],
+  hairColor: ['a55728','2c1b18','b58143','d6b370','724133','4a312c','f59797','ecdcbf','c93305','e8e1e1'],
+  skinColor: ['614335','d08b5b','ae5d29','edb98a','ffdbb4','fd9841','f8d25c'],
+  eyes: ['closed','cry','default','eyeRoll','happy','hearts','side','squint','surprised','winkWacky','wink','xDizzy'],
+  eyebrows: ['angryNatural','defaultNatural','flatNatural','frownNatural','raisedExcitedNatural','sadConcernedNatural','unibrowNatural','upDownNatural','angry','default','raisedExcited','sadConcerned','upDown'],
+  mouth: ['concerned','default','disbelief','eating','grimace','sad','screamOpen','serious','smile','tongue','twinkle','vomit'],
+  facialHair: ['none','beardLight','beardMajestic','beardMedium','moustacheFancy','moustacheMagnum'],
+  accessories: ['none','kurt','prescription01','prescription02','round','sunglasses','wayfarers','eyepatch'],
+  clothing: ['blazerAndShirt','blazerAndSweater','collarAndSweater','graphicShirt','hoodie','overall','shirtCrewNeck','shirtScoopNeck','shirtVNeck'],
+  clothesColor: ['262e33','65c9ff','5199e4','25557c','e6e6e6','929598','3c4f5c','b1e2ff','a7ffc4','ffafb9','ffffb1','ff488e','ff5c5c','ffffff'],
+  backgroundColor: ['e8a33d','3fae72','e1584b','3d6fb4','b08ae0','4fb4d8','c94e86','8b95a6'],
+};
+const AVATAAAR_DEFAULTS = {
+  top: 'shortFlat', hairColor: '4a312c', skinColor: 'edb98a', eyes: 'default', eyebrows: 'default',
+  mouth: 'default', facialHair: 'none', accessories: 'none', clothing: 'hoodie', clothesColor: '65c9ff', backgroundColor: 'e8a33d',
+};
+// Categories shown in the editor, in order, with whether they're a color
+// picker (rendered as swatches) or a style picker (rendered as text pills).
+const AVATAAAR_CATEGORIES = [
+  {key:'top', labelKey:'avatarHair', kind:'style'},
+  {key:'hairColor', labelKey:'avatarHairColor', kind:'color'},
+  {key:'skinColor', labelKey:'avatarSkinTone', kind:'color'},
+  {key:'eyes', labelKey:'avatarEyes', kind:'style'},
+  {key:'eyebrows', labelKey:'avatarEyebrows', kind:'style'},
+  {key:'mouth', labelKey:'avatarMouth', kind:'style'},
+  {key:'facialHair', labelKey:'avatarFacialHair', kind:'style'},
+  {key:'accessories', labelKey:'avatarGlasses', kind:'style'},
+  {key:'clothing', labelKey:'avatarClothing', kind:'style'},
+  {key:'clothesColor', labelKey:'avatarClothingColor', kind:'color'},
+  {key:'backgroundColor', labelKey:'avatarBackground', kind:'color'},
+];
+function humanizeAvatarOption(str){
+  if(str==='none') return '—';
+  return str.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/(\d+)/g,' $1').replace(/^./, c=>c.toUpperCase()).trim();
+}
+function dicebearUrl(options, seed){
+  const params = new URLSearchParams({seed: seed||'yeshe'});
+  Object.entries(options||{}).forEach(([key, val]) => {
+    if(key==='facialHair'){ params.set('facialHairProbability', val==='none'?'0':'100'); if(val!=='none') params.set(key, val); return; }
+    if(key==='accessories'){ params.set('accessoriesProbability', val==='none'?'0':'100'); if(val!=='none') params.set(key, val); return; }
+    params.set(key, val);
+  });
+  return DICEBEAR_BASE + '?' + params.toString();
+}
 const gameKey = username => 'sangwa_progress_v1__' + username;
 
 // ---- accounts (backend via Supabase API) -------
@@ -3713,9 +3750,9 @@ function defaultAppState(){
     paywallRegion: 'us',
     paywallError: '',
     paywallLoading: false,
-    avatar: {type:null, mascot:null, updatedAt:null},
-    avatarTab: 'mascot',
-    avatarDraft: {base:AVATAR_BASES[0], skin:'default', bg:AVATAR_BACKGROUNDS[0], accessory:'none'},
+    avatar: {type:null, options:null, updatedAt:null},
+    avatarTab: 'character',
+    avatarDraft: Object.assign({}, AVATAAAR_DEFAULTS),
     avatarSaving: false,
     avatarError: '',
   };
@@ -3856,8 +3893,11 @@ const I18N = {
     checkoutCancelBanner: "Checkout was cancelled — no charge was made.",
     avatarEditLink: "Customize avatar →",
     avatarEditorTitle: "Customize Your Avatar",
-    avatarTabMascot: "Mascot", avatarTabPhoto: "Photo",
-    avatarCharacter: "Character", avatarSkinTone: "Skin tone", avatarBackground: "Background", avatarAccessory: "Accessory",
+    avatarTabMascot: "Character", avatarTabPhoto: "Photo",
+    avatarHair: "Hair Style", avatarHairColor: "Hair Color", avatarSkinTone: "Skin Tone",
+    avatarEyes: "Eyes", avatarEyebrows: "Eyebrows", avatarMouth: "Mouth",
+    avatarFacialHair: "Facial Hair", avatarGlasses: "Glasses",
+    avatarClothing: "Clothing", avatarClothingColor: "Clothing Color", avatarBackground: "Background",
     avatarSave: "Save Avatar", avatarSaving: "Saving…",
     avatarPhotoHint: "Upload a photo of yourself — it'll be cropped to a circle.",
     avatarChoosePhoto: "Choose Photo",
@@ -3929,7 +3969,10 @@ const I18N = {
     avatarEditLink: "自定义头像 →",
     avatarEditorTitle: "自定义你的头像",
     avatarTabMascot: "卡通形象", avatarTabPhoto: "照片",
-    avatarCharacter: "角色", avatarSkinTone: "肤色", avatarBackground: "背景", avatarAccessory: "配饰",
+    avatarHair: "发型", avatarHairColor: "发色", avatarSkinTone: "肤色",
+    avatarEyes: "眼睛", avatarEyebrows: "眉毛", avatarMouth: "嘴巴",
+    avatarFacialHair: "胡子", avatarGlasses: "眼镜",
+    avatarClothing: "服装", avatarClothingColor: "服装颜色", avatarBackground: "背景",
     avatarSave: "保存头像", avatarSaving: "保存中…",
     avatarPhotoHint: "上传一张你的照片 — 会被裁剪为圆形。",
     avatarChoosePhoto: "选择照片",
@@ -4001,7 +4044,10 @@ const I18N = {
     avatarEditLink: "རང་གཟུགས་བཟོ་བཅོས་ →",
     avatarEditorTitle: "ཁྱེད་ཀྱི་རང་གཟུགས་སྒྱུར་བཅོས་བྱེད།",
     avatarTabMascot: "རྣམ་པ།", avatarTabPhoto: "པར།",
-    avatarCharacter: "མི་སྣ།", avatarSkinTone: "པགས་མདོག།", avatarBackground: "རྒྱབ་ལྗོངས།", avatarAccessory: "ཆས་ཆ།",
+    avatarHair: "སྐྲ་བཟོ།", avatarHairColor: "སྐྲ་མདོག།", avatarSkinTone: "པགས་མདོག།",
+    avatarEyes: "མིག", avatarEyebrows: "སྨིན་མ།", avatarMouth: "ཁ།",
+    avatarFacialHair: "ཁ་སྤུ།", avatarGlasses: "མིག་ཤེལ།",
+    avatarClothing: "གོས།", avatarClothingColor: "གོས་མདོག།", avatarBackground: "རྒྱབ་ལྗོངས།",
     avatarSave: "རང་གཟུགས་ཉར་ཚགས།", avatarSaving: "ཉར་ཚགས་བྱེད་བཞིན་ཡོད…",
     avatarPhotoHint: "ཁྱེད་རང་གི་པར་ཞིག་སྤུས་སྐྲུན་བྱོས — འདི་ཟླུམ་པོར་གཏུབ་ཆོག",
     avatarChoosePhoto: "པར་འདེམས།",
@@ -4693,30 +4739,23 @@ function retrySameLesson(){
 function backToLessonList(){ state.screen='lessonlist'; render(); }
 function exitLesson(){ state.screen='lessonlist'; render(); }
 
-// ---- avatars: mascot (emoji composition) or uploaded photo -------------------
-function avatarSkinSuffix(skin){ return skin && skin!=='default' ? skin : ''; }
+// ---- avatars: DiceBear character or uploaded photo ----------------------------
 function renderAvatarHTML(username, avatar, sizePx, animated){
-  const badgeSize = Math.round(sizePx*0.34);
   if(avatar && avatar.type==='photo'){
     const src = '/avatar/'+encodeURIComponent(username)+'?v='+encodeURIComponent(avatar.updatedAt||'0');
     return `<div class="avatar-circle ${animated?'animated':''}" style="width:${sizePx}px; height:${sizePx}px;"><img src="${src}" alt=""></div>`;
   }
-  if(avatar && avatar.type==='mascot' && avatar.mascot){
-    const m = avatar.mascot;
-    const badge = m.accessory && m.accessory!=='none'
-      ? `<div class="avatar-badge" style="width:${badgeSize}px; height:${badgeSize}px; font-size:${Math.round(badgeSize*0.6)}px;">${m.accessory}</div>` : '';
-    return `<div class="avatar-circle avatar-bg-${m.bg} ${animated?'animated':''}" style="width:${sizePx}px; height:${sizePx}px;">
-      <div class="avatar-base" style="font-size:${Math.round(sizePx*0.55)}px;">${m.base}${avatarSkinSuffix(m.skin)}</div>
-      ${badge}
-    </div>`;
+  if(avatar && avatar.type==='avataaar' && avatar.options){
+    const src = dicebearUrl(avatar.options, username);
+    return `<div class="avatar-circle ${animated?'animated':''}" style="width:${sizePx}px; height:${sizePx}px;"><img src="${src}" alt=""></div>`;
   }
   return `<div class="avatar-circle avatar-bg-gray ${animated?'animated':''}" style="width:${sizePx}px; height:${sizePx}px;"><div class="avatar-base" style="font-size:${Math.round(sizePx*0.5)}px;">🏔️</div></div>`;
 }
 
 function openAvatarEditor(){
   state.avatarError = '';
-  if(state.avatar.type==='mascot' && state.avatar.mascot) state.avatarDraft = Object.assign({}, state.avatar.mascot);
-  state.avatarTab = state.avatar.type==='photo' ? 'photo' : 'mascot';
+  if(state.avatar.type==='avataaar' && state.avatar.options) state.avatarDraft = Object.assign({}, state.avatar.options);
+  state.avatarTab = state.avatar.type==='photo' ? 'photo' : 'character';
   state.screen = 'avatar_editor';
   render();
 }
@@ -4725,23 +4764,23 @@ function setAvatarDraftPart(part, value){ state.avatarDraft[part] = value; rende
 
 function renderAvatarEditor(){
   const d = state.avatarDraft;
-  const preview = renderAvatarHTML(state.currentUser, {type:'mascot', mascot:d}, 96, true);
-  const swatchRow = (items, part, renderItem) => items.map(v => `
-    <div class="avatar-swatch ${d[part]===v?'selected':''}" onclick="setAvatarDraftPart('${part}','${v}')">${renderItem(v)}</div>
-  `).join('');
+  const preview = renderAvatarHTML(state.currentUser, {type:'avataaar', options:d}, 110, true);
 
-  const mascotPanel = `
+  const categoryRows = AVATAAAR_CATEGORIES.map(cat => {
+    const items = AVATAAAR_OPTIONS[cat.key].map(v => {
+      const swatch = cat.kind==='color'
+        ? `<div style="width:100%; height:100%; border-radius:50%; background:#${v};"></div>`
+        : `<span style="font-size:10px; line-height:1.15; padding:0 3px; text-align:center;">${humanizeAvatarOption(v)}</span>`;
+      return `<div class="avatar-swatch ${cat.kind==='style'?'avatar-swatch-wide':''} ${d[cat.key]===v?'selected':''}" onclick="setAvatarDraftPart('${cat.key}','${v}')">${swatch}</div>`;
+    }).join('');
+    return `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:6px;">${t(cat.labelKey)}</div><div class="avatar-picker-row">${items}</div>`;
+  }).join('');
+
+  const characterPanel = `
     <div style="text-align:center; margin-bottom:18px;">${preview}</div>
-    <div style="font-size:12px; color:var(--snow-dim); margin-bottom:6px;">${t('avatarCharacter')}</div>
-    <div class="avatar-picker-row">${swatchRow(AVATAR_BASES, 'base', v=>v)}</div>
-    <div style="font-size:12px; color:var(--snow-dim); margin-bottom:6px;">${t('avatarSkinTone')}</div>
-    <div class="avatar-picker-row">${swatchRow(AVATAR_SKINS, 'skin', v=>v==='default'?'🖐️':'🖐️'+v)}</div>
-    <div style="font-size:12px; color:var(--snow-dim); margin-bottom:6px;">${t('avatarBackground')}</div>
-    <div class="avatar-picker-row">${swatchRow(AVATAR_BACKGROUNDS, 'bg', v=>`<div class="avatar-circle avatar-bg-${v}" style="width:28px; height:28px;"></div>`)}</div>
-    <div style="font-size:12px; color:var(--snow-dim); margin-bottom:6px;">${t('avatarAccessory')}</div>
-    <div class="avatar-picker-row">${swatchRow(AVATAR_ACCESSORIES, 'accessory', v=>v==='none'?'🚫':v)}</div>
+    ${categoryRows}
     ${state.avatarError ? `<div style="color:#ff8080; font-size:13px; margin-top:6px;">${state.avatarError}</div>` : ''}
-    <button class="btn btn-primary btn-block" style="margin-top:16px;" ${state.avatarSaving?'disabled':''} onclick="saveMascotAvatar()">${state.avatarSaving?t('avatarSaving'):t('avatarSave')}</button>
+    <button class="btn btn-primary btn-block" style="margin-top:16px;" ${state.avatarSaving?'disabled':''} onclick="saveCharacterAvatar()">${state.avatarSaving?t('avatarSaving'):t('avatarSave')}</button>
   `;
 
   const currentPhoto = state.avatar.type==='photo' ? renderAvatarHTML(state.currentUser, state.avatar, 96, true) : '';
@@ -4759,20 +4798,20 @@ function renderAvatarEditor(){
     <div class="profile-card">
       <h2 style="text-align:center; margin-bottom:14px;">${t('avatarEditorTitle')}</h2>
       <div class="avatar-tabs">
-        <button class="avatar-tab ${state.avatarTab==='mascot'?'active':''}" onclick="setAvatarTab('mascot')">${t('avatarTabMascot')}</button>
+        <button class="avatar-tab ${state.avatarTab==='character'?'active':''}" onclick="setAvatarTab('character')">${t('avatarTabMascot')}</button>
         <button class="avatar-tab ${state.avatarTab==='photo'?'active':''}" onclick="setAvatarTab('photo')">${t('avatarTabPhoto')}</button>
       </div>
-      ${state.avatarTab==='mascot' ? mascotPanel : photoPanel}
+      ${state.avatarTab==='character' ? characterPanel : photoPanel}
     </div>
   </div>`;
 }
 
-async function saveMascotAvatar(){
+async function saveCharacterAvatar(){
   state.avatarSaving = true; state.avatarError=''; render();
   try{
-    const res = await fetch('/api/avatar/mascot', {
+    const res = await fetch('/api/avatar/character', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({username: state.currentUser, mascot: state.avatarDraft})
+      body: JSON.stringify({username: state.currentUser, options: state.avatarDraft})
     });
     const data = await res.json();
     if(!res.ok){ state.avatarError = data.error || t('errConnection'); state.avatarSaving=false; render(); return; }

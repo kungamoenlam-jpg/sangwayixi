@@ -25,20 +25,36 @@ function isSafeUsername(username) {
   return /^[a-zA-Z0-9_.-]{1,64}$/.test(String(username || ''));
 }
 
-// ---- mascot avatars: whitelisted parts, validated server-side so a client
-// can't stuff arbitrary strings into a field that gets rendered as HTML. ----
-const AVATAR_BASES = ['🧑', '👨', '👩', '🧔', '👴', '👵', '🥷', '🧙', '🦸', '🧚'];
-const AVATAR_SKINS = ['default', '🏻', '🏼', '🏽', '🏾', '🏿'];
-const AVATAR_BACKGROUNDS = ['gold', 'good', 'red', 'blue', 'purple', 'teal', 'pink', 'gray'];
-const AVATAR_ACCESSORIES = ['none', '🎩', '🧢', '👑', '🎓', '😎', '🕶️', '🌟', '✨', '🎧'];
-
-function validateMascot(mascot) {
-  if (!mascot || typeof mascot !== 'object') return null;
-  const base = AVATAR_BASES.includes(mascot.base) ? mascot.base : AVATAR_BASES[0];
-  const skin = AVATAR_SKINS.includes(mascot.skin) ? mascot.skin : 'default';
-  const bg = AVATAR_BACKGROUNDS.includes(mascot.bg) ? mascot.bg : AVATAR_BACKGROUNDS[0];
-  const accessory = AVATAR_ACCESSORIES.includes(mascot.accessory) ? mascot.accessory : 'none';
-  return { base, skin, bg, accessory };
+// ---- character avatars: DiceBear's open-source "Avataaars" style (MIT
+// licensed, api.dicebear.com) — illustrated human-like characters, not
+// photorealistic, not AI-generated per-user. Every option here is copied
+// straight from that style's published schema (api.dicebear.com/9.x/
+// avataaars/schema.json) and whitelisted server-side so a client can't stuff
+// arbitrary strings into a query string sent to a third party. ----
+const AVATAAAR_OPTIONS = {
+  top: ['hat','hijab','turban','winterHat1','winterHat02','winterHat03','winterHat04','bob','bun','curly','curvy','dreads','frida','fro','froBand','longButNotTooLong','miaWallace','shavedSides','straight02','straight01','straightAndStrand','dreads01','dreads02','frizzle','shaggy','shaggyMullet','shortCurly','shortFlat','shortRound','shortWaved','sides','theCaesar','theCaesarAndSidePart','bigHair'],
+  hairColor: ['a55728','2c1b18','b58143','d6b370','724133','4a312c','f59797','ecdcbf','c93305','e8e1e1'],
+  skinColor: ['614335','d08b5b','ae5d29','edb98a','ffdbb4','fd9841','f8d25c'],
+  eyes: ['closed','cry','default','eyeRoll','happy','hearts','side','squint','surprised','winkWacky','wink','xDizzy'],
+  eyebrows: ['angryNatural','defaultNatural','flatNatural','frownNatural','raisedExcitedNatural','sadConcernedNatural','unibrowNatural','upDownNatural','angry','default','raisedExcited','sadConcerned','upDown'],
+  mouth: ['concerned','default','disbelief','eating','grimace','sad','screamOpen','serious','smile','tongue','twinkle','vomit'],
+  facialHair: ['none','beardLight','beardMajestic','beardMedium','moustacheFancy','moustacheMagnum'],
+  accessories: ['none','kurt','prescription01','prescription02','round','sunglasses','wayfarers','eyepatch'],
+  clothing: ['blazerAndShirt','blazerAndSweater','collarAndSweater','graphicShirt','hoodie','overall','shirtCrewNeck','shirtScoopNeck','shirtVNeck'],
+  clothesColor: ['262e33','65c9ff','5199e4','25557c','e6e6e6','929598','3c4f5c','b1e2ff','a7ffc4','ffafb9','ffffb1','ff488e','ff5c5c','ffffff'],
+  backgroundColor: ['e8a33d','3fae72','e1584b','3d6fb4','b08ae0','4fb4d8','c94e86','8b95a6'],
+};
+const AVATAAAR_DEFAULTS = {
+  top: 'shortFlat', hairColor: '4a312c', skinColor: 'edb98a', eyes: 'default', eyebrows: 'default',
+  mouth: 'default', facialHair: 'none', accessories: 'none', clothing: 'hoodie', clothesColor: '65c9ff', backgroundColor: 'e8a33d',
+};
+function validateAvataaar(options) {
+  const src = (options && typeof options === 'object') ? options : {};
+  const result = {};
+  for (const [key, allowed] of Object.entries(AVATAAAR_OPTIONS)) {
+    result[key] = allowed.includes(src[key]) ? src[key] : AVATAAAR_DEFAULTS[key];
+  }
+  return result;
 }
 
 function createApp(overrides = {}) {
@@ -271,19 +287,19 @@ function createApp(overrides = {}) {
     };
   }
 
-  // The avatar column is a single jsonb blob: {type:'mascot', mascot:{...}} or
-  // {type:'photo', updatedAt}. Photo bytes live in Supabase Storage, not here
-  // — updatedAt is just a cache-busting query param for the <img> src.
+  // The avatar column is a single jsonb blob: {type:'avataaar', options:{...}}
+  // or {type:'photo', updatedAt}. Photo bytes live in Supabase Storage, not
+  // here — updatedAt is just a cache-busting query param for the <img> src.
   function sanitizeAvatar(user) {
     const raw = user.avatar || null;
-    if (!raw || !raw.type) return { type: null, mascot: null, updatedAt: null };
-    if (raw.type === 'mascot') {
-      return { type: 'mascot', mascot: validateMascot(raw.mascot), updatedAt: raw.updatedAt || null };
+    if (!raw || !raw.type) return { type: null, options: null, updatedAt: null };
+    if (raw.type === 'avataaar') {
+      return { type: 'avataaar', options: validateAvataaar(raw.options), updatedAt: raw.updatedAt || null };
     }
     if (raw.type === 'photo') {
-      return { type: 'photo', mascot: null, updatedAt: raw.updatedAt || null };
+      return { type: 'photo', options: null, updatedAt: raw.updatedAt || null };
     }
-    return { type: null, mascot: null, updatedAt: null };
+    return { type: null, options: null, updatedAt: null };
   }
 
   function sanitizeSubscription(user) {
@@ -707,11 +723,11 @@ function createApp(overrides = {}) {
   });
 
   // ---- avatars: mascot (JSON config) or photo (uploaded image) ---------------
-  app.post('/api/avatar/mascot', async (req, res) => {
-    const { username, mascot } = req.body || {};
+  app.post('/api/avatar/character', async (req, res) => {
+    const { username, options } = req.body || {};
     const user = await findUserByUsername(username);
     if (!user) return res.status(404).json({ error: 'User not found.' });
-    const avatar = { type: 'mascot', mascot: validateMascot(mascot), updatedAt: new Date().toISOString() };
+    const avatar = { type: 'avataaar', options: validateAvataaar(options), updatedAt: new Date().toISOString() };
     await updateUserAvatar(user.id, avatar);
     return res.json({ avatar });
   });
