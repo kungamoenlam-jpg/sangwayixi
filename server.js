@@ -19,6 +19,28 @@ function randomLetters(n) {
   return out;
 }
 
+// Matches the client-side username character rule (see errUsernameChars in
+// index.html) — used here to keep usernames safe as Storage path segments.
+function isSafeUsername(username) {
+  return /^[a-zA-Z0-9_.-]{1,64}$/.test(String(username || ''));
+}
+
+// ---- mascot avatars: whitelisted parts, validated server-side so a client
+// can't stuff arbitrary strings into a field that gets rendered as HTML. ----
+const AVATAR_BASES = ['🧑', '👨', '👩', '🧔', '👴', '👵', '🥷', '🧙', '🦸', '🧚'];
+const AVATAR_SKINS = ['default', '🏻', '🏼', '🏽', '🏾', '🏿'];
+const AVATAR_BACKGROUNDS = ['gold', 'good', 'red', 'blue', 'purple', 'teal', 'pink', 'gray'];
+const AVATAR_ACCESSORIES = ['none', '🎩', '🧢', '👑', '🎓', '😎', '🕶️', '🌟', '✨', '🎧'];
+
+function validateMascot(mascot) {
+  if (!mascot || typeof mascot !== 'object') return null;
+  const base = AVATAR_BASES.includes(mascot.base) ? mascot.base : AVATAR_BASES[0];
+  const skin = AVATAR_SKINS.includes(mascot.skin) ? mascot.skin : 'default';
+  const bg = AVATAR_BACKGROUNDS.includes(mascot.bg) ? mascot.bg : AVATAR_BACKGROUNDS[0];
+  const accessory = AVATAR_ACCESSORIES.includes(mascot.accessory) ? mascot.accessory : 'none';
+  return { base, skin, bg, accessory };
+}
+
 function createApp(overrides = {}) {
   const app = express();
   const PORT = overrides.port || Number(process.env.PORT) || 3000;
@@ -137,16 +159,17 @@ function createApp(overrides = {}) {
   const SUPABASE_PROJECT_URL = deriveSupabaseProjectUrl();
   const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || null;
   const AUDIO_BUCKET = 'audio';
+  const AVATAR_BUCKET = 'avatars';
   const supabaseAdmin = (SUPABASE_PROJECT_URL && SUPABASE_SERVICE_ROLE_KEY)
     ? createClient(SUPABASE_PROJECT_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
     : null;
 
-  async function ensureAudioBucket() {
+  async function ensureBucket(name) {
     if (!supabaseAdmin) return { ok: false, reason: 'not-configured' };
     try {
-      const { data: existing } = await supabaseAdmin.storage.getBucket(AUDIO_BUCKET);
+      const { data: existing } = await supabaseAdmin.storage.getBucket(name);
       if (!existing) {
-        const { error } = await supabaseAdmin.storage.createBucket(AUDIO_BUCKET, { public: true });
+        const { error } = await supabaseAdmin.storage.createBucket(name, { public: true });
         if (error && !/already exists/i.test(error.message || '')) throw error;
       }
       return { ok: true };
@@ -154,6 +177,8 @@ function createApp(overrides = {}) {
       return { ok: false, reason: error.message };
     }
   }
+  const ensureAudioBucket = () => ensureBucket(AUDIO_BUCKET);
+  const ensureAvatarBucket = () => ensureBucket(AVATAR_BUCKET);
 
   // High-quality neural voices: British English + Beijing-standard Mandarin, one
   // male and one female each. See https://learn.microsoft.com/azure/ai-services/speech-service/language-support
@@ -203,7 +228,8 @@ function createApp(overrides = {}) {
         add column if not exists stripe_customer_id text,
         add column if not exists subscription_status text,
         add column if not exists subscription_plan text,
-        add column if not exists subscription_period_end timestamptz;
+        add column if not exists subscription_period_end timestamptz,
+        add column if not exists avatar jsonb;
     `);
     databaseReady = true;
     return { connected: true, mode: 'supabase', url: SUPABASE_URL };
@@ -241,7 +267,23 @@ function createApp(overrides = {}) {
       username: user.username || '',
       createdAt: user.createdAt || user.created_at,
       subscription: sanitizeSubscription(user),
+      avatar: sanitizeAvatar(user),
     };
+  }
+
+  // The avatar column is a single jsonb blob: {type:'mascot', mascot:{...}} or
+  // {type:'photo', updatedAt}. Photo bytes live in Supabase Storage, not here
+  // — updatedAt is just a cache-busting query param for the <img> src.
+  function sanitizeAvatar(user) {
+    const raw = user.avatar || null;
+    if (!raw || !raw.type) return { type: null, mascot: null, updatedAt: null };
+    if (raw.type === 'mascot') {
+      return { type: 'mascot', mascot: validateMascot(raw.mascot), updatedAt: raw.updatedAt || null };
+    }
+    if (raw.type === 'photo') {
+      return { type: 'photo', mascot: null, updatedAt: raw.updatedAt || null };
+    }
+    return { type: null, mascot: null, updatedAt: null };
   }
 
   function sanitizeSubscription(user) {
@@ -300,6 +342,19 @@ function createApp(overrides = {}) {
     if (fields.status) users[idx].subscription_status = fields.status;
     if (fields.plan) users[idx].subscription_plan = fields.plan;
     if (fields.periodEnd) users[idx].subscription_period_end = fields.periodEnd;
+    writeUsers(users);
+  }
+
+  async function updateUserAvatar(userId, avatar) {
+    const client = await getDbClient();
+    if (client) {
+      await client.query('update public.users set avatar = $2 where id = $1', [userId, JSON.stringify(avatar)]);
+      return;
+    }
+    const users = readUsers();
+    const idx = users.findIndex((u) => u.id === userId);
+    if (idx === -1) return;
+    users[idx].avatar = avatar;
     writeUsers(users);
   }
 
@@ -396,6 +451,18 @@ function createApp(overrides = {}) {
   app.get('/audio/:lang/:file', (req, res) => {
     if (!supabaseAdmin) return res.status(503).end();
     const { data } = supabaseAdmin.storage.from(AUDIO_BUCKET).getPublicUrl(req.params.lang + '/' + req.params.file);
+    return res.redirect(302, data.publicUrl);
+  });
+  // Same redirect-to-Storage pattern as /audio above, for user-uploaded
+  // profile photos. 404s (rather than redirecting to a broken image) when the
+  // user has no photo avatar, so <img onerror> can fall back cleanly.
+  app.get('/avatar/:username', async (req, res) => {
+    if (!supabaseAdmin) return res.status(503).end();
+    const username = req.params.username;
+    if (!isSafeUsername(username)) return res.status(400).end();
+    const user = await findUserByUsername(username);
+    if (!user || !user.avatar || user.avatar.type !== 'photo') return res.status(404).end();
+    const { data } = supabaseAdmin.storage.from(AVATAR_BUCKET).getPublicUrl(username.toLowerCase() + '.jpg');
     return res.redirect(302, data.publicUrl);
   });
   app.use(express.static(__dirname));
@@ -636,7 +703,37 @@ function createApp(overrides = {}) {
     if (!user) {
       return res.status(404).json({ error: 'User not found.' });
     }
-    return res.json({ subscription: sanitizeSubscription(user) });
+    return res.json({ subscription: sanitizeSubscription(user), avatar: sanitizeAvatar(user) });
+  });
+
+  // ---- avatars: mascot (JSON config) or photo (uploaded image) ---------------
+  app.post('/api/avatar/mascot', async (req, res) => {
+    const { username, mascot } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    const avatar = { type: 'mascot', mascot: validateMascot(mascot), updatedAt: new Date().toISOString() };
+    await updateUserAvatar(user.id, avatar);
+    return res.json({ avatar });
+  });
+
+  app.post('/api/avatar/photo/:username', express.raw({ type: 'image/*', limit: '5mb' }), async (req, res) => {
+    const username = req.params.username;
+    if (!isSafeUsername(username)) return res.status(400).json({ error: 'Invalid username.' });
+    if (!supabaseAdmin) return res.status(503).json({ error: 'Photo storage is not configured on this server yet.' });
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+      return res.status(400).json({ error: 'No image data received.' });
+    }
+
+    const { error } = await supabaseAdmin.storage
+      .from(AVATAR_BUCKET)
+      .upload(username.toLowerCase() + '.jpg', req.body, { contentType: 'image/jpeg', upsert: true });
+    if (error) return res.status(502).json({ error: 'Upload to storage failed.', details: error.message });
+
+    const avatar = { type: 'photo', mascot: null, updatedAt: new Date().toISOString() };
+    await updateUserAvatar(user.id, avatar);
+    return res.json({ avatar });
   });
 
   app.get('/api/admin/users', async (req, res) => {
@@ -814,6 +911,7 @@ function createApp(overrides = {}) {
     initDatabase,
     getDbClient,
     ensureAudioBucket,
+    ensureAvatarBucket,
     ensureStripeProduct,
   };
 }
@@ -824,6 +922,10 @@ if (require.main === module) {
   appState.ensureAudioBucket().then((bucketStatus) => {
     if (bucketStatus.ok) console.log('Supabase Storage: audio bucket ready.');
     else console.log('Supabase Storage not active for audio (' + bucketStatus.reason + ') — recordings would not persist.');
+  });
+  appState.ensureAvatarBucket().then((bucketStatus) => {
+    if (bucketStatus.ok) console.log('Supabase Storage: avatars bucket ready.');
+    else console.log('Supabase Storage not active for avatars (' + bucketStatus.reason + ') — photo avatars would not persist.');
   });
   appState.ensureStripeProduct().then((stripeStatus) => {
     if (stripeStatus.ok) console.log('Stripe: Premium product/prices ready.');
