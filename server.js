@@ -6,6 +6,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { Client } = require('pg');
 const { createClient } = require('@supabase/supabase-js');
+const Stripe = require('stripe');
 
 function hashPassword(value) {
   return crypto.createHash('sha256').update(String(value)).digest('hex');
@@ -21,6 +22,67 @@ function createApp(overrides = {}) {
   const AZURE_SPEECH_KEY = process.env.AZURE_SPEECH_KEY || null;
   const AZURE_SPEECH_REGION = process.env.AZURE_SPEECH_REGION || null;
   const TTS_CACHE_DIR = overrides.ttsCacheDir || path.join(__dirname, 'data', 'tts-cache');
+
+  // ---- Stripe: Premium subscription (unlocks levels 6-15) ---------------------
+  // Two regional monthly prices on one Product, auto-created on startup so
+  // there's no manual dashboard clicking to get the price IDs right — same
+  // self-bootstrap philosophy as the `create table if not exists` below.
+  // 'us' targets everyone outside China/Tibet (USD); 'cn' is a discounted CNY
+  // price for users there, self-selected on the paywall screen (no IP
+  // geolocation — see the paywall UI). Actual acceptance of CNY-friendly
+  // payment methods (Alipay/WeChat Pay) depends on what's enabled on the
+  // underlying Stripe account; plain card payments always work via Checkout.
+  const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || null;
+  const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || null;
+  const APP_BASE_URL = process.env.APP_BASE_URL || 'https://www.kunga.me';
+  const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY) : null;
+  const STRIPE_PRODUCT_METADATA_KEY = 'yeshe_premium';
+  const SUBSCRIPTION_PLANS = {
+    us: { currency: 'usd', amount: 100, label: '$1.00 / month' },
+    cn: { currency: 'cny', amount: 500, label: '¥5.00 / month' },
+  };
+  let stripePriceIds = { us: null, cn: null };
+  let stripeReady = false;
+
+  async function ensureStripeProduct() {
+    if (!stripe) return { ok: false, reason: 'not-configured' };
+    try {
+      const products = await stripe.products.search({
+        query: `metadata['app']:'${STRIPE_PRODUCT_METADATA_KEY}'`,
+      });
+      let product = products.data[0];
+      if (!product) {
+        product = await stripe.products.create({
+          name: 'Yeshe Premium',
+          description: 'Unlocks the full 15-level Yeshe route (Daily Life Trail through Summit of Fluency).',
+          metadata: { app: STRIPE_PRODUCT_METADATA_KEY },
+        });
+      }
+
+      for (const [region, plan] of Object.entries(SUBSCRIPTION_PLANS)) {
+        const prices = await stripe.prices.search({
+          query: `product:'${product.id}' AND metadata['region']:'${region}' AND active:'true'`,
+        });
+        let price = prices.data[0];
+        if (!price) {
+          price = await stripe.prices.create({
+            product: product.id,
+            currency: plan.currency,
+            unit_amount: plan.amount,
+            recurring: { interval: 'month' },
+            metadata: { region },
+          });
+        }
+        stripePriceIds[region] = price.id;
+      }
+
+      stripeReady = true;
+      return { ok: true, productId: product.id, priceIds: stripePriceIds };
+    } catch (error) {
+      stripeReady = false;
+      return { ok: false, reason: error.message };
+    }
+  }
 
   // ---- Supabase Storage: persistent home for admin-recorded audio -------------
   // Render's disk is ephemeral (wiped on every restart, including automatic
@@ -100,6 +162,13 @@ function createApp(overrides = {}) {
         created_at timestamptz default now()
       );
     `);
+    await client.query(`
+      alter table public.users
+        add column if not exists stripe_customer_id text,
+        add column if not exists subscription_status text,
+        add column if not exists subscription_plan text,
+        add column if not exists subscription_period_end timestamptz;
+    `);
     databaseReady = true;
     return { connected: true, mode: 'supabase', url: SUPABASE_URL };
   }
@@ -135,7 +204,67 @@ function createApp(overrides = {}) {
       name: user.name || user.full_name || '',
       username: user.username || '',
       createdAt: user.createdAt || user.created_at,
+      subscription: sanitizeSubscription(user),
     };
+  }
+
+  function sanitizeSubscription(user) {
+    const status = user.subscription_status || user.subscriptionStatus || null;
+    return {
+      active: status === 'active' || status === 'trialing',
+      status,
+      plan: user.subscription_plan || user.subscriptionPlan || null,
+      periodEnd: user.subscription_period_end || user.subscriptionPeriodEnd || null,
+    };
+  }
+
+  // Looks a user up by username, returning the raw DB row / file record (not
+  // sanitized) so callers can read/write subscription_* fields directly.
+  async function findUserByUsername(username) {
+    const trimmed = String(username || '').trim().toLowerCase();
+    if (!trimmed) return null;
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query('select * from public.users where lower(username) = $1', [trimmed]);
+      return result.rows[0] || null;
+    }
+    const users = readUsers();
+    return users.find((u) => String(u.username || '').trim().toLowerCase() === trimmed) || null;
+  }
+
+  async function findUserByStripeCustomerId(customerId) {
+    if (!customerId) return null;
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query('select * from public.users where stripe_customer_id = $1', [customerId]);
+      return result.rows[0] || null;
+    }
+    const users = readUsers();
+    return users.find((u) => u.stripe_customer_id === customerId) || null;
+  }
+
+  async function updateUserSubscription(userId, fields) {
+    const client = await getDbClient();
+    if (client) {
+      await client.query(
+        `update public.users set
+           stripe_customer_id = coalesce($2, stripe_customer_id),
+           subscription_status = coalesce($3, subscription_status),
+           subscription_plan = coalesce($4, subscription_plan),
+           subscription_period_end = coalesce($5, subscription_period_end)
+         where id = $1`,
+        [userId, fields.stripeCustomerId || null, fields.status || null, fields.plan || null, fields.periodEnd || null]
+      );
+      return;
+    }
+    const users = readUsers();
+    const idx = users.findIndex((u) => u.id === userId);
+    if (idx === -1) return;
+    if (fields.stripeCustomerId) users[idx].stripe_customer_id = fields.stripeCustomerId;
+    if (fields.status) users[idx].subscription_status = fields.status;
+    if (fields.plan) users[idx].subscription_plan = fields.plan;
+    if (fields.periodEnd) users[idx].subscription_period_end = fields.periodEnd;
+    writeUsers(users);
   }
 
   async function listUsersFromDb() {
@@ -152,6 +281,52 @@ function createApp(overrides = {}) {
       createdAt: row.created_at,
     }));
   }
+
+  // Stripe webhook needs the raw request body to verify the signature, so it
+  // must be registered (with its own raw-body parser) before the global
+  // express.json() below, which would otherwise consume and parse it first.
+  app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    if (!stripe || !STRIPE_WEBHOOK_SECRET) {
+      return res.status(503).json({ error: 'Stripe webhook is not configured on this server yet.' });
+    }
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(req.body, req.headers['stripe-signature'], STRIPE_WEBHOOK_SECRET);
+    } catch (error) {
+      return res.status(400).json({ error: 'Webhook signature verification failed.', details: error.message });
+    }
+
+    try {
+      if (event.type === 'checkout.session.completed') {
+        const session = event.data.object;
+        const username = session.client_reference_id;
+        const user = username ? await findUserByUsername(username) : null;
+        if (user) {
+          const subscription = session.subscription
+            ? await stripe.subscriptions.retrieve(session.subscription)
+            : null;
+          await updateUserSubscription(user.id, {
+            stripeCustomerId: session.customer,
+            status: subscription ? subscription.status : 'active',
+            plan: session.metadata && session.metadata.region,
+            periodEnd: subscription ? new Date(subscription.current_period_end * 1000).toISOString() : null,
+          });
+        }
+      } else if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
+        const subscription = event.data.object;
+        const user = await findUserByStripeCustomerId(subscription.customer);
+        if (user) {
+          await updateUserSubscription(user.id, {
+            status: subscription.status,
+            periodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
+          });
+        }
+      }
+      return res.json({ received: true });
+    } catch (error) {
+      return res.status(500).json({ error: 'Webhook handling failed.', details: error.message });
+    }
+  });
 
   app.use(express.json({ limit: '1mb' }));
   // Recorded audio lives in Supabase Storage now (see the incident note above),
@@ -340,6 +515,64 @@ function createApp(overrides = {}) {
     });
   });
 
+  // ---- Stripe Premium subscription: checkout + status ------------------------
+  app.post('/api/create-checkout-session', async (req, res) => {
+    if (!stripe) {
+      return res.status(503).json({ error: 'Payments are not configured on this server yet.' });
+    }
+    const { username, region } = req.body || {};
+    if (!SUBSCRIPTION_PLANS[region]) {
+      return res.status(400).json({ error: 'Unknown region. Use "us" or "cn".' });
+    }
+    if (!stripeReady) await ensureStripeProduct();
+    const priceId = stripePriceIds[region];
+    if (!priceId) {
+      return res.status(503).json({ error: 'Stripe product/price setup has not completed yet. Try again shortly.' });
+    }
+
+    const user = await findUserByUsername(username);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    try {
+      let customerId = user.stripe_customer_id;
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user.email || undefined,
+          name: user.full_name || user.username,
+          metadata: { username: user.username },
+        });
+        customerId = customer.id;
+        await updateUserSubscription(user.id, { stripeCustomerId: customerId });
+      }
+
+      const session = await stripe.checkout.sessions.create({
+        mode: 'subscription',
+        customer: customerId,
+        client_reference_id: user.username,
+        line_items: [{ price: priceId, quantity: 1 }],
+        metadata: { region, username: user.username },
+        subscription_data: { metadata: { region, username: user.username } },
+        success_url: `${APP_BASE_URL}/?checkout=success`,
+        cancel_url: `${APP_BASE_URL}/?checkout=cancel`,
+      });
+
+      return res.json({ url: session.url });
+    } catch (error) {
+      return res.status(500).json({ error: 'Could not start checkout.', details: error.message });
+    }
+  });
+
+  app.get('/api/subscription-status', async (req, res) => {
+    const username = String(req.query.username || '');
+    const user = await findUserByUsername(username);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+    return res.json({ subscription: sanitizeSubscription(user) });
+  });
+
   app.get('/api/admin/users', async (req, res) => {
     const incomingKey = req.headers['x-admin-key'];
     if (incomingKey !== ADMIN_KEY) {
@@ -515,6 +748,7 @@ function createApp(overrides = {}) {
     initDatabase,
     getDbClient,
     ensureAudioBucket,
+    ensureStripeProduct,
   };
 }
 
@@ -524,6 +758,10 @@ if (require.main === module) {
   appState.ensureAudioBucket().then((bucketStatus) => {
     if (bucketStatus.ok) console.log('Supabase Storage: audio bucket ready.');
     else console.log('Supabase Storage not active for audio (' + bucketStatus.reason + ') — recordings would not persist.');
+  });
+  appState.ensureStripeProduct().then((stripeStatus) => {
+    if (stripeStatus.ok) console.log('Stripe: Premium product/prices ready.');
+    else console.log('Stripe not active (' + stripeStatus.reason + ') — subscriptions disabled until STRIPE_SECRET_KEY is set.');
   });
   appState.initDatabase()
     .then((status) => {

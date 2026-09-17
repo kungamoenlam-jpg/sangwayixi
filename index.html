@@ -3495,52 +3495,52 @@ const LEVELS = [
     modules: LEVEL5_MODULES
   },
 {
-    icon:'🏘️', title:'Daily Life Trail', subtitle:'Everyday Routines', range:'Modules 43–52', built:true,
+    icon:'🏘️', title:'Daily Life Trail', subtitle:'Everyday Routines', range:'Modules 43–52', built:true, paid:true,
     milestone:'Describe your daily routine — waking, dressing, eating, and the small things around you.',
     modules: LEVEL6_MODULES
   },
   {
-    icon:'👨‍👩‍👧‍👦', title:'Kinship Path', subtitle:'Family & Friends', range:'Modules 53–62', built:true,
+    icon:'👨‍👩‍👧‍👦', title:'Kinship Path', subtitle:'Family & Friends', range:'Modules 53–62', built:true, paid:true,
     milestone:'Talk about family, friends, teachers, and the people in your life.',
     modules: LEVEL7_MODULES
   },
   {
-    icon:'🧭', title:'Wayfarer\'s Route', subtitle:'Places & Travel', range:'Modules 63–72', built:true,
+    icon:'🧭', title:'Wayfarer\'s Route', subtitle:'Places & Travel', range:'Modules 63–72', built:true, paid:true,
     milestone:'Navigate markets, cities, and journeys — and give simple directions.',
     modules: LEVEL8_MODULES
   },
   {
-    icon:'⛅', title:'Sky & Seasons', subtitle:'Weather, Time & Nature', range:'Modules 73–82', built:true,
+    icon:'⛅', title:'Sky & Seasons', subtitle:'Weather, Time & Nature', range:'Modules 73–82', built:true, paid:true,
     milestone:'Discuss weather, time, seasons, and the natural world.',
     modules: LEVEL9_MODULES
   },
   {
-    icon:'💻', title:'Digital Ascent', subtitle:'School & Technology', range:'Modules 83–92', built:true,
+    icon:'💻', title:'Digital Ascent', subtitle:'School & Technology', range:'Modules 83–92', built:true, paid:true,
     milestone:'Talk about school, learning, computers, and technology.',
     modules: LEVEL10_MODULES
   },
   {
-    icon:'🛒', title:'Market Trail', subtitle:'Food & Daily Chores', range:'Modules 93–102', built:true,
+    icon:'🛒', title:'Market Trail', subtitle:'Food & Daily Chores', range:'Modules 93–102', built:true, paid:true,
     milestone:'Handle food, shopping, money, and everyday chores.',
     modules: LEVEL11_MODULES
   },
   {
-    icon:'💬', title:'Heart\'s Voice', subtitle:'Feelings & Communication', range:'Modules 103–112', built:true,
+    icon:'💬', title:'Heart\'s Voice', subtitle:'Feelings & Communication', range:'Modules 103–112', built:true, paid:true,
     milestone:'Express feelings, share opinions, and communicate clearly.',
     modules: LEVEL12_MODULES
   },
   {
-    icon:'📈', title:'Trade Winds', subtitle:'Society, Economics & Business', range:'Modules 113–122', built:true,
+    icon:'📈', title:'Trade Winds', subtitle:'Society, Economics & Business', range:'Modules 113–122', built:true, paid:true,
     milestone:'Discuss economics, business, and working life.',
     modules: LEVEL13_MODULES
   },
   {
-    icon:'🔬', title:'Frontier of Science', subtitle:'Science & Modern Life', range:'Modules 123–132', built:true,
+    icon:'🔬', title:'Frontier of Science', subtitle:'Science & Modern Life', range:'Modules 123–132', built:true, paid:true,
     milestone:'Talk about science, data, and modern technology.',
     modules: LEVEL14_MODULES
   },
   {
-    icon:'🏆', title:'Summit of Fluency', subtitle:'Advanced Natural Speech', range:'Modules 133–142', built:true,
+    icon:'🏆', title:'Summit of Fluency', subtitle:'Advanced Natural Speech', range:'Modules 133–142', built:true, paid:true,
     milestone:'Handle complex, natural sentences — conditions, reasons, and reflection.',
     modules: LEVEL15_MODULES
   },
@@ -3668,11 +3668,27 @@ function defaultAppState(){
     currentUser:null,
     game: defaultGame(),
     currentTrack:null, currentWorld:0,
-    session:null
+    session:null,
+    subscription: {active:false, status:null, plan:null, periodEnd:null},
+    paywallFrom: null,
+    paywallRegion: 'us',
+    paywallError: '',
+    paywallLoading: false,
   };
 }
 
 let state = defaultAppState();
+
+async function fetchSubscriptionStatus(){
+  if(!state.currentUser) return;
+  try{
+    const res = await fetch('/api/subscription-status?username=' + encodeURIComponent(state.currentUser));
+    if(!res.ok) return;
+    const data = await res.json();
+    state.subscription = data.subscription;
+    render();
+  } catch(e){ /* offline or server briefly unavailable — keep last known status */ }
+}
 
 function boot(){
   const savedLang = safeStorage.get(LANG_KEY);
@@ -3684,8 +3700,25 @@ function boot(){
     state.game = loadGame(sess.currentUser);
     regenHearts();
     state.screen = 'pick_language';
+    fetchSubscriptionStatus();
   } else {
     state.screen = 'auth';
+  }
+
+  // Returning from Stripe Checkout: the webhook may land a moment after the
+  // redirect, so poll subscription status briefly instead of checking once.
+  const params = new URLSearchParams(location.search);
+  if(params.has('checkout')){
+    state.checkoutResult = params.get('checkout');
+    history.replaceState(null, '', location.pathname);
+    if(state.checkoutResult === 'success' && sess.currentUser){
+      let attempts = 0;
+      const poll = setInterval(async () => {
+        attempts++;
+        await fetchSubscriptionStatus();
+        if(state.subscription.active || attempts >= 6) clearInterval(poll);
+      }, 2000);
+    }
   }
 }
 boot();
@@ -3767,6 +3800,15 @@ const I18N = {
     myProgress: "⛺ My progress",
     studyTopicBtn: "📚 Study a Topic",
     topicsTitle: "Study a Topic", topicsSub: "Pick a subject and learn its vocabulary in depth — no need to climb the main route first.",
+    premiumLabel: "Premium", premiumBadge: "🔒 Premium",
+    paywallTitle: "Unlock Premium",
+    paywallBody: "This level is part of Premium. Subscribe to unlock Daily Life Trail through Summit of Fluency (levels 6-15).",
+    paywallBodyLevel: "\"{level}\" is part of Premium. Subscribe to unlock Daily Life Trail through Summit of Fluency (levels 6-15).",
+    planUS: "🌍 Rest of world — $1.00 / month", planCN: "🇨🇳 China / Tibet — ¥5.00 / month",
+    paywallSubscribe: "Subscribe", paywallLoading: "Redirecting to checkout…",
+    paywallFooter: "Payment is handled securely by Stripe. Cancel anytime.",
+    checkoutSuccessBanner: "🎉 Premium unlocked! It may take a few seconds to reflect on the map.",
+    checkoutCancelBanner: "Checkout was cancelled — no charge was made.",
     homeFooter: "All 142 modules — Base Camp through 1,000 more real-life sentences across ten themed routes — are fully playable now. Every level is open to explore any time, no prerequisites.",
     comingSoon: "Coming soon", modulesCount: "{n} modules", modulesWord: "modules",
     lockedBody: "{range}. No exercises here yet — this is the next content drop. Milestone once it's built: {milestone}",
@@ -3823,6 +3865,15 @@ const I18N = {
     myProgress: "⛺ 我的进度",
     studyTopicBtn: "📚 学习一个主题",
     topicsTitle: "学习一个主题", topicsSub: "选择一个主题，深入学习相关词汇 — 不需要先完成主线路线。",
+    premiumLabel: "会员专享", premiumBadge: "🔒 会员专享",
+    paywallTitle: "解锁会员",
+    paywallBody: "此关卡属于会员内容。订阅后可解锁「日常生活之路」到「流利之巅」（第6-15关）。",
+    paywallBodyLevel: "「{level}」属于会员内容。订阅后可解锁「日常生活之路」到「流利之巅」（第6-15关）。",
+    planUS: "🌍 其他地区 — 每月 $1.00", planCN: "🇨🇳 中国 / 西藏 — 每月 ¥5.00",
+    paywallSubscribe: "订阅", paywallLoading: "正在跳转至结账页面…",
+    paywallFooter: "付款由 Stripe 安全处理，可随时取消。",
+    checkoutSuccessBanner: "🎉 会员已解锁！地图可能需要几秒钟才能更新。",
+    checkoutCancelBanner: "结账已取消 — 未产生任何扣款。",
     homeFooter: "全部142个单元 — 从大本营到十条主题路线、超过1000句真实生活用语 — 现已全部开放。任何等级都可随时探索，没有先修要求。",
     comingSoon: "即将推出", modulesCount: "{n} 个单元", modulesWord: "个单元",
     lockedBody: "{range}。此处暂无练习 — 这是下一次内容更新。建成后的里程碑：{milestone}",
@@ -3879,6 +3930,15 @@ const I18N = {
     myProgress: "⛺ ངའི་ཡར་རྒྱས།",
     studyTopicBtn: "📚 བརྗོད་གཞིག་སློབ་སྦྱོང་།",
     topicsTitle: "བརྗོད་གཞིག་སློབ་སྦྱོང་།", topicsSub: "བརྗོད་གཞི་ཞིག་འདེམས་ནས་དེའི་ཟུར་ཚིག་ཟབ་མོར་སློབ་སྦྱོང་གྱིས — ཐོག་མར་གཞུང་ལམ་མཇུག་སྐྱོང་མི་དགོས།",
+    premiumLabel: "མཐོ་རིམ།", premiumBadge: "🔒 མཐོ་རིམ།",
+    paywallTitle: "མཐོ་རིམ་འཇུས་སྐྱོང་།",
+    paywallBody: "ཚན་པ་འདི་མཐོ་རིམ་ཞབས་ཞུའི་ནང་ཚུད་ཡོད། ཉོ་སྒྲིག་བྱས་ན་ 'བརྗོད་གཞིའི་ལམ' ནས་ 'ཤིན་ཏུ་མཁས་པའི་རྩེ་མོ' བར (ཚན་པ 6-15) ཁ་ཕྱེ་ཐུབ།",
+    paywallBodyLevel: "\"{level}\" མཐོ་རིམ་ཞབས་ཞུའི་ནང་ཚུད་ཡོད། ཉོ་སྒྲིག་བྱས་ན་ 'བརྗོད་གཞིའི་ལམ' ནས་ 'ཤིན་ཏུ་མཁས་པའི་རྩེ་མོ' བར (ཚན་པ 6-15) ཁ་ཕྱེ་ཐུབ།",
+    planUS: "🌍 ས་གནས་གཞན། — ཟླ་རེར་ $1.00", planCN: "🇨🇳 རྒྱ་ནག / བོད། — ཟླ་རེར་ ¥5.00",
+    paywallSubscribe: "ཉོ་སྒྲིག", paywallLoading: "འཇལ་སྒྲིག་ཐང་ལ་སྐྱེལ་བཞིན་ཡོད…",
+    paywallFooter: "དངུལ་སྤྲོད་ལེན་ Stripe ཡིས་ཉེན་མེད་ངང་སྒྲུབ་ཀྱི་ཡོད། ནམ་ཡང་ཕྱིར་འཐེན་ཆོག",
+    checkoutSuccessBanner: "🎉 མཐོ་རིམ་ཞབས་ཞུ་ཁ་ཕྱེ་ཟིན། ས་ཁྲ་ལ་མངོན་པར་སྐར་ཆ་འགའ་འགོར་སྲིད།",
+    checkoutCancelBanner: "འཇལ་སྒྲིག་ཕྱིར་འཐེན་བྱས། དངུལ་གང་ཡང་བསྡུས་མེད།",
     homeFooter: "ཚན་པ 142 ཧྲིལ་པོ — རྩ་གནས་སྒར་ནས་བརྗོད་གཞིའི་ལམ་བཅུ་དང་འཚོ་བའི་ཚིག་གྲུབ་1000ལྷག་བར་དུ་ — ད་ལྟ་ཡོངས་སུ་སྐྱོན་ཐུབ། གནས་རིམ་ཚང་མ་ནམ་ཡང་བརྟག་དཔྱད་བྱེད་ཆོག, སྔོན་འགྲོའི་དགོས་མཁོ་མེད།",
     comingSoon: "མ་འོངས་པར་འབྱོར་འོང་།", modulesCount: "ཚན་པ་{n}།", modulesWord: "ཚན་པ།",
     lockedBody: "{range}། འདིར་ད་དུང་ལག་རྩལ་སྦྱོང་བརྡར་མེད། འདི་ནི་རྗེས་མའི་ནང་དོན་ཡིན། བཟོས་ཟིན་རྗེས་ཀྱི་དོན་ཚན: {milestone}",
@@ -3934,6 +3994,7 @@ const screens = {
   home: renderHome,
   map: renderMap,
   topics: renderTopics,
+  paywall: renderPaywall,
   lessonlist: renderLessonList,
   world_locked: renderWorldLocked,
   lesson: renderLesson,
@@ -4023,6 +4084,7 @@ async function doSignup(){
     saveSession({currentUser: usernameKey});
     state.currentUser = usernameKey;
     state.game = loadGame(usernameKey);
+    state.subscription = data.user.subscription || state.subscription;
     state.authError = '';
     state.screen = 'pick_language';
     render();
@@ -4054,6 +4116,7 @@ async function doLogin(){
     saveSession({currentUser: usernameKey});
     state.currentUser = usernameKey;
     state.game = loadGame(usernameKey);
+    state.subscription = data.user.subscription || state.subscription;
     state.authError = '';
     state.screen = 'pick_language';
     render();
@@ -4148,9 +4211,16 @@ function renderHome(){
     </button>`;
   }).join('');
 
+  const checkoutBanner = state.checkoutResult ? `
+    <div style="background:${state.checkoutResult==='success'?'rgba(107,201,143,.15)':'rgba(255,255,255,.08)'}; border:1px solid ${state.checkoutResult==='success'?'var(--good)':'rgba(255,255,255,.2)'}; border-radius:12px; padding:12px 14px; margin:0 0 14px; font-size:14px; display:flex; justify-content:space-between; align-items:center; gap:10px;">
+      <span>${state.checkoutResult==='success' ? t('checkoutSuccessBanner') : t('checkoutCancelBanner')}</span>
+      <button class="iconbtn" style="flex:none;" onclick="state.checkoutResult=null; render();">✕</button>
+    </div>` : '';
+
   return `
   ${topbar({back:'state.screen="pick_language"; render();'})}
   <div class="home ${appLangClass()}">
+    ${checkoutBanner}
     <div class="hero">
       <h1>ཡེ་ཤེས་ <span style="color:var(--gold)">Yeshe</span></h1>
       <div class="sub">${t('homeSub')}</div>
@@ -4165,15 +4235,17 @@ function renderHome(){
 function renderMap(){
   const track = trackById(state.currentTrack);
   const blocks = LEVELS.map((lvl, idx)=>({lvl, idx})).filter(x=>!x.lvl.topic).map(({lvl, idx})=>{
+    const locked = lvl.paid && !state.subscription.active;
     const stats = lvl.built ? levelStats(track.id, idx) : {done:0,total:0};
-    const nodeClass = (lvl.built && stats.done===stats.total) ? 'done' : '';
-    const sub = lvl.built ? `${stats.done}/${stats.total} ${t('modulesWord')}` : t('comingSoon');
+    const nodeClass = (lvl.built && !locked && stats.done===stats.total) ? 'done' : (locked ? 'locked' : '');
+    const sub = locked ? t('premiumLabel') : (lvl.built ? `${stats.done}/${stats.total} ${t('modulesWord')}` : t('comingSoon'));
+    const nodeIcon = locked ? '🔒' : (lvl.built ? '🚩' : lvl.icon);
     return `
     <div class="world-block">
-      <div class="world-title">${lvl.icon} ${lvl.title}</div>
+      <div class="world-title">${lvl.icon} ${lvl.title}${locked ? ' <span style="font-size:12px; color:var(--gold);">'+t('premiumBadge')+'</span>' : ''}</div>
       <div class="world-subtitle">${lvl.subtitle} · ${lvl.range}</div>
       <div class="node" style="align-self:center;">
-        <button class="node-btn ${nodeClass}" onclick="openLevel(${idx})">${lvl.built?'🚩':lvl.icon}</button>
+        <button class="node-btn ${nodeClass}" onclick="openLevel(${idx})">${nodeIcon}</button>
         <div class="node-label">${sub}</div>
       </div>
     </div>`;
@@ -4222,7 +4294,61 @@ function renderTopics(){
   `;
 }
 
+function setPaywallRegion(region){ state.paywallRegion = region; state.paywallError=''; render(); }
+
+function renderPaywall(){
+  const lvl = state.paywallFrom!=null ? LEVELS[state.paywallFrom] : null;
+  const region = state.paywallRegion;
+  return `
+  ${topbar({back:'state.screen="map"; render();'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>🔒 ${t('paywallTitle')}</h1>
+      <div class="sub">${lvl ? t('paywallBodyLevel', {level: lvl.title}) : t('paywallBody')}</div>
+    </div>
+    <div class="locked-panel" style="display:flex; flex-direction:column; gap:10px;">
+      <button class="btn ${region==='us'?'btn-primary':'btn-ghost'} btn-block" onclick="setPaywallRegion('us')">${t('planUS')}</button>
+      <button class="btn ${region==='cn'?'btn-primary':'btn-ghost'} btn-block" onclick="setPaywallRegion('cn')">${t('planCN')}</button>
+    </div>
+    ${state.paywallError ? `<div style="color:#ff8080; text-align:center; margin-top:10px; font-size:13px;">${state.paywallError}</div>` : ''}
+    <button class="btn btn-primary btn-block" style="margin-top:18px;" ${state.paywallLoading?'disabled':''} onclick="startCheckout()">${state.paywallLoading ? t('paywallLoading') : t('paywallSubscribe')}</button>
+    <div class="footer-note">${t('paywallFooter')}</div>
+  </div>
+  `;
+}
+
+async function startCheckout(){
+  state.paywallLoading = true;
+  state.paywallError = '';
+  render();
+  try{
+    const res = await fetch('/api/create-checkout-session', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({username: state.currentUser, region: state.paywallRegion})
+    });
+    const data = await res.json();
+    if(!res.ok || !data.url){
+      state.paywallError = data.error || t('errConnection');
+      state.paywallLoading = false;
+      render();
+      return;
+    }
+    window.location.href = data.url;
+  } catch(e){
+    state.paywallLoading = false;
+    state.paywallError = t('errConnection') + e.message;
+    render();
+  }
+}
+
 function openLevel(idx){
+  if(LEVELS[idx].paid && !state.subscription.active){
+    state.paywallFrom = idx;
+    state.screen = 'paywall';
+    render();
+    return;
+  }
   state.currentWorld = idx;
   state.screen = LEVELS[idx].built ? 'lessonlist' : 'world_locked';
   render();

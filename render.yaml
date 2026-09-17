@@ -12,3 +12,9 @@ services:
         sync: false
       - key: SUPABASE_URL
         sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: APP_BASE_URL
+        value: https://www.kunga.me
