@@ -194,9 +194,10 @@
     width:40px; height:40px; border-radius:50%; border:2px solid transparent; background:rgba(255,255,255,.08);
     display:flex; align-items:center; justify-content:center; font-size:20px; cursor:pointer; color:var(--snow);
   }
-  .avatar-swatch.avatar-swatch-wide{
-    width:auto; min-width:56px; height:34px; border-radius:17px; padding:0 10px;
+  .avatar-swatch.avatar-swatch-thumb{
+    width:54px; height:54px; border-radius:14px; overflow:hidden; padding:0;
   }
+  .avatar-swatch.avatar-swatch-thumb img{width:100%; height:100%; object-fit:cover;}
   .avatar-swatch.selected{border-color:var(--gold); box-shadow:0 0 0 2px rgba(232,163,61,.3); background:rgba(232,163,61,.15);}
   .avatar-tabs{display:flex; gap:8px; background:rgba(255,255,255,.06); border-radius:12px; padding:4px; margin-bottom:16px;}
   .avatar-tab{flex:1; border:none; background:transparent; color:var(--snow-dim); font-family:var(--font-display); font-weight:700; font-size:13px; padding:9px 0; border-radius:9px;}
@@ -3656,10 +3657,13 @@ const VOICE_PREF_KEY = 'yeshe_voice_pref_v1';
 
 // ---- character avatars: DiceBear's open-source "Avataaars" style
 // (api.dicebear.com, MIT licensed) — illustrated human-like characters
-// rendered as SVG from plain query params, no AI generation, no photos sent
-// anywhere. Mirrors the whitelist in server.js, which is the real source of
-// truth/validation — this copy just drives the picker UI. -------------------
-const DICEBEAR_BASE = 'https://api.dicebear.com/9.x/avataaars/svg';
+// rendered server-side (server.js proxies @dicebear/collection — see the
+// comment on renderAvataaarSvg there for why this isn't just an <img>
+// pointed straight at api.dicebear.com) from plain query params, no AI
+// generation, no photos sent anywhere. Mirrors the whitelist in server.js,
+// which is the real source of truth/validation — this copy just drives the
+// picker UI. ------------------------------------------------------------
+const DICEBEAR_BASE = '/api/avatar-render';
 const AVATAAAR_OPTIONS = {
   top: ['hat','hijab','turban','winterHat1','winterHat02','winterHat03','winterHat04','bob','bun','curly','curvy','dreads','frida','fro','froBand','longButNotTooLong','miaWallace','shavedSides','straight02','straight01','straightAndStrand','dreads01','dreads02','frizzle','shaggy','shaggyMullet','shortCurly','shortFlat','shortRound','shortWaved','sides','theCaesar','theCaesarAndSidePart','bigHair'],
   hairColor: ['a55728','2c1b18','b58143','d6b370','724133','4a312c','f59797','ecdcbf','c93305','e8e1e1'],
@@ -3696,14 +3700,22 @@ function humanizeAvatarOption(str){
   if(str==='none') return '—';
   return str.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/(\d+)/g,' $1').replace(/^./, c=>c.toUpperCase()).trim();
 }
-function dicebearUrl(options, seed){
-  const params = new URLSearchParams({seed: seed||'yeshe'});
-  Object.entries(options||{}).forEach(([key, val]) => {
-    if(key==='facialHair'){ params.set('facialHairProbability', val==='none'?'0':'100'); if(val!=='none') params.set(key, val); return; }
-    if(key==='accessories'){ params.set('accessoriesProbability', val==='none'?'0':'100'); if(val!=='none') params.set(key, val); return; }
-    params.set(key, val);
-  });
+function dicebearUrl(options, seed, extraParams){
+  // The "none" -> probability=0 translation for facialHair/accessories now
+  // happens server-side (renderAvataaarSvg) — this just serializes the raw
+  // whitelisted values as-is.
+  const params = new URLSearchParams(Object.assign({seed: seed||'yeshe'}, extraParams||{}));
+  Object.entries(options||{}).forEach(([key, val]) => params.set(key, val));
   return DICEBEAR_BASE + '?' + params.toString();
+}
+// Thumbnail for one picker option: a fixed baseline character (not the
+// user's in-progress draft) with just that one field swapped in, zoomed and
+// recentered a bit so facial details are legible at swatch size. Fixed
+// baseline (rather than layering on the live draft) keeps every thumbnail's
+// URL stable across renders, so the browser only ever fetches each one once.
+function avatarThumbUrl(categoryKey, value){
+  const opts = Object.assign({}, AVATAAAR_DEFAULTS, {[categoryKey]: value});
+  return dicebearUrl(opts, 'thumb', {scale:'150', translateY:'-8'});
 }
 const gameKey = username => 'sangwa_progress_v1__' + username;
 
@@ -4770,8 +4782,8 @@ function renderAvatarEditor(){
     const items = AVATAAAR_OPTIONS[cat.key].map(v => {
       const swatch = cat.kind==='color'
         ? `<div style="width:100%; height:100%; border-radius:50%; background:#${v};"></div>`
-        : `<span style="font-size:10px; line-height:1.15; padding:0 3px; text-align:center;">${humanizeAvatarOption(v)}</span>`;
-      return `<div class="avatar-swatch ${cat.kind==='style'?'avatar-swatch-wide':''} ${d[cat.key]===v?'selected':''}" onclick="setAvatarDraftPart('${cat.key}','${v}')">${swatch}</div>`;
+        : `<img src="${avatarThumbUrl(cat.key, v)}" alt="${humanizeAvatarOption(v)}" title="${humanizeAvatarOption(v)}" loading="lazy">`;
+      return `<div class="avatar-swatch ${cat.kind==='style'?'avatar-swatch-thumb':''} ${d[cat.key]===v?'selected':''}" onclick="setAvatarDraftPart('${cat.key}','${v}')">${swatch}</div>`;
     }).join('');
     return `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:6px;">${t(cat.labelKey)}</div><div class="avatar-picker-row">${items}</div>`;
   }).join('');

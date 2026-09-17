@@ -7,6 +7,8 @@ const crypto = require('node:crypto');
 const { Client } = require('pg');
 const { createClient } = require('@supabase/supabase-js');
 const Stripe = require('stripe');
+const { createAvatar } = require('@dicebear/core');
+const { avataaars } = require('@dicebear/collection');
 
 function hashPassword(value) {
   return crypto.createHash('sha256').update(String(value)).digest('hex');
@@ -55,6 +57,41 @@ function validateAvataaar(options) {
     result[key] = allowed.includes(src[key]) ? src[key] : AVATAAAR_DEFAULTS[key];
   }
   return result;
+}
+
+// Renders avatars with the @dicebear/collection package directly, in-process
+// — no network call to api.dicebear.com. Two reasons: (1) that public API
+// rate-limits bursts, which broke the picker UI when it tried to load ~94
+// option thumbnails at once (Chrome reported ERR_BLOCKED_BY_ORB); (2) this
+// app's audience is disproportionately in China/Tibet, where reaching some
+// arbitrary Western API from every end user's browser is a real reliability
+// risk that rendering server-side and serving from our own domain avoids
+// entirely. Cache is in-memory and unbounded — the whole combinatorial space
+// in practice is small (the 94 fixed picker thumbnails plus whatever actual
+// users pick), and it resets harmlessly on restart since regenerating is
+// cheap CPU work, not a network call.
+const avatarSvgCache = new Map();
+function renderAvataaarSvg(traits, extra) {
+  const validated = validateAvataaar(traits);
+  const params = Object.assign({}, validated, extra || {});
+  if (validated.facialHair === 'none') { delete params.facialHair; params.facialHairProbability = 0; }
+  else { params.facialHairProbability = 100; }
+  if (validated.accessories === 'none') { delete params.accessories; params.accessoriesProbability = 0; }
+  else { params.accessoriesProbability = 100; }
+
+  const cacheKey = JSON.stringify(params);
+  const cached = avatarSvgCache.get(cacheKey);
+  if (cached) return cached;
+  // @dicebear/core's OptionsSchema expects every field as an array (it picks
+  // one entry per the seed). A bare string like 'e8a33d' also satisfies
+  // JS's "is it iterable" check — strings are iterable character-by-character
+  // — so it silently iterates the string and picks a single CHARACTER as the
+  // "color" instead of erroring. Wrapping everything here is what avoids that.
+  const arrayParams = {};
+  for (const [key, val] of Object.entries(params)) arrayParams[key] = [val];
+  const svg = createAvatar(avataaars, arrayParams).toString();
+  avatarSvgCache.set(cacheKey, svg);
+  return svg;
 }
 
 function createApp(overrides = {}) {
@@ -481,6 +518,24 @@ function createApp(overrides = {}) {
     const { data } = supabaseAdmin.storage.from(AVATAR_BUCKET).getPublicUrl(username.toLowerCase() + '.jpg');
     return res.redirect(302, data.publicUrl);
   });
+
+  // Server-rendered DiceBear avatar (see renderAvataaarSvg above for why this
+  // isn't just an <img> pointed straight at api.dicebear.com). Output is
+  // fully deterministic per query string, so it's safe to cache aggressively.
+  app.get('/api/avatar-render', (req, res) => {
+    const q = req.query || {};
+    const extra = { seed: String(q.seed || 'yeshe').slice(0, 40) };
+    const scale = parseInt(q.scale, 10);
+    if (Number.isFinite(scale)) extra.scale = Math.max(50, Math.min(200, scale));
+    const translateY = parseInt(q.translateY, 10);
+    if (Number.isFinite(translateY)) extra.translateY = Math.max(-100, Math.min(100, translateY));
+
+    const svg = renderAvataaarSvg(q, extra);
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    return res.send(svg);
+  });
+
   app.use(express.static(__dirname));
 
   app.get('/api/health', async (req, res) => {
