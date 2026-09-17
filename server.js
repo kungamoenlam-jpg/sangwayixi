@@ -12,6 +12,13 @@ function hashPassword(value) {
   return crypto.createHash('sha256').update(String(value)).digest('hex');
 }
 
+function randomLetters(n) {
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+  let out = '';
+  for (let i = 0; i < n; i++) out += alphabet[crypto.randomInt(alphabet.length)];
+  return out;
+}
+
 function createApp(overrides = {}) {
   const app = express();
   const PORT = overrides.port || Number(process.env.PORT) || 3000;
@@ -296,22 +303,29 @@ function createApp(overrides = {}) {
       return res.status(400).json({ error: 'Webhook signature verification failed.', details: error.message });
     }
 
+    // Shared by checkout.session.completed and .async_payment_succeeded: some
+    // payment methods (e.g. bank debits) settle after the session "completes",
+    // so `completed` alone isn't proof of payment — payment_status is. See
+    // https://docs.stripe.com/checkout/fulfillment.md.
+    async function activateFromSession(session) {
+      if (session.payment_status === 'unpaid') return;
+      const username = session.client_reference_id;
+      const user = username ? await findUserByUsername(username) : null;
+      if (!user) return;
+      const subscription = session.subscription
+        ? await stripe.subscriptions.retrieve(session.subscription)
+        : null;
+      await updateUserSubscription(user.id, {
+        stripeCustomerId: session.customer,
+        status: subscription ? subscription.status : 'active',
+        plan: session.metadata && session.metadata.region,
+        periodEnd: subscription ? new Date(subscription.current_period_end * 1000).toISOString() : null,
+      });
+    }
+
     try {
-      if (event.type === 'checkout.session.completed') {
-        const session = event.data.object;
-        const username = session.client_reference_id;
-        const user = username ? await findUserByUsername(username) : null;
-        if (user) {
-          const subscription = session.subscription
-            ? await stripe.subscriptions.retrieve(session.subscription)
-            : null;
-          await updateUserSubscription(user.id, {
-            stripeCustomerId: session.customer,
-            status: subscription ? subscription.status : 'active',
-            plan: session.metadata && session.metadata.region,
-            periodEnd: subscription ? new Date(subscription.current_period_end * 1000).toISOString() : null,
-          });
-        }
+      if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
+        await activateFromSession(event.data.object);
       } else if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
         const subscription = event.data.object;
         const user = await findUserByStripeCustomerId(subscription.customer);
@@ -321,6 +335,13 @@ function createApp(overrides = {}) {
             periodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
           });
         }
+      } else if (event.type === 'invoice.payment_failed') {
+        // The subscription's own status (past_due, unpaid, etc.) already comes
+        // through as a separate customer.subscription.updated event — this
+        // handler exists so a failed renewal is never silently unhandled.
+        const invoice = event.data.object;
+        const user = await findUserByStripeCustomerId(invoice.customer);
+        if (user) console.log('Subscription renewal payment failed for user', user.username);
       }
       return res.json({ received: true });
     } catch (error) {
@@ -556,6 +577,9 @@ function createApp(overrides = {}) {
         subscription_data: { metadata: { region, username: user.username } },
         success_url: `${APP_BASE_URL}/?checkout=success`,
         cancel_url: `${APP_BASE_URL}/?checkout=cancel`,
+        // Labels this flow in the Dashboard's Checkout analytics — 8 random
+        // letters per Stripe's current tagging convention.
+        integration_identifier: 'yeshepremium' + randomLetters(8),
       });
 
       return res.json({ url: session.url });
