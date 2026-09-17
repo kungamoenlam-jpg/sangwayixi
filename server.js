@@ -31,14 +31,25 @@ function createApp(overrides = {}) {
   const TTS_CACHE_DIR = overrides.ttsCacheDir || path.join(__dirname, 'data', 'tts-cache');
 
   // ---- Stripe: Premium subscription (unlocks levels 6-15) ---------------------
-  // Two regional monthly prices on one Product, auto-created on startup so
-  // there's no manual dashboard clicking to get the price IDs right — same
-  // self-bootstrap philosophy as the `create table if not exists` below.
+  // Two regional monthly prices, auto-created on startup so there's no manual
+  // dashboard clicking to get the price IDs right — same self-bootstrap
+  // philosophy as the `create table if not exists` below.
   // 'us' targets everyone outside China/Tibet (USD); 'cn' is a discounted CNY
   // price for users there, self-selected on the paywall screen (no IP
   // geolocation — see the paywall UI). Actual acceptance of CNY-friendly
-  // payment methods (Alipay/WeChat Pay) depends on what's enabled on the
-  // underlying Stripe account; plain card payments always work via Checkout.
+  // payment methods (Alipay/WeChat Pay) depends on Stripe's private-preview
+  // approval for recurring payments on those methods; plain card payments
+  // always work via Checkout regardless.
+  //
+  // Stripe Checkout's own UI chrome (buttons, field labels, T&Cs) can be
+  // localized via the `locale` param, but Stripe has no Tibetan locale — the
+  // supported list tops out at zh/zh-HK/zh-TW for Chinese, nothing for bo.
+  // 'zh' is used for both zh and bo app-language users as the closest
+  // comprehensible option. What IS fully controllable regardless of Stripe's
+  // locale support is the product name/description, which actually says what
+  // you're buying — so there's a separate Product per app language (not just
+  // per region), each with its own translated name/description, sharing the
+  // same underlying regional prices.
   const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || null;
   const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || null;
   const APP_BASE_URL = process.env.APP_BASE_URL || 'https://www.kunga.me';
@@ -48,43 +59,61 @@ function createApp(overrides = {}) {
     us: { currency: 'usd', amount: 100, label: '$1.00 / month' },
     cn: { currency: 'cny', amount: 500, label: '¥5.00 / month' },
   };
-  let stripePriceIds = { us: null, cn: null };
+  const PRODUCT_TRANSLATIONS = {
+    en: {
+      name: 'Yeshe Premium',
+      description: 'Unlocks the full 15-level Yeshe route (Daily Life Trail through Summit of Fluency).',
+    },
+    zh: {
+      name: 'Yeshe 高级版',
+      description: '解锁完整的15级Yeshe学习路线（从日常生活之路到流利之巅）。',
+    },
+    bo: {
+      name: 'Yeshe མཐོ་རིམ།',
+      description: 'Yeshe ཡི་ཚན་པ་15 ཧྲིལ་པོའི་ལམ་ཁ་ཕྱེ་ཐུབ། (བརྗོད་གཞིའི་ལམ་ནས་ཤིན་ཏུ་མཁས་པའི་རྩེ་མོ་བར།)',
+    },
+  };
+  const STRIPE_CHECKOUT_LOCALE = { en: 'en', zh: 'zh', bo: 'zh' };
+  // stripePriceIds.en.us, stripePriceIds.zh.cn, etc.
+  let stripePriceIds = { en: {}, zh: {}, bo: {} };
   let stripeReady = false;
 
   async function ensureStripeProduct() {
     if (!stripe) return { ok: false, reason: 'not-configured' };
     try {
-      const products = await stripe.products.search({
-        query: `metadata['app']:'${STRIPE_PRODUCT_METADATA_KEY}'`,
-      });
-      let product = products.data[0];
-      if (!product) {
-        product = await stripe.products.create({
-          name: 'Yeshe Premium',
-          description: 'Unlocks the full 15-level Yeshe route (Daily Life Trail through Summit of Fluency).',
-          metadata: { app: STRIPE_PRODUCT_METADATA_KEY },
+      for (const [lang, text] of Object.entries(PRODUCT_TRANSLATIONS)) {
+        const products = await stripe.products.search({
+          query: `metadata['app']:'${STRIPE_PRODUCT_METADATA_KEY}' AND metadata['lang']:'${lang}'`,
         });
-      }
-
-      for (const [region, plan] of Object.entries(SUBSCRIPTION_PLANS)) {
-        const prices = await stripe.prices.search({
-          query: `product:'${product.id}' AND metadata['region']:'${region}' AND active:'true'`,
-        });
-        let price = prices.data[0];
-        if (!price) {
-          price = await stripe.prices.create({
-            product: product.id,
-            currency: plan.currency,
-            unit_amount: plan.amount,
-            recurring: { interval: 'month' },
-            metadata: { region },
+        let product = products.data[0];
+        if (!product) {
+          product = await stripe.products.create({
+            name: text.name,
+            description: text.description,
+            metadata: { app: STRIPE_PRODUCT_METADATA_KEY, lang },
           });
         }
-        stripePriceIds[region] = price.id;
+
+        for (const [region, plan] of Object.entries(SUBSCRIPTION_PLANS)) {
+          const prices = await stripe.prices.search({
+            query: `product:'${product.id}' AND metadata['region']:'${region}' AND active:'true'`,
+          });
+          let price = prices.data[0];
+          if (!price) {
+            price = await stripe.prices.create({
+              product: product.id,
+              currency: plan.currency,
+              unit_amount: plan.amount,
+              recurring: { interval: 'month' },
+              metadata: { region, lang },
+            });
+          }
+          stripePriceIds[lang][region] = price.id;
+        }
       }
 
       stripeReady = true;
-      return { ok: true, productId: product.id, priceIds: stripePriceIds };
+      return { ok: true, priceIds: stripePriceIds };
     } catch (error) {
       stripeReady = false;
       return { ok: false, reason: error.message };
@@ -553,11 +582,12 @@ function createApp(overrides = {}) {
       return res.status(503).json({ error: 'Payments are not configured on this server yet.' });
     }
     const { username, region } = req.body || {};
+    const lang = STRIPE_CHECKOUT_LOCALE[req.body && req.body.lang] ? req.body.lang : 'en';
     if (!SUBSCRIPTION_PLANS[region]) {
       return res.status(400).json({ error: 'Unknown region. Use "us" or "cn".' });
     }
     if (!stripeReady) await ensureStripeProduct();
-    const priceId = stripePriceIds[region];
+    const priceId = stripePriceIds[lang] && stripePriceIds[lang][region];
     if (!priceId) {
       return res.status(503).json({ error: 'Stripe product/price setup has not completed yet. Try again shortly.' });
     }
@@ -584,8 +614,9 @@ function createApp(overrides = {}) {
         customer: customerId,
         client_reference_id: user.username,
         line_items: [{ price: priceId, quantity: 1 }],
-        metadata: { region, username: user.username },
-        subscription_data: { metadata: { region, username: user.username } },
+        locale: STRIPE_CHECKOUT_LOCALE[lang],
+        metadata: { region, lang, username: user.username },
+        subscription_data: { metadata: { region, lang, username: user.username } },
         success_url: `${APP_BASE_URL}/?checkout=success`,
         cancel_url: `${APP_BASE_URL}/?checkout=cancel`,
         // Labels this flow in the Dashboard's Checkout analytics — 8 random

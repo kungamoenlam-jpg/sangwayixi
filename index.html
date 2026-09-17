@@ -4325,7 +4325,7 @@ async function startCheckout(){
     const res = await fetch('/api/create-checkout-session', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({username: state.currentUser, region: state.paywallRegion})
+      body: JSON.stringify({username: state.currentUser, region: state.paywallRegion, lang: state.appLang})
     });
     const data = await res.json();
     if(!res.ok || !data.url){
