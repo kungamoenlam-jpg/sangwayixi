@@ -303,6 +303,16 @@ function createApp(overrides = {}) {
       return res.status(400).json({ error: 'Webhook signature verification failed.', details: error.message });
     }
 
+    // As of API version 2025-03-31.basil, current_period_end moved off the
+    // Subscription object onto each Subscription Item (a subscription can now
+    // have items on different billing periods). Read from the first item, with
+    // a fallback to the old top-level field for older API versions.
+    function subscriptionPeriodEnd(subscription) {
+      const itemEnd = subscription.items && subscription.items.data[0] && subscription.items.data[0].current_period_end;
+      const end = itemEnd || subscription.current_period_end;
+      return end ? new Date(end * 1000).toISOString() : null;
+    }
+
     // Shared by checkout.session.completed and .async_payment_succeeded: some
     // payment methods (e.g. bank debits) settle after the session "completes",
     // so `completed` alone isn't proof of payment — payment_status is. See
@@ -319,7 +329,7 @@ function createApp(overrides = {}) {
         stripeCustomerId: session.customer,
         status: subscription ? subscription.status : 'active',
         plan: session.metadata && session.metadata.region,
-        periodEnd: subscription ? new Date(subscription.current_period_end * 1000).toISOString() : null,
+        periodEnd: subscription ? subscriptionPeriodEnd(subscription) : null,
       });
     }
 
@@ -332,7 +342,7 @@ function createApp(overrides = {}) {
         if (user) {
           await updateUserSubscription(user.id, {
             status: subscription.status,
-            periodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
+            periodEnd: subscriptionPeriodEnd(subscription),
           });
         }
       } else if (event.type === 'invoice.payment_failed') {
@@ -345,6 +355,7 @@ function createApp(overrides = {}) {
       }
       return res.json({ received: true });
     } catch (error) {
+      console.error('Webhook handling failed for event', event.type, error);
       return res.status(500).json({ error: 'Webhook handling failed.', details: error.message });
     }
   });
