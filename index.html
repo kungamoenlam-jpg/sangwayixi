@@ -3954,6 +3954,19 @@ const I18N = {
     hintFormulaSub: "Subtract the hundreds, tens and ones separately, borrowing from the next column if needed.",
     hintFormulaMul: "Break the second number into tens and ones, multiply each part by the first number, then add the results.",
     hintFormulaDiv: "Division undoes multiplication — find what the divisor multiplies by to reach the dividend. Use the table below.",
+    trickTitle: "Trick",
+    trick11: "Multiplying by 11: add the two digits of the other number and put the sum in the middle (carry if it's 10 or more).",
+    trickRoundUpAdd: "{val} is close to {rounded} — try adding {rounded} first, then subtract {diff}.",
+    trickRoundDownAdd: "{val} is close to {rounded} — try adding {rounded} first, then add {diff} more.",
+    trickRoundUpSub: "{val} is close to {rounded} — try subtracting {rounded} first, then add {diff} back.",
+    trickRoundDownSub: "{val} is close to {rounded} — try subtracting {rounded} first, then subtract {diff} more.",
+    trickRoundUpMul: "{val} is close to {rounded} — try {other} × {rounded} first, then subtract {other} × {diff}.",
+    trickRoundDownMul: "{val} is close to {rounded} — try {other} × {rounded} first, then add {other} × {diff}.",
+    trickDiv4: "Dividing by 4: halve the number, then halve it again.",
+    trickDiv5: "Dividing by 5: divide by 10, then double the result.",
+    trickDiv8: "Dividing by 8: halve the number three times.",
+    trickDiv20: "Dividing by 20: divide by 10, then halve the result.",
+    trickDiv25: "Dividing by 25: divide by 100, then multiply the result by 4.",
   },
   zh: {
     heroSub: "创建账户，在所有设备上保存你的学习进度。",
@@ -4045,6 +4058,19 @@ const I18N = {
     hintFormulaSub: "把百位、十位、个位分别相减，不够时向前一位借位。",
     hintFormulaMul: "把第二个数拆成十位和个位，分别乘以第一个数，再把结果相加。",
     hintFormulaDiv: "除法是乘法的逆运算：找出除数乘以多少能得到被除数。可参考下面的表格。",
+    trickTitle: "技巧",
+    trick11: "乘以11的技巧：把另一个数的两位数字相加，把和插入这两个数字中间（如果和≥10则要进位）。",
+    trickRoundUpAdd: "{val} 接近 {rounded}——可以先加 {rounded}，再减去 {diff}。",
+    trickRoundDownAdd: "{val} 接近 {rounded}——可以先加 {rounded}，再加上 {diff}。",
+    trickRoundUpSub: "{val} 接近 {rounded}——可以先减去 {rounded}，再加回 {diff}。",
+    trickRoundDownSub: "{val} 接近 {rounded}——可以先减去 {rounded}，再多减 {diff}。",
+    trickRoundUpMul: "{val} 接近 {rounded}——可以先算 {other} × {rounded}，再减去 {other} × {diff}。",
+    trickRoundDownMul: "{val} 接近 {rounded}——可以先算 {other} × {rounded}，再加上 {other} × {diff}。",
+    trickDiv4: "除以4的技巧：先除以2，再除以2一次。",
+    trickDiv5: "除以5的技巧：先除以10，再把结果乘以2。",
+    trickDiv8: "除以8的技巧：连续除以2三次。",
+    trickDiv20: "除以20的技巧：先除以10，再除以2。",
+    trickDiv25: "除以25的技巧：先除以100，再把结果乘以4。",
   },
   bo: {
     heroSub: "འཕྲུལ་ཆས་སོ་སོའི་ཐོག་ཁྱེད་ཀྱི་ཡར་རྒྱས་ཉར་ཚགས་བྱེད་ཆེད་རྩིས་ཐོ་ཞིག་གསར་སྐྲུན་གྱིས།",
@@ -4136,6 +4162,19 @@ const I18N = {
     hintFormulaSub: "བརྒྱ་ཐང་དང་བཅུ་ཐང་། གང་ཐང་སོ་སོར་འཐེན་ལ་དགོས་ན་གོང་གི་ཐང་ནས་སྐྱེལ་ཤིག།",
     hintFormulaMul: "གྲངས་གཉིས་པ་བཅུ་ཐང་དང་གང་ཐང་གཉིས་སུ་ཕྱེས་ནས། གྲངས་དང་པོས་སོ་སོར་བརྒྱབ་རྗེས་བསྡོམས་ཤིག།",
     hintFormulaDiv: "འགོ་བརྒྱབ་པ་ནི་འཕར་བའི་ལྡོག་ཕྱོགས་ཡིན། འགོ་བྱེད་ཀྱིས་ག་ཚོད་བརྒྱབ་ན་འགོ་བྱའི་གྲངས་ཐོན་མིན་འཚོལ། འོག་གི་རེའུ་མིག་ལ་ལྟོས།",
+    trickTitle: "ཐབས་ལམ།",
+    trick11: "11ལ་འཕར་བའི་ཐབས་ལམ། གྲངས་གཞན་པའི་ཨང་ཀི་གཉིས་སྣོན་ནས་བར་དུ་བཞག (10ལས་མང་ན་སྐྱེལ་)",
+    trickRoundUpAdd: "{val} ནི་{rounded}དང་ཉེ་བས། ཐོག་མར་{rounded}སྣོན་ནས་རྗེས་སུ་{diff}ཕུད།",
+    trickRoundDownAdd: "{val} ནི་{rounded}དང་ཉེ་བས། ཐོག་མར་{rounded}སྣོན་ནས་རྗེས་སུ་{diff}སླར་སྣོན།",
+    trickRoundUpSub: "{val} ནི་{rounded}དང་ཉེ་བས། ཐོག་མར་{rounded}ཕུད་ནས་རྗེས་སུ་{diff}སླར་སྣོན།",
+    trickRoundDownSub: "{val} ནི་{rounded}དང་ཉེ་བས། ཐོག་མར་{rounded}ཕུད་ནས་རྗེས་སུ་{diff}སླར་ཕུད།",
+    trickRoundUpMul: "{val} ནི་{rounded}དང་ཉེ་བས། ཐོག་མར་{other} × {rounded}རྩིས་ནས་རྗེས་སུ་{other} × {diff}ཕུད།",
+    trickRoundDownMul: "{val} ནི་{rounded}དང་ཉེ་བས། ཐོག་མར་{other} × {rounded}རྩིས་ནས་རྗེས་སུ་{other} × {diff}སྣོན།",
+    trickDiv4: "4ཡིས་འགོ་བའི་ཐབས་ལམ། གཉིས་ཆ་གཅིག་ཏུ་གཅོག་པ་ལན་གཉིས་བྱོས།",
+    trickDiv5: "5ཡིས་འགོ་བའི་ཐབས་ལམ། ཐོག་མར་10ཡིས་འགོ་ནས་གྲངས་འབྲས་ལ་2འཕར།",
+    trickDiv8: "8ཡིས་འགོ་བའི་ཐབས་ལམ། གཉིས་ཆ་གཅིག་ཏུ་གཅོག་པ་ལན་གསུམ་བྱོས།",
+    trickDiv20: "20ཡིས་འགོ་བའི་ཐབས་ལམ། ཐོག་མར་10ཡིས་འགོ་ནས་གཉིས་ཆ་གཅིག་ཏུ་གཅོག།",
+    trickDiv25: "25ཡིས་འགོ་བའི་ཐབས་ལམ། ཐོག་མར་100ཡིས་འགོ་ནས་གྲངས་འབྲས་ལ་4འཕར།",
   },
 };
 function t(key, vars){
@@ -4545,6 +4584,42 @@ function mathHintData(q){
   const rows = Array.from({length:12}, (_,i)=>({n:i+1, val:base*(i+1)}));
   return {formula: q.op==='×' ? t('hintFormulaMul') : t('hintFormulaDiv'), table:rows, base};
 }
+
+// Contextual mental-math tricks/tips, checked against the actual numbers in
+// the current problem rather than shown generically — e.g. "round-and-
+// adjust" only fires when an operand is actually close to a multiple of
+// ten. Returns zero or more localized tip strings.
+function roundAdjust(n){
+  const rem = n % 10;
+  if(rem>=8) return {rounded:n+(10-rem), diff:10-rem, dir:'up'};
+  if(rem>0 && rem<=2) return {rounded:n-rem, diff:rem, dir:'down'};
+  return null;
+}
+function mathTricksFor(q){
+  const tips = [];
+  if(q.op==='+'){
+    let info = roundAdjust(q.b), val = q.b;
+    if(!info){ info = roundAdjust(q.a); val = q.a; }
+    if(info) tips.push(t(info.dir==='up' ? 'trickRoundUpAdd' : 'trickRoundDownAdd', {val, rounded:info.rounded, diff:info.diff}));
+  } else if(q.op==='-'){
+    const info = roundAdjust(q.b);
+    if(info) tips.push(t(info.dir==='up' ? 'trickRoundUpSub' : 'trickRoundDownSub', {val:q.b, rounded:info.rounded, diff:info.diff}));
+  } else if(q.op==='×'){
+    if(q.a===11 || q.b===11){
+      tips.push(t('trick11'));
+    } else {
+      const infoA = roundAdjust(q.a), infoB = roundAdjust(q.b);
+      let chosen=null, val=null, other=null;
+      if(infoA && (!infoB || infoA.diff<=infoB.diff)){ chosen=infoA; val=q.a; other=q.b; }
+      else if(infoB){ chosen=infoB; val=q.b; other=q.a; }
+      if(chosen) tips.push(t(chosen.dir==='up' ? 'trickRoundUpMul' : 'trickRoundDownMul', {val, rounded:chosen.rounded, diff:chosen.diff, other}));
+    }
+  } else { // ÷
+    const divTricks = {4:'trickDiv4', 5:'trickDiv5', 8:'trickDiv8', 20:'trickDiv20', 25:'trickDiv25'};
+    if(divTricks[q.b]) tips.push(t(divTricks[q.b]));
+  }
+  return tips;
+}
 function toggleMathHint(){
   const s = state.mathSession;
   if(!s) return;
@@ -4607,6 +4682,12 @@ function renderMathPractice(){
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 20px; margin-top:10px; font-size:14px; font-family:var(--font-display);">
         ${hint.table.map(r=>`<div>${hint.base} × ${r.n} = ${r.val}</div>`).join('')}
       </div>` : '';
+    const tricks = mathTricksFor(q);
+    const tricksHtml = tricks.length ? `
+      <div style="margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,.12);">
+        <div style="font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--gold); margin-bottom:6px;">${t('trickTitle')}</div>
+        ${tricks.map(tip=>`<div style="font-size:14px; color:var(--snow-dim); line-height:1.5; margin-bottom:4px;">${tip}</div>`).join('')}
+      </div>` : '';
     hintBlock = `
       <button class="btn btn-ghost btn-block" onclick="toggleMathHint()">${s.showHint ? t('hintHideBtn') : t('hintShowBtn')}</button>
       ${s.showHint ? `
@@ -4614,6 +4695,7 @@ function renderMathPractice(){
         <div style="font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--gold); margin-bottom:6px;">${t('hintTitle')}</div>
         <div style="font-size:14px; color:var(--snow-dim); line-height:1.5;">${hint.formula}</div>
         ${tableHtml}
+        ${tricksHtml}
       </div>` : ''}
     `;
   }
