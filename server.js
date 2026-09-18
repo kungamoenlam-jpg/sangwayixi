@@ -42,7 +42,7 @@ const AVATAAAR_OPTIONS = {
   mouth: ['concerned','default','disbelief','eating','grimace','sad','screamOpen','serious','smile','tongue','twinkle','vomit'],
   facialHair: ['none','beardLight','beardMajestic','beardMedium','moustacheFancy','moustacheMagnum'],
   accessories: ['none','kurt','prescription01','prescription02','round','sunglasses','wayfarers','eyepatch'],
-  clothing: ['blazerAndShirt','blazerAndSweater','collarAndSweater','graphicShirt','hoodie','overall','shirtCrewNeck','shirtScoopNeck','shirtVNeck'],
+  clothing: ['blazerAndShirt','blazerAndSweater','collarAndSweater','graphicShirt','hoodie','overall','shirtCrewNeck','shirtScoopNeck','shirtVNeck','tibetanChuba','tibetanDress','monkRobe'],
   clothesColor: ['262e33','65c9ff','5199e4','25557c','e6e6e6','929598','3c4f5c','b1e2ff','a7ffc4','ffafb9','ffffb1','ff488e','ff5c5c','ffffff'],
   backgroundColor: ['e8a33d','3fae72','e1584b','3d6fb4','b08ae0','4fb4d8','c94e86','8b95a6'],
 };
@@ -57,6 +57,57 @@ function validateAvataaar(options) {
     result[key] = allowed.includes(src[key]) ? src[key] : AVATAAAR_DEFAULTS[key];
   }
   return result;
+}
+
+// DiceBear's Avataaars collection has no Tibetan garments, so these three
+// ('tibetanChuba', 'tibetanDress', 'monkRobe') are hand-drawn flat-vector
+// fragments layered in as a post-processing step (see applyTibetanClothing
+// below) rather than real DiceBear options — matching the same bounding box
+// (x:32-232, y:0-110) every built-in clothing shape uses inside the
+// `translate(0 170)` group, so they sit correctly under the neck.
+const TIBETAN_CLOTHING_BASE = 'M104 29a72 72 0 0 0-72 72v9h200v-9a72 72 0 0 0-72-72Z';
+const TIBETAN_CLOTHING_FRAGMENTS = {
+  tibetanChuba: (color) => `
+    <path d="${TIBETAN_CLOTHING_BASE}" fill="${color}"/>
+    <path d="M132 29 100 58l10 52h20l8-52Z" fill="#000" fill-opacity=".12"/>
+    <path d="M118 29q14 10 28 0l-6 22h-16Z" fill="#f4f0e6"/>
+    <path d="M32 46h200v16H32Z" fill="#c1440e"/>
+    <path d="M32 48h200v2.5H32Z" fill="#f4f0e6"/>
+    <path d="M32 59.5h200v2.5H32Z" fill="#f4f0e6"/>
+    <path d="M119 46v16h26V46Z" fill="#8a2f1c"/>
+  `,
+  tibetanDress: (color) => {
+    const stripeColors = ['#7a1f2b', '#e8c34d', '#2d6e4e', '#c1440e', '#25557c', '#f4f0e6'];
+    const x0 = 88, x1 = 176, y0 = 44, y1 = 110;
+    const stripeW = (x1 - x0) / stripeColors.length;
+    const stripes = stripeColors.map((c, i) =>
+      `<rect x="${(x0 + i * stripeW).toFixed(1)}" y="${y0}" width="${stripeW.toFixed(1)}" height="${y1 - y0}" fill="${c}"/>`
+    ).join('');
+    return `
+      <path d="${TIBETAN_CLOTHING_BASE}" fill="${color}"/>
+      <path d="M132 29 108 60l8 50h32l8-50Z" fill="#000" fill-opacity=".1"/>
+      <g clip-path="url(#tibetanApronClip)">${stripes}</g>
+      <defs><clipPath id="tibetanApronClip"><path d="M88 44h88v46a44 44 0 0 1-88 0Z"/></clipPath></defs>
+      <rect x="84" y="41" width="96" height="7" rx="1.5" fill="#3a1f1a"/>
+    `;
+  },
+  monkRobe: (color) => `
+    <path d="${TIBETAN_CLOTHING_BASE}" fill="${color}"/>
+    <path d="M108 29 76 60v50h20l14-58Z" fill="#000" fill-opacity=".12"/>
+    <path d="M96 29 26 52l10 24 84-32Z" fill="#e8a33d"/>
+    <path d="M70 44 26 52l10 24 15-6-9-16Z" fill="#000" fill-opacity=".1"/>
+    <path d="M96 29 26 52l10 24 7-3-9-17 70-27Z" fill="#000" fill-opacity=".08"/>
+  `,
+};
+function applyTibetanClothing(svg, clothingKey, color) {
+  const build = TIBETAN_CLOTHING_FRAGMENTS[clothingKey];
+  if (!build) return svg;
+  const marker = '<g transform="translate(0 170)">';
+  const start = svg.indexOf(marker);
+  if (start === -1) return svg;
+  const contentStart = start + marker.length;
+  const end = svg.indexOf('</g>', contentStart) + 4;
+  return svg.slice(0, contentStart) + build(color) + '</g>' + svg.slice(end);
 }
 
 // Renders avatars with the @dicebear/collection package directly, in-process
@@ -87,9 +138,13 @@ function renderAvataaarSvg(traits, extra) {
   // JS's "is it iterable" check — strings are iterable character-by-character
   // — so it silently iterates the string and picks a single CHARACTER as the
   // "color" instead of erroring. Wrapping everything here is what avoids that.
+  const customClothing = TIBETAN_CLOTHING_FRAGMENTS[validated.clothing];
+  const dicebearParams = Object.assign({}, params);
+  if (customClothing) dicebearParams.clothing = 'shirtCrewNeck';
   const arrayParams = {};
-  for (const [key, val] of Object.entries(params)) arrayParams[key] = [val];
-  const svg = createAvatar(avataaars, arrayParams).toString();
+  for (const [key, val] of Object.entries(dicebearParams)) arrayParams[key] = [val];
+  let svg = createAvatar(avataaars, arrayParams).toString();
+  if (customClothing) svg = applyTibetanClothing(svg, validated.clothing, '#' + validated.clothesColor);
   avatarSvgCache.set(cacheKey, svg);
   return svg;
 }
