@@ -3732,7 +3732,8 @@ function defaultGame(){
   return {
     xp:0, streak:0, lastActive:null,
     hearts:HEARTS_MAX, lastHeartTime: Date.now(),
-    tracks:{} // trackId -> {completed:{ "level-modulekey": stars }}
+    tracks:{}, // trackId -> {completed:{ "level-modulekey": stars }}
+    math:{easy:{best:0}, medium:{best:0}, hard:{best:0}} // difficulty -> best stars (0-3)
   };
 }
 function loadGame(username){
@@ -3757,6 +3758,7 @@ function defaultAppState(){
     game: defaultGame(),
     currentTrack:null, currentWorld:0,
     session:null,
+    mathSession:null,
     subscription: {active:false, status:null, plan:null, periodEnd:null},
     paywallFrom: null,
     paywallRegion: 'us',
@@ -3936,6 +3938,16 @@ const I18N = {
     totalXP: "Total XP", heartsLabel: "Hearts", nextInM: " · next in ~{n}m",
     modulesDoneLabel: "Modules done", resetAllProgress: "Reset all progress", logOut: "Log out",
     resetConfirm: "Reset all XP, streaks and lesson progress for this account? This cannot be undone.",
+    mentalMathBtn: "🧮 Practice Mental Math",
+    mentalMathTitle: "Mental Math",
+    mentalMathSub: "Sharpen addition, subtraction, multiplication and division. Every answer is typed — no multiple choice.",
+    mathEasyTitle: "Easy", mathEasySub: "Numbers up to 50, times tables up to 12.",
+    mathMediumTitle: "Medium", mathMediumSub: "Bigger numbers, two-digit multiplication.",
+    mathHardTitle: "Hard", mathHardSub: "Three-digit arithmetic, two-digit by two-digit multiplication.",
+    mathBestLabel: "Best: {n}/3 ⭐",
+    solveEyebrow: "Solve", checkBtn: "Check",
+    yourAnswerPlaceholder: "Your answer",
+    tryAgainMathBtn: "Try this set again", backToMathMenuBtn: "Back to Mental Math",
   },
   zh: {
     heroSub: "创建账户，在所有设备上保存你的学习进度。",
@@ -4011,6 +4023,16 @@ const I18N = {
     totalXP: "总经验值", heartsLabel: "生命值", nextInM: " · 约{n}分钟后恢复",
     modulesDoneLabel: "已完成单元", resetAllProgress: "重置全部进度", logOut: "退出登录",
     resetConfirm: "确定要重置此账户的全部经验值、连续天数和课程进度吗？此操作无法撤销。",
+    mentalMathBtn: "🧮 心算练习",
+    mentalMathTitle: "心算练习",
+    mentalMathSub: "锻炼加减乘除的心算能力。每次都要自己输入答案，没有选项可选。",
+    mathEasyTitle: "简单", mathEasySub: "数字最大到50，乘法口诀表到12。",
+    mathMediumTitle: "中等", mathMediumSub: "数字更大，包含两位数乘法。",
+    mathHardTitle: "困难", mathHardSub: "三位数运算，两位数乘两位数。",
+    mathBestLabel: "最佳：{n}/3 ⭐",
+    solveEyebrow: "计算", checkBtn: "检查",
+    yourAnswerPlaceholder: "输入答案",
+    tryAgainMathBtn: "再试一次", backToMathMenuBtn: "返回心算练习",
   },
   bo: {
     heroSub: "འཕྲུལ་ཆས་སོ་སོའི་ཐོག་ཁྱེད་ཀྱི་ཡར་རྒྱས་ཉར་ཚགས་བྱེད་ཆེད་རྩིས་ཐོ་ཞིག་གསར་སྐྲུན་གྱིས།",
@@ -4086,6 +4108,16 @@ const I18N = {
     totalXP: "XP བསྡོམས།", heartsLabel: "སྙིང་ཏིག", nextInM: " · སྐར་མ་~{n}ནང་འབྱོར",
     modulesDoneLabel: "ཚན་པ་གྲུབ་ཟིན།", resetAllProgress: "ཡར་རྒྱས་ཚང་མ་སླར་གསོ།", logOut: "ཕྱིར་འཐོན",
     resetConfirm: "རྩིས་ཐོ་འདིའི་XP, ཉིན་གྲངས་རྒྱུན་མཐུད་དང་སློབ་ཚན་ཡར་རྒྱས་ཚང་མ་སླར་གསོ་བྱེད་དམ། འདི་ཕྱིར་ལོག་མི་ཐུབ།",
+    mentalMathBtn: "🧮 སེམས་རྩིས་སློབ་སྦྱོང་།",
+    mentalMathTitle: "སེམས་རྩིས།",
+    mentalMathSub: "སྣོན་འཐེན་བརྒྱབ་འཐེན་གྱི་རྩིས་རིག་སྦྱངས་ཤིག། ལན་རང་ཉིད་ཡིག་འབྲི་དགོས་ལ་གདམ་ཁ་མེད།",
+    mathEasyTitle: "སླ་བོ།", mathEasySub: "ཨང་གྲངས་མཐོ་ཤོས་50, འཕར་ཐབས་རེའུ་མིག་12 བར།",
+    mathMediumTitle: "བར་མ།", mathMediumSub: "ཨང་གྲངས་ཆེ་བ་དང་གྲངས་ཀ་གཉིས་འཕར་བ།",
+    mathHardTitle: "དཀའ་བོ།", mathHardSub: "གྲངས་ཀ་གསུམ་གྱི་རྩིས་དང་གྲངས་ཀ་གཉིས་འཕར་བ་གཉིས།",
+    mathBestLabel: "མཐོ་ཤོས། {n}/3 ⭐",
+    solveEyebrow: "རྩིས་ཤིག", checkBtn: "ཞིབ་བཤེར།",
+    yourAnswerPlaceholder: "ལན་འབྲི་རོགས།",
+    tryAgainMathBtn: "སླར་ཚོད་ལྟ།", backToMathMenuBtn: "སེམས་རྩིས་སུ་ལོག",
   },
 };
 function t(key, vars){
@@ -4125,6 +4157,10 @@ const screens = {
   lesson: renderLesson,
   complete: renderComplete,
   outofhearts: renderOutOfHearts,
+  math_menu: renderMathMenu,
+  math_practice: renderMathPractice,
+  math_complete: renderMathComplete,
+  outofhearts_math: renderOutOfHeartsMath,
   profile: renderProfile,
   avatar_editor: renderAvatarEditor,
 };
@@ -4354,6 +4390,7 @@ function renderHome(){
       <div class="sub">${t('homeSub')}</div>
     </div>
     <div class="track-grid">${cards}</div>
+    <button class="btn btn-ghost btn-block" onclick="state.screen='math_menu'; render();">${t('mentalMathBtn')}</button>
     <button class="btn btn-ghost btn-block" onclick="goProfile()">${t('myProgress')}</button>
   </div>
   <div class="footer-note">${t('homeFooter')}</div>
@@ -4421,6 +4458,206 @@ function renderTopics(){
   </div>
   `;
 }
+
+// ---- mental math: a language-agnostic practice mode, independent of the
+// TRACKS/LEVELS vocab structure above. Typed numeric answers rather than
+// multiple choice, but reuses the same hearts/XP/streak scoring shape as
+// vocab lessons. ---------------------------------------------------------
+function randInt(min, max){ return min + Math.floor(Math.random()*(max-min+1)); }
+
+const MATH_PROBLEM_COUNT = 10;
+function buildMathProblem(difficulty){
+  const op = ['+','-','×','÷'][randInt(0,3)];
+  let a, b, answer;
+  if(difficulty==='easy'){
+    if(op==='+'){ a=randInt(1,50); b=randInt(1,50); answer=a+b; }
+    else if(op==='-'){ a=randInt(1,50); b=randInt(1,a); answer=a-b; }
+    else if(op==='×'){ a=randInt(1,12); b=randInt(1,12); answer=a*b; }
+    else { b=randInt(1,12); answer=randInt(1,12); a=b*answer; }
+  } else if(difficulty==='medium'){
+    if(op==='+'){ a=randInt(10,200); b=randInt(10,200); answer=a+b; }
+    else if(op==='-'){ a=randInt(10,300); b=randInt(1,a); answer=a-b; }
+    else if(op==='×'){ a=randInt(10,99); b=randInt(2,12); answer=a*b; }
+    else { b=randInt(2,12); answer=randInt(2,50); a=b*answer; }
+  } else { // hard
+    if(op==='+'){ a=randInt(100,999); b=randInt(100,999); answer=a+b; }
+    else if(op==='-'){ a=randInt(200,999); b=randInt(1,a); answer=a-b; }
+    else if(op==='×'){ a=randInt(11,99); b=randInt(11,99); answer=a*b; }
+    else { b=randInt(2,25); answer=randInt(2,80); a=b*answer; }
+  }
+  return {a, op, b, answer};
+}
+function buildMathProblems(difficulty){
+  return Array.from({length:MATH_PROBLEM_COUNT}, ()=>buildMathProblem(difficulty));
+}
+
+function startMathPractice(difficulty){
+  state.mathSession = {
+    difficulty,
+    problems: buildMathProblems(difficulty),
+    qIndex:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, input:''
+  };
+  state.screen = 'math_practice';
+  render();
+  focusMathInput();
+}
+function focusMathInput(){
+  setTimeout(()=>{ const el=document.getElementById('math_input'); if(el) el.focus(); }, 30);
+}
+
+function renderMathMenu(){
+  const diffs = [
+    {key:'easy', title:t('mathEasyTitle'), sub:t('mathEasySub')},
+    {key:'medium', title:t('mathMediumTitle'), sub:t('mathMediumSub')},
+    {key:'hard', title:t('mathHardTitle'), sub:t('mathHardSub')},
+  ];
+  const cards = diffs.map(d=>{
+    const best = (state.game.math && state.game.math[d.key]) ? state.game.math[d.key].best : 0;
+    return `
+    <button class="track-card" onclick="startMathPractice('${d.key}')">
+      <div class="glyph">🧮</div>
+      <div>
+        <div class="tc-title">${d.title}</div>
+        <div class="tc-sub">${d.sub}</div>
+      </div>
+      <div class="tc-progress">${best ? t('mathBestLabel',{n:best}) : t('startArrow')}</div>
+    </button>`;
+  }).join('');
+
+  return `
+  ${topbar({back:'goHome()'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>${t('mentalMathTitle')}</h1>
+      <div class="sub">${t('mentalMathSub')}</div>
+    </div>
+    <div class="track-grid">${cards}</div>
+  </div>
+  `;
+}
+
+function renderMathPractice(){
+  const s = state.mathSession;
+  const total = s.problems.length;
+  const q = s.problems[s.qIndex];
+  const pct = Math.round((s.qIndex/total)*100);
+
+  const feedback = s.answered ? `
+    <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
+      <div class="fb-text">
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback') : t('notQuiteFeedback')}</div>
+        ${!s.lastCorrect ? `<div class="fb-sub">${t('answerPrefix')}${q.answer}</div>` : ''}
+      </div>
+      <button class="btn btn-light" onclick="nextMathQuestion()">${s.qIndex+1>=total ? t('finishBtn'):t('continueBtn')}</button>
+    </div>` : '';
+
+  return `
+  ${topbar({back:'exitMathPractice()'})}
+  <div class="lesson">
+    <div class="progressbar"><div class="progressbar-fill" style="width:${pct}%"></div></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+      <div class="hearts-row">${Array.from({length:HEARTS_MAX}).map((_,i)=>`<span>${i<state.game.hearts?'❤️':'🩶'}</span>`).join('')}</div>
+      <div style="font-size:12px; color:var(--snow-dim);">${s.qIndex+1} / ${total}</div>
+    </div>
+    <div class="q-wrap">
+      <div class="q-card">
+        <div class="q-eyebrow">${t('solveEyebrow')}</div>
+        <div class="q-prompt">${q.a} ${q.op} ${q.b} = ?</div>
+      </div>
+      <div class="field" style="align-items:center; gap:12px;">
+        <input id="math_input" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
+          placeholder="${t('yourAnswerPlaceholder')}"
+          style="text-align:center; font-size:26px; font-family:var(--font-display); font-weight:700; width:100%;"
+          ${s.answered?'disabled':''} value="${s.input||''}"
+          oninput="state.mathSession.input=this.value.replace(/[^0-9]/g,'')"
+          onkeydown="if(event.key==='Enter'){ submitMathAnswer(); }">
+        ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitMathAnswer()">${t('checkBtn')}</button>` : ''}
+      </div>
+    </div>
+  </div>
+  ${feedback}
+  `;
+}
+
+function submitMathAnswer(){
+  const s = state.mathSession;
+  if(!s || s.answered) return;
+  const q = s.problems[s.qIndex];
+  if(s.input===''){ return; }
+  const correct = Number(s.input) === q.answer;
+  s.answered = true; s.lastCorrect = correct;
+  if(correct){
+    s.xpEarned += 10; state.game.xp += 10;
+  } else {
+    s.mistakes += 1;
+    if(state.game.hearts===HEARTS_MAX) state.game.lastHeartTime = Date.now();
+    state.game.hearts = Math.max(0, state.game.hearts-1);
+    if(state.game.hearts===0){ render(); setTimeout(()=>{ state.screen='outofhearts_math'; render(); }, 550); return; }
+  }
+  render();
+}
+
+function nextMathQuestion(){
+  const s = state.mathSession;
+  if(state.game.hearts<=0){ state.screen='outofhearts_math'; render(); return; }
+  s.qIndex += 1; s.answered=false; s.lastCorrect=null; s.input='';
+  if(s.qIndex>=s.problems.length){ finishMathPractice(); return; }
+  render();
+  focusMathInput();
+}
+
+function finishMathPractice(){
+  const s = state.mathSession;
+  const total = s.problems.length;
+  let stars = 1;
+  if(s.mistakes===0) stars=3; else if(s.mistakes<=Math.ceil(total*0.34)) stars=2;
+  if(!state.game.math) state.game.math = {easy:{best:0}, medium:{best:0}, hard:{best:0}};
+  const rec = state.game.math[s.difficulty] || (state.game.math[s.difficulty] = {best:0});
+  rec.best = Math.max(rec.best, stars);
+  if(stars===3){ state.game.xp += 20; s.xpEarned += 20; }
+  touchStreak();
+  state.screen='math_complete';
+  render();
+}
+
+function renderMathComplete(){
+  const s = state.mathSession;
+  const total = s.problems.length;
+  const stars = state.game.math[s.difficulty].best;
+  return `
+  ${topbar()}
+  <div class="complete ${appLangClass()}">
+    <div class="medal">${stars===3?'🏆':stars===2?'🥈':'🥉'}</div>
+    <h2>${t('checkpointReached')}</h2>
+    <div class="stars-final">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
+    <div class="stat-row">
+      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
+      <div class="stat-box"><div class="val">${total-s.mistakes}/${total}</div><div class="lab">${t('firstTryCorrect')}</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="backToMathMenu()">${t('backToMathMenuBtn')}</button>
+  </div>`;
+}
+
+function renderOutOfHeartsMath(){
+  const eta = nextHeartEta();
+  return `
+  ${topbar()}
+  <div class="complete ${appLangClass()}">
+    <div class="medal">💔</div>
+    <h2>${t('outOfHearts')}</h2>
+    <p style="color:var(--snow-dim); max-width:280px;">${t('heartsRefillText')} ${eta?t('nextHeartIn',{n:eta}):''} ${t('heartsRefillTail')}</p>
+    <button class="btn btn-primary btn-block" onclick="retryMathPractice()">${t('tryAgainMathBtn')}</button>
+    <button class="btn btn-ghost btn-block" onclick="backToMathMenu()">${t('backToMathMenuBtn')}</button>
+  </div>`;
+}
+function retryMathPractice(){
+  regenHearts();
+  if(state.game.hearts<=0){ render(); return; }
+  startMathPractice(state.mathSession.difficulty);
+}
+function backToMathMenu(){ state.screen='math_menu'; render(); }
+function exitMathPractice(){ state.screen='math_menu'; render(); }
 
 function setPaywallRegion(region){ state.paywallRegion = region; state.paywallError=''; render(); }
 
