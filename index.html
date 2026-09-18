@@ -3740,7 +3740,9 @@ function defaultGame(){
     hearts:HEARTS_MAX, lastHeartTime: Date.now(),
     tracks:{}, // trackId -> {completed:{ "level-modulekey": stars }}
     math:{easy:{best:0}, medium:{best:0}, hard:{best:0}}, // difficulty -> best correct-answer count
-    algebra:{} // topic key -> {best: correct-answer count}
+    algebra:{}, // topic key -> {best: correct-answer count}
+    calculus:{}, // topic key -> {best: correct-answer count}
+    totalCorrect:0, bestCombo:0, achievements:[] // shared across all practice modes
   };
 }
 function loadGame(username){
@@ -3767,6 +3769,7 @@ function defaultAppState(){
     session:null,
     mathSession:null,
     algebraSession:null,
+    calcSession:null,
     subscription: {active:false, status:null, plan:null, periodEnd:null},
     paywallFrom: null,
     paywallRegion: 'us',
@@ -3931,7 +3934,7 @@ const I18N = {
     voiceSettings: "Voice settings", englishVoice: "English voice", chineseVoice: "Chinese voice",
     voiceFemale: "Female", voiceMale: "Male",
     englishVoiceNote: "Words recorded in your own voice play automatically instead.",
-    correctFeedback: "Correct! +10 XP", notQuiteFeedback: "Not quite", answerPrefix: "Answer: ",
+    correctFeedback: "Correct! +{n} XP", notQuiteFeedback: "Not quite", answerPrefix: "Answer: ",
     finishBtn: "Finish", continueBtn: "Continue",
     checkpointReached: "Checkpoint reached!", xpEarnedLabel: "XP earned",
     firstTryCorrect: "First-try correct", dayStreak: "Day streak",
@@ -4047,6 +4050,66 @@ const I18N = {
     algLearn_trigonometry: "A handful of angles (0°, 30°, 45°, 60°, 90°) have exact sin/cos/tan values worth memorizing, since they show up constantly. They come from the side ratios of a 45-45-90 and a 30-60-90 right triangle.\n\nExample: sin(30°) = 1/2, cos(30°) = √3/2, tan(30°) = √3/3.",
     algTrigPrompt: "Evaluate: {expr}",
     algTrigExplain: "{expr} = {answer}. This is one of the standard angle values worth memorizing.",
+
+    comboLabel: "{n} in a row!",
+    levelLabel: "Level {n}",
+    xpToNextLevel: "to next level",
+    achievementUnlocked: "Achievement unlocked",
+    achievementsLabel: "Achievements",
+    achFirstStepsTitle: "First Steps", achFirstStepsDesc: "Get your first correct answer",
+    achCombo5Title: "On a Roll", achCombo5Desc: "Reach a 5-answer streak in one session",
+    achCombo10Title: "Unstoppable", achCombo10Desc: "Reach a 10-answer streak in one session",
+    achCenturyTitle: "Century Club", achCenturyDesc: "100 correct answers all-time",
+    achExplorerTitle: "Explorer", achExplorerDesc: "Play Mental Math, Algebra and Calculus at least once each",
+    achStreak7Title: "Week Streak", achStreak7Desc: "7-day daily streak",
+    achStreak30Title: "Month Streak", achStreak30Desc: "30-day daily streak",
+
+    calculusBtn: "📈 Learn Calculus",
+    calculusTitle: "Calculus",
+    calculusSub: "Month 2: limits, derivatives and integrals. Pick a topic to learn the concept, then practice.",
+    backToCalcMenuBtn: "Back to Calculus",
+
+    calcTopicTitle_limits: "Limits", calcTopicDesc_limits: "Evaluate limits of functions",
+    calcLearn_limits: "A limit asks: what value does f(x) approach as x gets closer and closer to some point c? For continuous functions (like polynomials), you can just substitute directly: lim(x→c) f(x) = f(c).\n\nSometimes substituting gives 0/0 — an ‘indeterminate form.’ When that happens, factor the numerator and denominator and cancel the common factor first, then substitute.\n\nExample: lim(x→2) (x² - 4)/(x - 2).\nSubstituting x=2 gives 0/0, so factor: (x-2)(x+2)/(x-2) = x+2 (for x≠2).\nNow substitute: 2 + 2 = 4.",
+    calcLimitDirectPrompt: "Evaluate: lim(x→{c}) [{expr}]",
+    calcLimitDirectExplain: "This function is continuous everywhere, so the limit equals direct substitution: f({c}) = {answer}.",
+    calcLimitFactorPrompt: "Evaluate: lim(x→{r}) [{num} / {den}]",
+    calcLimitFactorExplain: "Since x ≠ {r} while taking the limit, cancel the common factor {den}: the expression simplifies to {remExpr}. Substitute x = {r}: {answer}.",
+
+    calcTopicTitle_power_rule: "Derivatives: Power Rule", calcTopicDesc_power_rule: "Differentiate a polynomial",
+    calcLearn_power_rule: "The power rule says: d/dx[xⁿ] = n·x^(n-1). Multiply by the exponent, then subtract 1 from it. Apply this to each term of a polynomial separately.\n\nExample: if f(x) = 2x³ + 3x² - 4x + 1, find f'(x).\nf'(x) = 3(2)x² + 2(3)x - 4 = 6x² + 6x - 4.",
+    calcPowerRulePrompt: "If f(x) = {expr}, find f'({k}).",
+    calcPowerRuleExplain: "Apply the power rule to each term: f'(x) = {derivExpr}. Substitute x = {k}: {answer}.",
+
+    calcTopicTitle_product_rule: "Derivatives: Product Rule", calcTopicDesc_product_rule: "Differentiate a product of two functions",
+    calcLearn_product_rule: "When you're differentiating a product of two functions f(x) = u(x)·v(x), you can't just multiply the derivatives. The product rule is: (uv)' = u'v + uv'.\n\nExample: if u(x) = x + 2 and v(x) = 3x - 1, find (uv)'(x).\nu' = 1, v' = 3.\n(uv)' = 1·(3x-1) + (x+2)·3 = 3x - 1 + 3x + 6 = 6x + 5.",
+    calcProductRulePrompt: "If f(x) = ({uExpr}) × ({vExpr}), find f'({k}) using the product rule.",
+    calcProductRuleExplain: "By the product rule, f'(x) = u'v + uv'. At x = {k}: u = {uk}, v = {vk}, u' = {A}, v' = {C}. So f'({k}) = {stepExpr} = {sumExpr} = {answer}.",
+
+    calcTopicTitle_quotient_rule: "Derivatives: Quotient Rule", calcTopicDesc_quotient_rule: "Differentiate a quotient of two functions",
+    calcLearn_quotient_rule: "For a quotient f(x) = u(x)/v(x), the quotient rule is: (u/v)' = (u'v - uv') / v².\n\nExample: if u(x) = x and v(x) = x + 1, find (u/v)'(x).\nu' = 1, v' = 1.\n(u/v)' = [1·(x+1) - x·1] / (x+1)² = 1 / (x+1)².",
+    calcQuotientRulePrompt: "If f(x) = ({uExpr}) / ({vExpr}), find f'({k}) using the quotient rule.",
+    calcQuotientRuleExplain: "By the quotient rule, f'(x) = (u'v - uv') / v². At x = {k}: u = {uk}, v = {vk}, u' = {A}, v' = {C}. So f'({k}) = ({stepExpr}) / ({vk})² = {numerator} / {vk2} = {answer}.",
+
+    calcTopicTitle_chain_rule: "Derivatives: Chain Rule", calcTopicDesc_chain_rule: "Differentiate a composition of functions",
+    calcLearn_chain_rule: "When one function is nested inside another, f(g(x)), the chain rule says: [f(g(x))]' = f'(g(x)) × g'(x). Differentiate the outer function (leaving the inner one alone), then multiply by the derivative of the inner function.\n\nExample: if f(u) = u² and g(x) = 3x + 1, find the derivative of f(g(x)).\nf'(u) = 2u, so f'(g(x)) = 2(3x+1). g'(x) = 3.\n[f(g(x))]' = 2(3x+1) × 3 = 6(3x+1).",
+    calcChainRulePrompt: "If f(u) = {fExpr} and g(x) = {gExpr}, find the derivative of f(g(x)) at x = {k} using the chain rule.",
+    calcChainRuleExplain: "By the chain rule, [f(g(x))]' = f'(g(x)) × g'(x). Here f'(u) = {fPrimeExpr} and g'(x) = {C}. At x = {k}: g({k}) = {gk}, so f'(g({k})) = {twoA}×({gk}) = {fprime}. Multiply by g'(x): {fprime}×({C}) = {answer}.",
+
+    calcTopicTitle_optimisation: "Optimisation", calcTopicDesc_optimisation: "Find the critical point of a function",
+    calcLearn_optimisation: "A function's critical points — where it might have a maximum or minimum — occur where its derivative equals zero (or is undefined). Finding them is the first step in optimisation.\n\nExample: find the critical point of f(x) = x² - 6x + 5.\nf'(x) = 2x - 6. Set f'(x) = 0: 2x = 6, so x = 3.",
+    calcOptimPrompt: "Find the critical point (where f'(x) = 0) of f(x) = {expr}.",
+    calcOptimExplain: "f'(x) = {derivExpr}. Set f'(x) = 0: {twoA}x = {negB}, so x = {x0}.",
+
+    calcTopicTitle_antiderivatives: "Antiderivatives", calcTopicDesc_antiderivatives: "Find and evaluate an antiderivative",
+    calcLearn_antiderivatives: "An antiderivative reverses differentiation: it's a function F(x) whose derivative is f(x). The power rule in reverse: ∫xⁿ dx = x^(n+1)/(n+1) + C, where C is an unknown constant (since the derivative of any constant is 0).\n\nExample: find the antiderivative of f(x) = 4x + 3 with F(0) = 0.\nF(x) = 2x² + 3x + C. Since F(0) = 0, C = 0. So F(x) = 2x² + 3x.",
+    calcAntiderivPrompt: "Find the antiderivative F(x) of f(x) = {expr} with F(0) = 0, then evaluate F({k}).",
+    calcAntiderivExplain: "Using the power rule for integration (∫x dx = x²/2): F(x) = {FExpr} (with the constant of integration = 0). Evaluate at x = {k}: {sumExpr} = {answer}.",
+
+    calcTopicTitle_definite_integrals: "Definite Integrals", calcTopicDesc_definite_integrals: "Evaluate a definite integral",
+    calcLearn_definite_integrals: "A definite integral ∫ from a to b of f(x) dx gives the net signed area under f(x) between x=a and x=b. The Fundamental Theorem of Calculus says you can compute it as F(b) - F(a), where F is any antiderivative of f.\n\nExample: evaluate ∫ from 1 to 3 of 2x dx.\nAn antiderivative is F(x) = x². F(3) - F(1) = 9 - 1 = 8.",
+    calcDefIntegralPrompt: "Evaluate: ∫ from {a} to {b} of ({expr}) dx",
+    calcDefIntegralExplain: "The antiderivative is F(x) = {FExpr}. By the Fundamental Theorem of Calculus: ∫ = F({b}) - F({a}) = {Fb} - ({Fa}) = {answer}.",
   },
   zh: {
     heroSub: "创建账户，在所有设备上保存你的学习进度。",
@@ -4107,7 +4170,7 @@ const I18N = {
     voiceSettings: "语音设置", englishVoice: "英语语音", chineseVoice: "中文语音",
     voiceFemale: "女声", voiceMale: "男声",
     englishVoiceNote: "已用你自己声音录制的单词会自动优先播放。",
-    correctFeedback: "回答正确！+10 经验值", notQuiteFeedback: "不太对", answerPrefix: "答案：",
+    correctFeedback: "回答正确！+{n} 经验值", notQuiteFeedback: "不太对", answerPrefix: "答案：",
     finishBtn: "完成", continueBtn: "继续",
     checkpointReached: "到达检查点！", xpEarnedLabel: "获得经验值",
     firstTryCorrect: "首次正确率", dayStreak: "连续天数",
@@ -4223,6 +4286,66 @@ const I18N = {
     algLearn_trigonometry: "有几个角度（0°、30°、45°、60°、90°）的sin/cos/tan精确值值得记住，因为它们经常用到。它们来自45-45-90和30-60-90直角三角形的边长比例。\n\n例题：sin(30°) = 1/2，cos(30°) = √3/2，tan(30°) = √3/3。",
     algTrigPrompt: "计算：{expr}",
     algTrigExplain: "{expr} = {answer}。这是值得记住的标准角度值之一。",
+
+    comboLabel: "连续答对 {n} 题！",
+    levelLabel: "等级 {n}",
+    xpToNextLevel: "升级还需",
+    achievementUnlocked: "解锁成就",
+    achievementsLabel: "成就",
+    achFirstStepsTitle: "初次尝试", achFirstStepsDesc: "答对第一题",
+    achCombo5Title: "手感火热", achCombo5Desc: "单次练习中连续答对5题",
+    achCombo10Title: "势不可挡", achCombo10Desc: "单次练习中连续答对10题",
+    achCenturyTitle: "百题俱乐部", achCenturyDesc: "累计答对100题",
+    achExplorerTitle: "探索者", achExplorerDesc: "心算、代数、微积分各至少练习一次",
+    achStreak7Title: "一周连胜", achStreak7Desc: "连续学习7天",
+    achStreak30Title: "一月连胜", achStreak30Desc: "连续学习30天",
+
+    calculusBtn: "📈 学习微积分",
+    calculusTitle: "微积分",
+    calculusSub: "第二个月：极限、导数与积分。选择一个主题学习概念，然后开始练习。",
+    backToCalcMenuBtn: "返回微积分",
+
+    calcTopicTitle_limits: "极限", calcTopicDesc_limits: "计算函数的极限",
+    calcLearn_limits: "极限回答的问题是：当x越来越接近某个点c时，f(x)会趋近于什么值？对于连续函数（比如多项式），可以直接代入：lim(x→c) f(x) = f(c)。\n\n有时候直接代入会得到0/0——这叫做“不定型”。遇到这种情况，先把分子和分母因式分解，约去公因式，再代入。\n\n例题：lim(x→2) (x² - 4)/(x - 2)。\n代入x=2得到0/0，所以先因式分解：(x-2)(x+2)/(x-2) = x+2（当x≠2时）。\n再代入：2 + 2 = 4。",
+    calcLimitDirectPrompt: "计算：lim(x→{c}) [{expr}]",
+    calcLimitDirectExplain: "这个函数处处连续，所以极限等于直接代入的结果：f({c}) = {answer}。",
+    calcLimitFactorPrompt: "计算：lim(x→{r}) [{num} / {den}]",
+    calcLimitFactorExplain: "由于取极限时x ≠ {r}，可以约去公因式{den}：表达式化简为{remExpr}。代入x = {r}：{answer}。",
+
+    calcTopicTitle_power_rule: "导数：幂法则", calcTopicDesc_power_rule: "对多项式求导",
+    calcLearn_power_rule: "幂法则：d/dx[xⁿ] = n·x^(n-1)。乘以指数，再把指数减1。对多项式的每一项分别使用这个法则。\n\n例题：若 f(x) = 2x³ + 3x² - 4x + 1，求f'(x)。\nf'(x) = 3(2)x² + 2(3)x - 4 = 6x² + 6x - 4。",
+    calcPowerRulePrompt: "若 f(x) = {expr}，求 f'({k})。",
+    calcPowerRuleExplain: "对每一项使用幂法则：f'(x) = {derivExpr}。代入 x = {k}：{answer}。",
+
+    calcTopicTitle_product_rule: "导数：乘积法则", calcTopicDesc_product_rule: "对两个函数的乘积求导",
+    calcLearn_product_rule: "当你对两个函数的乘积 f(x) = u(x)·v(x) 求导时，不能直接把导数相乘。乘积法则是：(uv)' = u'v + uv'。\n\n例题：若 u(x) = x + 2，v(x) = 3x - 1，求(uv)'(x)。\nu' = 1，v' = 3。\n(uv)' = 1·(3x-1) + (x+2)·3 = 3x - 1 + 3x + 6 = 6x + 5。",
+    calcProductRulePrompt: "若 f(x) = ({uExpr}) × ({vExpr})，用乘积法则求 f'({k})。",
+    calcProductRuleExplain: "根据乘积法则，f'(x) = u'v + uv'。当 x = {k} 时：u = {uk}，v = {vk}，u' = {A}，v' = {C}。所以 f'({k}) = {stepExpr} = {sumExpr} = {answer}。",
+
+    calcTopicTitle_quotient_rule: "导数：商法则", calcTopicDesc_quotient_rule: "对两个函数的商求导",
+    calcLearn_quotient_rule: "对于商 f(x) = u(x)/v(x)，商法则是：(u/v)' = (u'v - uv') / v²。\n\n例题：若 u(x) = x，v(x) = x + 1，求(u/v)'(x)。\nu' = 1，v' = 1。\n(u/v)' = [1·(x+1) - x·1] / (x+1)² = 1 / (x+1)²。",
+    calcQuotientRulePrompt: "若 f(x) = ({uExpr}) / ({vExpr})，用商法则求 f'({k})。",
+    calcQuotientRuleExplain: "根据商法则，f'(x) = (u'v - uv') / v²。当 x = {k} 时：u = {uk}，v = {vk}，u' = {A}，v' = {C}。所以 f'({k}) = ({stepExpr}) / ({vk})² = {numerator} / {vk2} = {answer}。",
+
+    calcTopicTitle_chain_rule: "导数：链式法则", calcTopicDesc_chain_rule: "对复合函数求导",
+    calcLearn_chain_rule: "当一个函数嵌套在另一个函数里面，即 f(g(x))，链式法则是：[f(g(x))]' = f'(g(x)) × g'(x)。先对外层函数求导（内层保持不变），再乘以内层函数的导数。\n\n例题：若 f(u) = u²，g(x) = 3x + 1，求 f(g(x)) 的导数。\nf'(u) = 2u，所以 f'(g(x)) = 2(3x+1)。g'(x) = 3。\n[f(g(x))]' = 2(3x+1) × 3 = 6(3x+1)。",
+    calcChainRulePrompt: "若 f(u) = {fExpr}，g(x) = {gExpr}，用链式法则求 f(g(x)) 在 x = {k} 处的导数。",
+    calcChainRuleExplain: "根据链式法则，[f(g(x))]' = f'(g(x)) × g'(x)。这里 f'(u) = {fPrimeExpr}，g'(x) = {C}。当 x = {k} 时：g({k}) = {gk}，所以 f'(g({k})) = {twoA}×({gk}) = {fprime}。再乘以 g'(x)：{fprime}×({C}) = {answer}。",
+
+    calcTopicTitle_optimisation: "最优化", calcTopicDesc_optimisation: "求函数的临界点",
+    calcLearn_optimisation: "函数的临界点——可能出现最大值或最小值的地方——出现在导数等于零（或不存在）的地方。找到临界点是最优化问题的第一步。\n\n例题：求 f(x) = x² - 6x + 5 的临界点。\nf'(x) = 2x - 6。令 f'(x) = 0：2x = 6，所以 x = 3。",
+    calcOptimPrompt: "求 f(x) = {expr} 的临界点（f'(x) = 0 的地方）。",
+    calcOptimExplain: "f'(x) = {derivExpr}。令 f'(x) = 0：{twoA}x = {negB}，所以 x = {x0}。",
+
+    calcTopicTitle_antiderivatives: "原函数", calcTopicDesc_antiderivatives: "求并计算原函数",
+    calcLearn_antiderivatives: "原函数是求导的逆运算：它是一个函数F(x)，其导数是f(x)。把幂法则反过来用：∫xⁿ dx = x^(n+1)/(n+1) + C，其中C是一个未知常数（因为任何常数的导数都是0）。\n\n例题：求 f(x) = 4x + 3 的原函数，且 F(0) = 0。\nF(x) = 2x² + 3x + C。由于 F(0) = 0，所以 C = 0。所以 F(x) = 2x² + 3x。",
+    calcAntiderivPrompt: "求 f(x) = {expr} 的原函数 F(x)，且 F(0) = 0，然后计算 F({k})。",
+    calcAntiderivExplain: "使用积分的幂法则（∫x dx = x²/2）：F(x) = {FExpr}（积分常数为0）。代入 x = {k}：{sumExpr} = {answer}。",
+
+    calcTopicTitle_definite_integrals: "定积分", calcTopicDesc_definite_integrals: "计算定积分",
+    calcLearn_definite_integrals: "定积分 ∫ 从a到b的 f(x) dx 表示 f(x) 在 x=a 到 x=b 之间的净有向面积。微积分基本定理告诉我们，可以用 F(b) - F(a) 来计算它，其中F是f的任意一个原函数。\n\n例题：计算 ∫ 从1到3的 2x dx。\n一个原函数是 F(x) = x²。F(3) - F(1) = 9 - 1 = 8。",
+    calcDefIntegralPrompt: "计算：∫ 从 {a} 到 {b} 的 ({expr}) dx",
+    calcDefIntegralExplain: "原函数是 F(x) = {FExpr}。根据微积分基本定理：∫ = F({b}) - F({a}) = {Fb} - ({Fa}) = {answer}。",
   },
   bo: {
     heroSub: "འཕྲུལ་ཆས་སོ་སོའི་ཐོག་ཁྱེད་ཀྱི་ཡར་རྒྱས་ཉར་ཚགས་བྱེད་ཆེད་རྩིས་ཐོ་ཞིག་གསར་སྐྲུན་གྱིས།",
@@ -4283,7 +4406,7 @@ const I18N = {
     voiceSettings: "སྐད་སྒྲའི་སྒྲིག་འགོད", englishVoice: "དབྱིན་ཇིའི་སྐད་སྒྲ", chineseVoice: "རྒྱ་སྐད་ཀྱི་སྐད་སྒྲ",
     voiceFemale: "བུད་མེད།", voiceMale: "སྐྱེས་པ།",
     englishVoiceNote: "ཁྱེད་རང་གི་སྐད་སྒྲས་བཟོས་པའི་ཚིག་རྣམས་རང་འགུལ་གྱིས་སྒྲོག",
-    correctFeedback: "ལེགས་སོ! +10 XP", notQuiteFeedback: "འདི་མིན།", answerPrefix: "ལན། ",
+    correctFeedback: "ལེགས་སོ! +{n} XP", notQuiteFeedback: "འདི་མིན།", answerPrefix: "ལན། ",
     finishBtn: "མཇུག", continueBtn: "མུ་མཐུད།",
     checkpointReached: "ཚད་གནས་སླེབས་སོང་།", xpEarnedLabel: "XP ཐོབ་པ།",
     firstTryCorrect: "ཐེངས་དང་པོར་ལེགས་པ།", dayStreak: "ཉིན་གྲངས་རྒྱུན་མཐུད།",
@@ -4399,6 +4522,66 @@ const I18N = {
     algLearn_trigonometry: "ཟུར་ཐང་འགའ་ཤས (0°, 30°, 45°, 60°, 90°) ཀྱི sin/cos/tan ཐད་ཀར་གྲངས་དྲན་འོས། ཡང་ཡང་བེད་སྤྱོད་བྱེད་སྟབས། དེ་དག 45-45-90 དང 30-60-90 ཟུར་གསུམ་གྲུ་བཞིའི་ཟུར་ཐིག་ཆ་སྙོམས་ནས་ཐོན།\n\nདཔེར་བརྗོད། sin(30°) = 1/2, cos(30°) = √3/2, tan(30°) = √3/3।",
     algTrigPrompt: "རྩིས་ཤིག: {expr}",
     algTrigExplain: "{expr} = {answer}། འདི་ནི་དྲན་འོས་པའི་ཚད་ལྡན་ཟུར་ཐང་གྲངས་ཤིག་ཡིན།",
+
+    comboLabel: "རིམ་བཞིན་ལན་ཚང་ {n}!",
+    levelLabel: "རིམ་པ་ {n}",
+    xpToNextLevel: "རིམ་པ་གོང་མར་",
+    achievementUnlocked: "འགྲུབ་རྟགས་ཐོབ།",
+    achievementsLabel: "འགྲུབ་རྟགས།",
+    achFirstStepsTitle: "འགོ་བཙུགས།", achFirstStepsDesc: "ལན་དང་པོ་ཚང་བ།",
+    achCombo5Title: "མེ་ལྕེ་འབར་བ།", achCombo5Desc: "སྦྱོང་བརྡར་གཅིག་ནང་རིམ་བཞིན་ལན་ཚང་5",
+    achCombo10Title: "འགོག་ཐབས་མེད།", achCombo10Desc: "སྦྱོང་བརྡར་གཅིག་ནང་རིམ་བཞིན་ལན་ཚང་10",
+    achCenturyTitle: "བརྒྱ་ཚང་འཛིན་སྐྱོང་།", achCenturyDesc: "དུས་ཡུན་ཧྲིལ་པོར་ལན་ཚང་100",
+    achExplorerTitle: "འཚོལ་ཞིབ་པ།", achExplorerDesc: "སེམས་རྩིས, ཡིག་རྟགས་རྩིས, འཕེལ་འགྲིབ་རྩིས གསུམ་ཀ་རེ་རེ་བྱས་ཟིན།",
+    achStreak7Title: "བདུན་ཕྲག་རྒྱུན་མཐུད།", achStreak7Desc: "ཉིན་7རིང་རྒྱུན་མཐུད་སྦྱོང་བརྡར།",
+    achStreak30Title: "ཟླ་བ་རྒྱུན་མཐུད།", achStreak30Desc: "ཉིན་30རིང་རྒྱུན་མཐུད་སྦྱོང་བརྡར།",
+
+    calculusBtn: "📈 འཕེལ་འགྲིབ་རྩིས་སློབ་སྦྱོང་།",
+    calculusTitle: "འཕེལ་འགྲིབ་རྩིས།",
+    calculusSub: "ཟླ་བ་གཉིས་པ། མཐའ་ཚད, འཕྲོས་རྩིས་དང་སྡོམ་རྩིས། བརྗོད་གཞི་ཞིག་འདེམས་ནས་གོ་དོན་སློབ་ཞིང་རྗེས་སུ་སྦྱོང་བརྡར་གྱིས།",
+    backToCalcMenuBtn: "འཕེལ་འགྲིབ་རྩིས་སུ་ལོག",
+
+    calcTopicTitle_limits: "མཐའ་ཚད།", calcTopicDesc_limits: "བྱ་ཚབ་ཀྱི་མཐའ་ཚད་རྩིས་ཤིག",
+    calcLearn_limits: "མཐའ་ཚད་ཀྱིས་དྲི་བ་ནི། x ནི་གྲངས c ལ་ཉེ་རུ་ཉེ་རུ་འགྲོ་སྐབས f(x) གིས་ཐང་གང་ལ་ཉེ་བར་འགྲོ་མིན། རྒྱུན་མཐུད་བྱ་ཚབ་ཡིན་ན (མང་ཚིག་བཞིན) ཐད་ཀར་ཚབ་འཇུག་བྱེད་ཆོག: lim(x→c) f(x) = f(c)།\n\nཚབ་འཇུག་བྱས་ན 0/0ཐོན་པའི་སྐབས་ཡོད། འདི་ལ 'ངེས་མེད་རྣམ་པ' ཟེར། དེ་ལྟར་བྱུང་ན་སྟེང་འོག་གཉིས་ཆ་བགོས་བྱས་ནས་ཆ་མཉམ་ཐུན་མོང་གི་ཆ་ཤས་ཕྱིར་བསལ་རྗེས་ཚབ་འཇུག་བྱོས།\n\nདཔེར་བརྗོད། lim(x→2) (x² - 4)/(x - 2)།\nx=2ཚབ་འཇུག་ན 0/0ཐོན་སྟབས་ཆ་བགོས: (x-2)(x+2)/(x-2) = x+2 (x≠2ཡིན་སྐབས)།\nད་ཚབ་འཇུག: 2 + 2 = 4།",
+    calcLimitDirectPrompt: "རྩིས་ཤིག: lim(x→{c}) [{expr}]",
+    calcLimitDirectExplain: "བྱ་ཚབ་འདི་ས་གང་སར་རྒྱུན་མཐུད་ཡིན་སྟབས་མཐའ་ཚད་ནི་ཐད་ཀར་ཚབ་འཇུག་དང་མཚུངས: f({c}) = {answer}།",
+    calcLimitFactorPrompt: "རྩིས་ཤིག: lim(x→{r}) [{num} / {den}]",
+    calcLimitFactorExplain: "མཐའ་ཚད་རྩིས་སྐབས x ≠ {r} ཡིན་སྟབས་ཐུན་མོང་ཆ་ཤས {den} ཕྱིར་བསལ: བརྗོད་པ་བསྡུས་ནས {remExpr} ཐོན། x = {r} ཚབ་འཇུག: {answer}།",
+
+    calcTopicTitle_power_rule: "འཕྲོས་རྩིས: འཕར་ཆའི་སྒྲིག་གཞི།", calcTopicDesc_power_rule: "མང་ཚིག་གི་འཕྲོས་རྩིས་ཤིག",
+    calcLearn_power_rule: "འཕར་ཆའི་སྒྲིག་གཞི: d/dx[xⁿ] = n·x^(n-1)། འཕར་ཆས་བསྒྱུར་ནས 1 ཕུད། མང་ཚིག་གི་ཚན་པ་རེ་རེར་འདི་སྤྱོད།\n\nདཔེར་བརྗོད། f(x) = 2x³ + 3x² - 4x + 1ཡིན་ན f'(x) འཚོལ་ཤིག།\nf'(x) = 3(2)x² + 2(3)x - 4 = 6x² + 6x - 4།",
+    calcPowerRulePrompt: "f(x) = {expr} ཡིན་ན f'({k}) འཚོལ་ཤིག།",
+    calcPowerRuleExplain: "ཚན་པ་རེ་རེར་འཕར་ཆའི་སྒྲིག་གཞི་སྤྱོད: f'(x) = {derivExpr}། x = {k} ཚབ་འཇུག: {answer}།",
+
+    calcTopicTitle_product_rule: "འཕྲོས་རྩིས: བརྒྱབ་སྒྲིག་གཞི།", calcTopicDesc_product_rule: "བྱ་ཚབ་གཉིས་ཀྱི་བརྒྱབ་འབྲས་ཀྱི་འཕྲོས་རྩིས་ཤིག",
+    calcLearn_product_rule: "བྱ་ཚབ་གཉིས་ཀྱི་བརྒྱབ་འབྲས f(x) = u(x)·v(x) འཕྲོས་རྩིས་བྱེད་སྐབས་འཕྲོས་རྩིས་གཉིས་ཐད་ཀར་བརྒྱབ་མི་ཆོག། བརྒྱབ་སྒྲིག་གཞི་ནི: (uv)' = u'v + uv'།\n\nདཔེར་བརྗོད། u(x) = x + 2, v(x) = 3x - 1ཡིན་ན (uv)'(x) འཚོལ་ཤིག།\nu' = 1, v' = 3།\n(uv)' = 1·(3x-1) + (x+2)·3 = 3x - 1 + 3x + 6 = 6x + 5།",
+    calcProductRulePrompt: "f(x) = ({uExpr}) × ({vExpr}) ཡིན་ན བརྒྱབ་སྒྲིག་གཞིས f'({k}) འཚོལ་ཤིག།",
+    calcProductRuleExplain: "བརྒྱབ་སྒྲིག་གཞི་ལྟར f'(x) = u'v + uv'། x = {k} སྐབས: u = {uk}, v = {vk}, u' = {A}, v' = {C}། དེས་ན f'({k}) = {stepExpr} = {sumExpr} = {answer}།",
+
+    calcTopicTitle_quotient_rule: "འཕྲོས་རྩིས: འགོ་སྒྲིག་གཞི།", calcTopicDesc_quotient_rule: "བྱ་ཚབ་གཉིས་ཀྱི་འགོ་འབྲས་ཀྱི་འཕྲོས་རྩིས་ཤིག",
+    calcLearn_quotient_rule: "འགོ་འབྲས f(x) = u(x)/v(x)ལ་འགོ་སྒྲིག་གཞི་ནི: (u/v)' = (u'v - uv') / v²།\n\nདཔེར་བརྗོད། u(x) = x, v(x) = x + 1ཡིན་ན (u/v)'(x) འཚོལ་ཤིག།\nu' = 1, v' = 1།\n(u/v)' = [1·(x+1) - x·1] / (x+1)² = 1 / (x+1)²།",
+    calcQuotientRulePrompt: "f(x) = ({uExpr}) / ({vExpr}) ཡིན་ན འགོ་སྒྲིག་གཞིས f'({k}) འཚོལ་ཤིག།",
+    calcQuotientRuleExplain: "འགོ་སྒྲིག་གཞི་ལྟར f'(x) = (u'v - uv') / v²། x = {k} སྐབས: u = {uk}, v = {vk}, u' = {A}, v' = {C}། དེས་ན f'({k}) = ({stepExpr}) / ({vk})² = {numerator} / {vk2} = {answer}།",
+
+    calcTopicTitle_chain_rule: "འཕྲོས་རྩིས: འབྲེལ་སྒྲིག་གཞི།", calcTopicDesc_chain_rule: "འདྲེས་བྱ་ཚབ་ཀྱི་འཕྲོས་རྩིས་ཤིག",
+    calcLearn_chain_rule: "བྱ་ཚབ་གཅིག་གཞན་ཞིག་གི་ནང་དུ་བསྣོལ་ཡོད་ན, f(g(x)), འབྲེལ་སྒྲིག་གཞི་ནི: [f(g(x))]' = f'(g(x)) × g'(x)། ཐོག་མར་ཕྱི་རོལ་བྱ་ཚབ་འཕྲོས་རྩིས (ནང་གི་དེ་མི་བསྒྱུར), རྗེས་སུ་ནང་གི་བྱ་ཚབ་ཀྱི་འཕྲོས་རྩིས་དེས་བརྒྱབ།\n\nདཔེར་བརྗོད། f(u) = u², g(x) = 3x + 1ཡིན་ན f(g(x))གི་འཕྲོས་རྩིས་འཚོལ་ཤིག།\nf'(u) = 2u, དེས་ན f'(g(x)) = 2(3x+1)། g'(x) = 3།\n[f(g(x))]' = 2(3x+1) × 3 = 6(3x+1)།",
+    calcChainRulePrompt: "f(u) = {fExpr}, g(x) = {gExpr} ཡིན་ན འབྲེལ་སྒྲིག་གཞིས f(g(x))གི x = {k} སའི་འཕྲོས་རྩིས་འཚོལ་ཤིག།",
+    calcChainRuleExplain: "འབྲེལ་སྒྲིག་གཞི་ལྟར [f(g(x))]' = f'(g(x)) × g'(x)། འདིར f'(u) = {fPrimeExpr}, g'(x) = {C}། x = {k} སྐབས: g({k}) = {gk}, དེས་ན f'(g({k})) = {twoA}×({gk}) = {fprime}། g'(x)དེས་བརྒྱབ: {fprime}×({C}) = {answer}།",
+
+    calcTopicTitle_optimisation: "མཐོ་དམའ་འཚོལ་བ།", calcTopicDesc_optimisation: "བྱ་ཚབ་ཀྱི་མཚམས་གནས་འཚོལ་ཤིག",
+    calcLearn_optimisation: "བྱ་ཚབ་ཀྱི་མཚམས་གནས—མཐོ་ཤོས་སམ་དམའ་ཤོས་ཐོན་སའི་ས་ཆ—ནི་འཕྲོས་རྩིས་ཀླད་ཀོར་ (ཡང་ན་མེད་པ) ཡིན་སར་ཐོན། དེ་འཚོལ་བ་ནི་མཐོ་དམའ་འཚོལ་བའི་གོམ་པ་དང་པོ་ཡིན།\n\nདཔེར་བརྗོད། f(x) = x² - 6x + 5 གི་མཚམས་གནས་འཚོལ་ཤིག།\nf'(x) = 2x - 6། f'(x) = 0བཞག: 2x = 6, དེས་ན x = 3།",
+    calcOptimPrompt: "f(x) = {expr} གི་མཚམས་གནས (f'(x) = 0ཡོད་ས) འཚོལ་ཤིག།",
+    calcOptimExplain: "f'(x) = {derivExpr}། f'(x) = 0བཞག: {twoA}x = {negB}, དེས་ན x = {x0}།",
+
+    calcTopicTitle_antiderivatives: "ཕྱིར་འཕྲོས་རྩིས།", calcTopicDesc_antiderivatives: "ཕྱིར་འཕྲོས་རྩིས་འཚོལ་ནས་རྩིས་ཤིག",
+    calcLearn_antiderivatives: "ཕྱིར་འཕྲོས་རྩིས་ནི་འཕྲོས་རྩིས་ཀྱི་ལྡོག་ཕྱོགས་ཡིན: དེ་ནི་བྱ་ཚབ F(x) ཞིག་སྟེ་དེའི་འཕྲོས་རྩིས་ནི f(x) ཡིན། འཕར་ཆའི་སྒྲིག་གཞི་ལྡོག་སྟེ: ∫xⁿ dx = x^(n+1)/(n+1) + C, C ནི་མི་ཤེས་པའི་གྲངས་མི་འགྱུར་བ་ཡིན (གྲངས་མི་འགྱུར་བ་གང་ཡིན་ཀྱང་དེའི་འཕྲོས་རྩིས 0 ཡིན་སྟབས)།\n\nདཔེར་བརྗོད། f(x) = 4x + 3 གི་ཕྱིར་འཕྲོས་རྩིས་འཚོལ་ཤིག, F(0) = 0།\nF(x) = 2x² + 3x + C། F(0) = 0ཡིན་སྟབས C = 0། དེས་ན F(x) = 2x² + 3x།",
+    calcAntiderivPrompt: "f(x) = {expr} གི་ཕྱིར་འཕྲོས་རྩིས F(x) འཚོལ་ཤིག, F(0) = 0, རྗེས F({k}) རྩིས་ཤིག།",
+    calcAntiderivExplain: "སྡོམ་རྩིས་ཀྱི་འཕར་ཆའི་སྒྲིག་གཞི་སྤྱོད (∫x dx = x²/2): F(x) = {FExpr} (སྡོམ་རྩིས་གྲངས་མི་འགྱུར་བ 0)། x = {k} ཚབ་འཇུག: {sumExpr} = {answer}།",
+
+    calcTopicTitle_definite_integrals: "མཚམས་ཅན་སྡོམ་རྩིས།", calcTopicDesc_definite_integrals: "མཚམས་ཅན་སྡོམ་རྩིས་ཤིག",
+    calcLearn_definite_integrals: "མཚམས་ཅན་སྡོམ་རྩིས ∫ a ནས b བར f(x) dx ནི x=a ནས x=b བར f(x)འོག་གི་མངོན་གསལ་ཁྱོན་སྟོན། འཕེལ་འགྲིབ་རྩིས་ཀྱི་གཞི་རྩའི་གྲུབ་དོན་ལྟར F(b) - F(a) གིས་རྩིས་ཐུབ, F ནི f ཡི་ཕྱིར་འཕྲོས་རྩིས་གང་རུང་ཡིན།\n\nདཔེར་བརྗོད། ∫ 1 ནས 3 བར 2x dx རྩིས་ཤིག།\nཕྱིར་འཕྲོས་རྩིས་གཅིག་ནི F(x) = x²། F(3) - F(1) = 9 - 1 = 8།",
+    calcDefIntegralPrompt: "རྩིས་ཤིག: ∫ {a} ནས {b} བར ({expr}) dx",
+    calcDefIntegralExplain: "ཕྱིར་འཕྲོས་རྩིས་ནི F(x) = {FExpr}། འཕེལ་འགྲིབ་རྩིས་ཀྱི་གཞི་རྩའི་གྲུབ་དོན་ལྟར: ∫ = F({b}) - F({a}) = {Fb} - ({Fa}) = {answer}།",
   },
 };
 function t(key, vars){
@@ -4424,6 +4607,9 @@ document.addEventListener('keydown', function(e){
   } else if(state.screen === 'algebra_practice' && state.algebraSession){
     if(state.algebraSession.answered) nextAlgebraQuestion();
     else submitAlgebraAnswer();
+  } else if(state.screen === 'calc_practice' && state.calcSession){
+    if(state.calcSession.answered) nextCalcQuestion();
+    else submitCalcAnswer();
   }
 });
 
@@ -4461,6 +4647,10 @@ const screens = {
   algebra_learn: renderAlgebraLearn,
   algebra_practice: renderAlgebraPractice,
   algebra_complete: renderAlgebraComplete,
+  calc_menu: renderCalcMenu,
+  calc_learn: renderCalcLearn,
+  calc_practice: renderCalcPractice,
+  calc_complete: renderCalcComplete,
   profile: renderProfile,
   avatar_editor: renderAvatarEditor,
 };
@@ -4692,6 +4882,7 @@ function renderHome(){
     <div class="track-grid">${cards}</div>
     <button class="btn btn-ghost btn-block" onclick="state.screen='math_menu'; render();">${t('mentalMathBtn')}</button>
     <button class="btn btn-ghost btn-block" onclick="state.screen='algebra_menu'; render();">${t('algebraBtn')}</button>
+    <button class="btn btn-ghost btn-block" onclick="state.screen='calc_menu'; render();">${t('calculusBtn')}</button>
     <button class="btn btn-ghost btn-block" onclick="goProfile()">${t('myProgress')}</button>
   </div>
   <div class="footer-note">${t('homeFooter')}</div>
@@ -4791,12 +4982,87 @@ function buildMathProblem(difficulty){
 }
 const MATH_MAX_MISTAKES = 3;
 
+// ---- shared gamification: combo streaks, achievements, XP levels ----------
+// Used identically by mental math, algebra and calculus so the reward loop
+// feels the same everywhere rather than being a one-off for whichever
+// module happens to get built last.
+const ACHIEVEMENTS = [
+  {key:'first_steps', icon:'🌱', titleKey:'achFirstStepsTitle', descKey:'achFirstStepsDesc', check:g=>g.totalCorrect>=1},
+  {key:'combo_5', icon:'🔥', titleKey:'achCombo5Title', descKey:'achCombo5Desc', check:g=>g.bestCombo>=5},
+  {key:'combo_10', icon:'⚡', titleKey:'achCombo10Title', descKey:'achCombo10Desc', check:g=>g.bestCombo>=10},
+  {key:'century', icon:'💯', titleKey:'achCenturyTitle', descKey:'achCenturyDesc', check:g=>g.totalCorrect>=100},
+  {key:'explorer', icon:'🧭', titleKey:'achExplorerTitle', descKey:'achExplorerDesc', check:g=>
+    Object.values(g.math||{}).some(x=>x.best>0) &&
+    Object.values(g.algebra||{}).some(x=>x.best>0) &&
+    Object.values(g.calculus||{}).some(x=>x.best>0)
+  },
+  {key:'streak_7', icon:'🗓️', titleKey:'achStreak7Title', descKey:'achStreak7Desc', check:g=>g.streak>=7},
+  {key:'streak_30', icon:'🏔️', titleKey:'achStreak30Title', descKey:'achStreak30Desc', check:g=>g.streak>=30},
+];
+function checkAchievements(game){
+  if(!game.achievements) game.achievements=[];
+  const unlocked = [];
+  for(const a of ACHIEVEMENTS){
+    if(!game.achievements.includes(a.key) && a.check(game)){
+      game.achievements.push(a.key);
+      unlocked.push(a);
+    }
+  }
+  return unlocked;
+}
+function xpLevel(xp){
+  const level = Math.floor(xp/100)+1;
+  const into = xp%100;
+  return {level, into, span:100};
+}
+// Bonus XP scales with the streak already built BEFORE this answer, so an
+// isolated correct answer still earns the original flat 10 (no regression),
+// while a run of consecutive correct answers earns progressively more,
+// capped at +10 so it stays a bonus rather than runaway inflation.
+function registerCorrectAnswer(session, game){
+  const bonus = Math.min(session.combo||0, 10);
+  session.combo = (session.combo||0) + 1;
+  if(session.combo > (session.maxCombo||0)) session.maxCombo = session.combo;
+  if(session.combo > (game.bestCombo||0)) game.bestCombo = session.combo;
+  game.totalCorrect = (game.totalCorrect||0) + 1;
+  const xpGain = 10 + bonus;
+  session.correct += 1;
+  session.xpEarned += xpGain;
+  session.lastXpGain = xpGain;
+  game.xp += xpGain;
+  return xpGain;
+}
+function registerWrongAnswer(session){
+  session.combo = 0;
+  session.mistakes += 1;
+}
+function comboBadge(combo){
+  if(combo>=10) return '⚡⚡⚡';
+  if(combo>=6) return '🔥🔥';
+  if(combo>=3) return '🔥';
+  return '';
+}
+function achievementBannerHtml(newAchievements){
+  if(!newAchievements || !newAchievements.length) return '';
+  return `
+    <div style="width:100%; display:flex; flex-direction:column; gap:8px;">
+      ${newAchievements.map(a=>`
+        <div style="background:rgba(232,163,61,.15); border:1px solid rgba(232,163,61,.4); border-radius:12px; padding:10px 14px; display:flex; align-items:center; gap:10px; text-align:left;">
+          <div style="font-size:24px;">${a.icon}</div>
+          <div>
+            <div style="font-family:var(--font-display); font-weight:700; font-size:13px; color:var(--gold);">${t('achievementUnlocked')}</div>
+            <div style="font-size:13.5px;">${t(a.titleKey)} — ${t(a.descKey)}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
 function startMathPractice(difficulty){
   state.mathSession = {
     difficulty,
     current: buildMathProblem(difficulty),
     correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, input:'', isNewBest:false,
-    showHint:false
+    showHint:false, combo:0, maxCombo:0, newAchievements:[]
   };
   state.screen = 'math_practice';
   render();
@@ -4902,7 +5168,7 @@ function renderMathPractice(){
   const feedback = s.answered ? `
     <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
       <div class="fb-text">
-        <div class="fb-title">${s.lastCorrect? t('correctFeedback') : t('notQuiteFeedback')}</div>
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
         ${!s.lastCorrect ? `<div class="fb-sub">${t('answerPrefix')}${q.answer}</div>` : ''}
       </div>
       <button class="btn btn-light" onclick="nextMathQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
@@ -4938,7 +5204,7 @@ function renderMathPractice(){
   <div class="lesson">
     <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;">
       <div class="hearts-row">${Array.from({length:MATH_MAX_MISTAKES}).map((_,i)=>`<span>${i<(MATH_MAX_MISTAKES-s.mistakes)?'❤️':'🩶'}</span>`).join('')}</div>
-      <div style="font-size:12px; color:var(--snow-dim);">${t('correctAnswersLabel')}: ${s.correct}</div>
+      <div style="font-size:12px; color:var(--snow-dim); text-align:right;">${t('correctAnswersLabel')}: ${s.correct}${s.combo>=3?`<br><span style="color:var(--gold);">${comboBadge(s.combo)} ${t('comboLabel',{n:s.combo})}</span>`:''}</div>
     </div>
     <div class="q-wrap">
       <div class="q-card">
@@ -4967,12 +5233,8 @@ function submitMathAnswer(){
   if(s.input===''){ return; }
   const correct = Number(s.input) === q.answer;
   s.answered = true; s.lastCorrect = correct;
-  if(correct){
-    s.correct += 1;
-    s.xpEarned += 10; state.game.xp += 10;
-  } else {
-    s.mistakes += 1;
-  }
+  if(correct) registerCorrectAnswer(s, state.game);
+  else registerWrongAnswer(s);
   render();
 }
 
@@ -4992,6 +5254,7 @@ function finishMathPractice(){
   s.isNewBest = s.correct > rec.best;
   if(s.isNewBest) rec.best = s.correct;
   touchStreak();
+  s.newAchievements = checkAchievements(state.game);
   state.screen='math_complete';
   render();
 }
@@ -4999,6 +5262,7 @@ function finishMathPractice(){
 function renderMathComplete(){
   const s = state.mathSession;
   const best = state.game.math[s.difficulty].best;
+  const lvl = xpLevel(state.game.xp);
   return `
   ${topbar()}
   <div class="complete ${appLangClass()}">
@@ -5009,7 +5273,8 @@ function renderMathComplete(){
       <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
       <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
     </div>
-    <div style="color:var(--snow-dim); font-size:13px;">${t('mathBestLabel',{n:best})}</div>
+    <div style="color:var(--snow-dim); font-size:13px;">${t('mathBestLabel',{n:best})} · ${t('levelLabel',{n:lvl.level})}</div>
+    ${achievementBannerHtml(s.newAchievements)}
     <button class="btn btn-primary btn-block" onclick="backToMathMenu()">${t('backToMathMenuBtn')}</button>
   </div>`;
 }
@@ -5297,7 +5562,7 @@ function startAlgebraPractice(topicKey){
     topicKey,
     current: topic.build(),
     correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
-    inputs:{}
+    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
   };
   state.screen = 'algebra_practice';
   render();
@@ -5325,7 +5590,7 @@ function renderAlgebraPractice(){
   const feedback = s.answered ? `
     <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
       <div class="fb-text">
-        <div class="fb-title">${s.lastCorrect? t('correctFeedback') : t('notQuiteFeedback')}</div>
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
         <div class="fb-sub">${q.explain}</div>
       </div>
       <button class="btn btn-light" onclick="nextAlgebraQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
@@ -5336,7 +5601,7 @@ function renderAlgebraPractice(){
   <div class="lesson">
     <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;">
       <div class="hearts-row">${Array.from({length:MATH_MAX_MISTAKES}).map((_,i)=>`<span>${i<(MATH_MAX_MISTAKES-s.mistakes)?'❤️':'🩶'}</span>`).join('')}</div>
-      <div style="font-size:12px; color:var(--snow-dim);">${t('correctAnswersLabel')}: ${s.correct}</div>
+      <div style="font-size:12px; color:var(--snow-dim); text-align:right;">${t('correctAnswersLabel')}: ${s.correct}${s.combo>=3?`<br><span style="color:var(--gold);">${comboBadge(s.combo)} ${t('comboLabel',{n:s.combo})}</span>`:''}</div>
     </div>
     <div class="q-wrap">
       <div class="q-card">
@@ -5358,12 +5623,8 @@ function submitAlgebraAnswer(){
   for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
   const correct = q.check(s.inputs);
   s.answered = true; s.lastCorrect = correct;
-  if(correct){
-    s.correct += 1;
-    s.xpEarned += 10; state.game.xp += 10;
-  } else {
-    s.mistakes += 1;
-  }
+  if(correct) registerCorrectAnswer(s, state.game);
+  else registerWrongAnswer(s);
   render();
 }
 
@@ -5384,6 +5645,7 @@ function finishAlgebraPractice(){
   s.isNewBest = s.correct > rec.best;
   if(s.isNewBest) rec.best = s.correct;
   touchStreak();
+  s.newAchievements = checkAchievements(state.game);
   state.screen='algebra_complete';
   render();
 }
@@ -5391,6 +5653,7 @@ function finishAlgebraPractice(){
 function renderAlgebraComplete(){
   const s = state.algebraSession;
   const best = state.game.algebra[s.topicKey].best;
+  const lvl = xpLevel(state.game.xp);
   return `
   ${topbar()}
   <div class="complete ${appLangClass()}">
@@ -5401,13 +5664,345 @@ function renderAlgebraComplete(){
       <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
       <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
     </div>
-    <div style="color:var(--snow-dim); font-size:13px;">${t('mathBestLabel',{n:best})}</div>
+    <div style="color:var(--snow-dim); font-size:13px;">${t('mathBestLabel',{n:best})} · ${t('levelLabel',{n:lvl.level})}</div>
+    ${achievementBannerHtml(s.newAchievements)}
     <button class="btn btn-primary btn-block" onclick="backToAlgebraMenu()">${t('backToAlgebraMenuBtn')}</button>
   </div>`;
 }
 
 function backToAlgebraMenu(){ state.screen='algebra_menu'; render(); }
 function exitAlgebraPractice(){ state.screen='algebra_menu'; render(); }
+
+// ---- calculus learning: Month 2 of the planned progression (algebra ->
+// calculus -> linear algebra -> discrete math -> probability). Same
+// architecture as algebra (learn screen -> unlimited practice -> worked
+// explanation on a wrong answer -> best-score tracking), reusing the shared
+// combo/achievement/level system. Scoped to single-variable calculus's
+// core computational skills (limits, the derivative rules, optimisation,
+// antiderivatives, definite integrals) — implicit differentiation and
+// related rates are left out of this first pass since they don't reduce to
+// a single cleanly-typed-and-graded value the way these do.
+function calcProblemLimits(){
+  if(Math.random()<0.4){
+    const r = randInt(-8,8);
+    let s; do{ s = randInt(-8,8); }while(s===r);
+    const num = `${factorTerm(r)}${factorTerm(s)}`;
+    const den = factorTerm(r);
+    const answer = r - s;
+    const remExpr = `x${signedCoeffTerm(-s,'')}`;
+    return {
+      promptText: t('calcLimitFactorPrompt', {num, den, r}),
+      inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+      check(vals){ return Number(vals.ans)===answer; },
+      explain: t('calcLimitFactorExplain', {den, remExpr, r, answer}),
+    };
+  }
+  const A = nonZeroRandInt(1,5), B = randInt(-8,8), C = randInt(-8,8);
+  const c = randInt(-5,5);
+  const answer = A*c*c + B*c + C;
+  const expr = `${leadTerm(A,'x²')}${signedCoeffTerm(B,'x')}${signedCoeffTerm(C,'')}`;
+  return {
+    promptText: t('calcLimitDirectPrompt', {expr, c}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('calcLimitDirectExplain', {c, answer}),
+  };
+}
+function calcProblemPowerRule(){
+  const A = nonZeroRandInt(1,4), B = randInt(-6,6), C = randInt(-6,6), D = randInt(-6,6);
+  const k = randInt(-4,4);
+  const expr = `${leadTerm(A,'x³')}${signedCoeffTerm(B,'x²')}${signedCoeffTerm(C,'x')}${signedCoeffTerm(D,'')}`;
+  const derivExpr = `${leadTerm(3*A,'x²')}${signedCoeffTerm(2*B,'x')}${signedCoeffTerm(C,'')}`;
+  const answer = 3*A*k*k + 2*B*k + C;
+  return {
+    promptText: t('calcPowerRulePrompt', {expr, k}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('calcPowerRuleExplain', {derivExpr, k, answer}),
+  };
+}
+function calcProblemProductRule(){
+  const A = nonZeroRandInt(-6,6), B = randInt(-8,8), C = nonZeroRandInt(-6,6), D = randInt(-8,8);
+  const k = randInt(-5,5);
+  const uk = A*k+B, vk = C*k+D;
+  const term1 = A*vk, term2 = C*uk;
+  const answer = term1 + term2;
+  // Display strings built by hand (not naive "{a} + {b}" template interpolation)
+  // so a negative second term reads as "- 60", never the confusing "+ -60".
+  const stepExpr = `${A}×(${vk})${C>=0?` + ${C}`:` - ${-C}`}×(${uk})`;
+  const sumExpr = `${term1}${signedCoeffTerm(term2,'')}`;
+  const uExpr = `${leadTerm(A,'x')}${signedCoeffTerm(B,'')}`;
+  const vExpr = `${leadTerm(C,'x')}${signedCoeffTerm(D,'')}`;
+  return {
+    promptText: t('calcProductRulePrompt', {uExpr, vExpr, k}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('calcProductRuleExplain', {k, uk, vk, A, C, stepExpr, sumExpr, answer}),
+  };
+}
+function calcProblemQuotientRule(){
+  const A = nonZeroRandInt(-6,6), B = randInt(-8,8), C = nonZeroRandInt(-5,5);
+  const k = randInt(-5,5);
+  const vSign = randInt(0,1)===0 ? 1 : -1;
+  const D = vSign - C*k; // guarantees v(k) = C*k+D = vSign (±1), so v² = 1
+  const uk = A*k+B, vk = vSign, vk2 = vk*vk;
+  const term1 = A*vk, term2 = C*uk;
+  const numerator = term1 - term2;
+  const answer = numerator / vk2;
+  // Display string built by hand, same reasoning as the product rule above —
+  // avoids "5×(1) - -4×(9)"-style double signs from naive interpolation.
+  const stepExpr = `${A}×(${vk})${C>=0?` - ${C}`:` + ${-C}`}×(${uk})`;
+  const uExpr = `${leadTerm(A,'x')}${signedCoeffTerm(B,'')}`;
+  const vExpr = `${leadTerm(C,'x')}${signedCoeffTerm(D,'')}`;
+  return {
+    promptText: t('calcQuotientRulePrompt', {uExpr, vExpr, k}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('calcQuotientRuleExplain', {k, uk, vk, A, C, stepExpr, numerator, vk2, answer}),
+  };
+}
+function calcProblemChainRule(){
+  const A = nonZeroRandInt(1,5), B = randInt(-6,6);
+  const C = nonZeroRandInt(-5,5), D = randInt(-6,6);
+  const k = randInt(-5,5);
+  const gk = C*k+D;
+  const twoA = 2*A;
+  const fprime = twoA*gk;
+  const answer = fprime*C;
+  const fExpr = `${leadTerm(A,'u²')}${signedCoeffTerm(B,'')}`;
+  const gExpr = `${leadTerm(C,'x')}${signedCoeffTerm(D,'')}`;
+  const fPrimeExpr = `${leadTerm(twoA,'u')}`;
+  return {
+    promptText: t('calcChainRulePrompt', {fExpr, gExpr, k}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('calcChainRuleExplain', {fPrimeExpr, C, k, gk, twoA, fprime, answer}),
+  };
+}
+function calcProblemOptimisation(){
+  const A = nonZeroRandInt(1,6);
+  const x0 = nonZeroRandInt(-8,8);
+  const B = -2*A*x0;
+  const C = randInt(-8,8);
+  const expr = `${leadTerm(A,'x²')}${signedCoeffTerm(B,'x')}${signedCoeffTerm(C,'')}`;
+  const twoA = 2*A;
+  const derivExpr = `${leadTerm(twoA,'x')}${signedCoeffTerm(B,'')}`;
+  return {
+    promptText: t('calcOptimPrompt', {expr}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===x0; },
+    explain: t('calcOptimExplain', {derivExpr, twoA, negB:-B, x0}),
+  };
+}
+function calcProblemAntiderivatives(){
+  const A = nonZeroRandInt(-4,4)*2; // even, so A/2 is a clean integer
+  const B = randInt(-8,8);
+  const k = randInt(-6,6);
+  const halfA = A/2;
+  const expr = `${leadTerm(A,'x')}${signedCoeffTerm(B,'')}`;
+  const FExpr = `${leadTerm(halfA,'x²')}${signedCoeffTerm(B,'x')}`;
+  const term1 = halfA*k*k, term2 = B*k;
+  const answer = term1 + term2;
+  const sumExpr = `${term1}${signedCoeffTerm(term2,'')}`;
+  return {
+    promptText: t('calcAntiderivPrompt', {expr, k}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('calcAntiderivExplain', {FExpr, k, sumExpr, answer}),
+  };
+}
+function calcProblemDefiniteIntegral(){
+  const A = nonZeroRandInt(-4,4)*2; // even, so A/2 is a clean integer
+  const B = randInt(-8,8);
+  const a = randInt(-5,4);
+  let b; do{ b = randInt(-5,5); }while(b<=a);
+  const halfA = A/2;
+  const expr = `${leadTerm(A,'x')}${signedCoeffTerm(B,'')}`;
+  const FExpr = `${leadTerm(halfA,'x²')}${signedCoeffTerm(B,'x')}`;
+  const Fa = halfA*a*a + B*a, Fb = halfA*b*b + B*b;
+  const answer = Fb - Fa;
+  return {
+    promptText: t('calcDefIntegralPrompt', {expr, a, b}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('calcDefIntegralExplain', {FExpr, a, b, Fa, Fb, answer}),
+  };
+}
+
+const CALCULUS_TOPICS = [
+  {key:'limits', build:calcProblemLimits},
+  {key:'power_rule', build:calcProblemPowerRule},
+  {key:'product_rule', build:calcProblemProductRule},
+  {key:'quotient_rule', build:calcProblemQuotientRule},
+  {key:'chain_rule', build:calcProblemChainRule},
+  {key:'optimisation', build:calcProblemOptimisation},
+  {key:'antiderivatives', build:calcProblemAntiderivatives},
+  {key:'definite_integrals', build:calcProblemDefiniteIntegral},
+];
+function calcTopicByKey(key){ return CALCULUS_TOPICS.find(x=>x.key===key); }
+
+function renderCalcMenu(){
+  const cards = CALCULUS_TOPICS.map(topic=>{
+    const best = (state.game.calculus && state.game.calculus[topic.key]) ? state.game.calculus[topic.key].best : 0;
+    return `
+    <button class="track-card" onclick="openCalcTopic('${topic.key}')">
+      <div class="glyph">📈</div>
+      <div>
+        <div class="tc-title">${t('calcTopicTitle_'+topic.key)}</div>
+        <div class="tc-sub">${t('calcTopicDesc_'+topic.key)}</div>
+      </div>
+      <div class="tc-progress">${best ? t('mathBestLabel',{n:best}) : t('startArrow')}</div>
+    </button>`;
+  }).join('');
+
+  return `
+  ${topbar({back:'goHome()'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>${t('calculusTitle')}</h1>
+      <div class="sub">${t('calculusSub')}</div>
+    </div>
+    <div class="track-grid">${cards}</div>
+  </div>
+  `;
+}
+
+function openCalcTopic(topicKey){
+  state.calcSession = {topicKey};
+  state.screen = 'calc_learn';
+  render();
+}
+
+function renderCalcLearn(){
+  const topicKey = state.calcSession.topicKey;
+  return `
+  ${topbar({back:'state.screen="calc_menu"; render();'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero" style="padding-top:8px;">
+      <h1 style="font-size:26px;">${t('calcTopicTitle_'+topicKey)}</h1>
+    </div>
+    <div class="profile-card" style="text-align:left; line-height:1.6; font-size:14.5px; color:var(--snow-dim); white-space:pre-line;">${t('calcLearn_'+topicKey)}</div>
+    <button class="btn btn-primary btn-block" onclick="startCalcPractice('${topicKey}')">${t('startPracticeBtn')}</button>
+  </div>
+  `;
+}
+
+function startCalcPractice(topicKey){
+  const topic = calcTopicByKey(topicKey);
+  state.calcSession = {
+    topicKey,
+    current: topic.build(),
+    correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
+    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+  };
+  state.screen = 'calc_practice';
+  render();
+  focusCalcInput();
+}
+function focusCalcInput(){
+  setTimeout(()=>{ const el=document.querySelector('.calc-input'); if(el) el.focus(); }, 30);
+}
+
+function renderCalcPractice(){
+  const s = state.calcSession;
+  const q = s.current;
+  const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
+
+  const inputsHtml = q.inputs.map(inp=>`
+    <div style="flex:1;">
+      ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
+      <input class="calc-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
+        placeholder="${inp.placeholder||''}"
+        style="text-align:center; font-size:22px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
+        oninput="state.calcSession.inputs['${inp.key}']=this.value">
+    </div>`).join('');
+
+  const feedback = s.answered ? `
+    <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
+      <div class="fb-text">
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
+        <div class="fb-sub">${q.explain}</div>
+      </div>
+      <button class="btn btn-light" onclick="nextCalcQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
+    </div>` : '';
+
+  return `
+  ${topbar({back:'exitCalcPractice()'})}
+  <div class="lesson">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;">
+      <div class="hearts-row">${Array.from({length:MATH_MAX_MISTAKES}).map((_,i)=>`<span>${i<(MATH_MAX_MISTAKES-s.mistakes)?'❤️':'🩶'}</span>`).join('')}</div>
+      <div style="font-size:12px; color:var(--snow-dim); text-align:right;">${t('correctAnswersLabel')}: ${s.correct}${s.combo>=3?`<br><span style="color:var(--gold);">${comboBadge(s.combo)} ${t('comboLabel',{n:s.combo})}</span>`:''}</div>
+    </div>
+    <div class="q-wrap">
+      <div class="q-card">
+        <div class="q-eyebrow">${t('calcTopicTitle_'+s.topicKey)}</div>
+        <div class="q-prompt" style="font-size:22px;">${q.promptText}</div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:flex-end;">${inputsHtml}</div>
+      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitCalcAnswer()">${t('checkBtn')}</button>` : ''}
+    </div>
+  </div>
+  ${feedback}
+  `;
+}
+
+function submitCalcAnswer(){
+  const s = state.calcSession;
+  if(!s || s.answered) return;
+  const q = s.current;
+  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
+  const correct = q.check(s.inputs);
+  s.answered = true; s.lastCorrect = correct;
+  if(correct) registerCorrectAnswer(s, state.game);
+  else registerWrongAnswer(s);
+  render();
+}
+
+function nextCalcQuestion(){
+  const s = state.calcSession;
+  if(s.mistakes>=MATH_MAX_MISTAKES){ finishCalcPractice(); return; }
+  const topic = calcTopicByKey(s.topicKey);
+  s.answered=false; s.lastCorrect=null; s.inputs={};
+  s.current = topic.build();
+  render();
+  focusCalcInput();
+}
+
+function finishCalcPractice(){
+  const s = state.calcSession;
+  if(!state.game.calculus) state.game.calculus = {};
+  const rec = state.game.calculus[s.topicKey] || (state.game.calculus[s.topicKey] = {best:0});
+  s.isNewBest = s.correct > rec.best;
+  if(s.isNewBest) rec.best = s.correct;
+  touchStreak();
+  s.newAchievements = checkAchievements(state.game);
+  state.screen='calc_complete';
+  render();
+}
+
+function renderCalcComplete(){
+  const s = state.calcSession;
+  const best = state.game.calculus[s.topicKey].best;
+  const lvl = xpLevel(state.game.xp);
+  return `
+  ${topbar()}
+  <div class="complete ${appLangClass()}">
+    <div class="medal">${s.isNewBest ? '🏆' : '🎯'}</div>
+    <h2>${s.isNewBest ? t('newBestReached') : t('checkpointReached')}</h2>
+    <div class="stat-row">
+      <div class="stat-box"><div class="val">${s.correct}</div><div class="lab">${t('correctAnswersLabel')}</div></div>
+      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
+    </div>
+    <div style="color:var(--snow-dim); font-size:13px;">${t('mathBestLabel',{n:best})} · ${t('levelLabel',{n:lvl.level})}</div>
+    ${achievementBannerHtml(s.newAchievements)}
+    <button class="btn btn-primary btn-block" onclick="backToCalcMenu()">${t('backToCalcMenuBtn')}</button>
+  </div>`;
+}
+
+function backToCalcMenu(){ state.screen='calc_menu'; render(); }
+function exitCalcPractice(){ state.screen='calc_menu'; render(); }
 
 function setPaywallRegion(region){ state.paywallRegion = region; state.paywallError=''; render(); }
 
@@ -5630,7 +6225,7 @@ function renderLesson(){
   const feedback = s.answered ? `
     <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
       <div class="fb-text">
-        <div class="fb-title">${s.lastCorrect? t('correctFeedback') : t('notQuiteFeedback')}</div>
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:10}) : t('notQuiteFeedback')}</div>
         ${!s.lastCorrect ? `<div class="fb-sub">${t('answerPrefix')}${q.options.find(o=>o.correct).text}</div>` : ''}
       </div>
       <button class="btn btn-light" onclick="nextQuestion()">${s.qIndex+1>=total ? t('finishBtn'):t('continueBtn')}</button>
@@ -5870,6 +6465,12 @@ async function uploadAvatarPhoto(blob){
 function renderProfile(){
   const totalDone = Object.values(state.game.tracks).reduce((n,t)=>n+Object.keys(t.completed).length,0);
   const eta = nextHeartEta();
+  const lvl = xpLevel(state.game.xp);
+  const unlockedSet = new Set(state.game.achievements||[]);
+  const badgeRow = ACHIEVEMENTS.map(a=>{
+    const on = unlockedSet.has(a.key);
+    return `<div title="${t(a.titleKey)} — ${t(a.descKey)}" style="width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; background:rgba(255,255,255,${on?'.1':'.04'}); border:1px solid rgba(255,255,255,${on?'.18':'.08'}); opacity:${on?'1':'.35'}; filter:${on?'none':'grayscale(1)'};">${a.icon}</div>`;
+  }).join('');
   return `
   ${topbar({back:'goHome()'})}
   <div class="profile ${appLangClass()}">
@@ -5886,6 +6487,17 @@ function renderProfile(){
       <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">🔥 ${state.game.streak}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">${t('dayStreak')}</div></div>
       <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">${state.game.hearts}/${HEARTS_MAX}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">${t('heartsLabel')}${eta?t('nextInM',{n:eta}):''}</div></div>
       <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">${totalDone}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">${t('modulesDoneLabel')}</div></div>
+    </div>
+    <div class="profile-card">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
+        <div style="font-weight:600;">${t('levelLabel',{n:lvl.level})}</div>
+        <div style="font-size:12px; color:var(--snow-dim);">${lvl.into}/${lvl.span} ${t('xpToNextLevel')}</div>
+      </div>
+      <div class="progressbar"><div class="progressbar-fill" style="width:${lvl.into}%"></div></div>
+    </div>
+    <div class="profile-card">
+      <div style="font-weight:600; margin-bottom:12px;">${t('achievementsLabel')} (${unlockedSet.size}/${ACHIEVEMENTS.length})</div>
+      <div style="display:flex; flex-wrap:wrap; gap:8px;">${badgeRow}</div>
     </div>
     <div class="profile-card">
       <div style="font-weight:600; margin-bottom:12px;">${t('voiceSettings')}</div>
