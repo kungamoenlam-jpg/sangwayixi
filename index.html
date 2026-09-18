@@ -215,6 +215,12 @@
     padding:12px 14px; color:var(--snow); font-size:15px; font-family:var(--font-body);
   }
   .field input:focus{outline:2px solid var(--gold); outline-offset:1px;}
+  .algebra-input{
+    background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.14); border-radius:12px;
+    padding:12px 14px; color:var(--snow); font-family:var(--font-display);
+  }
+  .algebra-input:focus{outline:2px solid var(--gold); outline-offset:1px;}
+  .algebra-input::placeholder{color:var(--snow-dim); opacity:.6;}
   .auth-error{background:rgba(225,88,75,.18); border:1px solid rgba(225,88,75,.5); color:var(--snow); border-radius:10px; padding:10px 12px; font-size:13px;}
 
   @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
@@ -3733,7 +3739,8 @@ function defaultGame(){
     xp:0, streak:0, lastActive:null,
     hearts:HEARTS_MAX, lastHeartTime: Date.now(),
     tracks:{}, // trackId -> {completed:{ "level-modulekey": stars }}
-    math:{easy:{best:0}, medium:{best:0}, hard:{best:0}} // difficulty -> best stars (0-3)
+    math:{easy:{best:0}, medium:{best:0}, hard:{best:0}}, // difficulty -> best correct-answer count
+    algebra:{} // topic key -> {best: correct-answer count}
   };
 }
 function loadGame(username){
@@ -3759,6 +3766,7 @@ function defaultAppState(){
     currentTrack:null, currentWorld:0,
     session:null,
     mathSession:null,
+    algebraSession:null,
     subscription: {active:false, status:null, plan:null, periodEnd:null},
     paywallFrom: null,
     paywallRegion: 'us',
@@ -3967,6 +3975,78 @@ const I18N = {
     trickDiv8: "Dividing by 8: halve the number three times.",
     trickDiv20: "Dividing by 20: divide by 10, then halve the result.",
     trickDiv25: "Dividing by 25: divide by 100, then multiply the result by 4.",
+    algebraBtn: "📐 Learn Algebra",
+    algebraTitle: "Algebra",
+    algebraSub: "Month 1: get extremely comfortable manipulating equations. Pick a topic to learn the concept, then practice.",
+    startPracticeBtn: "Start practice",
+    backToAlgebraMenuBtn: "Back to Algebra",
+    algNumericAnswerPlaceholder: "Your answer",
+    algFractionAnswerPlaceholder: "e.g. 3/4",
+    algTrigAnswerPlaceholder: "e.g. 1/2 or √2/2",
+    algSlopeLabel: "Slope", algInterceptLabel: "Y-intercept",
+    algSmallerRootLabel: "Smaller root", algLargerRootLabel: "Larger root",
+
+    algTopicTitle_fractions: "Fractions", algTopicDesc_fractions: "Simplify fractions to lowest terms",
+    algLearn_fractions: "A fraction is in lowest terms when its numerator and denominator share no common factor other than 1. To simplify, find the greatest common factor (GCF) of the numerator and denominator, then divide both by it.\n\nExample: simplify 18/24.\nThe GCF of 18 and 24 is 6.\n18 ÷ 6 = 3, and 24 ÷ 6 = 4.\nSo 18/24 = 3/4.",
+    algFractionsPrompt: "Simplify: {expr}",
+    algFractionsExplain: "The greatest common factor of {num} and {den} is {k}. Divide both by {k}: {num}/{k} = {p}, {den}/{k} = {q}. So the answer is {p}/{q}.",
+
+    algTopicTitle_exponents: "Exponents", algTopicDesc_exponents: "Evaluate powers",
+    algLearn_exponents: "An exponent tells you how many times to multiply a number by itself. aⁿ means a multiplied by itself n times.\n\nExample: evaluate 3⁴.\n3⁴ = 3 × 3 × 3 × 3 = 81.",
+    algExponentsPrompt: "Evaluate: {expr}",
+    algExponentsExplain: "{a}^{b} means {a} multiplied by itself {b} times, which equals {answer}.",
+
+    algTopicTitle_logarithms: "Logarithms", algTopicDesc_logarithms: "Evaluate logarithms",
+    algLearn_logarithms: "A logarithm answers the question: what power do I raise the base to, to get this number? log_b(x) = e means b^e = x.\n\nExample: evaluate log₂(8).\nAsk: 2 to what power gives 8? Since 2³ = 8, log₂(8) = 3.",
+    algLogPrompt: "Evaluate: log_{b}({x})",
+    algLogExplain: "log_{b}({x}) asks: {b} to what power equals {x}? Since {b}^{e} = {x}, the answer is {e}.",
+
+    algTopicTitle_equations: "Equations", algTopicDesc_equations: "Solve linear equations for x",
+    algLearn_equations: "To solve a linear equation, isolate x by undoing each operation applied to it, working in reverse order — first move constants, then divide by the coefficient.\n\nExample: solve 3x + 5 = 20.\nSubtract 5 from both sides: 3x = 15.\nDivide both sides by 3: x = 5.",
+    algEquationsPrompt: "Solve for x: {expr}",
+    algEquationsExplain: "Isolate the x term: {a}x = {rhs}. Divide both sides by {a}: x = {x0}.",
+
+    algTopicTitle_inequalities: "Inequalities", algTopicDesc_inequalities: "Solve linear inequalities for x",
+    algLearn_inequalities: "Inequalities solve almost exactly like equations — isolate x the same way. The one rule to remember: if you multiply or divide both sides by a negative number, the inequality sign flips.\n\nExample: solve 2x + 3 < 11.\nSubtract 3: 2x < 8.\nDivide by 2 (positive, so the sign stays): x < 4.",
+    algInequalitiesPrompt: "Find the boundary value of x: {expr}",
+    algInequalitiesExplain: "Isolate the x term: {a}x compares to {rhs}. Divide by {a} (positive, so the direction doesn't flip): the boundary is x = {x0}.",
+
+    algTopicTitle_simultaneous: "Simultaneous Equations", algTopicDesc_simultaneous: "Solve two equations for x and y",
+    algLearn_simultaneous: "When two equations share the same two unknowns, you can solve both at once by elimination (adding/subtracting multiples of the equations to cancel one variable) or substitution (solving one equation for a variable and plugging it into the other).\n\nExample: solve x + y = 5 and x - y = 1.\nAdd the equations: 2x = 6, so x = 3.\nSubstitute back: 3 + y = 5, so y = 2.",
+    algSimultaneousPrompt: "Solve the system: {eq1}, and {eq2}",
+    algSimultaneousExplain: "Solving by elimination or substitution gives x = {x0} and y = {y0}.",
+
+    algTopicTitle_polynomials: "Polynomials", algTopicDesc_polynomials: "Evaluate a polynomial at a given x",
+    algLearn_polynomials: "To evaluate a polynomial at a specific value, substitute that value in for x everywhere it appears, then simplify using order of operations.\n\nExample: if f(x) = 2x² + 3x - 1, find f(2).\nf(2) = 2(2)² + 3(2) - 1 = 2(4) + 6 - 1 = 8 + 6 - 1 = 13.",
+    algPolynomialsPrompt: "If f(x) = {expr}, find f({k}).",
+    algPolynomialsExplain: "Substitute x = {k}: {sumExpr} = {answer}.",
+
+    algTopicTitle_factorisation: "Factorisation", algTopicDesc_factorisation: "Factor a quadratic and find its roots",
+    algLearn_factorisation: "A quadratic x² + bx + c factors as (x - r₁)(x - r₂) when r₁ and r₂ are its roots — two numbers that multiply to c and add to -b.\n\nExample: factor x² - 5x + 6.\nFind two numbers that multiply to 6 and add to -5: -2 and -3.\nSo x² - 5x + 6 = (x - 2)(x - 3), and the roots are x = 2 and x = 3.",
+    algFactorisationPrompt: "Find the roots: {expr}",
+    algFactorisationExplain: "This factors as {factors} = 0, so x = {rmin} or x = {rmax}.",
+
+    algTopicTitle_sequences: "Sequences", algTopicDesc_sequences: "Find a term in a sequence",
+    algLearn_sequences: "An arithmetic sequence adds the same amount (the common difference, d) each step: aₙ = a₁ + (n-1)d. A geometric sequence multiplies by the same amount (the common ratio, r) each step: aₙ = a₁ × r^(n-1).\n\nExample: an arithmetic sequence starts at 4 with common difference 3. Find the 6th term.\na₆ = 4 + (6-1)×3 = 4 + 15 = 19.",
+    algSeqArithPrompt: "An arithmetic sequence starts at {a1} with common difference {d}. Find the {n}th term.",
+    algSeqArithExplain: "Use aₙ = a₁ + (n-1)d = {a1} + ({n}-1)×{d} = {answer}.",
+    algSeqGeoPrompt: "A geometric sequence starts at {a1} with common ratio {r}. Find the {n}th term.",
+    algSeqGeoExplain: "Use aₙ = a₁ × r^(n-1) = {a1} × {r}^({n}-1) = {answer}.",
+
+    algTopicTitle_functions: "Functions", algTopicDesc_functions: "Evaluate a composition of functions",
+    algLearn_functions: "f(g(x)) means: first apply g to x, then apply f to that result. Work from the inside out.\n\nExample: if f(x) = 2x + 1 and g(x) = x - 3, find f(g(5)).\nFirst g(5) = 5 - 3 = 2.\nThen f(2) = 2(2) + 1 = 5.",
+    algFunctionsPrompt: "If f(x) = {fExpr} and g(x) = {gExpr}, find f(g({k})).",
+    algFunctionsExplain: "First find g({k}) = {inner}. Then find f({inner}) = {answer}.",
+
+    algTopicTitle_graphs: "Graphs", algTopicDesc_graphs: "Find the slope and y-intercept of a line",
+    algLearn_graphs: "A line's slope-intercept form is y = mx + b, where m is the slope and b is the y-intercept. Rearrange any linear equation into this form to read off both.\n\nExample: find the slope and y-intercept of y - 2x = 3.\nAdd 2x to both sides: y = 2x + 3.\nThe slope is 2 and the y-intercept is 3.",
+    algGraphsPrompt: "Find the slope and y-intercept: {expr}",
+    algGraphsExplain: "Rearranged to y = mx + b form: y = {m}x + {b}. So the slope is {m} and the y-intercept is {b}.",
+
+    algTopicTitle_trigonometry: "Trigonometry", algTopicDesc_trigonometry: "Standard angle values",
+    algLearn_trigonometry: "A handful of angles (0°, 30°, 45°, 60°, 90°) have exact sin/cos/tan values worth memorizing, since they show up constantly. They come from the side ratios of a 45-45-90 and a 30-60-90 right triangle.\n\nExample: sin(30°) = 1/2, cos(30°) = √3/2, tan(30°) = √3/3.",
+    algTrigPrompt: "Evaluate: {expr}",
+    algTrigExplain: "{expr} = {answer}. This is one of the standard angle values worth memorizing.",
   },
   zh: {
     heroSub: "创建账户，在所有设备上保存你的学习进度。",
@@ -4071,6 +4151,78 @@ const I18N = {
     trickDiv8: "除以8的技巧：连续除以2三次。",
     trickDiv20: "除以20的技巧：先除以10，再除以2。",
     trickDiv25: "除以25的技巧：先除以100，再把结果乘以4。",
+    algebraBtn: "📐 学习代数",
+    algebraTitle: "代数",
+    algebraSub: "第一个月：让你能够非常熟练地处理方程式。选择一个主题学习概念，然后开始练习。",
+    startPracticeBtn: "开始练习",
+    backToAlgebraMenuBtn: "返回代数",
+    algNumericAnswerPlaceholder: "输入答案",
+    algFractionAnswerPlaceholder: "例如 3/4",
+    algTrigAnswerPlaceholder: "例如 1/2 或 √2/2",
+    algSlopeLabel: "斜率", algInterceptLabel: "y轴截距",
+    algSmallerRootLabel: "较小的根", algLargerRootLabel: "较大的根",
+
+    algTopicTitle_fractions: "分数", algTopicDesc_fractions: "把分数化简到最简形式",
+    algLearn_fractions: "当分子和分母除了1以外没有公因数时，这个分数就是最简形式。化简的方法是：先找出分子和分母的最大公因数（GCF），再把两者都除以这个数。\n\n例题：化简 18/24。\n18和24的最大公因数是6。\n18 ÷ 6 = 3，24 ÷ 6 = 4。\n所以 18/24 = 3/4。",
+    algFractionsPrompt: "化简：{expr}",
+    algFractionsExplain: "{num}和{den}的最大公因数是{k}。两者都除以{k}：{num}/{k} = {p}，{den}/{k} = {q}。所以答案是 {p}/{q}。",
+
+    algTopicTitle_exponents: "指数", algTopicDesc_exponents: "计算幂",
+    algLearn_exponents: "指数表示一个数要自乘多少次。aⁿ 表示把 a 自己相乘 n 次。\n\n例题：计算 3⁴。\n3⁴ = 3 × 3 × 3 × 3 = 81。",
+    algExponentsPrompt: "计算：{expr}",
+    algExponentsExplain: "{a}^{b} 表示把 {a} 自己相乘 {b} 次，结果是 {answer}。",
+
+    algTopicTitle_logarithms: "对数", algTopicDesc_logarithms: "计算对数",
+    algLearn_logarithms: "对数回答的问题是：底数要变成多少次方才能得到这个数？log_b(x) = e 的意思是 b^e = x。\n\n例题：计算 log₂(8)。\n问：2的多少次方等于8？因为 2³ = 8，所以 log₂(8) = 3。",
+    algLogPrompt: "计算：log_{b}({x})",
+    algLogExplain: "log_{b}({x}) 问的是：{b} 的多少次方等于 {x}？因为 {b}^{e} = {x}，所以答案是 {e}。",
+
+    algTopicTitle_equations: "方程", algTopicDesc_equations: "求解一元一次方程",
+    algLearn_equations: "解一元一次方程时，通过逐步消去作用在 x 上的运算来把 x 单独留在一边——先移动常数项，再除以 x 的系数。\n\n例题：解 3x + 5 = 20。\n两边同时减去5：3x = 15。\n两边同时除以3：x = 5。",
+    algEquationsPrompt: "解方程，求x：{expr}",
+    algEquationsExplain: "先把含x的项单独留出：{a}x = {rhs}。两边同时除以{a}：x = {x0}。",
+
+    algTopicTitle_inequalities: "不等式", algTopicDesc_inequalities: "求解一元一次不等式",
+    algLearn_inequalities: "不等式的解法几乎和方程一样——用同样的方法把x单独留出。唯一要记住的规则是：如果两边同时乘以或除以一个负数，不等号的方向要翻转。\n\n例题：解 2x + 3 < 11。\n两边减去3：2x < 8。\n两边除以2（是正数，方向不变）：x < 4。",
+    algInequalitiesPrompt: "求x的临界值：{expr}",
+    algInequalitiesExplain: "先把含x的项单独留出：{a}x 与 {rhs} 比较。除以{a}（是正数，方向不变）：临界值是 x = {x0}。",
+
+    algTopicTitle_simultaneous: "联立方程", algTopicDesc_simultaneous: "求解含x和y的两个方程",
+    algLearn_simultaneous: "当两个方程包含相同的两个未知数时，可以用消元法（把方程相加或相减的倍数来消去一个变量）或代入法（把一个方程解出的变量代入另一个方程）同时求解。\n\n例题：解 x + y = 5 和 x - y = 1。\n两式相加：2x = 6，所以 x = 3。\n代回原式：3 + y = 5，所以 y = 2。",
+    algSimultaneousPrompt: "解方程组：{eq1}，以及 {eq2}",
+    algSimultaneousExplain: "用消元法或代入法可得 x = {x0}，y = {y0}。",
+
+    algTopicTitle_polynomials: "多项式", algTopicDesc_polynomials: "计算多项式在给定x处的值",
+    algLearn_polynomials: "要计算多项式在某个值处的值，把这个值代入x出现的每一个位置，再按运算顺序化简。\n\n例题：若 f(x) = 2x² + 3x - 1，求 f(2)。\nf(2) = 2(2)² + 3(2) - 1 = 2(4) + 6 - 1 = 8 + 6 - 1 = 13。",
+    algPolynomialsPrompt: "若 f(x) = {expr}，求 f({k})。",
+    algPolynomialsExplain: "代入 x = {k}：{sumExpr} = {answer}。",
+
+    algTopicTitle_factorisation: "因式分解", algTopicDesc_factorisation: "把二次式因式分解并求根",
+    algLearn_factorisation: "二次式 x² + bx + c 可以分解为 (x - r₁)(x - r₂)，其中 r₁ 和 r₂ 是它的根——两个相乘等于c、相加等于-b的数。\n\n例题：分解 x² - 5x + 6。\n找两个数，相乘等于6，相加等于-5：-2和-3。\n所以 x² - 5x + 6 = (x - 2)(x - 3)，根是 x = 2 或 x = 3。",
+    algFactorisationPrompt: "求根：{expr}",
+    algFactorisationExplain: "分解后是 {factors} = 0，所以 x = {rmin} 或 x = {rmax}。",
+
+    algTopicTitle_sequences: "数列", algTopicDesc_sequences: "求数列中的某一项",
+    algLearn_sequences: "等差数列每一步都加上相同的量（公差d）：aₙ = a₁ + (n-1)d。等比数列每一步都乘以相同的量（公比r）：aₙ = a₁ × r^(n-1)。\n\n例题：一个等差数列从4开始，公差为3，求第6项。\na₆ = 4 + (6-1)×3 = 4 + 15 = 19。",
+    algSeqArithPrompt: "一个等差数列从{a1}开始，公差为{d}。求第{n}项。",
+    algSeqArithExplain: "使用公式 aₙ = a₁ + (n-1)d = {a1} + ({n}-1)×{d} = {answer}。",
+    algSeqGeoPrompt: "一个等比数列从{a1}开始，公比为{r}。求第{n}项。",
+    algSeqGeoExplain: "使用公式 aₙ = a₁ × r^(n-1) = {a1} × {r}^({n}-1) = {answer}。",
+
+    algTopicTitle_functions: "函数", algTopicDesc_functions: "计算两个函数的复合",
+    algLearn_functions: "f(g(x)) 的意思是：先对x使用g，再对结果使用f。从内到外依次计算。\n\n例题：若 f(x) = 2x + 1，g(x) = x - 3，求 f(g(5))。\n先算 g(5) = 5 - 3 = 2。\n再算 f(2) = 2(2) + 1 = 5。",
+    algFunctionsPrompt: "若 f(x) = {fExpr}，g(x) = {gExpr}，求 f(g({k}))。",
+    algFunctionsExplain: "先求 g({k}) = {inner}。再求 f({inner}) = {answer}。",
+
+    algTopicTitle_graphs: "图像", algTopicDesc_graphs: "求一条直线的斜率和y轴截距",
+    algLearn_graphs: "直线的斜截式是 y = mx + b，其中m是斜率，b是y轴截距。把任意一次方程变形成这种形式，就能直接读出这两个值。\n\n例题：求 y - 2x = 3 的斜率和y轴截距。\n两边加上2x：y = 2x + 3。\n斜率是2，y轴截距是3。",
+    algGraphsPrompt: "求斜率和y轴截距：{expr}",
+    algGraphsExplain: "变形为 y = mx + b 的形式：y = {m}x + {b}。所以斜率是{m}，y轴截距是{b}。",
+
+    algTopicTitle_trigonometry: "三角函数", algTopicDesc_trigonometry: "标准角度的精确值",
+    algLearn_trigonometry: "有几个角度（0°、30°、45°、60°、90°）的sin/cos/tan精确值值得记住，因为它们经常用到。它们来自45-45-90和30-60-90直角三角形的边长比例。\n\n例题：sin(30°) = 1/2，cos(30°) = √3/2，tan(30°) = √3/3。",
+    algTrigPrompt: "计算：{expr}",
+    algTrigExplain: "{expr} = {answer}。这是值得记住的标准角度值之一。",
   },
   bo: {
     heroSub: "འཕྲུལ་ཆས་སོ་སོའི་ཐོག་ཁྱེད་ཀྱི་ཡར་རྒྱས་ཉར་ཚགས་བྱེད་ཆེད་རྩིས་ཐོ་ཞིག་གསར་སྐྲུན་གྱིས།",
@@ -4175,6 +4327,78 @@ const I18N = {
     trickDiv8: "8ཡིས་འགོ་བའི་ཐབས་ལམ། གཉིས་ཆ་གཅིག་ཏུ་གཅོག་པ་ལན་གསུམ་བྱོས།",
     trickDiv20: "20ཡིས་འགོ་བའི་ཐབས་ལམ། ཐོག་མར་10ཡིས་འགོ་ནས་གཉིས་ཆ་གཅིག་ཏུ་གཅོག།",
     trickDiv25: "25ཡིས་འགོ་བའི་ཐབས་ལམ། ཐོག་མར་100ཡིས་འགོ་ནས་གྲངས་འབྲས་ལ་4འཕར།",
+    algebraBtn: "📐 ཡིག་རྟགས་རྩིས་སློབ་སྦྱོང་།",
+    algebraTitle: "ཡིག་རྟགས་རྩིས།",
+    algebraSub: "ཟླ་དང་པོ། མཉམ་སྒྲིག་བཟོ་བཅོས་བྱེད་ཐུབ་པའི་ཤེས་ཡོན་མཐར་སྐྱེལ། བརྗོད་གཞི་ཞིག་འདེམས་ནས་གོ་དོན་སློབ་ཞིང་རྗེས་སུ་སྦྱོང་བརྡར་གྱིས།",
+    startPracticeBtn: "སྦྱོང་བརྡར་འགོ་འཛུགས།",
+    backToAlgebraMenuBtn: "ཡིག་རྟགས་རྩིས་སུ་ལོག",
+    algNumericAnswerPlaceholder: "ལན་འབྲི་རོགས།",
+    algFractionAnswerPlaceholder: "དཔེར་ན་ 3/4",
+    algTrigAnswerPlaceholder: "དཔེར་ན་ 1/2 ཡང་ན་ √2/2",
+    algSlopeLabel: "ཟུར་ཚད།", algInterceptLabel: "y-ཐིག་བཅད་ས།",
+    algSmallerRootLabel: "རྩ་བ་ཆུང་བ།", algLargerRootLabel: "རྩ་བ་ཆེ་བ།",
+
+    algTopicTitle_fractions: "ཆ་ཤས།", algTopicDesc_fractions: "ཆ་ཤས་ཐད་ཀར་ཆུང་ཤོས་སུ་བསྡུས་ཤིག",
+    algLearn_fractions: "ཆ་ཤས་ཤིག་གི་སྟེང་གྲངས་དང་འོག་གྲངས་གཉིས་ལ་1མ་གཏོགས་ཆ་མཉམ་གྲངས་གཞན་མེད་ན་དེ་ཐད་ཀར་ཆུང་ཤོས་ཡིན། བསྡུ་ཐབས་ནི། སྟེང་འོག་གཉིས་ཀྱི་ཆ་མཉམ་གྲངས་ཆེ་ཤོས (GCF) འཚོལ་ནས་གཉིས་ཀ་དེས་བགོས་ཤིག།\n\nདཔེར་བརྗོད། 18/24 བསྡུས་ཤིག།\n18དང24གི་ཆ་མཉམ་གྲངས་ཆེ་ཤོས་ནི6ཡིན།\n18 ÷ 6 = 3, 24 ÷ 6 = 4।\nདེས་ན 18/24 = 3/4।",
+    algFractionsPrompt: "བསྡུས་ཤིག: {expr}",
+    algFractionsExplain: "{num}དང{den}གི་ཆ་མཉམ་གྲངས་ཆེ་ཤོས་ནི{k}ཡིན། གཉིས་ཀ་{k}ཡིས་བགོས: {num}/{k} = {p}, {den}/{k} = {q}। དེས་ན་ལན་ནི {p}/{q}ཡིན།",
+
+    algTopicTitle_exponents: "འཕར་ཆ།", algTopicDesc_exponents: "འཕར་ཆའི་གྲངས་རྩིས་ཤིག",
+    algLearn_exponents: "འཕར་ཆས་གྲངས་ཤིག་རང་ཉིད་ལན་ག་ཚོད་བསྒྱུར་དགོས་མིན་སྟོན། aⁿ་ནི a རང་ཉིད་ལན n བསྒྱུར་བ་ཡིན།\n\nདཔེར་བརྗོད། 3⁴ རྩིས་ཤིག།\n3⁴ = 3 × 3 × 3 × 3 = 81।",
+    algExponentsPrompt: "རྩིས་ཤིག: {expr}",
+    algExponentsExplain: "{a}^{b}ནི {a} རང་ཉིད་ལན {b} བསྒྱུར་བ་སྟེ། གྲངས་འབྲས་ནི {answer}ཡིན།",
+
+    algTopicTitle_logarithms: "ལོག་རྩིས།", algTopicDesc_logarithms: "ལོག་རྩིས་ཀྱི་གྲངས་རྩིས་ཤིག",
+    algLearn_logarithms: "ལོག་རྩིས་ཀྱིས་དྲི་བ་འདི་ལན་འདེབས་བྱེད། གཞི་གྲངས་འཕར་ཆ་ག་ཚོད་ལ་བསྐྱོད་ན་གྲངས་འདི་ཐོན་མིན། log_b(x) = e ཞེས་པའི་དོན་ནི b^e = x ཡིན།\n\nདཔེར་བརྗོད། log₂(8) རྩིས་ཤིག།\nདྲི། 2ཡི་འཕར་ཆ་ག་ཚོད་ལ8ཐོན་མིན། 2³ = 8ཡིན་སྟབས log₂(8) = 3।",
+    algLogPrompt: "རྩིས་ཤིག: log_{b}({x})",
+    algLogExplain: "log_{b}({x}) གིས་དྲི་བ་ནི {b}ཡི་འཕར་ཆ་ག་ཚོད་ལ {x}ཐོན་མིན། {b}^{e} = {x}ཡིན་སྟབས་ལན་ནི {e}ཡིན།",
+
+    algTopicTitle_equations: "མཉམ་སྒྲིག", algTopicDesc_equations: "x་འཚོལ་བའི་མཉམ་སྒྲིག་ཐད་ཀར་སེལ་ཤིག",
+    algLearn_equations: "མཉམ་སྒྲིག་ཐད་ཀར་སེལ་བར་x་སྟེང་གི་བྱ་བ་རིམ་བཞིན་ཕྱིར་བསལ་ནས x་གཅིག་པུར་བཞག་དགོས། ཐོག་མར་གྲངས་རྟག་སྤོ་ནས་རྗེས་སུ x་གི་ཆ་མཉམ་གྲངས་ཡིས་བགོས།\n\nདཔེར་བརྗོད། 3x + 5 = 20 སེལ་ཤིག།\nགཉིས་ཀར5ཕུད: 3x = 15།\nགཉིས་ཀར3ཡིས་བགོས: x = 5।",
+    algEquationsPrompt: "x་འཚོལ་ཤིག: {expr}",
+    algEquationsExplain: "x་ཡོད་པའི་ཆ་གཅིག་པུར་བཞག: {a}x = {rhs}། གཉིས་ཀར{a}ཡིས་བགོས: x = {x0}।",
+
+    algTopicTitle_inequalities: "མི་མཉམ་སྒྲིག", algTopicDesc_inequalities: "x་འཚོལ་བའི་མི་མཉམ་སྒྲིག་ཐད་ཀར་སེལ་ཤིག",
+    algLearn_inequalities: "མི་མཉམ་སྒྲིག་སེལ་ཐབས་ནི་མཉམ་སྒྲིག་དང་ཧ་ཅང་འདྲ། x་གཅིག་པུར་བཞག་ཐབས་གཅིག་པ་ཡིན། དྲན་དགོས་པའི་སྒྲིག་གཞི་གཅིག་པུ་ནི། གཉིས་ཀར་མང་གྲངས་ཤིག་གིས་བསྒྱུར་ན་མི་མཉམ་རྟགས་ཀྱི་ཕྱོགས་ལྡོག་གོ།\n\nདཔེར་བརྗོད། 2x + 3 < 11 སེལ་ཤིག།\nགཉིས་ཀར3ཕུད: 2x < 8།\nགཉིས་ཀར2ཡིས་བགོས (མང་གྲངས་ཡིན་སྟབས་ཕྱོགས་མི་འགྱུར): x < 4।",
+    algInequalitiesPrompt: "x་ཀྱི་མཚམས་ཐང་འཚོལ་ཤིག: {expr}",
+    algInequalitiesExplain: "x་ཡོད་པའི་ཆ་གཅིག་པུར་བཞག: {a}x དང {rhs} གཉིས་བསྡུར། {a}ཡིས་བགོས (མང་གྲངས་ཡིན་སྟབས་ཕྱོགས་མི་འགྱུར): མཚམས་ཐང་ནི x = {x0}ཡིན།",
+
+    algTopicTitle_simultaneous: "མཉམ་སྒྲིག་གཉིས།", algTopicDesc_simultaneous: "x་དང་y་འཚོལ་བའི་མཉམ་སྒྲིག་གཉིས་སེལ་ཤིག",
+    algLearn_simultaneous: "མཉམ་སྒྲིག་གཉིས་ལ་མི་ཤེས་པའི་གྲངས་གཉིས་གཅིག་མཚུངས་ཡོད་ན། ཕྱིར་བསལ་ཐབས (མཉམ་སྒྲིག་གཉིས་ཀྱི་ལན་གྲངས་སྣོན་འཐེན་བྱས་ནས་གྲངས་གཅིག་ཕྱིར་བསལ་བ) ཡང་ན་ཚབ་འཇུག་ཐབས (མཉམ་སྒྲིག་གཅིག་ནས་གྲངས་ཤིག་སེལ་ནས་གཞན་དེའི་ནང་ཚབ་འཇུག) གིས་གཉིས་ཀ་སྟབས་བདེར་སེལ་ཐུབ།\n\nདཔེར་བརྗོད། x + y = 5 དང x - y = 1 སེལ་ཤིག།\nམཉམ་སྒྲིག་གཉིས་སྣོན: 2x = 6, དེས་ན x = 3།\nཕྱིར་ཚབ་འཇུག: 3 + y = 5, དེས་ན y = 2।",
+    algSimultaneousPrompt: "མཉམ་སྒྲིག་ཚོགས་སེལ་ཤིག: {eq1}, དེ་དང {eq2}",
+    algSimultaneousExplain: "ཕྱིར་བསལ་ཐབས་སམ་ཚབ་འཇུག་ཐབས་ཀྱིས x = {x0}, y = {y0} ཐོན།",
+
+    algTopicTitle_polynomials: "མང་ཚིག", algTopicDesc_polynomials: "x་ཐང་ངེས་ཅན་ཞིག་ལ་མང་ཚིག་གི་གྲངས་རྩིས་ཤིག",
+    algLearn_polynomials: "མང་ཚིག་ཐང་ངེས་ཅན་ཞིག་ལ་རྩིས་བར། ཐང་དེ x་ཡོད་ས་ཚང་མར་ཚབ་འཇུག་བྱས་ནས་བྱ་རིམ་གོ་རིམ་ལྟར་བསྡུས་ཤིག།\n\nདཔེར་བརྗོད། f(x) = 2x² + 3x - 1 ཡིན་ན f(2) འཚོལ་ཤིག།\nf(2) = 2(2)² + 3(2) - 1 = 2(4) + 6 - 1 = 8 + 6 - 1 = 13।",
+    algPolynomialsPrompt: "f(x) = {expr} ཡིན་ན f({k}) འཚོལ་ཤིག།",
+    algPolynomialsExplain: "x = {k} ཚབ་འཇུག: {sumExpr} = {answer}।",
+
+    algTopicTitle_factorisation: "ཆ་བགོས།", algTopicDesc_factorisation: "གཉིས་འཕར་མང་ཚིག་ཆ་བགོས་བྱས་ནས་རྩ་བ་འཚོལ་ཤིག",
+    algLearn_factorisation: "གཉིས་འཕར་མང་ཚིག x² + bx + c ནི (x - r₁)(x - r₂) ལ་ཆ་བགོས་ཐུབ། r₁ དང r₂ ནི་རྩ་བ་གཉིས་སྟེ། གཉིས་འཕར་ན c ཐོན་ལ་སྣོན་ན -b ཐོན་པའི་གྲངས་གཉིས་ཡིན།\n\nདཔེར་བརྗོད། x² - 5x + 6 ཆ་བགོས་ཤིག།\nའཕར་ན6, སྣོན་ན-5ཐོན་པའི་གྲངས་གཉིས་འཚོལ: -2 དང -3།\nདེས་ན x² - 5x + 6 = (x - 2)(x - 3), རྩ་བ་ནི x = 2 ཡང་ན x = 3।",
+    algFactorisationPrompt: "རྩ་བ་འཚོལ་ཤིག: {expr}",
+    algFactorisationExplain: "ཆ་བགོས་བྱས་ན {factors} = 0, དེས་ན x = {rmin} ཡང་ན x = {rmax}।",
+
+    algTopicTitle_sequences: "གོ་རིམ།", algTopicDesc_sequences: "གོ་རིམ་ནང་གི་ཚན་པ་ཞིག་འཚོལ་ཤིག",
+    algLearn_sequences: "རིམ་འགྲིག་གོ་རིམ་ནང་གོམ་པ་རེར་གྲངས་མཉམ་པ (ཆ་མཉམ་ཁྱད d) སྣོན: aₙ = a₁ + (n-1)d། འཕར་འགྲིག་གོ་རིམ་ནང་གོམ་པ་རེར་གྲངས་མཉམ་པ (ཆ་མཉམ་ཚད r) འཕར: aₙ = a₁ × r^(n-1)།\n\nདཔེར་བརྗོད། རིམ་འགྲིག་གོ་རིམ་ཞིག4ནས་འགོ་ཚུགས་ནས་ཆ་མཉམ་ཁྱད3ཡིན་ན། ཚན་པ6པ་འཚོལ་ཤིག།\na₆ = 4 + (6-1)×3 = 4 + 15 = 19।",
+    algSeqArithPrompt: "རིམ་འགྲིག་གོ་རིམ་ཞིག {a1} ནས་འགོ་ཚུགས་ནས་ཆ་མཉམ་ཁྱད {d} ཡིན། ཚན་པ {n} པ་འཚོལ་ཤིག།",
+    algSeqArithExplain: "aₙ = a₁ + (n-1)d = {a1} + ({n}-1)×{d} = {answer} བེད་སྤྱོད།",
+    algSeqGeoPrompt: "འཕར་འགྲིག་གོ་རིམ་ཞིག {a1} ནས་འགོ་ཚུགས་ནས་ཆ་མཉམ་ཚད {r} ཡིན། ཚན་པ {n} པ་འཚོལ་ཤིག།",
+    algSeqGeoExplain: "aₙ = a₁ × r^(n-1) = {a1} × {r}^({n}-1) = {answer} བེད་སྤྱོད།",
+
+    algTopicTitle_functions: "བྱ་ཚབ།", algTopicDesc_functions: "བྱ་ཚབ་གཉིས་སྦྲེལ་བའི་གྲངས་རྩིས་ཤིག",
+    algLearn_functions: "f(g(x)) གི་དོན་ནི། ཐོག་མར x ལ g སྤྱོད་ནས་གྲངས་འབྲས་དེར f སྤྱོད། ནང་ནས་ཕྱིར་རིམ་བཞིན་རྩིས།\n\nདཔེར་བརྗོད། f(x) = 2x + 1 དང g(x) = x - 3 ཡིན་ན f(g(5)) འཚོལ་ཤིག།\nཐོག་མར g(5) = 5 - 3 = 2།\nདེ་ནས f(2) = 2(2) + 1 = 5।",
+    algFunctionsPrompt: "f(x) = {fExpr} དང g(x) = {gExpr} ཡིན་ན f(g({k})) འཚོལ་ཤིག།",
+    algFunctionsExplain: "ཐོག་མར g({k}) = {inner} འཚོལ། དེ་ནས f({inner}) = {answer} འཚོལ།",
+
+    algTopicTitle_graphs: "རི་མོ།", algTopicDesc_graphs: "ཐིག་ཞིག་གི་ཟུར་ཚད་དང y-ཐིག་བཅད་ས་འཚོལ་ཤིག",
+    algLearn_graphs: "ཐིག་གི་ཟུར་ཚད-བཅད་ས་རྣམ་པ་ནི y = mx + b ཡིན་ལ། m ནི་ཟུར་ཚད, b ནི y-ཐིག་བཅད་ས་ཡིན། མཉམ་སྒྲིག་གང་རུང་རྣམ་པ་འདིར་བསྒྱུར་ན་གཉིས་ཀ་ཀློག་ཐུབ།\n\nདཔེར་བརྗོད། y - 2x = 3 གི་ཟུར་ཚད་དང y-ཐིག་བཅད་ས་འཚོལ་ཤིག།\nགཉིས་ཀར2xསྣོན: y = 2x + 3།\nཟུར་ཚད་ནི2, y-ཐིག་བཅད་ས་ནི3।",
+    algGraphsPrompt: "ཟུར་ཚད་དང y-ཐིག་བཅད་ས་འཚོལ་ཤིག: {expr}",
+    algGraphsExplain: "y = mx + b རྣམ་པར་བསྒྱུར་ན: y = {m}x + {b}། དེས་ན་ཟུར་ཚད་ནི {m}, y-ཐིག་བཅད་ས་ནི {b}ཡིན།",
+
+    algTopicTitle_trigonometry: "ཟུར་རྩིས།", algTopicDesc_trigonometry: "ཚད་ལྡན་ཟུར་ཐང་གི་ཐད་ཀར་གྲངས།",
+    algLearn_trigonometry: "ཟུར་ཐང་འགའ་ཤས (0°, 30°, 45°, 60°, 90°) ཀྱི sin/cos/tan ཐད་ཀར་གྲངས་དྲན་འོས། ཡང་ཡང་བེད་སྤྱོད་བྱེད་སྟབས། དེ་དག 45-45-90 དང 30-60-90 ཟུར་གསུམ་གྲུ་བཞིའི་ཟུར་ཐིག་ཆ་སྙོམས་ནས་ཐོན།\n\nདཔེར་བརྗོད། sin(30°) = 1/2, cos(30°) = √3/2, tan(30°) = √3/3।",
+    algTrigPrompt: "རྩིས་ཤིག: {expr}",
+    algTrigExplain: "{expr} = {answer}། འདི་ནི་དྲན་འོས་པའི་ཚད་ལྡན་ཟུར་ཐང་གྲངས་ཤིག་ཡིན།",
   },
 };
 function t(key, vars){
@@ -4187,16 +4411,20 @@ function t(key, vars){
 const app = document.getElementById('app');
 function render(){ app.innerHTML = screens[state.screen](); if(state.currentUser) saveGame(); }
 
-// Enter key on the mental math screen does whatever the primary button would:
-// submit the typed answer, or (once answered, when the input is disabled and
-// no longer receiving key events) advance to the next question. Attached once
-// at the document level rather than on the input itself so it still works
-// after the input gets disabled/re-rendered.
+// Enter key on the mental math / algebra practice screens does whatever the
+// primary button would: submit the typed answer, or (once answered, when
+// the input is disabled and no longer receiving key events) advance to the
+// next question. Attached once at the document level rather than on the
+// input itself so it still works after the input gets disabled/re-rendered.
 document.addEventListener('keydown', function(e){
   if(e.key !== 'Enter') return;
-  if(state.screen !== 'math_practice' || !state.mathSession) return;
-  if(state.mathSession.answered) nextMathQuestion();
-  else submitMathAnswer();
+  if(state.screen === 'math_practice' && state.mathSession){
+    if(state.mathSession.answered) nextMathQuestion();
+    else submitMathAnswer();
+  } else if(state.screen === 'algebra_practice' && state.algebraSession){
+    if(state.algebraSession.answered) nextAlgebraQuestion();
+    else submitAlgebraAnswer();
+  }
 });
 
 function topbar(opts){
@@ -4229,6 +4457,10 @@ const screens = {
   math_menu: renderMathMenu,
   math_practice: renderMathPractice,
   math_complete: renderMathComplete,
+  algebra_menu: renderAlgebraMenu,
+  algebra_learn: renderAlgebraLearn,
+  algebra_practice: renderAlgebraPractice,
+  algebra_complete: renderAlgebraComplete,
   profile: renderProfile,
   avatar_editor: renderAvatarEditor,
 };
@@ -4459,6 +4691,7 @@ function renderHome(){
     </div>
     <div class="track-grid">${cards}</div>
     <button class="btn btn-ghost btn-block" onclick="state.screen='math_menu'; render();">${t('mentalMathBtn')}</button>
+    <button class="btn btn-ghost btn-block" onclick="state.screen='algebra_menu'; render();">${t('algebraBtn')}</button>
     <button class="btn btn-ghost btn-block" onclick="goProfile()">${t('myProgress')}</button>
   </div>
   <div class="footer-note">${t('homeFooter')}</div>
@@ -4783,6 +5016,398 @@ function renderMathComplete(){
 
 function backToMathMenu(){ state.screen='math_menu'; render(); }
 function exitMathPractice(){ state.screen='math_menu'; render(); }
+
+// ---- algebra learning: Month 1 of a longer planned progression (algebra ->
+// calculus -> linear algebra -> discrete math -> probability). Unlike mental
+// math, each topic teaches the concept first (renderAlgebraLearn) before
+// practice, and a wrong answer shows the actual worked solution to THIS
+// problem, not just the bare correct number — teaching the concept in the
+// moment it's needed, not just grading. Answer-checking is deliberately
+// scoped to forms a plain string/number comparison can validate exactly
+// (integers, reduced fractions, a fixed set of exact trig values) rather
+// than attempting general symbolic/expression parsing. ----------------------
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ const r=a%b; a=b; b=r; } return a||1; }
+function nonZeroRandInt(min,max){ let v; do{ v=randInt(min,max); }while(v===0); return v; }
+function parseFraction(str){
+  if(!str) return null;
+  const s = str.trim();
+  const frac = s.match(/^(-?\d+)\s*\/\s*(-?\d+)$/);
+  if(frac){
+    const n=parseInt(frac[1],10), d=parseInt(frac[2],10);
+    if(d===0) return null;
+    const sign = (n<0)!==(d<0) ? -1 : 1;
+    const g = gcd(n,d);
+    return {p: sign*Math.abs(n)/g, q: Math.abs(d)/g};
+  }
+  const whole = s.match(/^(-?\d+)$/);
+  if(whole) return {p:parseInt(whole[1],10), q:1};
+  return null;
+}
+// "+3x" / "-x" / "" (omitted when coef===0) — for terms after the first.
+function signedCoeffTerm(coef, varPart){
+  if(coef===0) return '';
+  const sign = coef>0 ? ' + ' : ' - ';
+  const mag = Math.abs(coef);
+  const magStr = (varPart && mag===1) ? '' : String(mag);
+  return sign+magStr+varPart;
+}
+// "3x" / "-x" / "x" — for a leading term with no preceding sign.
+function leadTerm(coef, varPart){
+  if(coef===1) return varPart || '1';
+  if(coef===-1) return '-'+(varPart||'1');
+  return coef+(varPart||'');
+}
+function factorTerm(root){ return root>=0 ? `(x - ${root})` : `(x + ${-root})`; }
+
+function algProblemFractions(){
+  const q = randInt(2,9);
+  let p; do{ p = randInt(1, q*2); }while(gcd(p,q)!==1);
+  const k = randInt(2,6);
+  const num = p*k, den = q*k;
+  return {
+    promptText: t('algFractionsPrompt', {expr:`${num}/${den}`}),
+    inputs: [{key:'ans', placeholder:t('algFractionAnswerPlaceholder')}],
+    check(vals){ const f = parseFraction(vals.ans); return !!f && f.p===p && f.q===q; },
+    explain: t('algFractionsExplain', {num, den, k, p, q}),
+  };
+}
+function algProblemExponents(){
+  const a = randInt(2,6), b = randInt(2,4);
+  const answer = Math.pow(a,b);
+  return {
+    promptText: t('algExponentsPrompt', {expr:`${a}^${b}`}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('algExponentsExplain', {a, b, answer}),
+  };
+}
+function algProblemLogarithms(){
+  const bases=[2,3,5,10];
+  const b = bases[randInt(0,bases.length-1)];
+  const e = randInt(1,4);
+  const x = Math.pow(b,e);
+  return {
+    promptText: t('algLogPrompt', {b, x}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===e; },
+    explain: t('algLogExplain', {b, x, e}),
+  };
+}
+function algProblemEquations(){
+  const a = randInt(2,9);
+  const x0 = nonZeroRandInt(-10,10);
+  const b = randInt(-20,20);
+  const c = a*x0+b;
+  return {
+    promptText: t('algEquationsPrompt', {expr:`${a}x${signedCoeffTerm(b,'')} = ${c}`}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===x0; },
+    explain: t('algEquationsExplain', {a, rhs:c-b, x0}),
+  };
+}
+function algProblemInequalities(){
+  const a = randInt(2,9);
+  const x0 = nonZeroRandInt(-10,10);
+  const b = randInt(-20,20);
+  const c = a*x0+b;
+  const symbol = ['<','>','≤','≥'][randInt(0,3)];
+  return {
+    promptText: t('algInequalitiesPrompt', {expr:`${a}x${signedCoeffTerm(b,'')} ${symbol} ${c}`}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===x0; },
+    explain: t('algInequalitiesExplain', {a, rhs:c-b, x0}),
+  };
+}
+function algProblemSimultaneous(){
+  let a1,b1,a2,b2;
+  do{
+    a1=nonZeroRandInt(-6,6); b1=nonZeroRandInt(-6,6);
+    a2=nonZeroRandInt(-6,6); b2=nonZeroRandInt(-6,6);
+  } while(a1*b2-a2*b1===0);
+  const x0 = randInt(-8,8), y0 = randInt(-8,8);
+  const c1 = a1*x0+b1*y0, c2 = a2*x0+b2*y0;
+  return {
+    promptText: t('algSimultaneousPrompt', {
+      eq1:`${leadTerm(a1,'x')}${signedCoeffTerm(b1,'y')} = ${c1}`,
+      eq2:`${leadTerm(a2,'x')}${signedCoeffTerm(b2,'y')} = ${c2}`,
+    }),
+    inputs: [{key:'x', label:'x ='}, {key:'y', label:'y ='}],
+    check(vals){ return Number(vals.x)===x0 && Number(vals.y)===y0; },
+    explain: t('algSimultaneousExplain', {x0, y0}),
+  };
+}
+function algProblemPolynomials(){
+  const A = nonZeroRandInt(1,5), B = randInt(-8,8), C = randInt(-8,8);
+  const k = randInt(-5,5);
+  const term1 = A*k*k, term2 = B*k;
+  const answer = term1 + term2 + C;
+  const expr = `${leadTerm(A,'x²')}${signedCoeffTerm(B,'x')}${signedCoeffTerm(C,'')}`;
+  const sumExpr = `${term1}${signedCoeffTerm(term2,'')}${signedCoeffTerm(C,'')}`;
+  return {
+    promptText: t('algPolynomialsPrompt', {expr, k}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('algPolynomialsExplain', {k, sumExpr, answer}),
+  };
+}
+function algProblemFactorisation(){
+  let r1 = randInt(-8,8), r2;
+  do{ r2 = randInt(-8,8); }while(r2===r1);
+  const rmin = Math.min(r1,r2), rmax = Math.max(r1,r2);
+  const b = -(r1+r2), c = r1*r2;
+  const expr = `x²${signedCoeffTerm(b,'x')}${signedCoeffTerm(c,'')} = 0`;
+  return {
+    promptText: t('algFactorisationPrompt', {expr}),
+    inputs: [{key:'small', label:t('algSmallerRootLabel')}, {key:'large', label:t('algLargerRootLabel')}],
+    check(vals){ return Number(vals.small)===rmin && Number(vals.large)===rmax; },
+    explain: t('algFactorisationExplain', {factors:`${factorTerm(rmin)}${factorTerm(rmax)}`, rmin, rmax}),
+  };
+}
+function algProblemSequences(){
+  if(Math.random()<0.3){
+    const a1 = randInt(1,5), r = [2,3][randInt(0,1)], n = randInt(2,6);
+    const answer = a1*Math.pow(r,n-1);
+    return {
+      promptText: t('algSeqGeoPrompt', {a1, r, n}),
+      inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+      check(vals){ return Number(vals.ans)===answer; },
+      explain: t('algSeqGeoExplain', {a1, r, n, answer}),
+    };
+  }
+  const a1 = randInt(-10,10), d = nonZeroRandInt(-6,6), n = randInt(5,15);
+  const answer = a1+(n-1)*d;
+  return {
+    promptText: t('algSeqArithPrompt', {a1, d, n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('algSeqArithExplain', {a1, d, n, answer}),
+  };
+}
+function algProblemFunctions(){
+  const A = nonZeroRandInt(-5,5), B = randInt(-8,8);
+  const C = nonZeroRandInt(-5,5), D = randInt(-8,8);
+  const k = randInt(-5,5);
+  const inner = C*k+D;
+  const answer = A*inner+B;
+  const fExpr = `${leadTerm(A,'x')}${signedCoeffTerm(B,'')}`;
+  const gExpr = `${leadTerm(C,'x')}${signedCoeffTerm(D,'')}`;
+  return {
+    promptText: t('algFunctionsPrompt', {fExpr, gExpr, k}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('algFunctionsExplain', {k, inner, answer}),
+  };
+}
+function algProblemGraphs(){
+  const m = nonZeroRandInt(-6,6), b = randInt(-10,10);
+  const xTermSign = m>=0 ? '-' : '+';
+  const magStr = Math.abs(m)===1 ? '' : String(Math.abs(m));
+  const expr = `y ${xTermSign} ${magStr}x = ${b}`;
+  return {
+    promptText: t('algGraphsPrompt', {expr}),
+    inputs: [{key:'slope', label:t('algSlopeLabel')}, {key:'intercept', label:t('algInterceptLabel')}],
+    check(vals){ return Number(vals.slope)===m && Number(vals.intercept)===b; },
+    explain: t('algGraphsExplain', {m, b}),
+  };
+}
+const ALG_TRIG_TABLE = {
+  sin: {0:['0'], 30:['1/2'], 45:['√2/2','sqrt(2)/2'], 60:['√3/2','sqrt(3)/2'], 90:['1']},
+  cos: {0:['1'], 30:['√3/2','sqrt(3)/2'], 45:['√2/2','sqrt(2)/2'], 60:['1/2'], 90:['0']},
+  tan: {0:['0'], 30:['√3/3','sqrt(3)/3'], 45:['1'], 60:['√3','sqrt(3)']},
+};
+function algProblemTrig(){
+  const fns = Object.keys(ALG_TRIG_TABLE);
+  const fn = fns[randInt(0,fns.length-1)];
+  const angles = Object.keys(ALG_TRIG_TABLE[fn]).map(Number);
+  const angle = angles[randInt(0,angles.length-1)];
+  const accepted = ALG_TRIG_TABLE[fn][angle].map(s=>s.toLowerCase().replace(/\s+/g,''));
+  return {
+    promptText: t('algTrigPrompt', {expr:`${fn}(${angle}°)`}),
+    inputs: [{key:'ans', placeholder:t('algTrigAnswerPlaceholder')}],
+    check(vals){ const norm=(vals.ans||'').toLowerCase().replace(/\s+/g,''); return accepted.includes(norm); },
+    explain: t('algTrigExplain', {expr:`${fn}(${angle}°)`, answer:ALG_TRIG_TABLE[fn][angle][0]}),
+  };
+}
+
+const ALGEBRA_TOPICS = [
+  {key:'fractions', build:algProblemFractions},
+  {key:'exponents', build:algProblemExponents},
+  {key:'logarithms', build:algProblemLogarithms},
+  {key:'equations', build:algProblemEquations},
+  {key:'inequalities', build:algProblemInequalities},
+  {key:'simultaneous', build:algProblemSimultaneous},
+  {key:'polynomials', build:algProblemPolynomials},
+  {key:'factorisation', build:algProblemFactorisation},
+  {key:'sequences', build:algProblemSequences},
+  {key:'functions', build:algProblemFunctions},
+  {key:'graphs', build:algProblemGraphs},
+  {key:'trigonometry', build:algProblemTrig},
+];
+function algTopicByKey(key){ return ALGEBRA_TOPICS.find(x=>x.key===key); }
+
+function renderAlgebraMenu(){
+  const cards = ALGEBRA_TOPICS.map(topic=>{
+    const best = (state.game.algebra && state.game.algebra[topic.key]) ? state.game.algebra[topic.key].best : 0;
+    return `
+    <button class="track-card" onclick="openAlgebraTopic('${topic.key}')">
+      <div class="glyph">📐</div>
+      <div>
+        <div class="tc-title">${t('algTopicTitle_'+topic.key)}</div>
+        <div class="tc-sub">${t('algTopicDesc_'+topic.key)}</div>
+      </div>
+      <div class="tc-progress">${best ? t('mathBestLabel',{n:best}) : t('startArrow')}</div>
+    </button>`;
+  }).join('');
+
+  return `
+  ${topbar({back:'goHome()'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>${t('algebraTitle')}</h1>
+      <div class="sub">${t('algebraSub')}</div>
+    </div>
+    <div class="track-grid">${cards}</div>
+  </div>
+  `;
+}
+
+function openAlgebraTopic(topicKey){
+  state.algebraSession = {topicKey};
+  state.screen = 'algebra_learn';
+  render();
+}
+
+function renderAlgebraLearn(){
+  const topicKey = state.algebraSession.topicKey;
+  return `
+  ${topbar({back:'state.screen="algebra_menu"; render();'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero" style="padding-top:8px;">
+      <h1 style="font-size:26px;">${t('algTopicTitle_'+topicKey)}</h1>
+    </div>
+    <div class="profile-card" style="text-align:left; line-height:1.6; font-size:14.5px; color:var(--snow-dim); white-space:pre-line;">${t('algLearn_'+topicKey)}</div>
+    <button class="btn btn-primary btn-block" onclick="startAlgebraPractice('${topicKey}')">${t('startPracticeBtn')}</button>
+  </div>
+  `;
+}
+
+function startAlgebraPractice(topicKey){
+  const topic = algTopicByKey(topicKey);
+  state.algebraSession = {
+    topicKey,
+    current: topic.build(),
+    correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
+    inputs:{}
+  };
+  state.screen = 'algebra_practice';
+  render();
+  focusAlgebraInput();
+}
+function focusAlgebraInput(){
+  setTimeout(()=>{ const el=document.querySelector('.algebra-input'); if(el) el.focus(); }, 30);
+}
+
+function renderAlgebraPractice(){
+  const s = state.algebraSession;
+  const q = s.current;
+  const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
+
+  const inputsHtml = q.inputs.map(inp=>`
+    <div style="flex:1;">
+      ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
+      <input class="algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
+        placeholder="${inp.placeholder||''}"
+        style="text-align:center; font-size:22px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
+        oninput="state.algebraSession.inputs['${inp.key}']=this.value">
+    </div>`).join('');
+
+  const feedback = s.answered ? `
+    <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
+      <div class="fb-text">
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback') : t('notQuiteFeedback')}</div>
+        <div class="fb-sub">${q.explain}</div>
+      </div>
+      <button class="btn btn-light" onclick="nextAlgebraQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
+    </div>` : '';
+
+  return `
+  ${topbar({back:'exitAlgebraPractice()'})}
+  <div class="lesson">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;">
+      <div class="hearts-row">${Array.from({length:MATH_MAX_MISTAKES}).map((_,i)=>`<span>${i<(MATH_MAX_MISTAKES-s.mistakes)?'❤️':'🩶'}</span>`).join('')}</div>
+      <div style="font-size:12px; color:var(--snow-dim);">${t('correctAnswersLabel')}: ${s.correct}</div>
+    </div>
+    <div class="q-wrap">
+      <div class="q-card">
+        <div class="q-eyebrow">${t('algTopicTitle_'+s.topicKey)}</div>
+        <div class="q-prompt" style="font-size:24px;">${q.promptText}</div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:flex-end;">${inputsHtml}</div>
+      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitAlgebraAnswer()">${t('checkBtn')}</button>` : ''}
+    </div>
+  </div>
+  ${feedback}
+  `;
+}
+
+function submitAlgebraAnswer(){
+  const s = state.algebraSession;
+  if(!s || s.answered) return;
+  const q = s.current;
+  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
+  const correct = q.check(s.inputs);
+  s.answered = true; s.lastCorrect = correct;
+  if(correct){
+    s.correct += 1;
+    s.xpEarned += 10; state.game.xp += 10;
+  } else {
+    s.mistakes += 1;
+  }
+  render();
+}
+
+function nextAlgebraQuestion(){
+  const s = state.algebraSession;
+  if(s.mistakes>=MATH_MAX_MISTAKES){ finishAlgebraPractice(); return; }
+  const topic = algTopicByKey(s.topicKey);
+  s.answered=false; s.lastCorrect=null; s.inputs={};
+  s.current = topic.build();
+  render();
+  focusAlgebraInput();
+}
+
+function finishAlgebraPractice(){
+  const s = state.algebraSession;
+  if(!state.game.algebra) state.game.algebra = {};
+  const rec = state.game.algebra[s.topicKey] || (state.game.algebra[s.topicKey] = {best:0});
+  s.isNewBest = s.correct > rec.best;
+  if(s.isNewBest) rec.best = s.correct;
+  touchStreak();
+  state.screen='algebra_complete';
+  render();
+}
+
+function renderAlgebraComplete(){
+  const s = state.algebraSession;
+  const best = state.game.algebra[s.topicKey].best;
+  return `
+  ${topbar()}
+  <div class="complete ${appLangClass()}">
+    <div class="medal">${s.isNewBest ? '🏆' : '🎯'}</div>
+    <h2>${s.isNewBest ? t('newBestReached') : t('checkpointReached')}</h2>
+    <div class="stat-row">
+      <div class="stat-box"><div class="val">${s.correct}</div><div class="lab">${t('correctAnswersLabel')}</div></div>
+      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
+    </div>
+    <div style="color:var(--snow-dim); font-size:13px;">${t('mathBestLabel',{n:best})}</div>
+    <button class="btn btn-primary btn-block" onclick="backToAlgebraMenu()">${t('backToAlgebraMenuBtn')}</button>
+  </div>`;
+}
+
+function backToAlgebraMenu(){ state.screen='algebra_menu'; render(); }
+function exitAlgebraPractice(){ state.screen='algebra_menu'; render(); }
 
 function setPaywallRegion(region){ state.paywallRegion = region; state.paywallError=''; render(); }
 
