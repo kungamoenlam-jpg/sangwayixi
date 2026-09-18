@@ -4130,6 +4130,18 @@ function t(key, vars){
 const app = document.getElementById('app');
 function render(){ app.innerHTML = screens[state.screen](); if(state.currentUser) saveGame(); }
 
+// Enter key on the mental math screen does whatever the primary button would:
+// submit the typed answer, or (once answered, when the input is disabled and
+// no longer receiving key events) advance to the next question. Attached once
+// at the document level rather than on the input itself so it still works
+// after the input gets disabled/re-rendered.
+document.addEventListener('keydown', function(e){
+  if(e.key !== 'Enter') return;
+  if(state.screen !== 'math_practice' || !state.mathSession) return;
+  if(state.mathSession.answered) nextMathQuestion();
+  else submitMathAnswer();
+});
+
 function topbar(opts){
   opts = opts||{};
   return `
@@ -4569,8 +4581,7 @@ function renderMathPractice(){
           placeholder="${t('yourAnswerPlaceholder')}"
           style="text-align:center; font-size:26px; font-family:var(--font-display); font-weight:700; width:100%;"
           ${s.answered?'disabled':''} value="${s.input||''}"
-          oninput="state.mathSession.input=this.value.replace(/[^0-9]/g,'')"
-          onkeydown="if(event.key==='Enter'){ submitMathAnswer(); }">
+          oninput="state.mathSession.input=this.value.replace(/[^0-9]/g,'')">
         ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitMathAnswer()">${t('checkBtn')}</button>` : ''}
       </div>
     </div>
