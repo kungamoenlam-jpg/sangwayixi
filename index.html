@@ -3949,6 +3949,11 @@ const I18N = {
     yourAnswerPlaceholder: "Your answer",
     correctAnswersLabel: "Correct answers", newBestReached: "New best!",
     backToMathMenuBtn: "Back to Mental Math",
+    hintShowBtn: "💡 Show hint", hintHideBtn: "Hide hint", hintTitle: "Hint",
+    hintFormulaAdd: "Add the hundreds, tens and ones separately, then combine the totals.",
+    hintFormulaSub: "Subtract the hundreds, tens and ones separately, borrowing from the next column if needed.",
+    hintFormulaMul: "Break the second number into tens and ones, multiply each part by the first number, then add the results.",
+    hintFormulaDiv: "Division undoes multiplication — find what the divisor multiplies by to reach the dividend. Use the table below.",
   },
   zh: {
     heroSub: "创建账户，在所有设备上保存你的学习进度。",
@@ -4035,6 +4040,11 @@ const I18N = {
     yourAnswerPlaceholder: "输入答案",
     correctAnswersLabel: "答对题数", newBestReached: "刷新最佳成绩！",
     backToMathMenuBtn: "返回心算练习",
+    hintShowBtn: "💡 显示提示", hintHideBtn: "隐藏提示", hintTitle: "提示",
+    hintFormulaAdd: "把百位、十位、个位分别相加，再把结果合并。",
+    hintFormulaSub: "把百位、十位、个位分别相减，不够时向前一位借位。",
+    hintFormulaMul: "把第二个数拆成十位和个位，分别乘以第一个数，再把结果相加。",
+    hintFormulaDiv: "除法是乘法的逆运算：找出除数乘以多少能得到被除数。可参考下面的表格。",
   },
   bo: {
     heroSub: "འཕྲུལ་ཆས་སོ་སོའི་ཐོག་ཁྱེད་ཀྱི་ཡར་རྒྱས་ཉར་ཚགས་བྱེད་ཆེད་རྩིས་ཐོ་ཞིག་གསར་སྐྲུན་གྱིས།",
@@ -4121,6 +4131,11 @@ const I18N = {
     yourAnswerPlaceholder: "ལན་འབྲི་རོགས།",
     correctAnswersLabel: "ལན་ཚང་བའི་གྲངས།", newBestReached: "མཐོ་ཤོས་གསར་པ།",
     backToMathMenuBtn: "སེམས་རྩིས་སུ་ལོག",
+    hintShowBtn: "💡 ཐབས་ཤེས་སྟོན།", hintHideBtn: "ཐབས་ཤེས་སྦེད།", hintTitle: "ཐབས་ཤེས།",
+    hintFormulaAdd: "བརྒྱ་ཐང་དང་བཅུ་ཐང་། གང་ཐང་སོ་སོར་སྣོན་ནས་མཐའ་མར་བསྡོམས་ཤིག།",
+    hintFormulaSub: "བརྒྱ་ཐང་དང་བཅུ་ཐང་། གང་ཐང་སོ་སོར་འཐེན་ལ་དགོས་ན་གོང་གི་ཐང་ནས་སྐྱེལ་ཤིག།",
+    hintFormulaMul: "གྲངས་གཉིས་པ་བཅུ་ཐང་དང་གང་ཐང་གཉིས་སུ་ཕྱེས་ནས། གྲངས་དང་པོས་སོ་སོར་བརྒྱབ་རྗེས་བསྡོམས་ཤིག།",
+    hintFormulaDiv: "འགོ་བརྒྱབ་པ་ནི་འཕར་བའི་ལྡོག་ཕྱོགས་ཡིན། འགོ་བྱེད་ཀྱིས་ག་ཚོད་བརྒྱབ་ན་འགོ་བྱའི་གྲངས་ཐོན་མིན་འཚོལ། འོག་གི་རེའུ་མིག་ལ་ལྟོས།",
   },
 };
 function t(key, vars){
@@ -4508,11 +4523,33 @@ function startMathPractice(difficulty){
   state.mathSession = {
     difficulty,
     current: buildMathProblem(difficulty),
-    correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, input:'', isNewBest:false
+    correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, input:'', isNewBest:false,
+    showHint:false
   };
   state.screen = 'math_practice';
   render();
   focusMathInput();
+}
+
+// Hints (hard difficulty only, opt-in): a short strategy note plus, for
+// multiplication/division, a 1-12 lookup table built off one operand — the
+// operand itself, for ×, since the standard algorithm always ends up
+// multiplying it by single digits; the divisor, for ÷, since checking
+// "divisor × ? = dividend" against the table is the standard technique.
+// Doesn't hand over the final answer directly except by coincidence (e.g. a
+// small quotient landing inside the 1-12 range), which is fine for a hint.
+function mathHintData(q){
+  if(q.op==='+') return {formula:t('hintFormulaAdd'), table:null};
+  if(q.op==='-') return {formula:t('hintFormulaSub'), table:null};
+  const base = q.op==='×' ? q.a : q.b;
+  const rows = Array.from({length:12}, (_,i)=>({n:i+1, val:base*(i+1)}));
+  return {formula: q.op==='×' ? t('hintFormulaMul') : t('hintFormulaDiv'), table:rows, base};
+}
+function toggleMathHint(){
+  const s = state.mathSession;
+  if(!s) return;
+  s.showHint = !s.showHint;
+  render();
 }
 function focusMathInput(){
   setTimeout(()=>{ const el=document.getElementById('math_input'); if(el) el.focus(); }, 30);
@@ -4563,6 +4600,24 @@ function renderMathPractice(){
       <button class="btn btn-light" onclick="nextMathQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
     </div>` : '';
 
+  let hintBlock = '';
+  if(s.difficulty==='hard'){
+    const hint = mathHintData(q);
+    const tableHtml = hint.table ? `
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:4px 20px; margin-top:10px; font-size:14px; font-family:var(--font-display);">
+        ${hint.table.map(r=>`<div>${hint.base} × ${r.n} = ${r.val}</div>`).join('')}
+      </div>` : '';
+    hintBlock = `
+      <button class="btn btn-ghost btn-block" onclick="toggleMathHint()">${s.showHint ? t('hintHideBtn') : t('hintShowBtn')}</button>
+      ${s.showHint ? `
+      <div style="background:rgba(255,255,255,.06); border:1px dashed rgba(255,255,255,.25); border-radius:14px; padding:14px 16px; margin-top:10px; text-align:left; width:100%; box-sizing:border-box;">
+        <div style="font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--gold); margin-bottom:6px;">${t('hintTitle')}</div>
+        <div style="font-size:14px; color:var(--snow-dim); line-height:1.5;">${hint.formula}</div>
+        ${tableHtml}
+      </div>` : ''}
+    `;
+  }
+
   return `
   ${topbar({back:'exitMathPractice()'})}
   <div class="lesson">
@@ -4582,6 +4637,7 @@ function renderMathPractice(){
           ${s.answered?'disabled':''} value="${s.input||''}"
           oninput="state.mathSession.input=this.value.replace(/[^0-9]/g,'')">
         ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitMathAnswer()">${t('checkBtn')}</button>` : ''}
+        ${hintBlock}
       </div>
     </div>
   </div>
@@ -4608,7 +4664,7 @@ function submitMathAnswer(){
 function nextMathQuestion(){
   const s = state.mathSession;
   if(s.mistakes>=MATH_MAX_MISTAKES){ finishMathPractice(); return; }
-  s.answered=false; s.lastCorrect=null; s.input='';
+  s.answered=false; s.lastCorrect=null; s.input=''; s.showHint=false;
   s.current = buildMathProblem(s.difficulty);
   render();
   focusMathInput();
