@@ -257,6 +257,10 @@
   }
   .stmt-value.stmt-correct{color:var(--good);}
   .stmt-value.stmt-wrong{color:var(--bad);}
+  .biz-switch{width:48px; height:28px; border-radius:999px; background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); position:relative; flex-shrink:0; padding:0; cursor:pointer; transition:background .15s ease;}
+  .biz-switch.on{background:var(--gold); border-color:var(--gold);}
+  .biz-switch-knob{position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%; background:var(--snow); transition:left .15s ease; box-shadow:0 1px 3px rgba(0,0,0,.3);}
+  .biz-switch.on .biz-switch-knob{left:22px;}
   .auth-error{background:rgba(225,88,75,.18); border:1px solid rgba(225,88,75,.5); color:var(--snow); border-radius:10px; padding:10px 12px; font-size:13px;}
 
   @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
@@ -3809,6 +3813,7 @@ function defaultAppState(){
     algebraSession:null,
     calcSession:null,
     businessSession:null,
+    businessEndlessMode:false,
     subscription: {active:false, status:null, plan:null, periodEnd:null},
     paywallFrom: null,
     paywallRegion: 'us',
@@ -4184,6 +4189,10 @@ const I18N = {
     bizRoundsCompletedLabel: "Rounds completed",
     bizNextRoundBtn: "Next round →",
     backToBusinessMenuBtn: "Back to Business Concepts",
+    bizEndlessModeTitle: "Endless Mode", bizEndlessModeDesc: "Unlimited questions until 5 mistakes — score as many as you can",
+    bizEndlessBestLabel: "Best score: {n}",
+    bizEndlessOverTitle: "Run over — 5 mistakes",
+    bizEndlessRestartBtn: "Play again",
     bizAxisTime: "Time →", bizAxisQuantity: "Quantity →",
     bizLabelSimple: "Simple", bizLabelCompound: "Compound",
     bizLabelStocks: "Stocks 30%", bizLabelBonds: "Bonds 25%", bizLabelRealEstate: "Real Estate 25%", bizLabelCash: "Cash 20%",
@@ -4522,6 +4531,10 @@ const I18N = {
     bizRoundsCompletedLabel: "已完成轮数",
     bizNextRoundBtn: "下一轮 →",
     backToBusinessMenuBtn: "返回商业概念",
+    bizEndlessModeTitle: "无限模式", bizEndlessModeDesc: "无限量的题目，直到答错5次为止——尽量多答对",
+    bizEndlessBestLabel: "最佳成绩：{n}",
+    bizEndlessOverTitle: "挑战结束——已答错5次",
+    bizEndlessRestartBtn: "再玩一次",
     bizAxisTime: "时间 →", bizAxisQuantity: "数量 →",
     bizLabelSimple: "单利", bizLabelCompound: "复利",
     bizLabelStocks: "股票 30%", bizLabelBonds: "债券 25%", bizLabelRealEstate: "房地产 25%", bizLabelCash: "现金 20%",
@@ -4860,6 +4873,10 @@ const I18N = {
     bizRoundsCompletedLabel: "གྲུབ་ཟིན་པའི་ཐེངས།",
     bizNextRoundBtn: "ཐེངས་རྗེས་མ →",
     backToBusinessMenuBtn: "ཚོང་ལས་དོན་ཚན་སུ་ལོག",
+    bizEndlessModeTitle: "མཐའ་མེད་ཐབས་ལམ།", bizEndlessModeDesc: "ནོར་འཁྲུལ་5ཐེངས་མ་བྱུང་བར་དུ་དྲི་བ་མཐའ་མེད་བྱེད— ཇི་ཙམ་མང་བ་ལན་ཚང་ཐབས་བྱོས།",
+    bizEndlessBestLabel: "མཐོ་ཤོས་: {n}",
+    bizEndlessOverTitle: "འགྲན་བསྡུར་གྲོལ་སོང་— ནོར་འཁྲུལ་5ཐེངས་བྱུང་།",
+    bizEndlessRestartBtn: "བསྐྱར་དུ་རྩེད།",
     bizAxisTime: "དུས་ཚོད →", bizAxisQuantity: "གྲངས་ཚད →",
     bizLabelSimple: "རྐྱང་སྐྱེད", bizLabelCompound: "འདུས་སྐྱེད",
     bizLabelStocks: "མཛོད་ཆ 30%", bizLabelBonds: "བུ་ལོན་ཡིག་ཆ 25%", bizLabelRealEstate: "ས་ཁང 25%", bizLabelCash: "དངུལ་ཕྱོགས 20%",
@@ -5012,6 +5029,8 @@ const screens = {
   business_learn: renderBusinessLearn,
   business_quiz: renderBusinessQuiz,
   business_result: renderBusinessResult,
+  business_endless: renderBusinessEndless,
+  business_endless_result: renderBusinessEndlessResult,
   profile: renderProfile,
   avatar_editor: renderAvatarEditor,
 };
@@ -6699,6 +6718,7 @@ const BUSINESS_CONCEPTS = {
   ],
 };
 function bizConceptByKey(category, key){ return BUSINESS_CONCEPTS[category].find(c=>c.key===key); }
+const BUSINESS_MAX_MISTAKES = 5;
 function normalizeTermAnswer(s){
   return (s||'').toLowerCase().trim().replace(/[.,!?'"()]/g,'').replace(/\s+/g,' ');
 }
@@ -6716,16 +6736,23 @@ function renderBusinessMenu(){
     {key:'mgmtacct', icon:'📊', titleKey:'bizMgmtAcctTitle', descKey:'bizMgmtAcctDesc'},
     {key:'finacct', icon:'📑', titleKey:'bizFinAcctTitle', descKey:'bizFinAcctDesc'},
   ];
+  const endlessOn = !!state.businessEndlessMode;
   const cards = cats.map(cat=>{
-    const rounds = (state.game.business && state.game.business[cat.key]) ? state.game.business[cat.key].rounds : 0;
+    const rec = state.game.business && state.game.business[cat.key];
+    const rounds = rec ? rec.rounds : 0;
+    const bestEndless = rec ? (rec.bestEndless||0) : 0;
+    const progressLabel = endlessOn
+      ? (bestEndless ? t('bizEndlessBestLabel',{n:bestEndless}) : t('startArrow'))
+      : (rounds ? t('bizRoundsLabel',{n:rounds}) : t('startArrow'));
+    const action = endlessOn ? `startBusinessEndless('${cat.key}')` : `startBusinessRound('${cat.key}')`;
     return `
-    <button class="track-card" onclick="startBusinessRound('${cat.key}')">
+    <button class="track-card" onclick="${action}">
       <div class="glyph">${cat.icon}</div>
       <div>
         <div class="tc-title">${t(cat.titleKey)}</div>
         <div class="tc-sub">${t(cat.descKey)}</div>
       </div>
-      <div class="tc-progress">${rounds ? t('bizRoundsLabel',{n:rounds}) : t('startArrow')}</div>
+      <div class="tc-progress">${progressLabel}</div>
     </button>`;
   }).join('');
 
@@ -6736,17 +6763,29 @@ function renderBusinessMenu(){
       <h1>${t('businessTitle')}</h1>
       <div class="sub">${t('businessSub')}</div>
     </div>
+    <div class="profile-card" style="display:flex; align-items:center; justify-content:space-between; gap:12px; text-align:left;">
+      <div>
+        <div class="tc-title" style="font-size:15px;">${t('bizEndlessModeTitle')}</div>
+        <div class="tc-sub">${t('bizEndlessModeDesc')}</div>
+      </div>
+      <button class="biz-switch ${endlessOn?'on':''}" onclick="toggleBusinessEndlessMode()" aria-pressed="${endlessOn}"><span class="biz-switch-knob"></span></button>
+    </div>
     <div class="track-grid">${cards}</div>
   </div>
   `;
 }
 
+function toggleBusinessEndlessMode(){
+  state.businessEndlessMode = !state.businessEndlessMode;
+  render();
+}
+
 function startBusinessRound(category){
   const picks = shuffled(BUSINESS_CONCEPTS[category]).slice(0,3);
   state.businessSession = {
-    category, concepts:picks, learnIndex:0,
+    category, concepts:picks, learnIndex:0, endless:false,
     quizConcept:null, quizType:null, quizOptions:null, selected:null, input:'', answered:false, lastCorrect:null,
-    xpEarned:0, statementRows:null, stmtInputs:{},
+    xpEarned:0, lastXpGain:0, statementRows:null, stmtInputs:{},
   };
   state.screen = 'business_learn';
   render();
@@ -6781,7 +6820,8 @@ function nextBusinessLearn(){
 
 function startBusinessQuiz(){
   const s = state.businessSession;
-  const concept = s.concepts[randInt(0, s.concepts.length-1)];
+  const pool = s.endless ? BUSINESS_CONCEPTS[s.category] : s.concepts;
+  const concept = pool[randInt(0, pool.length-1)];
   const exposure = (state.game.conceptExposure && state.game.conceptExposure[concept.key]) || 0;
   s.quizConcept = concept;
   s.quizOptions = null;
@@ -6793,21 +6833,22 @@ function startBusinessQuiz(){
   } else {
     s.quizType = exposure===0 ? 'mcq' : 'typed';
     if(s.quizType==='mcq'){
-      const pool = BUSINESS_CONCEPTS[s.category].filter(c=>c.key!==concept.key);
-      const distractors = shuffled(pool).slice(0,3);
+      const distractorPool = BUSINESS_CONCEPTS[s.category].filter(c=>c.key!==concept.key);
+      const distractors = shuffled(distractorPool).slice(0,3);
       s.quizOptions = shuffled([concept, ...distractors]).map(c=>({key:c.key, label:t(c.titleKey), correct:c.key===concept.key}));
     }
   }
   s.selected = null; s.input=''; s.answered = false; s.lastCorrect = null;
-  state.screen = 'business_quiz';
+  state.screen = s.endless ? 'business_endless' : 'business_quiz';
   render();
   if(s.quizType==='typed') setTimeout(()=>{ const el=document.querySelector('.biz-input'); if(el) el.focus(); }, 30);
 }
 
-function renderBusinessQuiz(){
-  const s = state.businessSession;
-  const concept = s.quizConcept;
+function businessEyebrowKey(s){
+  return s.quizType==='mcq' ? 'bizMcqEyebrow' : (s.quizType==='statement' ? 'bizStatementEyebrow' : 'bizTypedEyebrow');
+}
 
+function renderBusinessQuizBody(s){
   const mcqHtml = s.quizType==='mcq' ? `
     <div class="options">
       ${s.quizOptions.map(o=>{
@@ -6837,32 +6878,125 @@ function renderBusinessQuiz(){
     </div>
     ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitBusinessStatement()">${t('checkBtn')}</button>` : ''}` : '';
 
-  const eyebrowKey = s.quizType==='mcq' ? 'bizMcqEyebrow' : (s.quizType==='statement' ? 'bizStatementEyebrow' : 'bizTypedEyebrow');
-  const feedback = s.answered ? `
+  return mcqHtml + typedHtml + statementHtml;
+}
+
+function businessFeedbackBar(s){
+  if(!s.answered) return '';
+  const concept = s.quizConcept;
+  const showAnswerHint = !s.lastCorrect && s.quizType!=='statement';
+  if(s.endless){
+    const willFinish = s.mistakes >= BUSINESS_MAX_MISTAKES;
+    return `
+    <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
+      <div class="fb-text">
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
+        ${showAnswerHint ? `<div class="fb-sub">${t('answerPrefix')}${t(concept.titleKey)}</div>` : ''}
+      </div>
+      <button class="btn btn-light" onclick="nextBusinessEndlessQuestion()">${willFinish ? t('finishBtn') : t('continueBtn')}</button>
+    </div>`;
+  }
+  return `
     <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
       <div class="fb-text">
         <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.xpEarned}) : t('notQuiteFeedback')}</div>
-        ${(!s.lastCorrect && s.quizType!=='statement') ? `<div class="fb-sub">${t('answerPrefix')}${t(concept.titleKey)}</div>` : ''}
+        ${showAnswerHint ? `<div class="fb-sub">${t('answerPrefix')}${t(concept.titleKey)}</div>` : ''}
       </div>
       <button class="btn btn-light" onclick="finishBusinessRound()">${t('bizSeeResultBtn')}</button>
-    </div>` : '';
+    </div>`;
+}
 
+function renderBusinessQuiz(){
+  const s = state.businessSession;
+  const concept = s.quizConcept;
   return `
   ${topbar({back:'backToBusinessMenu()'})}
   <div class="lesson">
-    <div style="font-size:12px; color:var(--snow-dim); text-align:center; margin-bottom:6px;">${t(eyebrowKey)}</div>
+    <div style="font-size:12px; color:var(--snow-dim); text-align:center; margin-bottom:6px;">${t(businessEyebrowKey(s))}</div>
     <div class="q-wrap">
       <div class="q-card">
         <div class="q-eyebrow">${t('bizQuizEyebrow')}</div>
         <div class="q-prompt" style="font-size:21px;">${t(concept.questionKey)}</div>
       </div>
-      ${mcqHtml}
-      ${typedHtml}
-      ${statementHtml}
+      ${renderBusinessQuizBody(s)}
     </div>
   </div>
-  ${feedback}
+  ${businessFeedbackBar(s)}
   `;
+}
+
+function renderBusinessEndless(){
+  const s = state.businessSession;
+  const concept = s.quizConcept;
+  return `
+  ${topbar({back:'exitBusinessEndless()'})}
+  <div class="lesson">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;">
+      <div class="hearts-row">${Array.from({length:BUSINESS_MAX_MISTAKES}).map((_,i)=>`<span>${i<(BUSINESS_MAX_MISTAKES-s.mistakes)?'❤️':'🩶'}</span>`).join('')}</div>
+      <div style="font-size:12px; color:var(--snow-dim); text-align:right;">${t('correctAnswersLabel')}: ${s.correct}${s.combo>=3?`<br><span style="color:var(--gold);">${comboBadge(s.combo)} ${t('comboLabel',{n:s.combo})}</span>`:''}</div>
+    </div>
+    <div style="font-size:12px; color:var(--snow-dim); text-align:center; margin-bottom:6px;">${t(businessEyebrowKey(s))}</div>
+    <div class="q-wrap">
+      <div class="q-card">
+        <div class="q-eyebrow">${t('bizQuizEyebrow')}</div>
+        <div class="q-prompt" style="font-size:21px;">${t(concept.questionKey)}</div>
+      </div>
+      ${renderBusinessQuizBody(s)}
+    </div>
+  </div>
+  ${businessFeedbackBar(s)}
+  `;
+}
+
+function nextBusinessEndlessQuestion(){
+  const s = state.businessSession;
+  if(s.mistakes>=BUSINESS_MAX_MISTAKES){ finishBusinessEndless(); return; }
+  startBusinessQuiz();
+}
+
+function exitBusinessEndless(){ state.screen='business_menu'; render(); }
+
+function finishBusinessEndless(){
+  const s = state.businessSession;
+  if(!state.game.business) state.game.business = {};
+  const rec = state.game.business[s.category] || (state.game.business[s.category] = {rounds:0});
+  s.isNewBest = s.correct > (rec.bestEndless||0);
+  if(s.isNewBest) rec.bestEndless = s.correct;
+  touchStreak();
+  s.newAchievements = checkAchievements(state.game);
+  state.screen = 'business_endless_result';
+  render();
+}
+
+function renderBusinessEndlessResult(){
+  const s = state.businessSession;
+  const rec = state.game.business[s.category];
+  const lvl = xpLevel(state.game.xp);
+  return `
+  ${topbar()}
+  <div class="complete ${appLangClass()}">
+    <div class="medal">${s.isNewBest ? '🏆' : '🎯'}</div>
+    <h2>${s.isNewBest ? t('newBestReached') : t('bizEndlessOverTitle')}</h2>
+    <div class="stat-row">
+      <div class="stat-box"><div class="val">${s.correct}</div><div class="lab">${t('correctAnswersLabel')}</div></div>
+      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
+    </div>
+    <div style="color:var(--snow-dim); font-size:13px;">${t('bizEndlessBestLabel',{n:rec.bestEndless||0})} · ${t('levelLabel',{n:lvl.level})}</div>
+    ${achievementBannerHtml(s.newAchievements)}
+    <button class="btn btn-primary btn-block" onclick="startBusinessEndless('${s.category}')">${t('bizEndlessRestartBtn')}</button>
+    <button class="btn btn-ghost btn-block" onclick="backToBusinessMenu()">${t('backToBusinessMenuBtn')}</button>
+  </div>`;
+}
+
+function startBusinessEndless(category){
+  state.businessSession = {
+    category, concepts:null, learnIndex:0, endless:true,
+    quizConcept:null, quizType:null, quizOptions:null, selected:null, input:'', answered:false, lastCorrect:null,
+    xpEarned:0, lastXpGain:0, statementRows:null, stmtInputs:{},
+    correct:0, mistakes:0, combo:0, maxCombo:0, isNewBest:false, newAchievements:[],
+  };
+  startBusinessQuiz();
 }
 
 function submitBusinessMcq(key){
@@ -6893,17 +7027,23 @@ function submitBusinessStatement(){
   render();
 }
 function finalizeBusinessAnswer(s){
-  if(s.lastCorrect){
-    const bonus = 10;
-    s.xpEarned = bonus;
-    state.game.xp += bonus;
-    state.game.totalCorrect = (state.game.totalCorrect||0) + 1;
-  } else {
-    s.xpEarned = 0;
-  }
   if(!state.game.conceptExposure) state.game.conceptExposure = {};
   const key = s.quizConcept.key;
   state.game.conceptExposure[key] = (state.game.conceptExposure[key]||0) + 1;
+
+  if(s.endless){
+    if(s.lastCorrect) s.lastXpGain = registerCorrectAnswer(s, state.game);
+    else { registerWrongAnswer(s); s.lastXpGain = 0; }
+  } else {
+    if(s.lastCorrect){
+      s.xpEarned = 10;
+      state.game.xp += 10;
+      state.game.totalCorrect = (state.game.totalCorrect||0) + 1;
+    } else {
+      s.xpEarned = 0;
+    }
+    s.lastXpGain = s.xpEarned;
+  }
 }
 
 function finishBusinessRound(){
