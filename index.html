@@ -4170,6 +4170,12 @@ const I18N = {
     bizTitle_job_costing: "Job Costing", bizExplain_job_costing: "Job costing traces direct materials, direct labour and allocated overhead to a specific job or batch — used when products or services are distinct, like a custom furniture order or an audit engagement.", bizQuestion_job_costing: "What costing system assigns direct materials, direct labour and overhead to a specific, distinct job or batch?",
     bizTitle_breakeven_point: "Breakeven Point", bizExplain_breakeven_point: "The breakeven point is where total revenue equals total costs — profit is zero. Above it, each additional unit's contribution margin becomes profit; below it, the business loses money.", bizQuestion_breakeven_point: "What is the point called where total revenue equals total costs and profit is zero?",
     bizTitle_responsibility_center: "Responsibility Center", bizExplain_responsibility_center: "A responsibility center is an organizational unit — like a department or division — whose manager is held accountable for a specific set of financial results, such as costs, revenues or profit.", bizQuestion_responsibility_center: "What term describes an organizational unit whose manager is accountable for its costs, revenue or profit?",
+    bizTitle_cost_driver: "Cost Driver", bizExplain_cost_driver: "A cost driver is a variable, such as the level of activity or volume, that causally affects costs over a given time span — for example machine hours or direct labour hours, used as the allocation base for overhead.", bizQuestion_cost_driver: "What term describes a variable, like machine hours, that causally affects costs over a given time span?",
+    bizTitle_relevant_range: "Relevant Range", bizExplain_relevant_range: "The relevant range is the range of activity — the upper and lower limits of production — within which assumptions about fixed and variable cost behaviour are expected to hold true.", bizQuestion_relevant_range: "What term describes the range of activity within which assumptions about fixed and variable cost behaviour hold true?",
+    bizTitle_contribution_margin: "Contribution Margin", bizExplain_contribution_margin: "Contribution margin is sales revenue minus variable costs — the amount left over to cover fixed costs and then contribute to profit. It can be calculated in total or per unit.", bizQuestion_contribution_margin: "What term describes sales revenue minus variable costs — the amount that covers fixed costs and then profit?",
+    bizTitle_budgetary_slack: "Budgetary Slack", bizExplain_budgetary_slack: "Budgetary slack is the practice of underestimating budgeted revenues or overestimating budgeted costs so that targets are easier to achieve — often used by managers to cope with uncertainty or guard against budget cuts.", bizQuestion_budgetary_slack: "What term describes underestimating revenues or overestimating costs in a budget to make targets easier to hit?",
+    bizTitle_overhead_allocation: "Overhead Allocation", bizExplain_overhead_allocation: "Overhead is allocated to jobs using a predetermined rate set before the period starts: Budgeted Overhead ÷ Budgeted Driver Quantity. During the period, Applied Overhead = Predetermined Rate × Actual Driver Quantity used.", bizQuestion_overhead_allocation: "Complete the overhead allocation schedule below.",
+    bizTitle_unit_manufacturing_cost: "Unit Manufacturing Cost", bizExplain_unit_manufacturing_cost: "Unit manufacturing cost combines Direct Materials, Direct Labour and Factory Overhead. Prime Cost is Direct Materials plus Direct Labour, while Conversion Cost is Direct Labour plus Factory Overhead.", bizQuestion_unit_manufacturing_cost: "Complete the unit manufacturing cost schedule below.",
     bizTitle_financial_accounting: "Financial Accounting", bizExplain_financial_accounting: "Financial accounting produces standardized statements — the income statement, balance sheet and cash flow statement — for external users like investors, lenders and regulators, following accounting standards.", bizQuestion_financial_accounting: "What branch of accounting produces standardized statements for external users like investors and lenders?",
     bizTitle_income_statement: "Income Statement", bizExplain_income_statement: "The income statement reports revenue, subtracts the cost of goods sold to find gross profit, then subtracts period expenses to arrive at profit for the period.", bizQuestion_income_statement: "Complete the income statement below.",
     bizTitle_work_in_process: "Work in Process", bizExplain_work_in_process: "Work in Process (WIP) is inventory that has entered production but is not yet finished — it holds the direct materials, direct labour and overhead applied so far.", bizQuestion_work_in_process: "What term describes inventory that has started production but is not yet finished?",
@@ -6639,6 +6645,34 @@ function buildBalanceSheetStatement(hard){
 function diagramFromStatement(buildFn){
   return () => renderStatementTable(buildFn(true).map(r=>Object.assign({},r,{blank:false})), {plain:true});
 }
+function buildOverheadAllocationStatement(hard){
+  const rate = randInt(2,20);
+  const budgetedDriverQty = randInt(500,5000);
+  const budgetedOH = rate*budgetedDriverQty;
+  const actualDriverQty = randInt(500,5000);
+  const appliedOH = rate*actualDriverQty;
+  return [
+    {label:'Budgeted Manufacturing Overhead', value:budgetedOH, key:'budgetedOH', blank:false},
+    {label:'Budgeted Driver Quantity (units)', value:budgetedDriverQty, key:'budgetedDriverQty', blank:false},
+    {label:'Predetermined OH Rate ($/unit)', value:rate, key:'rate', blank:hard},
+    {label:'Actual Driver Quantity (units)', value:actualDriverQty, key:'actualDriverQty', blank:false},
+    {label:'Applied Overhead', value:appliedOH, key:'appliedOH', blank:true},
+  ];
+}
+function buildUnitCostStatement(hard){
+  const dm = randInt(5,60);
+  const dl = randInt(5,60);
+  const oh = randInt(5,60);
+  const prime = dm+dl;
+  const unitCost = dm+dl+oh;
+  return [
+    {label:'Direct Materials', value:dm, key:'dm', blank:false},
+    {label:'Direct Labour', value:dl, key:'dl', blank:false},
+    {label:'Prime Cost', value:prime, key:'prime', blank:hard},
+    {label:'Factory Overhead', value:oh, key:'oh', blank:false},
+    {label:'Unit Manufacturing Cost', value:unitCost, key:'unitCost', blank:true},
+  ];
+}
 
 const BUSINESS_CONCEPTS = {
   finance: [
@@ -6697,6 +6731,20 @@ const BUSINESS_CONCEPTS = {
       quizVariant:'statement', buildStatement:buildCMStatement},
     {key:'responsibility_center', icon:'🧭', diagram:null, titleKey:'bizTitle_responsibility_center', explainKey:'bizExplain_responsibility_center', questionKey:'bizQuestion_responsibility_center',
       acceptedAnswers:{en:['responsibility center','responsibility centre']}},
+    {key:'cost_driver', icon:'🎯', diagram:null, titleKey:'bizTitle_cost_driver', explainKey:'bizExplain_cost_driver', questionKey:'bizQuestion_cost_driver',
+      acceptedAnswers:{en:['cost driver']}},
+    {key:'relevant_range', icon:'📏', diagram:null, titleKey:'bizTitle_relevant_range', explainKey:'bizExplain_relevant_range', questionKey:'bizQuestion_relevant_range',
+      acceptedAnswers:{en:['relevant range']}},
+    {key:'contribution_margin', icon:'💹', diagram:null, titleKey:'bizTitle_contribution_margin', explainKey:'bizExplain_contribution_margin', questionKey:'bizQuestion_contribution_margin',
+      acceptedAnswers:{en:['contribution margin']}},
+    {key:'budgetary_slack', icon:'🎈', diagram:null, titleKey:'bizTitle_budgetary_slack', explainKey:'bizExplain_budgetary_slack', questionKey:'bizQuestion_budgetary_slack',
+      acceptedAnswers:{en:['budgetary slack']}},
+    {key:'overhead_allocation', icon:'🧮', diagram:diagramFromStatement(buildOverheadAllocationStatement), titleKey:'bizTitle_overhead_allocation', explainKey:'bizExplain_overhead_allocation', questionKey:'bizQuestion_overhead_allocation',
+      acceptedAnswers:{en:['overhead allocation','applied overhead']},
+      quizVariant:'statement', buildStatement:buildOverheadAllocationStatement},
+    {key:'unit_manufacturing_cost', icon:'🏷️', diagram:diagramFromStatement(buildUnitCostStatement), titleKey:'bizTitle_unit_manufacturing_cost', explainKey:'bizExplain_unit_manufacturing_cost', questionKey:'bizQuestion_unit_manufacturing_cost',
+      acceptedAnswers:{en:['unit manufacturing cost']},
+      quizVariant:'statement', buildStatement:buildUnitCostStatement},
   ],
   finacct: [
     {key:'financial_accounting', icon:'📑', diagram:null, titleKey:'bizTitle_financial_accounting', explainKey:'bizExplain_financial_accounting', questionKey:'bizQuestion_financial_accounting',
