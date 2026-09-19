@@ -245,6 +245,18 @@
   }
   .algebra-input:focus{outline:2px solid var(--gold); outline-offset:1px;}
   .algebra-input::placeholder{color:var(--snow-dim); opacity:.6;}
+  .stmt-table{width:100%; border-collapse:collapse; font-size:14px;}
+  .stmt-row{display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid rgba(255,255,255,.1);}
+  .stmt-row:last-child{border-bottom:none; padding-top:10px; border-top:2px solid rgba(255,255,255,.25); font-weight:700;}
+  .stmt-label{color:var(--snow-dim); flex:1;}
+  .stmt-row:last-child .stmt-label{color:var(--snow);}
+  .stmt-value{font-family:var(--font-display); font-weight:700; min-width:90px; text-align:right;}
+  .stmt-input{
+    width:100px; text-align:right; font-family:var(--font-display); font-weight:700; font-size:14px;
+    background:rgba(255,255,255,.07); border:1px solid var(--gold); border-radius:8px; color:var(--snow); padding:6px 8px;
+  }
+  .stmt-value.stmt-correct{color:var(--good);}
+  .stmt-value.stmt-wrong{color:var(--bad);}
   .auth-error{background:rgba(225,88,75,.18); border:1px solid rgba(225,88,75,.5); color:var(--snow); border-radius:10px; padding:10px 12px; font-size:13px;}
 
   @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
@@ -4144,6 +4156,21 @@ const I18N = {
     bizFinanceTitle: "Finance", bizFinanceDesc: "Money, investing and how businesses manage it",
     bizEconomicsTitle: "Economics", bizEconomicsDesc: "How markets, prices and economies work",
     bizTechTitle: "Tech Companies", bizTechDesc: "The companies building today's technology",
+    bizMgmtAcctTitle: "Management Accounting", bizMgmtAcctDesc: "Cost behavior, job costing and breakeven analysis",
+    bizFinAcctTitle: "Financial Accounting", bizFinAcctDesc: "Financial statements and how they're built",
+    bizStatementEyebrow: "Fill in the missing figures",
+    bizTitle_indirect_costs: "Indirect Costs", bizExplain_indirect_costs: "Indirect costs (overhead) cannot be traced directly to a single product or job — like factory rent or a supervisor's salary. They must be allocated across products using a cost driver.", bizQuestion_indirect_costs: "What term describes costs like factory rent that cannot be traced directly to one product?",
+    bizTitle_variable_costs: "Variable Costs", bizExplain_variable_costs: "Variable costs change in direct proportion to the level of activity — the more units produced, the higher the total variable cost, but the cost per unit stays constant.", bizQuestion_variable_costs: "What term describes costs that change in direct proportion to activity level, like raw materials?",
+    bizTitle_fixed_costs: "Fixed Costs", bizExplain_fixed_costs: "Fixed costs stay the same in total regardless of activity level within a relevant range — like rent or a manager's salary — but the cost per unit falls as volume rises.", bizQuestion_fixed_costs: "What term describes costs that stay the same in total no matter how many units are produced, like rent?",
+    bizTitle_job_costing: "Job Costing", bizExplain_job_costing: "Job costing traces direct materials, direct labour and allocated overhead to a specific job or batch — used when products or services are distinct, like a custom furniture order or an audit engagement.", bizQuestion_job_costing: "What costing system assigns direct materials, direct labour and overhead to a specific, distinct job or batch?",
+    bizTitle_breakeven_point: "Breakeven Point", bizExplain_breakeven_point: "The breakeven point is where total revenue equals total costs — profit is zero. Above it, each additional unit's contribution margin becomes profit; below it, the business loses money.", bizQuestion_breakeven_point: "What is the point called where total revenue equals total costs and profit is zero?",
+    bizTitle_responsibility_center: "Responsibility Center", bizExplain_responsibility_center: "A responsibility center is an organizational unit — like a department or division — whose manager is held accountable for a specific set of financial results, such as costs, revenues or profit.", bizQuestion_responsibility_center: "What term describes an organizational unit whose manager is accountable for its costs, revenue or profit?",
+    bizTitle_financial_accounting: "Financial Accounting", bizExplain_financial_accounting: "Financial accounting produces standardized statements — the income statement, balance sheet and cash flow statement — for external users like investors, lenders and regulators, following accounting standards.", bizQuestion_financial_accounting: "What branch of accounting produces standardized statements for external users like investors and lenders?",
+    bizTitle_income_statement: "Income Statement", bizExplain_income_statement: "The income statement reports revenue, subtracts the cost of goods sold to find gross profit, then subtracts period expenses to arrive at profit for the period.", bizQuestion_income_statement: "Complete the income statement below.",
+    bizTitle_work_in_process: "Work in Process", bizExplain_work_in_process: "Work in Process (WIP) is inventory that has entered production but is not yet finished — it holds the direct materials, direct labour and overhead applied so far.", bizQuestion_work_in_process: "What term describes inventory that has started production but is not yet finished?",
+    bizTitle_cogm: "Cost of Goods Manufactured", bizExplain_cogm: "Cost of Goods Manufactured (COGM) adds opening Work in Process to total manufacturing costs incurred during the period, then subtracts closing Work in Process.", bizQuestion_cogm: "Complete the schedule of Cost of Goods Manufactured below.",
+    bizTitle_cogs: "Cost of Goods Sold", bizExplain_cogs: "Cost of Goods Sold (COGS) adds opening Finished Goods inventory to the Cost of Goods Manufactured during the period, then subtracts closing Finished Goods inventory.", bizQuestion_cogs: "Complete the Cost of Goods Sold schedule below.",
+    bizTitle_balance_sheet: "Balance Sheet", bizExplain_balance_sheet: "The balance sheet shows what a business owns and owes at a point in time. Total Assets always equal Total Liabilities plus Total Equity.", bizQuestion_balance_sheet: "Complete the balance sheet below.",
     bizRoundsLabel: "{n} rounds done",
     bizLearnEyebrow: "Concept {n} of {total}",
     bizNextConceptBtn: "Next concept",
@@ -4479,6 +4506,9 @@ const I18N = {
     bizFinanceTitle: "金融", bizFinanceDesc: "金钱、投资，以及企业如何管理它们",
     bizEconomicsTitle: "经济学", bizEconomicsDesc: "市场、价格与经济如何运作",
     bizTechTitle: "科技公司", bizTechDesc: "打造当今科技的公司们",
+    bizMgmtAcctTitle: "管理会计", bizMgmtAcctDesc: "成本行为、工作成本法与损益平衡分析",
+    bizFinAcctTitle: "财务会计", bizFinAcctDesc: "财务报表及其编制方法",
+    bizStatementEyebrow: "填写缺失的数字",
     bizRoundsLabel: "已完成{n}轮",
     bizLearnEyebrow: "概念 {n}/{total}",
     bizNextConceptBtn: "下一个概念",
@@ -4814,6 +4844,9 @@ const I18N = {
     bizFinanceTitle: "དངུལ་རྩིས།", bizFinanceDesc: "དངུལ, རྩ་ཆེའི་བཙོང་ཉོ, ཚོང་ལས་ཀྱིས་དེ་དག་ཇི་ལྟར་སྐྱོང་མིན།",
     bizEconomicsTitle: "དཔལ་འབྱོར་རིག་པ།", bizEconomicsDesc: "ཚོང་ར, གོང་ཚད, དཔལ་འབྱོར་ཇི་ལྟར་འཕེལ་མིན།",
     bizTechTitle: "ལག་རྩལ་ཚོང་ལས།", bizTechDesc: "དེང་སྐབས་ཀྱི་ལག་རྩལ་བཟོ་མཁན་གྱི་ཚོང་ལས་ཁག",
+    bizMgmtAcctTitle: "འཛིན་སྐྱོང་རྩིས་ཁྲ།", bizMgmtAcctDesc: "འགྲོ་སོང་གི་རང་བཞིན, ལས་ཀའི་རིན་རྩིས, ཉེར་འདོན་ཆ་མཉམ་གྱི་དབྱེ་ཞིབ།",
+    bizFinAcctTitle: "དངུལ་རྩིས་རྩིས་ཁྲ།", bizFinAcctDesc: "དངུལ་རྩིས་སྙན་ཐོ་དང་དེ་ཇི་ལྟར་བཟོ་མིན།",
+    bizStatementEyebrow: "མེད་པའི་གྲངས་ཀ་ཁ་སྐོང་རྒྱོབ།",
     bizRoundsLabel: "ཐེངས་{n}གྲུབ་ཟིན།",
     bizLearnEyebrow: "དོན་ཚན {n}/{total}",
     bizNextConceptBtn: "དོན་ཚན་རྗེས་མ།",
@@ -6449,6 +6482,144 @@ function diagramElasticity(){
     <text x="118" y="154" style="fill:rgba(255,255,255,.5); font-size:9px;">${t('bizAxisQuantity')}</text>
   </svg>`;
 }
+function diagramBreakeven(){
+  return `<svg viewBox="0 0 280 160" style="width:100%; height:auto;">
+    <line x1="30" y1="140" x2="260" y2="140" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <line x1="30" y1="140" x2="30" y2="15" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <path d="M30 140 L240 30" style="stroke:var(--good); fill:none;" stroke-width="2.5"/>
+    <path d="M30 100 L240 55" style="stroke:var(--ice); fill:none;" stroke-width="2.5"/>
+    <circle cx="146" cy="76" r="4" style="fill:var(--gold);"/>
+    <text x="105" y="70" style="fill:var(--gold); font-size:9px;">Breakeven</text>
+    <text x="215" y="35" style="fill:var(--good); font-size:10px;">TR</text>
+    <text x="215" y="60" style="fill:var(--ice); font-size:10px;">TC</text>
+    <text x="120" y="154" style="fill:rgba(255,255,255,.5); font-size:9px;">Quantity →</text>
+    <text x="8" y="80" style="fill:rgba(255,255,255,.5); font-size:9px;" transform="rotate(-90 8 80)">$</text>
+  </svg>`;
+}
+
+// ---- financial statement "figures": a plain HTML table (label left, value
+// right), reused both as a read-only worked example on the Learn screen and
+// as an interactive fill-in-the-blank exercise during the quiz — the
+// "figures of financial statements where the user can fill in missing
+// information based on calculation" the user asked for. Money is formatted
+// accounting-style (parentheses for negatives) since that's the convention
+// used throughout the source lecture slides, and typed answers accept that
+// same style back (parens, a leading minus, $ signs, thousands commas).
+function formatMoney(n){
+  const neg = n<0;
+  const s = Math.abs(Math.round(n)).toLocaleString('en-US');
+  return neg ? `(${s})` : s;
+}
+function normalizeMoneyAnswer(str){
+  if(!str) return null;
+  let s = String(str).trim().replace(/[$,\s]/g,'');
+  let neg = false;
+  if(/^\(.*\)$/.test(s)){ neg = true; s = s.slice(1,-1); }
+  if(s.startsWith('-')){ neg = true; s = s.slice(1); }
+  if(s==='') return null;
+  const num = parseFloat(s);
+  if(isNaN(num)) return null;
+  return neg ? -num : num;
+}
+function checkStatementAnswer(rows, inputs){
+  const correctness = {};
+  let allCorrect = true;
+  rows.filter(r=>r.blank).forEach(r=>{
+    const typed = normalizeMoneyAnswer(inputs[r.key]);
+    const ok = typed!==null && Math.abs(typed - r.value) < 0.5;
+    correctness[r.key] = ok;
+    if(!ok) allCorrect = false;
+  });
+  return {allCorrect, correctness};
+}
+function renderStatementTable(rows, opts){
+  opts = opts || {};
+  const plain = !!opts.plain;
+  const inputs = opts.inputs || {};
+  const answered = !!opts.answered;
+  const correctness = opts.correctness || {};
+  const rowsHtml = rows.map(r=>{
+    if(!plain && r.blank && !answered){
+      return `<div class="stmt-row"><div class="stmt-label">${r.label}</div><input class="stmt-input" data-key="${r.key}" type="text" inputmode="numeric" placeholder="?" value="${inputs[r.key]||''}" oninput="state.businessSession.stmtInputs['${r.key}']=this.value"></div>`;
+    }
+    if(!plain && r.blank && answered){
+      const ok = correctness[r.key];
+      return `<div class="stmt-row"><div class="stmt-label">${r.label}</div><div class="stmt-value ${ok?'stmt-correct':'stmt-wrong'}">${formatMoney(r.value)}</div></div>`;
+    }
+    return `<div class="stmt-row"><div class="stmt-label">${r.label}</div><div class="stmt-value">${formatMoney(r.value)}</div></div>`;
+  }).join('');
+  return `<div class="stmt-table">${rowsHtml}</div>`;
+}
+
+function buildCMStatement(hard){
+  const sp = randInt(3,12), vc = randInt(1, sp-1);
+  const units = randInt(2,10)*1000;
+  const fc = randInt(5,40)*1000;
+  const revenue = sp*units, varCosts = vc*units;
+  const cm = revenue-varCosts, profit = cm-fc;
+  return [
+    {label:'Sales Revenue', value:revenue, key:'revenue', blank:false},
+    {label:'Less: Variable Costs', value:varCosts, key:'vc', blank:false},
+    {label:'Contribution Margin', value:cm, key:'cm', blank:true},
+    {label:'Less: Fixed Costs', value:fc, key:'fc', blank:false},
+    {label:'Profit/(Loss)', value:profit, key:'profit', blank:hard},
+  ];
+}
+function buildIncomeStatement(hard){
+  const revenue = randInt(50,200)*100;
+  const cogs = randInt(20,Math.floor(revenue/100)-10)*100;
+  const gp = revenue-cogs;
+  const expenses = randInt(5,Math.max(6,Math.floor(gp/100)-5))*100;
+  const profit = gp-expenses;
+  return [
+    {label:'Revenue', value:revenue, key:'revenue', blank:false},
+    {label:'Less: Cost of Goods Sold', value:cogs, key:'cogs', blank:false},
+    {label:'Gross Profit', value:gp, key:'gp', blank:true},
+    {label:'Less: Period Expenses', value:expenses, key:'expenses', blank:false},
+    {label:'Profit', value:profit, key:'profit', blank:hard},
+  ];
+}
+function buildCOGMStatement(hard){
+  const openWIP = randInt(5,50)*10;
+  const dm = randInt(20,100)*10, dl = randInt(20,100)*10, oh = randInt(10,80)*10;
+  const mfg = dm+dl+oh;
+  const closeWIP = randInt(5,50)*10;
+  const cogm = openWIP+mfg-closeWIP;
+  return [
+    {label:'Opening Work in Process', value:openWIP, key:'openWIP', blank:false},
+    {label:'Direct Materials', value:dm, key:'dm', blank:false},
+    {label:'Direct Labour', value:dl, key:'dl', blank:false},
+    {label:'Manufacturing Overhead', value:oh, key:'oh', blank:false},
+    {label:'Total Manufacturing Costs', value:mfg, key:'mfg', blank:hard},
+    {label:'Less: Closing Work in Process', value:closeWIP, key:'closeWIP', blank:false},
+    {label:'Cost of Goods Manufactured', value:cogm, key:'cogm', blank:true},
+  ];
+}
+function buildCOGSStatement(hard){
+  const openFG = randInt(5,50)*10;
+  const cogm = randInt(50,300)*10;
+  const closeFG = randInt(5,50)*10;
+  const cogs = openFG+cogm-closeFG;
+  return [
+    {label:'Opening Finished Goods', value:openFG, key:'openFG', blank:false},
+    {label:'Add: Cost of Goods Manufactured', value:cogm, key:'cogm', blank:false},
+    {label:'Less: Closing Finished Goods', value:closeFG, key:'closeFG', blank:hard},
+    {label:'Cost of Goods Sold', value:cogs, key:'cogs', blank:true},
+  ];
+}
+function buildBalanceSheetStatement(hard){
+  const liabilities = randInt(20,150)*100;
+  const equity = randInt(20,150)*100;
+  const assets = liabilities+equity;
+  return [
+    {label:'Total Liabilities', value:liabilities, key:'liabilities', blank:hard},
+    {label:'Total Equity', value:equity, key:'equity', blank:false},
+    {label:'Total Assets', value:assets, key:'assets', blank:true},
+  ];
+}
+function diagramFromStatement(buildFn){
+  return () => renderStatementTable(buildFn(true).map(r=>Object.assign({},r,{blank:false})), {plain:true});
+}
 
 const BUSINESS_CONCEPTS = {
   finance: [
@@ -6493,6 +6664,39 @@ const BUSINESS_CONCEPTS = {
     {key:'nvidia', icon:'🎮', diagram:null, titleKey:'bizTitle_nvidia', explainKey:'bizExplain_nvidia', questionKey:'bizQuestion_nvidia',
       acceptedAnswers:{en:['nvidia'], zh:['英伟达'], bo:['nvidia']}},
   ],
+  mgmtacct: [
+    {key:'indirect_costs', icon:'🏭', diagram:null, titleKey:'bizTitle_indirect_costs', explainKey:'bizExplain_indirect_costs', questionKey:'bizQuestion_indirect_costs',
+      acceptedAnswers:{en:['indirect costs','overhead','overheads','indirect cost']}},
+    {key:'variable_costs', icon:'📈', diagram:null, titleKey:'bizTitle_variable_costs', explainKey:'bizExplain_variable_costs', questionKey:'bizQuestion_variable_costs',
+      acceptedAnswers:{en:['variable costs','variable cost']}},
+    {key:'fixed_costs', icon:'🏢', diagram:null, titleKey:'bizTitle_fixed_costs', explainKey:'bizExplain_fixed_costs', questionKey:'bizQuestion_fixed_costs',
+      acceptedAnswers:{en:['fixed costs','fixed cost']}},
+    {key:'job_costing', icon:'🔧', diagram:null, titleKey:'bizTitle_job_costing', explainKey:'bizExplain_job_costing', questionKey:'bizQuestion_job_costing',
+      acceptedAnswers:{en:['job costing']}},
+    {key:'breakeven_point', icon:'⚖️', diagram:diagramBreakeven, titleKey:'bizTitle_breakeven_point', explainKey:'bizExplain_breakeven_point', questionKey:'bizQuestion_breakeven_point',
+      acceptedAnswers:{en:['breakeven point','break-even point','breakeven','break-even']},
+      quizVariant:'statement', buildStatement:buildCMStatement},
+    {key:'responsibility_center', icon:'🧭', diagram:null, titleKey:'bizTitle_responsibility_center', explainKey:'bizExplain_responsibility_center', questionKey:'bizQuestion_responsibility_center',
+      acceptedAnswers:{en:['responsibility center','responsibility centre']}},
+  ],
+  finacct: [
+    {key:'financial_accounting', icon:'📑', diagram:null, titleKey:'bizTitle_financial_accounting', explainKey:'bizExplain_financial_accounting', questionKey:'bizQuestion_financial_accounting',
+      acceptedAnswers:{en:['financial accounting']}},
+    {key:'income_statement', icon:'📄', diagram:diagramFromStatement(buildIncomeStatement), titleKey:'bizTitle_income_statement', explainKey:'bizExplain_income_statement', questionKey:'bizQuestion_income_statement',
+      acceptedAnswers:{en:['income statement','profit and loss statement','p&l']},
+      quizVariant:'statement', buildStatement:buildIncomeStatement},
+    {key:'work_in_process', icon:'🏗️', diagram:null, titleKey:'bizTitle_work_in_process', explainKey:'bizExplain_work_in_process', questionKey:'bizQuestion_work_in_process',
+      acceptedAnswers:{en:['work in process','work in progress','wip']}},
+    {key:'cogm', icon:'🏭', diagram:diagramFromStatement(buildCOGMStatement), titleKey:'bizTitle_cogm', explainKey:'bizExplain_cogm', questionKey:'bizQuestion_cogm',
+      acceptedAnswers:{en:['cost of goods manufactured','cogm']},
+      quizVariant:'statement', buildStatement:buildCOGMStatement},
+    {key:'cogs', icon:'🧾', diagram:diagramFromStatement(buildCOGSStatement), titleKey:'bizTitle_cogs', explainKey:'bizExplain_cogs', questionKey:'bizQuestion_cogs',
+      acceptedAnswers:{en:['cost of goods sold','cogs']},
+      quizVariant:'statement', buildStatement:buildCOGSStatement},
+    {key:'balance_sheet', icon:'⚖️', diagram:diagramFromStatement(buildBalanceSheetStatement), titleKey:'bizTitle_balance_sheet', explainKey:'bizExplain_balance_sheet', questionKey:'bizQuestion_balance_sheet',
+      acceptedAnswers:{en:['balance sheet']},
+      quizVariant:'statement', buildStatement:buildBalanceSheetStatement},
+  ],
 };
 function bizConceptByKey(category, key){ return BUSINESS_CONCEPTS[category].find(c=>c.key===key); }
 function normalizeTermAnswer(s){
@@ -6509,6 +6713,8 @@ function renderBusinessMenu(){
     {key:'finance', icon:'💰', titleKey:'bizFinanceTitle', descKey:'bizFinanceDesc'},
     {key:'economics', icon:'📉', titleKey:'bizEconomicsTitle', descKey:'bizEconomicsDesc'},
     {key:'tech', icon:'💻', titleKey:'bizTechTitle', descKey:'bizTechDesc'},
+    {key:'mgmtacct', icon:'📊', titleKey:'bizMgmtAcctTitle', descKey:'bizMgmtAcctDesc'},
+    {key:'finacct', icon:'📑', titleKey:'bizFinAcctTitle', descKey:'bizFinAcctDesc'},
   ];
   const cards = cats.map(cat=>{
     const rounds = (state.game.business && state.game.business[cat.key]) ? state.game.business[cat.key].rounds : 0;
@@ -6540,7 +6746,7 @@ function startBusinessRound(category){
   state.businessSession = {
     category, concepts:picks, learnIndex:0,
     quizConcept:null, quizType:null, quizOptions:null, selected:null, input:'', answered:false, lastCorrect:null,
-    xpEarned:0,
+    xpEarned:0, statementRows:null, stmtInputs:{},
   };
   state.screen = 'business_learn';
   render();
@@ -6578,13 +6784,19 @@ function startBusinessQuiz(){
   const concept = s.concepts[randInt(0, s.concepts.length-1)];
   const exposure = (state.game.conceptExposure && state.game.conceptExposure[concept.key]) || 0;
   s.quizConcept = concept;
-  s.quizType = exposure===0 ? 'mcq' : 'typed';
-  if(s.quizType==='mcq'){
-    const pool = BUSINESS_CONCEPTS[s.category].filter(c=>c.key!==concept.key);
-    const distractors = shuffled(pool).slice(0,3);
-    s.quizOptions = shuffled([concept, ...distractors]).map(c=>({key:c.key, label:t(c.titleKey), correct:c.key===concept.key}));
+  s.quizOptions = null;
+  s.statementRows = null;
+  s.stmtInputs = {};
+  if(concept.quizVariant==='statement'){
+    s.quizType = 'statement';
+    s.statementRows = concept.buildStatement(exposure > 0);
   } else {
-    s.quizOptions = null;
+    s.quizType = exposure===0 ? 'mcq' : 'typed';
+    if(s.quizType==='mcq'){
+      const pool = BUSINESS_CONCEPTS[s.category].filter(c=>c.key!==concept.key);
+      const distractors = shuffled(pool).slice(0,3);
+      s.quizOptions = shuffled([concept, ...distractors]).map(c=>({key:c.key, label:t(c.titleKey), correct:c.key===concept.key}));
+    }
   }
   s.selected = null; s.input=''; s.answered = false; s.lastCorrect = null;
   state.screen = 'business_quiz';
@@ -6619,11 +6831,18 @@ function renderBusinessQuiz(){
       ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitBusinessTyped()">${t('checkBtn')}</button>` : ''}
     </div>` : '';
 
+  const statementHtml = s.quizType==='statement' ? `
+    <div class="profile-card" style="text-align:left;">
+      ${renderStatementTable(s.statementRows, {inputs:s.stmtInputs, answered:s.answered, correctness:s.stmtCorrectness||{}})}
+    </div>
+    ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitBusinessStatement()">${t('checkBtn')}</button>` : ''}` : '';
+
+  const eyebrowKey = s.quizType==='mcq' ? 'bizMcqEyebrow' : (s.quizType==='statement' ? 'bizStatementEyebrow' : 'bizTypedEyebrow');
   const feedback = s.answered ? `
     <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
       <div class="fb-text">
         <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.xpEarned}) : t('notQuiteFeedback')}</div>
-        ${!s.lastCorrect ? `<div class="fb-sub">${t('answerPrefix')}${t(concept.titleKey)}</div>` : ''}
+        ${(!s.lastCorrect && s.quizType!=='statement') ? `<div class="fb-sub">${t('answerPrefix')}${t(concept.titleKey)}</div>` : ''}
       </div>
       <button class="btn btn-light" onclick="finishBusinessRound()">${t('bizSeeResultBtn')}</button>
     </div>` : '';
@@ -6631,7 +6850,7 @@ function renderBusinessQuiz(){
   return `
   ${topbar({back:'backToBusinessMenu()'})}
   <div class="lesson">
-    <div style="font-size:12px; color:var(--snow-dim); text-align:center; margin-bottom:6px;">${s.quizType==='mcq' ? t('bizMcqEyebrow') : t('bizTypedEyebrow')}</div>
+    <div style="font-size:12px; color:var(--snow-dim); text-align:center; margin-bottom:6px;">${t(eyebrowKey)}</div>
     <div class="q-wrap">
       <div class="q-card">
         <div class="q-eyebrow">${t('bizQuizEyebrow')}</div>
@@ -6639,6 +6858,7 @@ function renderBusinessQuiz(){
       </div>
       ${mcqHtml}
       ${typedHtml}
+      ${statementHtml}
     </div>
   </div>
   ${feedback}
@@ -6659,6 +6879,16 @@ function submitBusinessTyped(){
   if(s.answered || !s.input.trim()) return;
   s.answered = true;
   s.lastCorrect = checkBusinessTyped(s.quizConcept, s.input);
+  finalizeBusinessAnswer(s);
+  render();
+}
+function submitBusinessStatement(){
+  const s = state.businessSession;
+  if(s.answered) return;
+  const {allCorrect, correctness} = checkStatementAnswer(s.statementRows, s.stmtInputs);
+  s.answered = true;
+  s.lastCorrect = allCorrect;
+  s.stmtCorrectness = correctness;
   finalizeBusinessAnswer(s);
   render();
 }
