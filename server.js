@@ -160,7 +160,11 @@ function createApp(overrides = {}) {
   const AZURE_SPEECH_REGION = process.env.AZURE_SPEECH_REGION || null;
   const TTS_CACHE_DIR = overrides.ttsCacheDir || path.join(__dirname, 'data', 'tts-cache');
 
-  // ---- Stripe: Premium subscription (unlocks levels 6-15) ---------------------
+  // ---- Stripe: Premium subscription (unlocks the final 2 levels: Frontier of
+  // Science and Summit of Fluency) --------------------------------------------
+  // Deliberately narrow for now — growth strategy is free-almost-everything
+  // until the user base clears ~3000, then widen the paywall back out. See
+  // the `paid:true` flags on LEVELS in index.html for what's actually locked.
   // Two regional monthly prices, auto-created on startup so there's no manual
   // dashboard clicking to get the price IDs right — same self-bootstrap
   // philosophy as the `create table if not exists` below.
@@ -192,15 +196,15 @@ function createApp(overrides = {}) {
   const PRODUCT_TRANSLATIONS = {
     en: {
       name: 'Yeshe Premium',
-      description: 'Unlocks the full 15-level Yeshe route (Daily Life Trail through Summit of Fluency).',
+      description: 'Unlocks the final two levels of the Yeshe route: Frontier of Science and Summit of Fluency.',
     },
     zh: {
       name: 'Yeshe 高级版',
-      description: '解锁完整的15级Yeshe学习路线（从日常生活之路到流利之巅）。',
+      description: '解锁Yeshe学习路线的最后两关：「科学前沿」和「流利之巅」。',
     },
     bo: {
       name: 'Yeshe མཐོ་རིམ།',
-      description: 'Yeshe ཡི་ཚན་པ་15 ཧྲིལ་པོའི་ལམ་ཁ་ཕྱེ་ཐུབ། (བརྗོད་གཞིའི་ལམ་ནས་ཤིན་ཏུ་མཁས་པའི་རྩེ་མོ་བར།)',
+      description: 'Yeshe ཡི་ལམ་ཁའི་མཐའ་མའི་ཚན་པ་གཉིས་ཁ་ཕྱེ་ཐུབ། ཚན་པ 14 དང 15།',
     },
   };
   const STRIPE_CHECKOUT_LOCALE = { en: 'en', zh: 'zh', bo: 'zh' };
@@ -221,6 +225,15 @@ function createApp(overrides = {}) {
             name: text.name,
             description: text.description,
             metadata: { app: STRIPE_PRODUCT_METADATA_KEY, lang },
+          });
+        } else if (product.name !== text.name || product.description !== text.description) {
+          // Keep an already-created product's copy in sync with the code —
+          // otherwise editing PRODUCT_TRANSLATIONS here would silently do
+          // nothing once the product exists, since it's only ever created
+          // once above.
+          product = await stripe.products.update(product.id, {
+            name: text.name,
+            description: text.description,
           });
         }
 

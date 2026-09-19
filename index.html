@@ -84,6 +84,30 @@
   .track-card .tc-sub{font-size:12.5px; color:var(--snow-dim); margin-top:4px;}
   .track-card .tc-progress{margin-left:auto; font-size:12px; color:var(--snow-dim); text-align:right; flex-shrink:0;}
 
+  .section-heading{font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--gold); font-weight:700; margin:0 2px -8px;}
+  .stats-strip{
+    display:flex; align-items:center; justify-content:space-between; width:100%; text-align:left;
+    border:1px solid rgba(255,255,255,.1); border-radius:14px; padding:14px 16px;
+    background:linear-gradient(160deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+    color:var(--snow); box-shadow:var(--shadow);
+  }
+  .stats-strip:active{transform:scale(.98);}
+  .stats-strip .stat-chips{display:flex; gap:14px;}
+  .stats-strip .stat-chip{display:flex; flex-direction:column; align-items:flex-start; gap:1px;}
+  .stats-strip .stat-chip .v{font-family:var(--font-display); font-weight:700; font-size:16px;}
+  .stats-strip .stat-chip .l{font-size:10px; color:var(--snow-dim);}
+  .stats-strip .see-more{font-size:12px; color:var(--gold); font-weight:600; flex-shrink:0;}
+  .practice-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
+  .practice-tile{
+    display:flex; flex-direction:column; align-items:center; gap:7px; text-align:center;
+    border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:16px 6px 12px;
+    background:linear-gradient(160deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+    color:var(--snow); box-shadow:var(--shadow);
+  }
+  .practice-tile:active{transform:scale(.97);}
+  .practice-tile .glyph{font-size:24px; width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:rgba(232,163,61,.15);}
+  .practice-tile .pt-title{font-family:var(--font-display); font-weight:700; font-size:12.5px; line-height:1.25;}
+
   .map-wrap{flex:1; display:flex; flex-direction:column;}
   .map-scroll{flex:1; padding:20px 10px 50px; position:relative;}
   .route{position:relative; padding:10px 30px; display:flex; flex-direction:column; align-items:center; gap:56px;}
@@ -3526,42 +3550,42 @@ const LEVELS = [
     modules: LEVEL5_MODULES
   },
 {
-    icon:'🏘️', title:'Daily Life Trail', subtitle:'Everyday Routines', range:'Modules 43–52', built:true, paid:true,
+    icon:'🏘️', title:'Daily Life Trail', subtitle:'Everyday Routines', range:'Modules 43–52', built:true,
     milestone:'Describe your daily routine — waking, dressing, eating, and the small things around you.',
     modules: LEVEL6_MODULES
   },
   {
-    icon:'👨‍👩‍👧‍👦', title:'Kinship Path', subtitle:'Family & Friends', range:'Modules 53–62', built:true, paid:true,
+    icon:'👨‍👩‍👧‍👦', title:'Kinship Path', subtitle:'Family & Friends', range:'Modules 53–62', built:true,
     milestone:'Talk about family, friends, teachers, and the people in your life.',
     modules: LEVEL7_MODULES
   },
   {
-    icon:'🧭', title:'Wayfarer\'s Route', subtitle:'Places & Travel', range:'Modules 63–72', built:true, paid:true,
+    icon:'🧭', title:'Wayfarer\'s Route', subtitle:'Places & Travel', range:'Modules 63–72', built:true,
     milestone:'Navigate markets, cities, and journeys — and give simple directions.',
     modules: LEVEL8_MODULES
   },
   {
-    icon:'⛅', title:'Sky & Seasons', subtitle:'Weather, Time & Nature', range:'Modules 73–82', built:true, paid:true,
+    icon:'⛅', title:'Sky & Seasons', subtitle:'Weather, Time & Nature', range:'Modules 73–82', built:true,
     milestone:'Discuss weather, time, seasons, and the natural world.',
     modules: LEVEL9_MODULES
   },
   {
-    icon:'💻', title:'Digital Ascent', subtitle:'School & Technology', range:'Modules 83–92', built:true, paid:true,
+    icon:'💻', title:'Digital Ascent', subtitle:'School & Technology', range:'Modules 83–92', built:true,
     milestone:'Talk about school, learning, computers, and technology.',
     modules: LEVEL10_MODULES
   },
   {
-    icon:'🛒', title:'Market Trail', subtitle:'Food & Daily Chores', range:'Modules 93–102', built:true, paid:true,
+    icon:'🛒', title:'Market Trail', subtitle:'Food & Daily Chores', range:'Modules 93–102', built:true,
     milestone:'Handle food, shopping, money, and everyday chores.',
     modules: LEVEL11_MODULES
   },
   {
-    icon:'💬', title:'Heart\'s Voice', subtitle:'Feelings & Communication', range:'Modules 103–112', built:true, paid:true,
+    icon:'💬', title:'Heart\'s Voice', subtitle:'Feelings & Communication', range:'Modules 103–112', built:true,
     milestone:'Express feelings, share opinions, and communicate clearly.',
     modules: LEVEL12_MODULES
   },
   {
-    icon:'📈', title:'Trade Winds', subtitle:'Society, Economics & Business', range:'Modules 113–122', built:true, paid:true,
+    icon:'📈', title:'Trade Winds', subtitle:'Society, Economics & Business', range:'Modules 113–122', built:true,
     milestone:'Discuss economics, business, and working life.',
     modules: LEVEL13_MODULES
   },
@@ -3905,12 +3929,13 @@ const I18N = {
     homeSub: "Four routes up the same mountain — choose the language you already speak, and climb a 40-module path toward the one you're learning: words → sentences → conversations → ideas.",
     modulesDone: "{n} modules done", startArrow: "Start →",
     myProgress: "⛺ My progress",
+    sectionLanguagesLabel: "Languages", sectionPracticeLabel: "Math Practice",
     studyTopicBtn: "📚 Study a Topic",
     topicsTitle: "Study a Topic", topicsSub: "Pick a subject and learn its vocabulary in depth — no need to climb the main route first.",
     premiumLabel: "Premium", premiumBadge: "🔒 Premium",
     paywallTitle: "Unlock Premium",
-    paywallBody: "This level is part of Premium. Subscribe to unlock Daily Life Trail through Summit of Fluency (levels 6-15).",
-    paywallBodyLevel: "\"{level}\" is part of Premium. Subscribe to unlock Daily Life Trail through Summit of Fluency (levels 6-15).",
+    paywallBody: "This level is part of Premium. Subscribe to unlock the final two levels: Frontier of Science and Summit of Fluency.",
+    paywallBodyLevel: "\"{level}\" is part of Premium. Subscribe to unlock the final two levels: Frontier of Science and Summit of Fluency.",
     planUS: "🌍 Rest of world — $1.00 / month", planCN: "🇨🇳 China / Tibet — ¥5.00 / month",
     paywallSubscribe: "Subscribe", paywallLoading: "Redirecting to checkout…",
     paywallFooter: "Payment is handled securely by Stripe. Cancel anytime.",
@@ -4141,12 +4166,13 @@ const I18N = {
     homeSub: "同一座山，四条路线 — 选择你已经会说的语言，沿着40个单元攀登，学习一门新语言：单词 → 句子 → 对话 → 思想。",
     modulesDone: "已完成 {n} 个单元", startArrow: "开始 →",
     myProgress: "⛺ 我的进度",
+    sectionLanguagesLabel: "语言", sectionPracticeLabel: "数学练习",
     studyTopicBtn: "📚 学习一个主题",
     topicsTitle: "学习一个主题", topicsSub: "选择一个主题，深入学习相关词汇 — 不需要先完成主线路线。",
     premiumLabel: "会员专享", premiumBadge: "🔒 会员专享",
     paywallTitle: "解锁会员",
-    paywallBody: "此关卡属于会员内容。订阅后可解锁「日常生活之路」到「流利之巅」（第6-15关）。",
-    paywallBodyLevel: "「{level}」属于会员内容。订阅后可解锁「日常生活之路」到「流利之巅」（第6-15关）。",
+    paywallBody: "此关卡属于会员内容。订阅后可解锁最后两关：「科学前沿」和「流利之巅」。",
+    paywallBodyLevel: "「{level}」属于会员内容。订阅后可解锁最后两关：「科学前沿」和「流利之巅」。",
     planUS: "🌍 其他地区 — 每月 $1.00", planCN: "🇨🇳 中国 / 西藏 — 每月 ¥5.00",
     paywallSubscribe: "订阅", paywallLoading: "正在跳转至结账页面…",
     paywallFooter: "付款由 Stripe 安全处理，可随时取消。",
@@ -4377,12 +4403,13 @@ const I18N = {
     homeSub: "རི་བོ་གཅིག་ལ་ལམ་བཞི། ད་ལྟ་ཤེས་པའི་སྐད་ཡིག་འདེམས་ནས་, ཚན་པ་40ཡི་ལམ་ནས་སྐད་ཡིག་གསར་པ་ཞིག་སློབ་སྦྱོང་གྱིས: ཚིག → ཚིག་གྲུབ → གླེང་མོལ → བསམ་ཚུལ།",
     modulesDone: "ཚན་པ་{n}གྲུབ་ཟིན།", startArrow: "འགོ་འཛུགས →",
     myProgress: "⛺ ངའི་ཡར་རྒྱས།",
+    sectionLanguagesLabel: "སྐད་ཡིག", sectionPracticeLabel: "རྩིས་རིག་སྦྱོང་བརྡར།",
     studyTopicBtn: "📚 བརྗོད་གཞིག་སློབ་སྦྱོང་།",
     topicsTitle: "བརྗོད་གཞིག་སློབ་སྦྱོང་།", topicsSub: "བརྗོད་གཞི་ཞིག་འདེམས་ནས་དེའི་ཟུར་ཚིག་ཟབ་མོར་སློབ་སྦྱོང་གྱིས — ཐོག་མར་གཞུང་ལམ་མཇུག་སྐྱོང་མི་དགོས།",
     premiumLabel: "མཐོ་རིམ།", premiumBadge: "🔒 མཐོ་རིམ།",
     paywallTitle: "མཐོ་རིམ་འཇུས་སྐྱོང་།",
-    paywallBody: "ཚན་པ་འདི་མཐོ་རིམ་ཞབས་ཞུའི་ནང་ཚུད་ཡོད། ཉོ་སྒྲིག་བྱས་ན་ 'བརྗོད་གཞིའི་ལམ' ནས་ 'ཤིན་ཏུ་མཁས་པའི་རྩེ་མོ' བར (ཚན་པ 6-15) ཁ་ཕྱེ་ཐུབ།",
-    paywallBodyLevel: "\"{level}\" མཐོ་རིམ་ཞབས་ཞུའི་ནང་ཚུད་ཡོད། ཉོ་སྒྲིག་བྱས་ན་ 'བརྗོད་གཞིའི་ལམ' ནས་ 'ཤིན་ཏུ་མཁས་པའི་རྩེ་མོ' བར (ཚན་པ 6-15) ཁ་ཕྱེ་ཐུབ།",
+    paywallBody: "ཚན་པ་འདི་མཐོ་རིམ་ཞབས་ཞུའི་ནང་ཚུད་ཡོད། ཉོ་སྒྲིག་བྱས་ན་མཐའ་མའི་ཚན་པ་གཉིས་ཁ་ཕྱེ་ཐུབ: 'ཚན་རིག་མཐའ་མཚམས' དང 'ཤིན་ཏུ་མཁས་པའི་རྩེ་མོ'།",
+    paywallBodyLevel: "\"{level}\" མཐོ་རིམ་ཞབས་ཞུའི་ནང་ཚུད་ཡོད། ཉོ་སྒྲིག་བྱས་ན་མཐའ་མའི་ཚན་པ་གཉིས་ཁ་ཕྱེ་ཐུབ: 'ཚན་རིག་མཐའ་མཚམས' དང 'ཤིན་ཏུ་མཁས་པའི་རྩེ་མོ'།",
     planUS: "🌍 ས་གནས་གཞན། — ཟླ་རེར་ $1.00", planCN: "🇨🇳 རྒྱ་ནག / བོད། — ཟླ་རེར་ ¥5.00",
     paywallSubscribe: "ཉོ་སྒྲིག", paywallLoading: "འཇལ་སྒྲིག་ཐང་ལ་སྐྱེལ་བཞིན་ཡོད…",
     paywallFooter: "དངུལ་སྤྲོད་ལེན་ Stripe ཡིས་ཉེན་མེད་ངང་སྒྲུབ་ཀྱི་ཡོད། ནམ་ཡང་ཕྱིར་འཐེན་ཆོག",
@@ -4871,6 +4898,32 @@ function renderHome(){
       <button class="iconbtn" style="flex:none;" onclick="state.checkoutResult=null; render();">✕</button>
     </div>` : '';
 
+  const lvl = xpLevel(state.game.xp);
+  const statsStrip = `
+    <button class="stats-strip" onclick="goProfile()">
+      <div class="stat-chips">
+        <div class="stat-chip"><div class="v">🔥 ${state.game.streak}</div><div class="l">${t('dayStreak')}</div></div>
+        <div class="stat-chip"><div class="v">⭐ ${state.game.xp}</div><div class="l">${t('levelLabel',{n:lvl.level})}</div></div>
+      </div>
+      <div class="see-more">${t('myProgress')} →</div>
+    </button>`;
+
+  const practiceGrid = `
+    <div class="practice-grid">
+      <button class="practice-tile" onclick="state.screen='math_menu'; render();">
+        <div class="glyph">🧮</div>
+        <div class="pt-title">${t('mentalMathTitle')}</div>
+      </button>
+      <button class="practice-tile" onclick="state.screen='algebra_menu'; render();">
+        <div class="glyph">📐</div>
+        <div class="pt-title">${t('algebraTitle')}</div>
+      </button>
+      <button class="practice-tile" onclick="state.screen='calc_menu'; render();">
+        <div class="glyph">📈</div>
+        <div class="pt-title">${t('calculusTitle')}</div>
+      </button>
+    </div>`;
+
   return `
   ${topbar({back:'state.screen="pick_language"; render();'})}
   <div class="home ${appLangClass()}">
@@ -4879,11 +4932,11 @@ function renderHome(){
       <h1>ཡེ་ཤེས་ <span style="color:var(--gold)">Yeshe</span></h1>
       <div class="sub">${t('homeSub')}</div>
     </div>
+    ${statsStrip}
+    <div class="section-heading">${t('sectionLanguagesLabel')}</div>
     <div class="track-grid">${cards}</div>
-    <button class="btn btn-ghost btn-block" onclick="state.screen='math_menu'; render();">${t('mentalMathBtn')}</button>
-    <button class="btn btn-ghost btn-block" onclick="state.screen='algebra_menu'; render();">${t('algebraBtn')}</button>
-    <button class="btn btn-ghost btn-block" onclick="state.screen='calc_menu'; render();">${t('calculusBtn')}</button>
-    <button class="btn btn-ghost btn-block" onclick="goProfile()">${t('myProgress')}</button>
+    <div class="section-heading">${t('sectionPracticeLabel')}</div>
+    ${practiceGrid}
   </div>
   <div class="footer-note">${t('homeFooter')}</div>
   `;
