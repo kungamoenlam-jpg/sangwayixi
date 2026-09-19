@@ -97,7 +97,7 @@
   .stats-strip .stat-chip .v{font-family:var(--font-display); font-weight:700; font-size:16px;}
   .stats-strip .stat-chip .l{font-size:10px; color:var(--snow-dim);}
   .stats-strip .see-more{font-size:12px; color:var(--gold); font-weight:600; flex-shrink:0;}
-  .practice-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;}
+  .practice-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
   .practice-tile{
     display:flex; flex-direction:column; align-items:center; gap:7px; text-align:center;
     border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:16px 6px 12px;
@@ -3766,6 +3766,8 @@ function defaultGame(){
     math:{easy:{best:0}, medium:{best:0}, hard:{best:0}}, // difficulty -> best correct-answer count
     algebra:{}, // topic key -> {best: correct-answer count}
     calculus:{}, // topic key -> {best: correct-answer count}
+    business:{}, // category key -> {rounds: completed-rounds count}
+    conceptExposure:{}, // concept key -> times tested (drives MCQ -> typed progression)
     totalCorrect:0, bestCombo:0, achievements:[] // shared across all practice modes
   };
 }
@@ -3794,6 +3796,7 @@ function defaultAppState(){
     mathSession:null,
     algebraSession:null,
     calcSession:null,
+    businessSession:null,
     subscription: {active:false, status:null, plan:null, periodEnd:null},
     paywallFrom: null,
     paywallRegion: 'us',
@@ -4135,6 +4138,104 @@ const I18N = {
     calcLearn_definite_integrals: "A definite integral ∫ from a to b of f(x) dx gives the net signed area under f(x) between x=a and x=b. The Fundamental Theorem of Calculus says you can compute it as F(b) - F(a), where F is any antiderivative of f.\n\nExample: evaluate ∫ from 1 to 3 of 2x dx.\nAn antiderivative is F(x) = x². F(3) - F(1) = 9 - 1 = 8.",
     calcDefIntegralPrompt: "Evaluate: ∫ from {a} to {b} of ({expr}) dx",
     calcDefIntegralExplain: "The antiderivative is F(x) = {FExpr}. By the Fundamental Theorem of Calculus: ∫ = F({b}) - F({a}) = {Fb} - ({Fa}) = {answer}.",
+
+    businessTitle: "Business Concepts",
+    businessSub: "Finance, economics and the tech companies shaping them. Learn 3 concepts, then get quizzed on one — multiple choice the first time, typed from memory after that.",
+    bizFinanceTitle: "Finance", bizFinanceDesc: "Money, investing and how businesses manage it",
+    bizEconomicsTitle: "Economics", bizEconomicsDesc: "How markets, prices and economies work",
+    bizTechTitle: "Tech Companies", bizTechDesc: "The companies building today's technology",
+    bizRoundsLabel: "{n} rounds done",
+    bizLearnEyebrow: "Concept {n} of {total}",
+    bizNextConceptBtn: "Next concept",
+    bizStartQuizBtn: "Start quiz",
+    bizQuizEyebrow: "Quiz",
+    bizMcqEyebrow: "Choose the right term",
+    bizTypedEyebrow: "Type the term from memory",
+    bizTypedPlaceholder: "Your answer",
+    bizSeeResultBtn: "See result",
+    bizRoundDoneTitle: "Round complete",
+    bizRoundsCompletedLabel: "Rounds completed",
+    bizNextRoundBtn: "Next round →",
+    backToBusinessMenuBtn: "Back to Business Concepts",
+    bizAxisTime: "Time →", bizAxisQuantity: "Quantity →",
+    bizLabelSimple: "Simple", bizLabelCompound: "Compound",
+    bizLabelStocks: "Stocks 30%", bizLabelBonds: "Bonds 25%", bizLabelRealEstate: "Real Estate 25%", bizLabelCash: "Cash 20%",
+    bizLabelRevenue: "Revenue", bizLabelExpenses: "Expenses", bizLabelNetCash1: "Net Cash", bizLabelNetCash2: "Flow",
+    bizLabelEquilibrium: "Equilibrium", bizLabelSupply: "Supply", bizLabelDemand: "Demand",
+    bizLabelPriceLevel: "Price Level",
+    bizLabelInelastic: "Inelastic (steep)", bizLabelElastic: "Elastic (flat)",
+
+    bizTitle_compound_interest: "Compound Interest",
+    bizExplain_compound_interest: "Compound interest is interest calculated on both the amount you originally invested or borrowed (the principal) and all the interest that has already accumulated. Because each period's interest gets added back to the principal, growth accelerates over time — this is why starting to invest early matters so much.",
+    bizQuestion_compound_interest: "What term describes interest earned on both the principal and previously earned interest?",
+
+    bizTitle_diversification: "Diversification",
+    bizExplain_diversification: "Diversification means spreading your money across different investments — stocks, bonds, industries, countries — instead of putting it all in one place. If one investment performs badly, others may offset the loss, reducing overall risk without necessarily reducing expected return.",
+    bizQuestion_diversification: "What term describes spreading investments across different assets to reduce risk?",
+
+    bizTitle_cash_flow: "Cash Flow",
+    bizExplain_cash_flow: "Cash flow is the net amount of money moving into and out of a business over a period of time. Positive cash flow means more money is coming in than going out; negative cash flow means the opposite — even a profitable company can fail if it runs out of cash.",
+    bizQuestion_cash_flow: "What term describes the net amount of money moving in and out of a business?",
+
+    bizTitle_liquidity: "Liquidity",
+    bizExplain_liquidity: "Liquidity describes how quickly and easily an asset can be converted into cash without losing value. Cash itself is perfectly liquid; real estate is illiquid because selling it takes time and effort. Businesses need enough liquid assets to cover short-term obligations.",
+    bizQuestion_liquidity: "What term describes how easily an asset can be converted into cash?",
+
+    bizTitle_roi: "Return on Investment",
+    bizExplain_roi: "Return on Investment (ROI) measures how much profit an investment generates relative to its cost. It's calculated as (Gain − Cost) ÷ Cost, expressed as a percentage. A higher ROI means the investment was more efficient at generating profit.",
+    bizQuestion_roi: "What metric measures the profit an investment generates relative to its cost?",
+
+    bizTitle_ipo: "IPO",
+    bizExplain_ipo: "An IPO, or Initial Public Offering, is the first time a private company sells shares of stock to the public on a stock exchange. It lets the company raise money from public investors, but also means it must start disclosing financial information regularly.",
+    bizQuestion_ipo: "What is it called when a private company first sells shares to the public?",
+
+    bizTitle_supply_demand: "Supply and Demand",
+    bizExplain_supply_demand: "Supply and demand describes how price is determined in a market. As price rises, suppliers want to sell more (supply increases) but buyers want less (demand decreases). The price where the supply and demand curves meet is called equilibrium — where the market naturally settles.",
+    bizQuestion_supply_demand: "What term describes the price point where supply and demand curves intersect?",
+
+    bizTitle_opportunity_cost: "Opportunity Cost",
+    bizExplain_opportunity_cost: "Opportunity cost is the value of the next-best alternative you give up when you make a choice. If you spend an hour studying instead of working a job that pays $20/hour, your opportunity cost of studying is $20 — even though no money actually changed hands.",
+    bizQuestion_opportunity_cost: "What term describes the value of the next-best option you give up when making a choice?",
+
+    bizTitle_inflation: "Inflation",
+    bizExplain_inflation: "Inflation is the rate at which the general price level of goods and services rises over time, reducing the purchasing power of money. Moderate inflation is normal in a healthy economy, but high inflation erodes savings and makes planning difficult.",
+    bizQuestion_inflation: "What term describes a general rise in prices over time that reduces money's purchasing power?",
+
+    bizTitle_gdp: "GDP",
+    bizExplain_gdp: "GDP, or Gross Domestic Product, is the total monetary value of all finished goods and services produced within a country in a given period. It's the most common measure of the size and health of a country's economy.",
+    bizQuestion_gdp: "What is the total value of all goods and services produced in a country called?",
+
+    bizTitle_elasticity: "Elasticity",
+    bizExplain_elasticity: "Elasticity measures how much the quantity demanded (or supplied) of a good changes when its price changes. A good is 'elastic' if demand changes a lot with price, like luxury items; it's 'inelastic' if demand barely changes, like essential medicine.",
+    bizQuestion_elasticity: "What term describes how much quantity demanded changes in response to a price change?",
+
+    bizTitle_monopoly: "Monopoly",
+    bizExplain_monopoly: "A monopoly exists when a single company is the only seller of a good or service in a market, giving it significant control over price since there's no competition. Governments often regulate monopolies to protect consumers.",
+    bizQuestion_monopoly: "What term describes a market with only one seller controlling supply?",
+
+    bizTitle_apple: "Apple",
+    bizExplain_apple: "Apple Inc. was founded in 1976 by Steve Jobs, Steve Wozniak, and Ronald Wayne in Cupertino, California. It's best known for the iPhone, Mac computers, and iPad, and became the first U.S. company to reach a $3 trillion market valuation.",
+    bizQuestion_apple: "Which company makes the iPhone and is headquartered in Cupertino, California?",
+
+    bizTitle_google: "Google",
+    bizExplain_google: "Google was founded in 1998 by Larry Page and Sergey Brin as a search engine. Its parent company, Alphabet, now also owns YouTube and Android — Google's primary revenue source is online advertising.",
+    bizQuestion_google: "Which company's parent is Alphabet and makes most of its money from online advertising?",
+
+    bizTitle_amazon: "Amazon",
+    bizExplain_amazon: "Amazon started in 1994 as an online bookstore founded by Jeff Bezos. It has grown into the world's largest e-commerce retailer and also runs Amazon Web Services (AWS), the leading cloud computing platform, which generates most of its profit.",
+    bizQuestion_amazon: "Which company started as an online bookstore and now runs the leading cloud platform, AWS?",
+
+    bizTitle_microsoft: "Microsoft",
+    bizExplain_microsoft: "Microsoft was founded in 1975 by Bill Gates and Paul Allen. It's best known for the Windows operating system and Office software, and is now a major player in cloud computing through Azure, having invested heavily in OpenAI.",
+    bizQuestion_microsoft: "Which company makes Windows and Office, and invested heavily in OpenAI?",
+
+    bizTitle_tesla: "Tesla",
+    bizExplain_tesla: "Tesla was founded in 2003 and is led by Elon Musk. It's best known for electric vehicles, but also builds energy storage products like the Powerwall and solar panels, aiming to accelerate the world's shift to sustainable energy.",
+    bizQuestion_tesla: "Which electric vehicle company also makes the Powerwall energy storage product?",
+
+    bizTitle_nvidia: "Nvidia",
+    bizExplain_nvidia: "Nvidia designs GPUs (graphics processing units) originally built for video games, but its chips turned out to be extremely well-suited for AI computation. This made Nvidia one of the most valuable companies in the world during the AI boom of the 2020s.",
+    bizQuestion_nvidia: "Which company's GPU chips became central to the AI boom of the 2020s?",
   },
   zh: {
     heroSub: "创建账户，在所有设备上保存你的学习进度。",
@@ -4372,6 +4473,104 @@ const I18N = {
     calcLearn_definite_integrals: "定积分 ∫ 从a到b的 f(x) dx 表示 f(x) 在 x=a 到 x=b 之间的净有向面积。微积分基本定理告诉我们，可以用 F(b) - F(a) 来计算它，其中F是f的任意一个原函数。\n\n例题：计算 ∫ 从1到3的 2x dx。\n一个原函数是 F(x) = x²。F(3) - F(1) = 9 - 1 = 8。",
     calcDefIntegralPrompt: "计算：∫ 从 {a} 到 {b} 的 ({expr}) dx",
     calcDefIntegralExplain: "原函数是 F(x) = {FExpr}。根据微积分基本定理：∫ = F({b}) - F({a}) = {Fb} - ({Fa}) = {answer}。",
+
+    businessTitle: "商业概念",
+    businessSub: "金融、经济学，以及塑造它们的科技公司。先学习3个概念，再接受其中一个的测验——第一次是选择题，之后要凭记忆手动输入。",
+    bizFinanceTitle: "金融", bizFinanceDesc: "金钱、投资，以及企业如何管理它们",
+    bizEconomicsTitle: "经济学", bizEconomicsDesc: "市场、价格与经济如何运作",
+    bizTechTitle: "科技公司", bizTechDesc: "打造当今科技的公司们",
+    bizRoundsLabel: "已完成{n}轮",
+    bizLearnEyebrow: "概念 {n}/{total}",
+    bizNextConceptBtn: "下一个概念",
+    bizStartQuizBtn: "开始测验",
+    bizQuizEyebrow: "测验",
+    bizMcqEyebrow: "选择正确的术语",
+    bizTypedEyebrow: "凭记忆输入术语",
+    bizTypedPlaceholder: "输入答案",
+    bizSeeResultBtn: "查看结果",
+    bizRoundDoneTitle: "本轮完成",
+    bizRoundsCompletedLabel: "已完成轮数",
+    bizNextRoundBtn: "下一轮 →",
+    backToBusinessMenuBtn: "返回商业概念",
+    bizAxisTime: "时间 →", bizAxisQuantity: "数量 →",
+    bizLabelSimple: "单利", bizLabelCompound: "复利",
+    bizLabelStocks: "股票 30%", bizLabelBonds: "债券 25%", bizLabelRealEstate: "房地产 25%", bizLabelCash: "现金 20%",
+    bizLabelRevenue: "收入", bizLabelExpenses: "支出", bizLabelNetCash1: "净现金", bizLabelNetCash2: "流量",
+    bizLabelEquilibrium: "均衡点", bizLabelSupply: "供给", bizLabelDemand: "需求",
+    bizLabelPriceLevel: "价格水平",
+    bizLabelInelastic: "缺乏弹性（陡）", bizLabelElastic: "有弹性（平）",
+
+    bizTitle_compound_interest: "复利",
+    bizExplain_compound_interest: "复利是指按本金和已累积的利息一起计算的利息。由于每一期的利息都会加回本金，增长会随时间加速——这就是为什么尽早开始投资如此重要。",
+    bizQuestion_compound_interest: "既对本金也对已获得的利息计算的利息叫什么？",
+
+    bizTitle_diversification: "多元化投资",
+    bizExplain_diversification: "多元化投资是指把资金分散投入不同的投资标的——股票、债券、行业、国家——而不是全部投入一处。如果某项投资表现不好，其他投资可能会抵消损失，从而在不必降低预期收益的情况下降低整体风险。",
+    bizQuestion_diversification: "把投资分散到不同资产以降低风险的策略叫什么？",
+
+    bizTitle_cash_flow: "现金流",
+    bizExplain_cash_flow: "现金流是指一段时间内流入和流出企业的资金净额。正现金流意味着流入的钱多于流出的钱；负现金流则相反——即使是盈利的公司，如果现金耗尽也可能倒闭。",
+    bizQuestion_cash_flow: "描述企业资金净流入流出的术语是什么？",
+
+    bizTitle_liquidity: "流动性",
+    bizExplain_liquidity: "流动性描述的是一项资产能多快、多容易地转换成现金而不损失价值。现金本身具有完全的流动性；房地产流动性差，因为出售它需要时间和精力。企业需要足够的流动资产来应付短期债务。",
+    bizQuestion_liquidity: "描述一项资产能多容易转换成现金的术语是什么？",
+
+    bizTitle_roi: "投资回报率",
+    bizExplain_roi: "投资回报率（ROI）衡量一项投资相对于其成本所产生的利润。计算方式为（收益－成本）÷成本，以百分比表示。ROI越高，说明该投资产生利润的效率越高。",
+    bizQuestion_roi: "衡量投资相对于其成本所产生利润的指标叫什么？",
+
+    bizTitle_ipo: "首次公开募股",
+    bizExplain_ipo: "IPO，即首次公开募股，是指一家私人公司首次在证券交易所向公众出售股票。这让公司能从公众投资者那里筹集资金，但也意味着它必须开始定期披露财务信息。",
+    bizQuestion_ipo: "私人公司首次向公众出售股票叫做什么？",
+
+    bizTitle_supply_demand: "供给与需求",
+    bizExplain_supply_demand: "供给与需求描述了市场中价格是如何决定的。价格上升时，供应商想卖得更多（供给增加），但买家想买得更少（需求减少）。供给曲线和需求曲线相交的价格点叫做均衡——市场自然稳定下来的地方。",
+    bizQuestion_supply_demand: "供给曲线和需求曲线相交的价格点叫什么？",
+
+    bizTitle_opportunity_cost: "机会成本",
+    bizExplain_opportunity_cost: "机会成本是指做出选择时放弃的次优选项的价值。如果你花一小时学习，而不是去做一份时薪20美元的工作，那么你学习的机会成本就是20美元——即使实际上没有钱易手。",
+    bizQuestion_opportunity_cost: "做出选择时放弃的次优选项的价值叫什么？",
+
+    bizTitle_inflation: "通货膨胀",
+    bizExplain_inflation: "通货膨胀是指商品和服务的总体价格水平随时间上升的速度，这会降低货币的购买力。适度的通货膨胀在健康的经济中是正常的，但高通胀会侵蚀储蓄，使规划变得困难。",
+    bizQuestion_inflation: "描述物价随时间普遍上升、降低货币购买力的术语是什么？",
+
+    bizTitle_gdp: "国内生产总值",
+    bizExplain_gdp: "GDP，即国内生产总值，是指一个国家在一定时期内生产的所有最终商品和服务的总货币价值。它是衡量一个国家经济规模和健康状况最常用的指标。",
+    bizQuestion_gdp: "一个国家生产的所有商品和服务的总价值叫什么？",
+
+    bizTitle_elasticity: "弹性",
+    bizExplain_elasticity: "弹性衡量的是某商品的需求量（或供给量）在价格变化时变化的程度。如果需求随价格变化很大（比如奢侈品），这种商品就是'弹性'的；如果需求几乎不变（比如必需药品），就是'缺乏弹性'的。",
+    bizQuestion_elasticity: "描述需求量对价格变化反应程度的术语是什么？",
+
+    bizTitle_monopoly: "垄断",
+    bizExplain_monopoly: "当市场上只有一家公司是某种商品或服务的唯一卖家时，就存在垄断，这让它由于没有竞争而对价格拥有很大的控制力。政府经常对垄断进行监管以保护消费者。",
+    bizQuestion_monopoly: "描述只有一个卖家控制供给的市场的术语是什么？",
+
+    bizTitle_apple: "苹果",
+    bizExplain_apple: "苹果公司由史蒂夫·乔布斯、史蒂夫·沃兹尼亚克和罗纳德·韦恩于1976年在加利福尼亚州库比蒂诺创立。它以iPhone、Mac电脑和iPad闻名，并成为美国第一家市值达到3万亿美元的公司。",
+    bizQuestion_apple: "哪家公司生产iPhone，总部位于加州库比蒂诺？",
+
+    bizTitle_google: "谷歌",
+    bizExplain_google: "谷歌由拉里·佩奇和谢尔盖·布林于1998年创立，最初是一个搜索引擎。它的母公司Alphabet现在还拥有YouTube和Android——谷歌的主要收入来源是网络广告。",
+    bizQuestion_google: "哪家公司的母公司是Alphabet，主要靠网络广告盈利？",
+
+    bizTitle_amazon: "亚马逊",
+    bizExplain_amazon: "亚马逊由杰夫·贝索斯于1994年创立，最初是一家网上书店。它已发展成为全球最大的电商零售商，同时运营着领先的云计算平台亚马逊云服务（AWS），这是其利润的主要来源。",
+    bizQuestion_amazon: "哪家公司最初是网上书店，现在运营着领先的云平台AWS？",
+
+    bizTitle_microsoft: "微软",
+    bizExplain_microsoft: "微软由比尔·盖茨和保罗·艾伦于1975年创立。它以Windows操作系统和Office软件闻名，如今也通过Azure在云计算领域占据重要地位，并对OpenAI进行了大量投资。",
+    bizQuestion_microsoft: "哪家公司生产Windows和Office，并对OpenAI进行了大量投资？",
+
+    bizTitle_tesla: "特斯拉",
+    bizExplain_tesla: "特斯拉成立于2003年，由埃隆·马斯克领导。它以电动汽车闻名，但也生产储能产品（如Powerwall）和太阳能板，旨在加速全球向可持续能源的转型。",
+    bizQuestion_tesla: "哪家电动汽车公司也生产Powerwall储能产品？",
+
+    bizTitle_nvidia: "英伟达",
+    bizExplain_nvidia: "英伟达设计的GPU（图形处理器）最初是为电子游戏而制造的，但其芯片被证明非常适合AI计算。这让英伟达在2020年代的AI浪潮中成为全球最具价值的公司之一。",
+    bizQuestion_nvidia: "哪家公司的GPU芯片成为2020年代AI浪潮的核心？",
   },
   bo: {
     heroSub: "འཕྲུལ་ཆས་སོ་སོའི་ཐོག་ཁྱེད་ཀྱི་ཡར་རྒྱས་ཉར་ཚགས་བྱེད་ཆེད་རྩིས་ཐོ་ཞིག་གསར་སྐྲུན་གྱིས།",
@@ -4609,6 +4808,104 @@ const I18N = {
     calcLearn_definite_integrals: "མཚམས་ཅན་སྡོམ་རྩིས ∫ a ནས b བར f(x) dx ནི x=a ནས x=b བར f(x)འོག་གི་མངོན་གསལ་ཁྱོན་སྟོན། འཕེལ་འགྲིབ་རྩིས་ཀྱི་གཞི་རྩའི་གྲུབ་དོན་ལྟར F(b) - F(a) གིས་རྩིས་ཐུབ, F ནི f ཡི་ཕྱིར་འཕྲོས་རྩིས་གང་རུང་ཡིན།\n\nདཔེར་བརྗོད། ∫ 1 ནས 3 བར 2x dx རྩིས་ཤིག།\nཕྱིར་འཕྲོས་རྩིས་གཅིག་ནི F(x) = x²། F(3) - F(1) = 9 - 1 = 8།",
     calcDefIntegralPrompt: "རྩིས་ཤིག: ∫ {a} ནས {b} བར ({expr}) dx",
     calcDefIntegralExplain: "ཕྱིར་འཕྲོས་རྩིས་ནི F(x) = {FExpr}། འཕེལ་འགྲིབ་རྩིས་ཀྱི་གཞི་རྩའི་གྲུབ་དོན་ལྟར: ∫ = F({b}) - F({a}) = {Fb} - ({Fa}) = {answer}།",
+
+    businessTitle: "ཚོང་ལས་དོན་ཚན།",
+    businessSub: "དངུལ་རྩིས, དཔལ་འབྱོར་རིག་པ, དེ་དག་བཟོ་མཁན་གྱི་ལག་རྩལ་ཚོང་ལས། དོན་ཚན 3 སློབ་ནས་གཅིག་གི་ཐད་ཀར་བརྟག་ཞིབ་བྱེད། ཐོག་མར་གདམ་ཁ་བཞིའི་དྲི་བ, རྗེས་སུ་དྲན་པ་ལས་ཡིག་འབྲི་དགོས།",
+    bizFinanceTitle: "དངུལ་རྩིས།", bizFinanceDesc: "དངུལ, རྩ་ཆེའི་བཙོང་ཉོ, ཚོང་ལས་ཀྱིས་དེ་དག་ཇི་ལྟར་སྐྱོང་མིན།",
+    bizEconomicsTitle: "དཔལ་འབྱོར་རིག་པ།", bizEconomicsDesc: "ཚོང་ར, གོང་ཚད, དཔལ་འབྱོར་ཇི་ལྟར་འཕེལ་མིན།",
+    bizTechTitle: "ལག་རྩལ་ཚོང་ལས།", bizTechDesc: "དེང་སྐབས་ཀྱི་ལག་རྩལ་བཟོ་མཁན་གྱི་ཚོང་ལས་ཁག",
+    bizRoundsLabel: "ཐེངས་{n}གྲུབ་ཟིན།",
+    bizLearnEyebrow: "དོན་ཚན {n}/{total}",
+    bizNextConceptBtn: "དོན་ཚན་རྗེས་མ།",
+    bizStartQuizBtn: "བརྟག་ཞིབ་འགོ་འཛུགས།",
+    bizQuizEyebrow: "བརྟག་ཞིབ།",
+    bizMcqEyebrow: "མིང་ཚིག་ངེས་ཅན་འདེམས་ཤིག",
+    bizTypedEyebrow: "དྲན་པ་ལས་མིང་ཚིག་འབྲི་ཤིག",
+    bizTypedPlaceholder: "ལན་འབྲི་རོགས།",
+    bizSeeResultBtn: "འབྲས་བུ་ལྟོས།",
+    bizRoundDoneTitle: "ཐེངས་འདི་གྲུབ།",
+    bizRoundsCompletedLabel: "གྲུབ་ཟིན་པའི་ཐེངས།",
+    bizNextRoundBtn: "ཐེངས་རྗེས་མ →",
+    backToBusinessMenuBtn: "ཚོང་ལས་དོན་ཚན་སུ་ལོག",
+    bizAxisTime: "དུས་ཚོད →", bizAxisQuantity: "གྲངས་ཚད →",
+    bizLabelSimple: "རྐྱང་སྐྱེད", bizLabelCompound: "འདུས་སྐྱེད",
+    bizLabelStocks: "མཛོད་ཆ 30%", bizLabelBonds: "བུ་ལོན་ཡིག་ཆ 25%", bizLabelRealEstate: "ས་ཁང 25%", bizLabelCash: "དངུལ་ཕྱོགས 20%",
+    bizLabelRevenue: "འབབ་འོང།", bizLabelExpenses: "འགྲོ་སོང་།", bizLabelNetCash1: "དངུལ་ལྷག", bizLabelNetCash2: "འགྲོ་འོང་།",
+    bizLabelEquilibrium: "ཆ་སྙོམས།", bizLabelSupply: "འདོན་སྤྲོད།", bizLabelDemand: "དགོས་མཁོ།",
+    bizLabelPriceLevel: "གོང་ཚད་གནས་རིམ།",
+    bizLabelInelastic: "འགྱུར་མི་ཐུབ (མཐོ)", bizLabelElastic: "འགྱུར་ཐུབ (ཐང)",
+
+    bizTitle_compound_interest: "འདུས་སྐྱེད།",
+    bizExplain_compound_interest: "འདུས་སྐྱེད་ནི་རྩ་བའི་དངུལ (ཐོག་མར་བསྐྱེད་བ་ཡང་ན་བསྐྱེད་ཡོད་པ) དང་སྔར་འདུས་ཟིན་པའི་སྐྱེད་གཉིས་ཆར་ལ་བརྩིས་པའི་སྐྱེད་ཡིན། དུས་ཡུན་རེའི་སྐྱེད་རྩ་བར་སླར་སྣོན་བྱེད་སྟབས, འཕེལ་རིམ་དུས་ཡུན་དང་བསྟུན་མྱུར་དུ་འགྲོ། དེའི་ཕྱིར་སྔ་མོ་ནས་བསྐྱེད་འགོ་འཛུགས་པ་ཧ་ཅང་གལ་ཆེན་ཡིན།",
+    bizQuestion_compound_interest: "རྩ་བ་དང་སྔར་ཐོབ་པའི་སྐྱེད་གཉིས་ཆར་ལ་བརྩིས་པའི་སྐྱེད་ལ་མིང་ཚིག་གང་ཟེར།",
+
+    bizTitle_diversification: "སྤེལ་བགོས།",
+    bizExplain_diversification: "སྤེལ་བགོས་ནི་དངུལ་གཅིག་པུར་མ་བསྐྱེད་པར་བསྐྱེད་ཐབས་མི་འདྲ་བ—མཛོད་ཆ, ཡིག་ཆ, ལས་སྡེ, རྒྱལ་ཁབ—ལ་སྤེལ་བགོས་བྱེད་པ་ཡིན། བསྐྱེད་ཐབས་གཅིག་གིས་ལེགས་པོ་མ་བྱུང་ན, གཞན་གྱིས་གྱོང་ཆད་ཁེགས་ཐུབ, འདིས་མཐའ་མའི་ཐོབ་འབྲས་མི་མར་བར་ཉེན་ཁ་ཡོངས་སུ་དམའ་རུ་གཏོང་ཐུབ།",
+    bizQuestion_diversification: "ཉེན་ཁ་དམའ་རུ་གཏོང་ཆེད་བསྐྱེད་ཐབས་མི་འདྲ་བར་སྤེལ་བགོས་བྱེད་པའི་ཐབས་ལམ་ལ་མིང་ཚིག་གང་ཟེར།",
+
+    bizTitle_cash_flow: "དངུལ་འགྲོ་འོང་།",
+    bizExplain_cash_flow: "དངུལ་འགྲོ་འོང་ནི་དུས་ཡུན་ཞིག་རིང་ཚོང་ལས་ནང་དུ་འོང་བ་དང་ཕྱིར་འགྲོ་བའི་དངུལ་གྱི་ཧྲིལ་གྲངས་ཡིན། དངུལ་འགྲོ་འོང་ཡག་པོ་ཞེས་པ་ནི་ཐོན་པ་ལས་འོང་བ་མང་བ, ཉག་པོ་ནི་དེའི་ལྡོག་ཕྱོགས་ཡིན—ཚོང་ལས་ཁེ་ཐོབ་ཡོད་ཀྱང་དངུལ་ཟད་ན་ཤོར་ཉེན་ཡོད།",
+    bizQuestion_cash_flow: "ཚོང་ལས་ནང་དངུལ་འོང་འགྲོའི་ཧྲིལ་གྲངས་ལ་མིང་ཚིག་གང་ཟེར།",
+
+    bizTitle_liquidity: "འགྲོ་འོང་མྱུར་ཚད།",
+    bizExplain_liquidity: "འགྲོ་འོང་མྱུར་ཚད་ནི་མཛོད་ཆ་ཞིག་གོང་མི་ཉམས་པར་དངུལ་དུ་ག་ཚོད་མྱུར་བཀོལ་ཐུབ་མིན་སྟོན། དངུལ་རང་ཉིད་འགྲོ་འོང་མྱུར་ཤོས་ཡིན, ས་ཁང་ནི་བཙོང་བར་དུས་ཚོད་དགོས་སྟབས་འགྲོ་འོང་དལ་བ་ཡིན། ཚོང་ལས་ལ་ཉིན་ཐུང་གི་ཆ་ཤས་སྤྲོད་ཆེད་འགྲོ་འོང་མྱུར་བའི་མཛོད་ཆ་འདང་ངེས་དགོས།",
+    bizQuestion_liquidity: "མཛོད་ཆ་ཞིག་དངུལ་དུ་ག་ཚོད་སླ་བར་བཀོལ་ཐུབ་མིན་སྟོན་པའི་མིང་ཚིག་གང་ཟེར།",
+
+    bizTitle_roi: "བཙོང་ཉོའི་ཕན་འབྲས།",
+    bizExplain_roi: "བཙོང་ཉོའི་ཕན་འབྲས (ROI) ཀྱིས་བསྐྱེད་པའི་གོང་ཚད་ལས་ཁེ་ག་ཚོད་ཐོན་མིན་བརྟག། རྩིས་ཐབས་ནི (ཁེ - གོང་ཚད) ÷ གོང་ཚད་ཡིན, བརྒྱ་ཆར་སྟོན། ROI མཐོ་ན་བསྐྱེད་ཐབས་དེས་ཁེ་བཟོ་ཐུབ་པའི་ནུས་པ་མཐོ་བ་སྟོན།",
+    bizQuestion_roi: "བསྐྱེད་པའི་གོང་ཚད་ལས་ཐོན་པའི་ཁེ་བརྟག་པའི་ཚད་གཞི་ལ་མིང་ཚིག་གང་ཟེར།",
+
+    bizTitle_ipo: "མང་ཚོགས་ཆ་ཤས་བཙོང་འགོ།",
+    bizExplain_ipo: "IPO ནི་སྒེར་སྤྱིའི་ཚོང་ལས་ཤིག་གིས་ཐོག་མར་མང་ཚོགས་ལ་ཆ་ཤས་བཙོང་བའི་སྐབས་ཡིན། འདིས་ཚོང་ལས་ལ་མང་ཚོགས་བསྐྱེད་མཁན་ནས་དངུལ་བསྡུ་ཐུབ་ཀྱང, དེའི་དངུལ་རྩིས་གནས་ཚུལ་དུས་རྒྱུན་སྤེལ་དགོས་པའི་དོན་ཡང་ཡིན།",
+    bizQuestion_ipo: "སྒེར་སྤྱིའི་ཚོང་ལས་ཤིག་ཐོག་མར་མང་ཚོགས་ལ་ཆ་ཤས་བཙོང་བ་ལ་མིང་ཚིག་གང་ཟེར།",
+
+    bizTitle_supply_demand: "འདོན་སྤྲོད་དང་དགོས་མཁོ།",
+    bizExplain_supply_demand: "འདོན་སྤྲོད་དང་དགོས་མཁོས་ཚོང་རའི་ནང་གོང་ཚད་ཇི་ལྟར་ཐག་གཅོད་བྱེད་མིན་སྟོན། གོང་ཚད་མཐོ་རུ་སོང་ན་འདོན་མཁན་གྱིས་མང་བ་བཙོང་འདོད (འདོན་སྤྲོད་མང་དུ་འགྲོ) ཡིན་ཡང་ཉོ་མཁན་གྱིས་ཉུང་བ་ཉོ་འདོད (དགོས་མཁོ་ཉུང་དུ་འགྲོ)། འདོན་སྤྲོད་དང་དགོས་མཁོའི་རི་མོ་གཉིས་ཕྲད་སའི་གོང་ཚད་ལ་ཆ་སྙོམས་ཟེར, འདི་ནི་ཚོང་ར་རང་བཞིན་གྱིས་བརྟན་པོར་གནས་ས་ཡིན།",
+    bizQuestion_supply_demand: "འདོན་སྤྲོད་དང་དགོས་མཁོའི་རི་མོ་གཉིས་ཕྲད་སའི་གོང་ཚད་ལ་མིང་ཚིག་གང་ཟེར།",
+
+    bizTitle_opportunity_cost: "གོ་སྐབས་གོང་རྡོག།",
+    bizExplain_opportunity_cost: "གོ་སྐབས་གོང་རྡོག་ནི་གདམ་ཁ་ཞིག་བྱེད་སྐབས་ཕུད་པའི་གོ་སྐབས་ལེགས་ཤོས་གཉིས་པའི་གོང་ཚད་ཡིན། ཁྱོད་ཀྱིས་ཆུ་ཚོད་གཅིག་སློབ་སྦྱོང་ལ་བེད་སྤྱོད་བྱས, ཆུ་ཚོད་རེར་ཨེ་སྒོར 20 ཐོབ་པའི་ལས་ཀ་མ་བྱས་ན, སློབ་སྦྱོང་གི་གོ་སྐབས་གོང་རྡོག་ནི་ཨེ་སྒོར 20 ཡིན—དངུལ་ངོ་མ་བརྗེ་བོ་མེད་ཀྱང་།",
+    bizQuestion_opportunity_cost: "གདམ་ཁ་བྱེད་སྐབས་ཕུད་པའི་གོ་སྐབས་ལེགས་ཤོས་གཉིས་པའི་གོང་ཚད་ལ་མིང་ཚིག་གང་ཟེར།",
+
+    bizTitle_inflation: "དངུལ་གོང་འཛེག།",
+    bizExplain_inflation: "དངུལ་གོང་འཛེག་ནི་ཟོག་དང་ཞབས་ཞུའི་གོང་ཚད་སྤྱིར་བཏང་དུས་ཡུན་དང་བསྟུན་འཛེག་པའི་མྱུར་ཚད་ཡིན, འདིས་དངུལ་གྱི་ཉོ་ནུས་དམའ་རུ་གཏོང་། དཔལ་འབྱོར་བདེ་ཐང་ཅན་ཞིག་ནང་དངུལ་གོང་འཛེག་ཆུང་ཆུང་ཞིག་རང་བཞིན་ཡིན, འོན་ཀྱང་དངུལ་གོང་འཛེག་ཆེན་པོས་ཉར་ཚགས་ཟད་ཚུགས་ཤིང་འཆར་གཞི་བརྩི་དཀའ་བར་བཟོ།",
+    bizQuestion_inflation: "དུས་ཡུན་དང་བསྟུན་གོང་ཚད་སྤྱིར་བཏང་འཛེག་ནས་དངུལ་གྱི་ཉོ་ནུས་དམའ་རུ་འགྲོ་བའི་མིང་ཚིག་གང་ཟེར།",
+
+    bizTitle_gdp: "རྒྱལ་ཁབ་ནང་འབྲས་བུ་སྤྱིའི་གོང་ཚད།",
+    bizExplain_gdp: "GDP ནི་རྒྱལ་ཁབ་ཅིག་གི་ནང་དུས་ཡུན་ངེས་ཅན་ཞིག་རིང་བཟོས་པའི་ཟོག་དང་ཞབས་ཞུ་ཚང་མའི་དངུལ་གོང་ཧྲིལ་པོ་ཡིན། འདི་ནི་རྒྱལ་ཁབ་ཅིག་གི་དཔལ་འབྱོར་ཆེ་ཆུང་དང་བདེ་ཐང་བརྟག་པའི་ཚད་གཞི་མང་ཤོས་བེད་སྤྱོད་བྱེད་པ་ཡིན།",
+    bizQuestion_gdp: "རྒྱལ་ཁབ་ཅིག་གིས་བཟོས་པའི་ཟོག་དང་ཞབས་ཞུ་ཚང་མའི་གོང་ཚད་ལ་མིང་ཚིག་གང་ཟེར།",
+
+    bizTitle_elasticity: "འགྱུར་ཐུབ་ཚད།",
+    bizExplain_elasticity: "འགྱུར་ཐུབ་ཚད་ཀྱིས་ཟོག་ཅིག་གི་དགོས་མཁོ (ཡང་ན་འདོན་སྤྲོད) གོང་ཚད་འགྱུར་སྐབས་ག་ཚོད་འགྱུར་མིན་བརྟག། གོང་ཚད་དང་བསྟུན་དགོས་མཁོ་མང་དུ་འགྱུར་ན (དཔེར་ན་ལང་ཟོག) 'འགྱུར་ཐུབ' ཟེར, དགོས་མཁོ་ཇི་ཙམ་ཡང་མི་འགྱུར་ན (དཔེར་ན་གནད་འགག་གི་སྨན) 'འགྱུར་མི་ཐུབ' ཟེར།",
+    bizQuestion_elasticity: "གོང་ཚད་འགྱུར་སྐབས་དགོས་མཁོ་ག་ཚོད་འགྱུར་མིན་སྟོན་པའི་མིང་ཚིག་གང་ཟེར།",
+
+    bizTitle_monopoly: "གཅིག་བཙན།",
+    bizExplain_monopoly: "ཚོང་ར་ཞིག་ནང་ཚོང་ལས་གཅིག་པུ་ཞིག་གིས་ཟོག་གམ་ཞབས་ཞུ་ཞིག་གི་འདོན་མཁན་གཅིག་པུར་གྱུར་ན་གཅིག་བཙན་ཡིན, འགྲན་ཟླ་མེད་སྟབས་གོང་ཚད་ལ་དབང་ཚད་ཆེན་པོ་ཐོབ། སྲིད་གཞུང་གིས་ཉོ་མཁན་སྲུང་སྐྱོབ་ཆེད་གཅིག་བཙན་ལ་ཚོད་འཛིན་བྱེད་མང་།",
+    bizQuestion_monopoly: "ཚོང་ར་ནང་འདོན་མཁན་གཅིག་པུས་འདོན་སྤྲོད་ཚོད་འཛིན་བྱེད་པའི་མིང་ཚིག་གང་ཟེར།",
+
+    bizTitle_apple: "ཨེ་སྵལ།",
+    bizExplain_apple: "ཨེ་སྵལ་ཚོང་ལས་ནི 1976 ལོར་སི་ཊིབ་ཇོབསི, སི་ཊིབ་ཝོ་ཛི་ནི་ཡག, རོ་ན་ལད་ཝེན་གསུམ་གྱིས་ཁེ་ལི་ཧྥོར་ནི་ཡའི་ཁུ་པེར་ཊི་ནོ་རུ་བཙུགས། iPhone, Mac ཁོམ་པུ་ཊར, iPad ཡིས་མིང་གྲགས་ཆེ, ཨ་སྒོར་ཊི་ལིའན 3 ལ་སླེབས་པའི་ཨ་རིའི་ཚོང་ལས་དང་པོ་ཡིན།",
+    bizQuestion_apple: "iPhone བཟོ་མཁན་དང་ཁེ་ལི་ཧྥོར་ནི་ཡའི་ཁུ་པེར་ཊི་ནོར་གནས་སྡོད་བྱེད་པའི་ཚོང་ལས་གང་ཡིན།",
+
+    bizTitle_google: "གུ་གུལ།",
+    bizExplain_google: "གུ་གུལ་ནི 1998 ལོར་ལ་རི་པེཇ་དང་སར་གེ་བིརིན་གཉིས་ཀྱིས་འཚོལ་འཚོལ་ལས་སྣེ་ཞིག་ཏུ་བཙུགས། དེའི་མ་ཚོང་ལས་ཨཱལ་ཕ་བེཊི་ད་ལྟ་ YouTube དང་ Android ཡང་ལག་པར་ཡོད—གུ་གུལ་གྱི་དངུལ་འབྱུང་ཁུངས་གཙོ་བོ་ནི་དྲ་ཐོག་ཁྱབ་བསྒྲགས་ཡིན།",
+    bizQuestion_google: "མ་ཚོང་ལས་ཨཱལ་ཕ་བེཊི་ཡིན་ཞིང་དྲ་ཐོག་ཁྱབ་བསྒྲགས་ལས་དངུལ་མང་ཤོས་འཐོན་པའི་ཚོང་ལས་གང་ཡིན།",
+
+    bizTitle_amazon: "ཨེ་མ་ཛཱུན།",
+    bizExplain_amazon: "ཨེ་མ་ཛཱུན་ནི 1994 ལོར་ཇེཕ་བེ་ཛོསི་ཡིས་དྲ་ཐོག་དཔེ་ཚོང་ཞིག་ཏུ་བཙུགས། ད་ལྟ་འཛམ་གླིང་ཐོག་དྲ་ཐོག་ཚོང་ལས་ཆེ་ཤོས་སུ་འཕེལ་ཡོད་ལ, AWS ཟེར་བའི་སྤྲིན་རྩིས་གྲས་ཐོག་མའང་བསྐྲུན, འདི་ནི་དེའི་ཁེ་འབབ་གཙོ་བོའི་འབྱུང་ཁུངས་ཡིན།",
+    bizQuestion_amazon: "དྲ་ཐོག་དཔེ་ཚོང་ཞིག་ཏུ་འགོ་བཙུགས་ནས་ད་ལྟ་ AWS སྤྲིན་རྩིས་གྲས་ཐོག་མ་སྐྱོང་བའི་ཚོང་ལས་གང་ཡིན།",
+
+    bizTitle_microsoft: "མའི་ཁྲོ་སོཕ་ཊི།",
+    bizExplain_microsoft: "མའི་ཁྲོ་སོཕ་ཊི་ནི 1975 ལོར་བིལ་གེཊིསི་དང་པལ་ཨེ་ལན་གཉིས་ཀྱིས་བཙུགས། Windows བཀོལ་སྤྱོད་མ་ལག་དང་ Office ཡིས་མིང་གྲགས་ཆེ, ད་ལྟ་ Azure བརྒྱུད་སྤྲིན་རྩིས་ནང་ཡང་ཐོན་ཆེན་ཡོང་ཞིང་ OpenAI ལ་དངུལ་མང་པོ་བཙུགས་ཡོད།",
+    bizQuestion_microsoft: "Windows དང་ Office བཟོ་མཁན, OpenAI ལ་དངུལ་མང་པོ་བཙུགས་པའི་ཚོང་ལས་གང་ཡིན།",
+
+    bizTitle_tesla: "ཊེས་ལ།",
+    bizExplain_tesla: "ཊེས་ལ 2003 ལོར་བཙུགས་ཤིང་ཨི་ལཱོན་མཱསིཀ་གིས་འགོ་ཁྲིད། གློག་འཁོར་ཡིས་མིང་གྲགས་ཆེ་ཡང་, ནུས་ཤུགས་ཉར་ཚགས་ཐོན་རྫས (Powerwall ལྟ་བུ) དང་ཉི་འོད་པང་ལེབ་ཀྱང་བཟོ, འཛམ་གླིང་ནུས་ཤུགས་བརྟན་ཐུབ་པའི་ཆ་ལ་མྱུར་དུ་སྒྱུར་ཐབས་ཡིན།",
+    bizQuestion_tesla: "Powerwall ནུས་ཤུགས་ཉར་ཚགས་ཐོན་རྫས་ཀྱང་བཟོ་མཁན་གློག་འཁོར་ཚོང་ལས་གང་ཡིན།",
+
+    bizTitle_nvidia: "Nvidia།",
+    bizExplain_nvidia: "Nvidia གིས་ GPU (རི་མོའི་ལས་སྤྱོད་འཕྲུལ་ཆས) བཟོ, ཐོག་མར་རྩེད་མོའི་ཆེད་བཟོས་ཀྱང་, དེའི་སྤུ་ཚེག་ AI རྩིས་ལས་ལ་ཧ་ཅང་འཚམ་པར་ཐོན། འདིས 2020 ལོ་རབས་ཀྱི་ AI འཕེལ་རྒྱས་སྐབས་ Nvidia འཛམ་གླིང་ནང་གོང་ཚད་ཆེ་ཤོས་ཀྱི་ཚོང་ལས་གྲས་སུ་བསྒྱུར།",
+    bizQuestion_nvidia: "2020 ལོ་རབས་ AI འཕེལ་རྒྱས་ལ་གལ་ཆེན་བྱུང་བའི་ GPU སྤུ་ཚེག་ཚོང་ལས་གང་ཡིན།",
   },
 };
 function t(key, vars){
@@ -4678,6 +4975,10 @@ const screens = {
   calc_learn: renderCalcLearn,
   calc_practice: renderCalcPractice,
   calc_complete: renderCalcComplete,
+  business_menu: renderBusinessMenu,
+  business_learn: renderBusinessLearn,
+  business_quiz: renderBusinessQuiz,
+  business_result: renderBusinessResult,
   profile: renderProfile,
   avatar_editor: renderAvatarEditor,
 };
@@ -4921,6 +5222,10 @@ function renderHome(){
       <button class="practice-tile" onclick="state.screen='calc_menu'; render();">
         <div class="glyph">📈</div>
         <div class="pt-title">${t('calculusTitle')}</div>
+      </button>
+      <button class="practice-tile" onclick="state.screen='business_menu'; render();">
+        <div class="glyph">💼</div>
+        <div class="pt-title">${t('businessTitle')}</div>
       </button>
     </div>`;
 
@@ -6056,6 +6361,354 @@ function renderCalcComplete(){
 
 function backToCalcMenu(){ state.screen='calc_menu'; render(); }
 function exitCalcPractice(){ state.screen='calc_menu'; render(); }
+
+// ---- business concepts: Finance, Economics and Tech Companies. Different
+// shape from algebra/calculus — these are qualitative concepts, not
+// computations, so the loop is "teach 3, then quiz on 1 of them" rather than
+// endless generated problems. The quiz question itself progresses from
+// multiple-choice (first time a concept is tested) to typed recall (every
+// time after) — tracked per-concept in state.game.conceptExposure, which
+// persists across every round and every session, not just the current one.
+// Diagrams are hand-drawn inline SVG (no image assets), using the app's
+// existing CSS custom properties via style= so they match the current theme.
+function diagramCompoundInterest(){
+  return `<svg viewBox="0 0 280 140" style="width:100%; height:auto;">
+    <line x1="20" y1="120" x2="260" y2="120" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <line x1="20" y1="120" x2="20" y2="15" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <path d="M20 120 L260 60" style="stroke:var(--ice); fill:none;" stroke-width="2.5"/>
+    <path d="M20 120 C 80 118, 150 95, 260 20" style="stroke:var(--gold); fill:none;" stroke-width="2.5"/>
+    <text x="185" y="75" style="fill:var(--ice); font-size:10px;">${t('bizLabelSimple')}</text>
+    <text x="140" y="38" style="fill:var(--gold); font-size:10px;">${t('bizLabelCompound')}</text>
+    <text x="20" y="134" style="fill:rgba(255,255,255,.5); font-size:9px;">${t('bizAxisTime')}</text>
+  </svg>`;
+}
+function diagramDiversification(){
+  const r=45, c=2*Math.PI*r;
+  const slices = [30,25,25,20];
+  const colors = ['var(--gold)','var(--ice)','var(--good)','var(--bad)'];
+  let offset=0;
+  const circles = slices.map((pct,i)=>{
+    const len = c*pct/100;
+    const dash = `${len} ${c-len}`;
+    const dashoffset = -offset;
+    offset += len;
+    return `<circle cx="70" cy="70" r="${r}" fill="none" style="stroke:${colors[i]}" stroke-width="26" stroke-dasharray="${dash}" stroke-dashoffset="${dashoffset}"/>`;
+  }).join('');
+  return `<svg viewBox="0 0 280 140" style="width:100%; height:auto;">
+    <g transform="rotate(-90 70 70)">${circles}</g>
+    <text x="148" y="42" style="fill:var(--gold); font-size:10px;">■ ${t('bizLabelStocks')}</text>
+    <text x="148" y="62" style="fill:var(--ice); font-size:10px;">■ ${t('bizLabelBonds')}</text>
+    <text x="148" y="82" style="fill:var(--good); font-size:10px;">■ ${t('bizLabelRealEstate')}</text>
+    <text x="148" y="102" style="fill:var(--bad); font-size:10px;">■ ${t('bizLabelCash')}</text>
+  </svg>`;
+}
+function diagramCashFlow(){
+  return `<svg viewBox="0 0 280 100" style="width:100%; height:auto;">
+    <defs><marker id="bizArrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" style="fill:rgba(255,255,255,.6);"/></marker></defs>
+    <rect x="8" y="30" width="78" height="40" rx="8" style="fill:rgba(63,174,114,.18); stroke:var(--good);" stroke-width="1.5"/>
+    <text x="47" y="54" text-anchor="middle" style="fill:var(--good); font-size:11px; font-weight:700;">${t('bizLabelRevenue')}</text>
+    <path d="M90 50 L106 50" style="stroke:rgba(255,255,255,.4);" stroke-width="2" marker-end="url(#bizArrow)"/>
+    <rect x="110" y="30" width="78" height="40" rx="8" style="fill:rgba(225,88,75,.18); stroke:var(--bad);" stroke-width="1.5"/>
+    <text x="149" y="54" text-anchor="middle" style="fill:var(--bad); font-size:11px; font-weight:700;">${t('bizLabelExpenses')}</text>
+    <path d="M192 50 L208 50" style="stroke:rgba(255,255,255,.4);" stroke-width="2" marker-end="url(#bizArrow)"/>
+    <rect x="212" y="30" width="66" height="40" rx="8" style="fill:rgba(232,163,61,.18); stroke:var(--gold);" stroke-width="1.5"/>
+    <text x="245" y="47" text-anchor="middle" style="fill:var(--gold); font-size:9.5px; font-weight:700;">${t('bizLabelNetCash1')}</text>
+    <text x="245" y="59" text-anchor="middle" style="fill:var(--gold); font-size:9.5px; font-weight:700;">${t('bizLabelNetCash2')}</text>
+  </svg>`;
+}
+function diagramSupplyDemand(){
+  return `<svg viewBox="0 0 280 160" style="width:100%; height:auto;">
+    <line x1="30" y1="140" x2="260" y2="140" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <line x1="30" y1="140" x2="30" y2="15" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <path d="M30 30 L240 130" style="stroke:var(--bad); fill:none;" stroke-width="2.5"/>
+    <path d="M30 130 L240 30" style="stroke:var(--good); fill:none;" stroke-width="2.5"/>
+    <circle cx="135" cy="80" r="4" style="fill:var(--gold);"/>
+    <text x="140" y="72" style="fill:var(--gold); font-size:9px;">${t('bizLabelEquilibrium')}</text>
+    <text x="215" y="35" style="fill:var(--good); font-size:10px;">${t('bizLabelSupply')}</text>
+    <text x="205" y="130" style="fill:var(--bad); font-size:10px;">${t('bizLabelDemand')}</text>
+    <text x="122" y="154" style="fill:rgba(255,255,255,.5); font-size:9px;">${t('bizAxisQuantity')}</text>
+  </svg>`;
+}
+function diagramInflation(){
+  return `<svg viewBox="0 0 280 140" style="width:100%; height:auto;">
+    <line x1="20" y1="120" x2="260" y2="120" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <line x1="20" y1="120" x2="20" y2="15" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <path d="M20 100 L80 90 L140 70 L200 45 L260 20" style="stroke:var(--bad); fill:none;" stroke-width="2.5"/>
+    <text x="145" y="42" style="fill:var(--bad); font-size:10px;">${t('bizLabelPriceLevel')}</text>
+    <text x="20" y="134" style="fill:rgba(255,255,255,.5); font-size:9px;">${t('bizAxisTime')}</text>
+  </svg>`;
+}
+function diagramElasticity(){
+  return `<svg viewBox="0 0 280 160" style="width:100%; height:auto;">
+    <line x1="30" y1="140" x2="260" y2="140" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <line x1="30" y1="140" x2="30" y2="15" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <path d="M60 20 L100 140" style="stroke:var(--bad); fill:none;" stroke-width="2.5"/>
+    <path d="M30 60 L260 100" style="stroke:var(--ice); fill:none;" stroke-width="2.5"/>
+    <text x="65" y="35" style="fill:var(--bad); font-size:9px;">${t('bizLabelInelastic')}</text>
+    <text x="165" y="90" style="fill:var(--ice); font-size:9px;">${t('bizLabelElastic')}</text>
+    <text x="118" y="154" style="fill:rgba(255,255,255,.5); font-size:9px;">${t('bizAxisQuantity')}</text>
+  </svg>`;
+}
+
+const BUSINESS_CONCEPTS = {
+  finance: [
+    {key:'compound_interest', icon:'💰', diagram:diagramCompoundInterest, titleKey:'bizTitle_compound_interest', explainKey:'bizExplain_compound_interest', questionKey:'bizQuestion_compound_interest',
+      acceptedAnswers:{en:['compound interest'], zh:['复利'], bo:['འདུས་སྐྱེད']}},
+    {key:'diversification', icon:'🥧', diagram:diagramDiversification, titleKey:'bizTitle_diversification', explainKey:'bizExplain_diversification', questionKey:'bizQuestion_diversification',
+      acceptedAnswers:{en:['diversification'], zh:['多元化投资','投资多元化'], bo:['སྤེལ་བགོས']}},
+    {key:'cash_flow', icon:'💵', diagram:diagramCashFlow, titleKey:'bizTitle_cash_flow', explainKey:'bizExplain_cash_flow', questionKey:'bizQuestion_cash_flow',
+      acceptedAnswers:{en:['cash flow'], zh:['现金流'], bo:['དངུལ་འགྲོ་འོང་']}},
+    {key:'liquidity', icon:'🌊', diagram:null, titleKey:'bizTitle_liquidity', explainKey:'bizExplain_liquidity', questionKey:'bizQuestion_liquidity',
+      acceptedAnswers:{en:['liquidity'], zh:['流动性'], bo:['འགྲོ་འོང་མྱུར་ཚད']}},
+    {key:'roi', icon:'📊', diagram:null, titleKey:'bizTitle_roi', explainKey:'bizExplain_roi', questionKey:'bizQuestion_roi',
+      acceptedAnswers:{en:['return on investment','roi'], zh:['投资回报率','投资回报'], bo:['བཙོང་ཉོའི་ཕན་འབྲས']}},
+    {key:'ipo', icon:'🔔', diagram:null, titleKey:'bizTitle_ipo', explainKey:'bizExplain_ipo', questionKey:'bizQuestion_ipo',
+      acceptedAnswers:{en:['ipo','initial public offering'], zh:['首次公开募股','ipo'], bo:['མང་ཚོགས་ལ་ཐོག་མར་ཆ་ཤས་བཙོང་བ']}},
+  ],
+  economics: [
+    {key:'supply_demand', icon:'⚖️', diagram:diagramSupplyDemand, titleKey:'bizTitle_supply_demand', explainKey:'bizExplain_supply_demand', questionKey:'bizQuestion_supply_demand',
+      acceptedAnswers:{en:['equilibrium','equilibrium price'], zh:['均衡价格','均衡'], bo:['ཆ་སྙོམས་གོང་ཚད']}},
+    {key:'opportunity_cost', icon:'🔀', diagram:null, titleKey:'bizTitle_opportunity_cost', explainKey:'bizExplain_opportunity_cost', questionKey:'bizQuestion_opportunity_cost',
+      acceptedAnswers:{en:['opportunity cost'], zh:['机会成本'], bo:['གོ་སྐབས་གོང་རྡོག']}},
+    {key:'inflation', icon:'🎈', diagram:diagramInflation, titleKey:'bizTitle_inflation', explainKey:'bizExplain_inflation', questionKey:'bizQuestion_inflation',
+      acceptedAnswers:{en:['inflation'], zh:['通货膨胀','通胀'], bo:['དངུལ་གོང་འཛེག']}},
+    {key:'gdp', icon:'🏭', diagram:null, titleKey:'bizTitle_gdp', explainKey:'bizExplain_gdp', questionKey:'bizQuestion_gdp',
+      acceptedAnswers:{en:['gdp','gross domestic product'], zh:['国内生产总值','gdp'], bo:['རྒྱལ་ཁབ་ནང་ཁུལ་གྱི་འབྲས་བུ་སྤྱིའི་གོང་ཚད']}},
+    {key:'elasticity', icon:'📏', diagram:diagramElasticity, titleKey:'bizTitle_elasticity', explainKey:'bizExplain_elasticity', questionKey:'bizQuestion_elasticity',
+      acceptedAnswers:{en:['elasticity'], zh:['弹性'], bo:['འགྱུར་ཐུབ་ཚད']}},
+    {key:'monopoly', icon:'👑', diagram:null, titleKey:'bizTitle_monopoly', explainKey:'bizExplain_monopoly', questionKey:'bizQuestion_monopoly',
+      acceptedAnswers:{en:['monopoly'], zh:['垄断'], bo:['གཅིག་བཙན']}},
+  ],
+  tech: [
+    {key:'apple', icon:'🍎', diagram:null, titleKey:'bizTitle_apple', explainKey:'bizExplain_apple', questionKey:'bizQuestion_apple',
+      acceptedAnswers:{en:['apple'], zh:['苹果','苹果公司'], bo:['ཨེ་སྵལ།']}},
+    {key:'google', icon:'🔍', diagram:null, titleKey:'bizTitle_google', explainKey:'bizExplain_google', questionKey:'bizQuestion_google',
+      acceptedAnswers:{en:['google'], zh:['谷歌'], bo:['གུ་གུལ།']}},
+    {key:'amazon', icon:'📦', diagram:null, titleKey:'bizTitle_amazon', explainKey:'bizExplain_amazon', questionKey:'bizQuestion_amazon',
+      acceptedAnswers:{en:['amazon'], zh:['亚马逊'], bo:['ཨེ་མ་ཛཱུན།']}},
+    {key:'microsoft', icon:'🪟', diagram:null, titleKey:'bizTitle_microsoft', explainKey:'bizExplain_microsoft', questionKey:'bizQuestion_microsoft',
+      acceptedAnswers:{en:['microsoft'], zh:['微软'], bo:['མའི་ཁྲོོ་སོཕ་ཊི།','microsoft']}},
+    {key:'tesla', icon:'🚗', diagram:null, titleKey:'bizTitle_tesla', explainKey:'bizExplain_tesla', questionKey:'bizQuestion_tesla',
+      acceptedAnswers:{en:['tesla'], zh:['特斯拉'], bo:['ཊེས་ལ།']}},
+    {key:'nvidia', icon:'🎮', diagram:null, titleKey:'bizTitle_nvidia', explainKey:'bizExplain_nvidia', questionKey:'bizQuestion_nvidia',
+      acceptedAnswers:{en:['nvidia'], zh:['英伟达'], bo:['nvidia']}},
+  ],
+};
+function bizConceptByKey(category, key){ return BUSINESS_CONCEPTS[category].find(c=>c.key===key); }
+function normalizeTermAnswer(s){
+  return (s||'').toLowerCase().trim().replace(/[.,!?'"()]/g,'').replace(/\s+/g,' ');
+}
+function checkBusinessTyped(concept, typed){
+  const norm = normalizeTermAnswer(typed);
+  const all = [].concat(concept.acceptedAnswers.en, concept.acceptedAnswers.zh, concept.acceptedAnswers.bo);
+  return all.some(a => normalizeTermAnswer(a) === norm);
+}
+
+function renderBusinessMenu(){
+  const cats = [
+    {key:'finance', icon:'💰', titleKey:'bizFinanceTitle', descKey:'bizFinanceDesc'},
+    {key:'economics', icon:'📉', titleKey:'bizEconomicsTitle', descKey:'bizEconomicsDesc'},
+    {key:'tech', icon:'💻', titleKey:'bizTechTitle', descKey:'bizTechDesc'},
+  ];
+  const cards = cats.map(cat=>{
+    const rounds = (state.game.business && state.game.business[cat.key]) ? state.game.business[cat.key].rounds : 0;
+    return `
+    <button class="track-card" onclick="startBusinessRound('${cat.key}')">
+      <div class="glyph">${cat.icon}</div>
+      <div>
+        <div class="tc-title">${t(cat.titleKey)}</div>
+        <div class="tc-sub">${t(cat.descKey)}</div>
+      </div>
+      <div class="tc-progress">${rounds ? t('bizRoundsLabel',{n:rounds}) : t('startArrow')}</div>
+    </button>`;
+  }).join('');
+
+  return `
+  ${topbar({back:'goHome()'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>${t('businessTitle')}</h1>
+      <div class="sub">${t('businessSub')}</div>
+    </div>
+    <div class="track-grid">${cards}</div>
+  </div>
+  `;
+}
+
+function startBusinessRound(category){
+  const picks = shuffled(BUSINESS_CONCEPTS[category]).slice(0,3);
+  state.businessSession = {
+    category, concepts:picks, learnIndex:0,
+    quizConcept:null, quizType:null, quizOptions:null, selected:null, input:'', answered:false, lastCorrect:null,
+    xpEarned:0,
+  };
+  state.screen = 'business_learn';
+  render();
+}
+
+function renderBusinessLearn(){
+  const s = state.businessSession;
+  const concept = s.concepts[s.learnIndex];
+  const isLast = s.learnIndex >= s.concepts.length - 1;
+  return `
+  ${topbar({back:'backToBusinessMenu()'})}
+  <div class="home ${appLangClass()}">
+    <div style="font-size:12px; color:var(--snow-dim); text-align:center;">${t('bizLearnEyebrow',{n:s.learnIndex+1, total:s.concepts.length})}</div>
+    <div class="hero" style="padding-top:4px;">
+      <h1 style="font-size:26px;">${concept.icon} ${t(concept.titleKey)}</h1>
+    </div>
+    <div class="profile-card" style="text-align:left;">
+      <div style="line-height:1.6; font-size:14.5px; color:var(--snow-dim);">${t(concept.explainKey)}</div>
+      ${concept.diagram ? `<div style="margin-top:14px; background:rgba(255,255,255,.04); border-radius:12px; padding:10px;">${concept.diagram()}</div>` : ''}
+    </div>
+    <button class="btn btn-primary btn-block" onclick="nextBusinessLearn()">${isLast ? t('bizStartQuizBtn') : t('bizNextConceptBtn')}</button>
+  </div>
+  `;
+}
+
+function nextBusinessLearn(){
+  const s = state.businessSession;
+  s.learnIndex += 1;
+  if(s.learnIndex >= s.concepts.length){ startBusinessQuiz(); return; }
+  render();
+}
+
+function startBusinessQuiz(){
+  const s = state.businessSession;
+  const concept = s.concepts[randInt(0, s.concepts.length-1)];
+  const exposure = (state.game.conceptExposure && state.game.conceptExposure[concept.key]) || 0;
+  s.quizConcept = concept;
+  s.quizType = exposure===0 ? 'mcq' : 'typed';
+  if(s.quizType==='mcq'){
+    const pool = BUSINESS_CONCEPTS[s.category].filter(c=>c.key!==concept.key);
+    const distractors = shuffled(pool).slice(0,3);
+    s.quizOptions = shuffled([concept, ...distractors]).map(c=>({key:c.key, label:t(c.titleKey), correct:c.key===concept.key}));
+  } else {
+    s.quizOptions = null;
+  }
+  s.selected = null; s.input=''; s.answered = false; s.lastCorrect = null;
+  state.screen = 'business_quiz';
+  render();
+  if(s.quizType==='typed') setTimeout(()=>{ const el=document.querySelector('.biz-input'); if(el) el.focus(); }, 30);
+}
+
+function renderBusinessQuiz(){
+  const s = state.businessSession;
+  const concept = s.quizConcept;
+
+  const mcqHtml = s.quizType==='mcq' ? `
+    <div class="options">
+      ${s.quizOptions.map(o=>{
+        let cls = 'opt';
+        if(s.answered){
+          if(o.correct) cls += ' correct reveal';
+          else if(o.key===s.selected && !o.correct) cls += ' wrong reveal';
+          else cls += ' disabled reveal';
+        }
+        return `<button class="${cls}" ${s.answered?'':`onclick="submitBusinessMcq('${o.key}')"`}><span>${o.label}</span></button>`;
+      }).join('')}
+    </div>` : '';
+
+  const typedHtml = s.quizType==='typed' ? `
+    <div class="field" style="align-items:center; gap:12px;">
+      <input class="biz-input algebra-input" type="text" autocomplete="off"
+        placeholder="${t('bizTypedPlaceholder')}"
+        style="text-align:center; font-size:20px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${s.input}"
+        oninput="state.businessSession.input=this.value">
+      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitBusinessTyped()">${t('checkBtn')}</button>` : ''}
+    </div>` : '';
+
+  const feedback = s.answered ? `
+    <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
+      <div class="fb-text">
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.xpEarned}) : t('notQuiteFeedback')}</div>
+        ${!s.lastCorrect ? `<div class="fb-sub">${t('answerPrefix')}${t(concept.titleKey)}</div>` : ''}
+      </div>
+      <button class="btn btn-light" onclick="finishBusinessRound()">${t('bizSeeResultBtn')}</button>
+    </div>` : '';
+
+  return `
+  ${topbar({back:'backToBusinessMenu()'})}
+  <div class="lesson">
+    <div style="font-size:12px; color:var(--snow-dim); text-align:center; margin-bottom:6px;">${s.quizType==='mcq' ? t('bizMcqEyebrow') : t('bizTypedEyebrow')}</div>
+    <div class="q-wrap">
+      <div class="q-card">
+        <div class="q-eyebrow">${t('bizQuizEyebrow')}</div>
+        <div class="q-prompt" style="font-size:21px;">${t(concept.questionKey)}</div>
+      </div>
+      ${mcqHtml}
+      ${typedHtml}
+    </div>
+  </div>
+  ${feedback}
+  `;
+}
+
+function submitBusinessMcq(key){
+  const s = state.businessSession;
+  if(s.answered) return;
+  s.selected = key;
+  s.answered = true;
+  s.lastCorrect = key === s.quizConcept.key;
+  finalizeBusinessAnswer(s);
+  render();
+}
+function submitBusinessTyped(){
+  const s = state.businessSession;
+  if(s.answered || !s.input.trim()) return;
+  s.answered = true;
+  s.lastCorrect = checkBusinessTyped(s.quizConcept, s.input);
+  finalizeBusinessAnswer(s);
+  render();
+}
+function finalizeBusinessAnswer(s){
+  if(s.lastCorrect){
+    const bonus = 10;
+    s.xpEarned = bonus;
+    state.game.xp += bonus;
+    state.game.totalCorrect = (state.game.totalCorrect||0) + 1;
+  } else {
+    s.xpEarned = 0;
+  }
+  if(!state.game.conceptExposure) state.game.conceptExposure = {};
+  const key = s.quizConcept.key;
+  state.game.conceptExposure[key] = (state.game.conceptExposure[key]||0) + 1;
+}
+
+function finishBusinessRound(){
+  const s = state.businessSession;
+  if(!state.game.business) state.game.business = {};
+  const rec = state.game.business[s.category] || (state.game.business[s.category] = {rounds:0});
+  rec.rounds += 1;
+  touchStreak();
+  s.newAchievements = checkAchievements(state.game);
+  state.screen = 'business_result';
+  render();
+}
+
+function renderBusinessResult(){
+  const s = state.businessSession;
+  const rounds = state.game.business[s.category].rounds;
+  const lvl = xpLevel(state.game.xp);
+  return `
+  ${topbar()}
+  <div class="complete ${appLangClass()}">
+    <div class="medal">${s.lastCorrect ? '🎯' : '📘'}</div>
+    <h2>${s.lastCorrect ? t('correctFeedback',{n:s.xpEarned}) : t('bizRoundDoneTitle')}</h2>
+    <div class="stat-row">
+      <div class="stat-box"><div class="val">${rounds}</div><div class="lab">${t('bizRoundsCompletedLabel')}</div></div>
+      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
+    </div>
+    <div style="color:var(--snow-dim); font-size:13px;">${t('levelLabel',{n:lvl.level})}</div>
+    ${achievementBannerHtml(s.newAchievements)}
+    <button class="btn btn-primary btn-block" onclick="startBusinessRound('${s.category}')">${t('bizNextRoundBtn')}</button>
+    <button class="btn btn-ghost btn-block" onclick="backToBusinessMenu()">${t('backToBusinessMenuBtn')}</button>
+  </div>`;
+}
+
+function backToBusinessMenu(){ state.screen='business_menu'; render(); }
 
 function setPaywallRegion(region){ state.paywallRegion = region; state.paywallError=''; render(); }
 
