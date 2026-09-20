@@ -4230,6 +4230,20 @@ const I18N = {
     bizTitle_classification: "Classification", bizExplain_classification: "Classification is used when the target Y is qualitative — it takes values in a finite set of classes, like spam/not spam. A classifier assigns each observation to the class with the highest estimated probability.", bizQuestion_classification: "What term describes predicting a qualitative target by assigning each observation to one of a finite set of classes?",
     bizTitle_mse: "Mean Squared Error", bizExplain_mse: "Training MSE measures fit on the data used to train the model; it always falls as flexibility increases. Test MSE, measured on fresh data, is what actually matters — it eventually rises again once the model starts overfitting.", bizQuestion_mse: "Complete the training and test MSE schedule below.",
     bizTitle_misclassification_rate: "Misclassification Rate", bizExplain_misclassification_rate: "The misclassification (test error) rate is the fraction of test observations a classifier gets wrong — 1 minus the fraction correct, usually expressed as a percentage.", bizQuestion_misclassification_rate: "Complete the classifier accuracy schedule below.",
+    bizTitle_supervised_learning: "Supervised Learning", bizExplain_supervised_learning: "Supervised learning is the process of learning a function f from labeled training data — pairs of predictors X and a known response Y — as in Y = f(X) + epsilon. Linear regression is one of the simplest supervised learning approaches.", bizQuestion_supervised_learning: "What term describes learning a function from labeled (X, Y) training pairs, like linear regression does?",
+    bizTitle_cross_validation: "Cross-Validation", bizExplain_cross_validation: "Cross-validation is used as a practical proxy for estimating test MSE directly from the training data, when a large held-out test set isn't available.", bizQuestion_cross_validation: "What technique estimates test MSE from the training data alone, used when a separate test set isn't available?",
+    bizTitle_simple_linear_regression: "Simple Linear Regression", bizExplain_simple_linear_regression: "Simple linear regression models a quantitative response Y using a single predictor X: Y = β0 + β1X + ε, where β0 is the intercept and β1 is the slope.", bizQuestion_simple_linear_regression: "What term describes modelling a quantitative response using a single predictor, Y = β0 + β1X + ε?",
+    bizTitle_ordinary_least_squares: "Ordinary Least Squares", bizExplain_ordinary_least_squares: "Ordinary least squares (OLS) chooses the coefficient estimates that minimize the residual sum of squares (RSS) — the total squared gap between actual and predicted values. In code this is one line: sm.OLS(y, X).fit().", bizQuestion_ordinary_least_squares: "What method chooses regression coefficients by minimizing the residual sum of squares?",
+    bizTitle_residual_standard_error: "Residual Standard Error", bizExplain_residual_standard_error: "The Residual Standard Error (RSE) is the average size of a residual, RSE = sqrt(RSS / (n − 2)). A smaller RSE means the model's predictions are closer to the actual values.", bizQuestion_residual_standard_error: "What term describes the average size of a residual, calculated as the square root of RSS divided by (n − 2)?",
+    bizTitle_standard_error: "Standard Error", bizExplain_standard_error: "The standard error (SE) of an estimate tells us how much it would vary if we repeated the study with a new sample — a smaller SE means a more reliable estimate.", bizQuestion_standard_error: "What term describes how much an estimate would vary if the study were repeated with a new sample?",
+    bizTitle_confidence_interval: "Confidence Interval", bizExplain_confidence_interval: "A 95% confidence interval is a range of values, such as β1 ± 2·SE(β1), such that with 95% probability the range contains the true unknown value of the parameter.", bizQuestion_confidence_interval: "What term describes a range of values expected to contain the true parameter with a stated probability, like 95%?",
+    bizTitle_hypothesis_testing: "Hypothesis Testing", bizExplain_hypothesis_testing: "Testing H0: β1 = 0 against Ha: β1 ≠ 0 uses a t-statistic (the estimate divided by its standard error). A small p-value (typically below 0.05) means the observed association is unlikely under H0, so we reject H0 and conclude X is associated with Y.", bizQuestion_hypothesis_testing: "What term describes testing whether a coefficient equals zero using a t-statistic and p-value?",
+    bizTitle_multiple_linear_regression: "Multiple Linear Regression", bizExplain_multiple_linear_regression: "Multiple linear regression extends simple linear regression to several predictors: Y = β0 + β1X1 + β2X2 + ... + βpXp + ε. Each coefficient βj is the average effect on Y of a one-unit increase in Xj, holding all other predictors fixed.", bizQuestion_multiple_linear_regression: "What term describes a linear regression model with more than one predictor?",
+    bizTitle_dummy_variable: "Dummy Variable", bizExplain_dummy_variable: "A qualitative (categorical) predictor, like home-owner Yes/No, is encoded as a dummy variable taking the value 1 or 0. A categorical variable with K levels needs K − 1 dummy variables, with one level left as the baseline.", bizQuestion_dummy_variable: "What term describes a 0/1 variable used to encode a qualitative predictor like home-owner Yes/No?",
+    bizTitle_collinearity: "Collinearity", bizExplain_collinearity: "Collinearity (or multicollinearity) occurs when two or more predictors are closely related. It inflates the standard errors of the coefficients, measured by the Variance Inflation Factor (VIF) — values much greater than 5-10 are problematic.", bizQuestion_collinearity: "What term describes two or more predictors being closely related, which inflates coefficient standard errors?",
+    bizTitle_heteroscedasticity: "Heteroscedasticity", bizExplain_heteroscedasticity: "Heteroscedasticity means the spread of residuals grows as fitted values grow, visible as a fan shape in a residual plot — violating the assumption of constant error variance. A log or Box-Cox transformation of Y often helps.", bizQuestion_heteroscedasticity: "What term describes the spread of residuals growing with fitted values, visible as a fan shape in a residual plot?",
+    bizTitle_f_test: "F-Test", bizExplain_f_test: "The F-test checks whether the predictors, as a group, explain more variation in Y than would be expected by chance — a large F statistic (with a small p-value) means at least one predictor is genuinely related to Y.", bizQuestion_f_test: "What test checks whether a group of predictors, together, explain more variation in Y than expected by chance?",
+    bizTitle_r_squared: "R-Squared", bizExplain_r_squared: "R-squared is the fraction of variance in Y explained by the model: R² = (TSS − RSS) / TSS. Values close to 1 mean the model explains most of the variation; values close to 0 mean it explains very little.", bizQuestion_r_squared: "Complete the R-squared schedule below.",
     bizRoundsLabel: "{n} rounds done",
     bizLearnEyebrow: "Concept {n} of {total}",
     bizNextConceptBtn: "Next concept",
@@ -6843,6 +6857,18 @@ function buildAccuracyStatement(hard){
     {label:'Misclassification Rate (%)', value:rate, key:'rate', blank:true},
   ];
 }
+function buildRSquaredStatement(hard){
+  const tss = randInt(2,20)*100;
+  const r2Pct = randInt(10,90);
+  const rss = (tss/100)*(100-r2Pct);
+  const explained = tss-rss;
+  return [
+    {label:'Total Sum of Squares (TSS)', value:tss, key:'tss', blank:false},
+    {label:'Residual Sum of Squares (RSS)', value:rss, key:'rss', blank:false},
+    {label:'Variance Explained (TSS − RSS)', value:explained, key:'explained', blank:hard},
+    {label:'R-squared (%)', value:r2Pct, key:'r2Pct', blank:true},
+  ];
+}
 
 const BUSINESS_CONCEPTS = {
   finance: [
@@ -6994,6 +7020,35 @@ const BUSINESS_CONCEPTS = {
     {key:'misclassification_rate', icon:'❌', diagram:diagramFromStatement(buildAccuracyStatement), titleKey:'bizTitle_misclassification_rate', explainKey:'bizExplain_misclassification_rate', questionKey:'bizQuestion_misclassification_rate',
       acceptedAnswers:{en:['misclassification rate','test error rate']},
       quizVariant:'statement', buildStatement:buildAccuracyStatement},
+    {key:'supervised_learning', icon:'🧑‍🏫', diagram:null, titleKey:'bizTitle_supervised_learning', explainKey:'bizExplain_supervised_learning', questionKey:'bizQuestion_supervised_learning',
+      acceptedAnswers:{en:['supervised learning']}},
+    {key:'cross_validation', icon:'🔁', diagram:null, titleKey:'bizTitle_cross_validation', explainKey:'bizExplain_cross_validation', questionKey:'bizQuestion_cross_validation',
+      acceptedAnswers:{en:['cross-validation','cross validation','cv']}},
+    {key:'simple_linear_regression', icon:'📏', diagram:null, titleKey:'bizTitle_simple_linear_regression', explainKey:'bizExplain_simple_linear_regression', questionKey:'bizQuestion_simple_linear_regression',
+      acceptedAnswers:{en:['simple linear regression']}},
+    {key:'ordinary_least_squares', icon:'📉', diagram:null, titleKey:'bizTitle_ordinary_least_squares', explainKey:'bizExplain_ordinary_least_squares', questionKey:'bizQuestion_ordinary_least_squares',
+      acceptedAnswers:{en:['ordinary least squares','ols']}},
+    {key:'residual_standard_error', icon:'📊', diagram:null, titleKey:'bizTitle_residual_standard_error', explainKey:'bizExplain_residual_standard_error', questionKey:'bizQuestion_residual_standard_error',
+      acceptedAnswers:{en:['residual standard error','rse']}},
+    {key:'standard_error', icon:'📶', diagram:null, titleKey:'bizTitle_standard_error', explainKey:'bizExplain_standard_error', questionKey:'bizQuestion_standard_error',
+      acceptedAnswers:{en:['standard error','se']}},
+    {key:'confidence_interval', icon:'🎯', diagram:null, titleKey:'bizTitle_confidence_interval', explainKey:'bizExplain_confidence_interval', questionKey:'bizQuestion_confidence_interval',
+      acceptedAnswers:{en:['confidence interval']}},
+    {key:'hypothesis_testing', icon:'🔬', diagram:null, titleKey:'bizTitle_hypothesis_testing', explainKey:'bizExplain_hypothesis_testing', questionKey:'bizQuestion_hypothesis_testing',
+      acceptedAnswers:{en:['hypothesis testing']}},
+    {key:'multiple_linear_regression', icon:'➕', diagram:null, titleKey:'bizTitle_multiple_linear_regression', explainKey:'bizExplain_multiple_linear_regression', questionKey:'bizQuestion_multiple_linear_regression',
+      acceptedAnswers:{en:['multiple linear regression']}},
+    {key:'dummy_variable', icon:'0️⃣', diagram:null, titleKey:'bizTitle_dummy_variable', explainKey:'bizExplain_dummy_variable', questionKey:'bizQuestion_dummy_variable',
+      acceptedAnswers:{en:['dummy variable']}},
+    {key:'collinearity', icon:'🔗', diagram:null, titleKey:'bizTitle_collinearity', explainKey:'bizExplain_collinearity', questionKey:'bizQuestion_collinearity',
+      acceptedAnswers:{en:['collinearity','multicollinearity']}},
+    {key:'heteroscedasticity', icon:'📣', diagram:null, titleKey:'bizTitle_heteroscedasticity', explainKey:'bizExplain_heteroscedasticity', questionKey:'bizQuestion_heteroscedasticity',
+      acceptedAnswers:{en:['heteroscedasticity']}},
+    {key:'f_test', icon:'🧪', diagram:null, titleKey:'bizTitle_f_test', explainKey:'bizExplain_f_test', questionKey:'bizQuestion_f_test',
+      acceptedAnswers:{en:['f-test','f test']}},
+    {key:'r_squared', icon:'🥧', diagram:diagramFromStatement(buildRSquaredStatement), titleKey:'bizTitle_r_squared', explainKey:'bizExplain_r_squared', questionKey:'bizQuestion_r_squared',
+      acceptedAnswers:{en:['r-squared','r squared']},
+      quizVariant:'statement', buildStatement:buildRSquaredStatement},
   ],
 };
 function bizConceptByKey(category, key){ return BUSINESS_CONCEPTS[category].find(c=>c.key===key); }
