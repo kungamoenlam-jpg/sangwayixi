@@ -261,6 +261,13 @@
   .biz-switch.on{background:var(--gold); border-color:var(--gold);}
   .biz-switch-knob{position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%; background:var(--snow); transition:left .15s ease; box-shadow:0 1px 3px rgba(0,0,0,.3);}
   .biz-switch.on .biz-switch-knob{left:22px;}
+  .qb-line{margin-bottom:8px; line-height:1.55;}
+  .qb-line:last-child{margin-bottom:0;}
+  .qb-line strong{color:var(--gold);}
+  .qb-list{margin:2px 0 12px 20px; padding:0;}
+  .qb-list:last-child{margin-bottom:0;}
+  .qb-list li{margin-bottom:6px; line-height:1.5;}
+  .qb-prompt-card{font-family:var(--font-display); font-size:17px; font-weight:600; line-height:1.4;}
   .auth-error{background:rgba(225,88,75,.18); border:1px solid rgba(225,88,75,.5); color:var(--snow); border-radius:10px; padding:10px 12px; font-size:13px;}
 
   @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
@@ -6614,6 +6621,29 @@ function normalizeMoneyAnswer(str){
   if(isNaN(num)) return null;
   return neg ? -num : num;
 }
+// Breaks dense, comma/semicolon-packed exam-bank prose (e.g. "Steel: Direct,
+// Inventoriable. Maintenance staff: Indirect, Inventoriable. ...") into
+// separate readable lines, bolding "Label:" prefixes and turning semicolon-
+// separated lists into bullet points. Used for Quiz Bank questions/answers
+// and concept explanations, all of which are static authored text (no user
+// input), so no HTML escaping is needed.
+function formatReadableText(text){
+  if(!text) return '';
+  const sentences = text.split(/\.\s+/)
+    .map((s,i,arr) => (i<arr.length-1 && !/[.!?:]$/.test(s)) ? s+'.' : s)
+    .map(s=>s.trim()).filter(Boolean);
+  return sentences.map(sentence=>{
+    const m = sentence.match(/^([^:]{2,60}):\s*(.+)$/);
+    let label = null, rest = sentence;
+    if(m){ label = m[1].trim(); rest = m[2].trim(); }
+    const semiItems = rest.split(';').map(x=>x.trim()).filter(Boolean);
+    if(semiItems.length >= 2){
+      const items = semiItems.map(it=>`<li>${it.replace(/\.$/,'')}</li>`).join('');
+      return `${label?`<div class="qb-line"><strong>${label}:</strong></div>`:''}<ul class="qb-list">${items}</ul>`;
+    }
+    return `<div class="qb-line">${label?`<strong>${label}:</strong> `:''}${rest}</div>`;
+  }).join('');
+}
 function checkStatementAnswer(rows, inputs){
   const correctness = {};
   let allCorrect = true;
@@ -7061,7 +7091,7 @@ function renderBusinessLearn(){
       <h1 style="font-size:26px;">${concept.icon} ${t(concept.titleKey)}</h1>
     </div>
     <div class="profile-card" style="text-align:left;">
-      <div style="line-height:1.6; font-size:14.5px; color:var(--snow-dim);">${t(concept.explainKey)}</div>
+      <div style="font-size:14.5px; color:var(--snow-dim);">${formatReadableText(t(concept.explainKey))}</div>
       ${concept.diagram ? `<div style="margin-top:14px; background:rgba(255,255,255,.04); border-radius:12px; padding:10px;">${concept.diagram()}</div>` : ''}
     </div>
     <button class="btn btn-primary btn-block" onclick="nextBusinessLearn()">${isLast ? t('bizStartQuizBtn') : t('bizNextConceptBtn')}</button>
@@ -7351,7 +7381,7 @@ function quizBankOptionsHtml(s, q){
     return `
     <div class="profile-card" style="text-align:left;">
       <div style="font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--gold); margin-bottom:6px;">${t('quizBankAnswerLabel')}</div>
-      <div style="line-height:1.6; font-size:14.5px; color:var(--snow-dim);">${q.exp}</div>
+      <div style="font-size:14.5px; color:var(--snow-dim);">${formatReadableText(q.exp)}</div>
     </div>
     <div style="display:flex; gap:10px;">
       <button class="btn btn-primary btn-block" onclick="submitQuizBankSelfMark(true)">${t('quizBankGotItRightBtn')}</button>
@@ -7361,7 +7391,7 @@ function quizBankOptionsHtml(s, q){
   return `
     <div class="profile-card" style="text-align:left;">
       <div style="font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--gold); margin-bottom:6px;">${t('quizBankAnswerLabel')}</div>
-      <div style="line-height:1.6; font-size:14.5px; color:var(--snow-dim);">${q.exp}</div>
+      <div style="font-size:14.5px; color:var(--snow-dim);">${formatReadableText(q.exp)}</div>
     </div>`;
 }
 
@@ -7384,10 +7414,15 @@ function renderQuizBankSession(){
       <div style="font-size:12px; color:var(--snow-dim); text-align:right;">${t('correctAnswersLabel')}: ${s.correct}${s.combo>=3?`<br><span style="color:var(--gold);">${comboBadge(s.combo)} ${t('comboLabel',{n:s.combo})}</span>`:''}</div>
     </div>
     <div class="q-wrap">
+      ${(q.type==='mcq'||q.type==='tf') ? `
       <div class="q-card">
         <div class="q-eyebrow">${t('quizBankQuizEyebrow')}</div>
         <div class="q-prompt" style="font-size:19px;">${q.q}</div>
-      </div>
+      </div>` : `
+      <div class="q-eyebrow" style="text-align:center;">${t('quizBankQuizEyebrow')}</div>
+      <div class="profile-card" style="text-align:left;">
+        <div class="qb-prompt-card">${formatReadableText(q.q)}</div>
+      </div>`}
       ${quizBankOptionsHtml(s, q)}
     </div>
   </div>
