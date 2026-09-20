@@ -4165,6 +4165,7 @@ const I18N = {
     bizTechTitle: "Tech Companies", bizTechDesc: "The companies building today's technology",
     bizMgmtAcctTitle: "Management Accounting", bizMgmtAcctDesc: "Cost behavior, job costing and breakeven analysis",
     bizFinAcctTitle: "Financial Accounting", bizFinAcctDesc: "Financial statements and how they're built",
+    bizMlTitle: "Machine Learning", bizMlDesc: "Statistical learning, probability and how models learn from data",
     bizStatementEyebrow: "Fill in the missing figures",
     bizTitle_indirect_costs: "Indirect Costs", bizExplain_indirect_costs: "Indirect costs (overhead) cannot be traced directly to a single product or job — like factory rent or a supervisor's salary. They must be allocated across products using a cost driver.", bizQuestion_indirect_costs: "What term describes costs like factory rent that cannot be traced directly to one product?",
     bizTitle_variable_costs: "Variable Costs", bizExplain_variable_costs: "Variable costs change in direct proportion to the level of activity — the more units produced, the higher the total variable cost, but the cost per unit stays constant.", bizQuestion_variable_costs: "What term describes costs that change in direct proportion to activity level, like raw materials?",
@@ -4208,6 +4209,20 @@ const I18N = {
     bizTitle_cogm: "Cost of Goods Manufactured", bizExplain_cogm: "Cost of Goods Manufactured (COGM) adds opening Work in Process to total manufacturing costs incurred during the period, then subtracts closing Work in Process.", bizQuestion_cogm: "Complete the schedule of Cost of Goods Manufactured below.",
     bizTitle_cogs: "Cost of Goods Sold", bizExplain_cogs: "Cost of Goods Sold (COGS) adds opening Finished Goods inventory to the Cost of Goods Manufactured during the period, then subtracts closing Finished Goods inventory.", bizQuestion_cogs: "Complete the Cost of Goods Sold schedule below.",
     bizTitle_balance_sheet: "Balance Sheet", bizExplain_balance_sheet: "The balance sheet shows what a business owns and owes at a point in time. Total Assets always equal Total Liabilities plus Total Equity.", bizQuestion_balance_sheet: "Complete the balance sheet below.",
+    bizTitle_probability: "Probability", bizExplain_probability: "Probability is a mathematical language and framework used to describe and measure the likelihood of events or the distribution of random variables.", bizQuestion_probability: "What term describes the mathematical framework used to measure the likelihood of events or the distribution of random variables?",
+    bizTitle_uncertainty_quantification: "Uncertainty Quantification", bizExplain_uncertainty_quantification: "Uncertainty Quantification (UQ) is the broader applied science of identifying, measuring, and propagating all sources of doubt and variability — including computer models, physical systems, and incomplete data — to see how they impact real-world outcomes.", bizQuestion_uncertainty_quantification: "What term describes the applied science of identifying, measuring and propagating all sources of doubt and variability to see how they impact real-world outcomes?",
+    bizTitle_statistical_learning: "Statistical Learning", bizExplain_statistical_learning: "Statistical learning developed within the statistics discipline, with an emphasis on models, interpretability and uncertainty quantification — in contrast to machine learning, which emerged from computer science with an emphasis on large-scale applications and predictive performance.", bizQuestion_statistical_learning: "What term describes the statistics-discipline approach to learning from data, emphasizing models, interpretability and uncertainty quantification?",
+    bizTitle_reducible_error: "Reducible Error", bizExplain_reducible_error: "Reducible error is the part of prediction error due to the model f-hat being imperfect. It can be reduced by using better data or a better algorithm.", bizQuestion_reducible_error: "What term describes the part of prediction error that can be reduced with better data or a better algorithm?",
+    bizTitle_irreducible_error: "Irreducible Error", bizExplain_irreducible_error: "Irreducible error is the variability in Y due to random noise (epsilon) that cannot be removed even if you knew the true function f exactly. Even a perfect model can't predict better than this floor.", bizQuestion_irreducible_error: "What term describes the noise in the data that no model, however good, can ever predict away?",
+    bizTitle_parametric_model: "Parametric Model", bizExplain_parametric_model: "A parametric model specifies a functional form for f — like a linear model — and estimates a finite set of parameters from the training data. It needs relatively few observations but may not fit the true relationship well.", bizQuestion_parametric_model: "What term describes a model that specifies a fixed functional form and estimates a finite set of parameters from the data?",
+    bizTitle_non_parametric_model: "Non-Parametric Model", bizExplain_non_parametric_model: "A non-parametric model makes no explicit assumption about the functional form of f. It's more flexible and can fit complex patterns, but needs more data and is more prone to overfitting.", bizQuestion_non_parametric_model: "What term describes a model that makes no explicit assumption about the functional form being estimated?",
+    bizTitle_overfitting: "Overfitting", bizExplain_overfitting: "Overfitting happens when a flexible model fits the training data extremely well — including its noise — so that training error keeps falling while test error on new data starts rising.", bizQuestion_overfitting: "What term describes a model fitting the training data so closely (including its noise) that test error on new data gets worse?",
+    bizTitle_bias_variance_tradeoff: "Bias-Variance Trade-off", bizExplain_bias_variance_tradeoff: "As model flexibility increases, variance (how much the fit would change with a different training set) increases while bias (error from approximating reality with too simple a model) decreases. The best model minimizes the sum of the two.", bizQuestion_bias_variance_tradeoff: "What term describes how a model's error splits into two components that move in opposite directions as flexibility changes?",
+    bizTitle_decision_boundary: "Decision Boundary", bizExplain_decision_boundary: "In a two-class classification problem, the decision boundary is the set of points where the predicted class probability is exactly 50% — on one side an observation is assigned to one class, on the other side to the remaining class.", bizQuestion_decision_boundary: "What term describes the set of points where a classifier's predicted probability is exactly 50%, splitting the two classes?",
+    bizTitle_regression: "Regression", bizExplain_regression: "Regression is used when the target Y is quantitative, like a price or a temperature. It's the counterpart to classification, which is used for qualitative targets.", bizQuestion_regression: "What term describes predicting a quantitative target, like a price, rather than a category?",
+    bizTitle_classification: "Classification", bizExplain_classification: "Classification is used when the target Y is qualitative — it takes values in a finite set of classes, like spam/not spam. A classifier assigns each observation to the class with the highest estimated probability.", bizQuestion_classification: "What term describes predicting a qualitative target by assigning each observation to one of a finite set of classes?",
+    bizTitle_mse: "Mean Squared Error", bizExplain_mse: "Training MSE measures fit on the data used to train the model; it always falls as flexibility increases. Test MSE, measured on fresh data, is what actually matters — it eventually rises again once the model starts overfitting.", bizQuestion_mse: "Complete the training and test MSE schedule below.",
+    bizTitle_misclassification_rate: "Misclassification Rate", bizExplain_misclassification_rate: "The misclassification (test error) rate is the fraction of test observations a classifier gets wrong — 1 minus the fraction correct, usually expressed as a percentage.", bizQuestion_misclassification_rate: "Complete the classifier accuracy schedule below.",
     bizRoundsLabel: "{n} rounds done",
     bizLearnEyebrow: "Concept {n} of {total}",
     bizNextConceptBtn: "Next concept",
@@ -4549,6 +4564,7 @@ const I18N = {
     bizTechTitle: "科技公司", bizTechDesc: "打造当今科技的公司们",
     bizMgmtAcctTitle: "管理会计", bizMgmtAcctDesc: "成本行为、工作成本法与损益平衡分析",
     bizFinAcctTitle: "财务会计", bizFinAcctDesc: "财务报表及其编制方法",
+    bizMlTitle: "机器学习", bizMlDesc: "统计学习、概率论，以及模型如何从数据中学习",
     bizStatementEyebrow: "填写缺失的数字",
     bizRoundsLabel: "已完成{n}轮",
     bizLearnEyebrow: "概念 {n}/{total}",
@@ -4902,6 +4918,7 @@ const I18N = {
     bizTechTitle: "ལག་རྩལ་ཚོང་ལས།", bizTechDesc: "དེང་སྐབས་ཀྱི་ལག་རྩལ་བཟོ་མཁན་གྱི་ཚོང་ལས་ཁག",
     bizMgmtAcctTitle: "འཛིན་སྐྱོང་རྩིས་ཁྲ།", bizMgmtAcctDesc: "འགྲོ་སོང་གི་རང་བཞིན, ལས་ཀའི་རིན་རྩིས, ཉེར་འདོན་ཆ་མཉམ་གྱི་དབྱེ་ཞིབ།",
     bizFinAcctTitle: "དངུལ་རྩིས་རྩིས་ཁྲ།", bizFinAcctDesc: "དངུལ་རྩིས་སྙན་ཐོ་དང་དེ་ཇི་ལྟར་བཟོ་མིན།",
+    bizMlTitle: "འཕྲུལ་ཆས་སློབ་སྦྱོང་།", bizMlDesc: "ཚད་རྩིས་སློབ་སྦྱོང་, རྒྱུ་ཆ་ཐེབས་རྩིས, དཔེ་དབྱིབས་ཚུལ་ཇི་ལྟར་གཞི་གྲངས་ནས་སློབ་སྦྱོང་བྱེད་མིན།",
     bizStatementEyebrow: "མེད་པའི་གྲངས་ཀ་ཁ་སྐོང་རྒྱོབ།",
     bizRoundsLabel: "ཐེངས་{n}གྲུབ་ཟིན།",
     bizLearnEyebrow: "དོན་ཚན {n}/{total}",
@@ -6768,6 +6785,34 @@ function buildCostPlusPricingStatement(hard){
     {label:'Price', value:price, key:'price', blank:true},
   ];
 }
+function buildMSEStatement(hard){
+  const nOptions = [4,5,8,10,20];
+  const nTrain = nOptions[randInt(0,nOptions.length-1)];
+  const nTest = nOptions[randInt(0,nOptions.length-1)];
+  const mseTrain = randInt(2,40);
+  const mseTest = mseTrain + randInt(1,20);
+  const sseTrain = nTrain*mseTrain;
+  const sseTest = nTest*mseTest;
+  return [
+    {label:'Training SSE (Sum of Squared Errors)', value:sseTrain, key:'sseTrain', blank:false},
+    {label:'Training Observations (n)', value:nTrain, key:'nTrain', blank:false},
+    {label:'Training MSE', value:mseTrain, key:'mseTrain', blank:hard},
+    {label:'Test SSE (Sum of Squared Errors)', value:sseTest, key:'sseTest', blank:false},
+    {label:'Test Observations (n)', value:nTest, key:'nTest', blank:false},
+    {label:'Test MSE', value:mseTest, key:'mseTest', blank:true},
+  ];
+}
+function buildAccuracyStatement(hard){
+  const misclassified = randInt(5,40);
+  const correct = 100-misclassified;
+  const rate = misclassified;
+  return [
+    {label:'Total Test Observations', value:100, key:'total', blank:false},
+    {label:'Misclassified Observations', value:misclassified, key:'misclassified', blank:false},
+    {label:'Correct Predictions', value:correct, key:'correct', blank:hard},
+    {label:'Misclassification Rate (%)', value:rate, key:'rate', blank:true},
+  ];
+}
 
 const BUSINESS_CONCEPTS = {
   finance: [
@@ -6888,6 +6933,38 @@ const BUSINESS_CONCEPTS = {
       acceptedAnswers:{en:['balance sheet']},
       quizVariant:'statement', buildStatement:buildBalanceSheetStatement},
   ],
+  ml: [
+    {key:'probability', icon:'🎲', diagram:null, titleKey:'bizTitle_probability', explainKey:'bizExplain_probability', questionKey:'bizQuestion_probability',
+      acceptedAnswers:{en:['probability']}},
+    {key:'uncertainty_quantification', icon:'🌫️', diagram:null, titleKey:'bizTitle_uncertainty_quantification', explainKey:'bizExplain_uncertainty_quantification', questionKey:'bizQuestion_uncertainty_quantification',
+      acceptedAnswers:{en:['uncertainty quantification','uq']}},
+    {key:'statistical_learning', icon:'📈', diagram:null, titleKey:'bizTitle_statistical_learning', explainKey:'bizExplain_statistical_learning', questionKey:'bizQuestion_statistical_learning',
+      acceptedAnswers:{en:['statistical learning']}},
+    {key:'reducible_error', icon:'🔧', diagram:null, titleKey:'bizTitle_reducible_error', explainKey:'bizExplain_reducible_error', questionKey:'bizQuestion_reducible_error',
+      acceptedAnswers:{en:['reducible error']}},
+    {key:'irreducible_error', icon:'🌪️', diagram:null, titleKey:'bizTitle_irreducible_error', explainKey:'bizExplain_irreducible_error', questionKey:'bizQuestion_irreducible_error',
+      acceptedAnswers:{en:['irreducible error']}},
+    {key:'parametric_model', icon:'📐', diagram:null, titleKey:'bizTitle_parametric_model', explainKey:'bizExplain_parametric_model', questionKey:'bizQuestion_parametric_model',
+      acceptedAnswers:{en:['parametric model']}},
+    {key:'non_parametric_model', icon:'🌊', diagram:null, titleKey:'bizTitle_non_parametric_model', explainKey:'bizExplain_non_parametric_model', questionKey:'bizQuestion_non_parametric_model',
+      acceptedAnswers:{en:['non-parametric model','non parametric model','nonparametric model']}},
+    {key:'overfitting', icon:'🪤', diagram:null, titleKey:'bizTitle_overfitting', explainKey:'bizExplain_overfitting', questionKey:'bizQuestion_overfitting',
+      acceptedAnswers:{en:['overfitting']}},
+    {key:'bias_variance_tradeoff', icon:'⚖️', diagram:null, titleKey:'bizTitle_bias_variance_tradeoff', explainKey:'bizExplain_bias_variance_tradeoff', questionKey:'bizQuestion_bias_variance_tradeoff',
+      acceptedAnswers:{en:['bias-variance tradeoff','bias variance tradeoff','bias-variance trade-off','bias variance trade-off']}},
+    {key:'decision_boundary', icon:'🚧', diagram:null, titleKey:'bizTitle_decision_boundary', explainKey:'bizExplain_decision_boundary', questionKey:'bizQuestion_decision_boundary',
+      acceptedAnswers:{en:['decision boundary']}},
+    {key:'regression', icon:'📉', diagram:null, titleKey:'bizTitle_regression', explainKey:'bizExplain_regression', questionKey:'bizQuestion_regression',
+      acceptedAnswers:{en:['regression']}},
+    {key:'classification', icon:'🏷️', diagram:null, titleKey:'bizTitle_classification', explainKey:'bizExplain_classification', questionKey:'bizQuestion_classification',
+      acceptedAnswers:{en:['classification']}},
+    {key:'mse', icon:'📏', diagram:diagramFromStatement(buildMSEStatement), titleKey:'bizTitle_mse', explainKey:'bizExplain_mse', questionKey:'bizQuestion_mse',
+      acceptedAnswers:{en:['mean squared error','mse']},
+      quizVariant:'statement', buildStatement:buildMSEStatement},
+    {key:'misclassification_rate', icon:'❌', diagram:diagramFromStatement(buildAccuracyStatement), titleKey:'bizTitle_misclassification_rate', explainKey:'bizExplain_misclassification_rate', questionKey:'bizQuestion_misclassification_rate',
+      acceptedAnswers:{en:['misclassification rate','test error rate']},
+      quizVariant:'statement', buildStatement:buildAccuracyStatement},
+  ],
 };
 function bizConceptByKey(category, key){ return BUSINESS_CONCEPTS[category].find(c=>c.key===key); }
 const BUSINESS_MAX_MISTAKES = 5;
@@ -6907,6 +6984,7 @@ function renderBusinessMenu(){
     {key:'tech', icon:'💻', titleKey:'bizTechTitle', descKey:'bizTechDesc'},
     {key:'mgmtacct', icon:'📊', titleKey:'bizMgmtAcctTitle', descKey:'bizMgmtAcctDesc'},
     {key:'finacct', icon:'📑', titleKey:'bizFinAcctTitle', descKey:'bizFinAcctDesc'},
+    {key:'ml', icon:'🤖', titleKey:'bizMlTitle', descKey:'bizMlDesc'},
   ];
   const endlessOn = !!state.businessEndlessMode;
   const cards = cats.map(cat=>{
