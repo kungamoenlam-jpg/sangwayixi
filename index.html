@@ -271,6 +271,7 @@
 <div class="flagstrip"><span></span><span></span><span></span><span></span><span></span></div>
 <div id="app"></div>
 
+<script src="business_quizbank_data.js"></script>
 <script>
 /* =========================================================================
    YESHE — data + engine
@@ -3814,6 +3815,7 @@ function defaultAppState(){
     calcSession:null,
     businessSession:null,
     businessEndlessMode:false,
+    quizBankSession:null,
     subscription: {active:false, status:null, plan:null, periodEnd:null},
     paywallFrom: null,
     paywallRegion: 'us',
@@ -4176,6 +4178,30 @@ const I18N = {
     bizTitle_budgetary_slack: "Budgetary Slack", bizExplain_budgetary_slack: "Budgetary slack is the practice of underestimating budgeted revenues or overestimating budgeted costs so that targets are easier to achieve — often used by managers to cope with uncertainty or guard against budget cuts.", bizQuestion_budgetary_slack: "What term describes underestimating revenues or overestimating costs in a budget to make targets easier to hit?",
     bizTitle_overhead_allocation: "Overhead Allocation", bizExplain_overhead_allocation: "Overhead is allocated to jobs using a predetermined rate set before the period starts: Budgeted Overhead ÷ Budgeted Driver Quantity. During the period, Applied Overhead = Predetermined Rate × Actual Driver Quantity used.", bizQuestion_overhead_allocation: "Complete the overhead allocation schedule below.",
     bizTitle_unit_manufacturing_cost: "Unit Manufacturing Cost", bizExplain_unit_manufacturing_cost: "Unit manufacturing cost combines Direct Materials, Direct Labour and Factory Overhead. Prime Cost is Direct Materials plus Direct Labour, while Conversion Cost is Direct Labour plus Factory Overhead.", bizQuestion_unit_manufacturing_cost: "Complete the unit manufacturing cost schedule below.",
+    bizTitle_cost_object: "Cost Object", bizExplain_cost_object: "A cost object is anything for which a cost measurement is desired — a product, job, department, customer or activity. Direct and indirect costs are both defined relative to a chosen cost object.", bizQuestion_cost_object: "What term describes anything for which a cost measurement is desired, such as a product or department?",
+    bizTitle_direct_costs: "Direct Costs", bizExplain_direct_costs: "Direct costs are related to a particular cost object and can be traced to it easily and economically — like the timber used in a specific table. They are assigned by cost tracing, not allocation.", bizQuestion_direct_costs: "What term describes costs that can be traced easily and economically to a specific cost object?",
+    bizTitle_inventoriable_costs: "Inventoriable Costs", bizExplain_inventoriable_costs: "Inventoriable costs are all costs of a product that are treated as assets on the balance sheet when incurred, and become cost of goods sold only when the product is sold.", bizQuestion_inventoriable_costs: "What term describes product costs treated as assets until the product is sold, then expensed as COGS?",
+    bizTitle_period_costs: "Period Costs", bizExplain_period_costs: "Period costs are all costs in the income statement other than cost of goods sold — like R&D, advertising, and selling and administration expenses. They are expensed in the period incurred, not held in inventory.", bizQuestion_period_costs: "What term describes costs in the income statement other than cost of goods sold, expensed as incurred?",
+    bizTitle_prime_cost: "Prime Cost", bizExplain_prime_cost: "Prime cost is the sum of all direct manufacturing costs: Direct Materials plus Direct Labour. It excludes manufacturing overhead entirely.", bizQuestion_prime_cost: "What term describes Direct Materials plus Direct Labour?",
+    bizTitle_conversion_cost: "Conversion Cost", bizExplain_conversion_cost: "Conversion cost comprises all the manufacturing costs needed to transform direct materials into finished goods: Direct Labour plus Manufacturing Overhead.", bizQuestion_conversion_cost: "What term describes Direct Labour plus Manufacturing Overhead — the cost of turning materials into finished goods?",
+    bizTitle_process_costing: "Process Costing", bizExplain_process_costing: "Process costing is used when many units of a single, homogeneous product flow evenly through a continuous production process — like a plastics or beverage manufacturer. The cost object is the process or department, and costs are averaged across all units.", bizQuestion_process_costing: "What costing system averages costs across many identical units flowing through a continuous production process?",
+    bizTitle_normal_costing: "Normal Costing", bizExplain_normal_costing: "Normal costing reports actual direct materials and actual direct labour, but uses a predetermined rate to apply overhead — timely, though not necessarily as accurate as actual costing.", bizQuestion_normal_costing: "What costing system uses actual DM and DL but a predetermined rate for overhead?",
+    bizTitle_master_budget: "Master Budget", bizExplain_master_budget: "The master budget is the working document at the core of the budgeting cycle. It combines the operating budget (revenues, costs, budgeted income statement) with the financial budget (cash budget, budgeted balance sheet).", bizQuestion_master_budget: "What is the working document called that combines the operating budget and the financial budget?",
+    bizTitle_controllability: "Controllability", bizExplain_controllability: "Controllability is the degree of influence a specific manager has over costs, revenues or related items for which they are responsible. A controllable cost is one primarily subject to that manager's influence for a given period.", bizQuestion_controllability: "What term describes the degree of influence a specific manager has over the costs or revenues they are responsible for?",
+    bizTitle_under_over_applied_overhead: "Under/Over-applied Overhead", bizExplain_under_over_applied_overhead: "If actual overhead exceeds applied overhead, overhead is under-applied and the difference is added to unadjusted COGS. If applied exceeds actual, overhead is over-applied and the difference is subtracted from unadjusted COGS.", bizQuestion_under_over_applied_overhead: "Complete the under/over-applied overhead schedule below.",
+    bizTitle_production_budget: "Production Budget", bizExplain_production_budget: "The production budget converts budgeted sales into units to produce: budgeted unit sales plus desired ending finished goods, minus beginning finished goods inventory.", bizQuestion_production_budget: "Complete the production budget below.",
+    bizTitle_cost_plus_pricing: "Cost-Plus Pricing", bizExplain_cost_plus_pricing: "Under cost-plus pricing, the job cost (direct materials plus direct labour plus applied overhead) is multiplied by (1 + markup %) to set the selling price.", bizQuestion_cost_plus_pricing: "Complete the cost-plus pricing schedule below.",
+    quizBankCardTitle: "ACCT1102 Quiz Bank", quizBankCardDesc: "400 real exam-style questions across all 4 management accounting topics",
+    quizBankMenuTitle: "ACCT1102 Quiz Bank", quizBankMenuSub: "Pick a topic, or take on all 400 questions at once.",
+    quizBankQuestionCount: "{n} questions", quizBankBestLabel: "Best: {n}/{total}",
+    quizBankAllTitle: "All 400 Questions",
+    quizBankQuestionCounter: "Question {n} of {total}",
+    quizBankQuizEyebrow: "Exam Practice",
+    quizBankShowAnswerBtn: "Show Answer", quizBankAnswerLabel: "Answer",
+    quizBankGotItRightBtn: "Got it right", quizBankGotItWrongBtn: "Got it wrong",
+    quizBankTrueBtn: "True", quizBankFalseBtn: "False",
+    quizBankCompleteTitle: "Quiz Bank Complete", quizBankScoreLabel: "Score",
+    quizBankRetryBtn: "Retry this set", backToQuizBankMenuBtn: "Back to Quiz Bank",
     bizTitle_financial_accounting: "Financial Accounting", bizExplain_financial_accounting: "Financial accounting produces standardized statements — the income statement, balance sheet and cash flow statement — for external users like investors, lenders and regulators, following accounting standards.", bizQuestion_financial_accounting: "What branch of accounting produces standardized statements for external users like investors and lenders?",
     bizTitle_income_statement: "Income Statement", bizExplain_income_statement: "The income statement reports revenue, subtracts the cost of goods sold to find gross profit, then subtracts period expenses to arrive at profit for the period.", bizQuestion_income_statement: "Complete the income statement below.",
     bizTitle_work_in_process: "Work in Process", bizExplain_work_in_process: "Work in Process (WIP) is inventory that has entered production but is not yet finished — it holds the direct materials, direct labour and overhead applied so far.", bizQuestion_work_in_process: "What term describes inventory that has started production but is not yet finished?",
@@ -4541,6 +4567,17 @@ const I18N = {
     bizEndlessBestLabel: "最佳成绩：{n}",
     bizEndlessOverTitle: "挑战结束——已答错5次",
     bizEndlessRestartBtn: "再玩一次",
+    quizBankCardTitle: "ACCT1102 题库", quizBankCardDesc: "涵盖管理会计四个主题的400道真实考试风格题目",
+    quizBankMenuTitle: "ACCT1102 题库", quizBankMenuSub: "选择一个主题，或一次挑战全部400题。",
+    quizBankQuestionCount: "{n} 道题", quizBankBestLabel: "最佳成绩：{n}/{total}",
+    quizBankAllTitle: "全部400题",
+    quizBankQuestionCounter: "第 {n} / {total} 题",
+    quizBankQuizEyebrow: "考试练习",
+    quizBankShowAnswerBtn: "显示答案", quizBankAnswerLabel: "答案",
+    quizBankGotItRightBtn: "我答对了", quizBankGotItWrongBtn: "我答错了",
+    quizBankTrueBtn: "对", quizBankFalseBtn: "错",
+    quizBankCompleteTitle: "题库练习完成", quizBankScoreLabel: "得分",
+    quizBankRetryBtn: "再挑战一次", backToQuizBankMenuBtn: "返回题库",
     bizAxisTime: "时间 →", bizAxisQuantity: "数量 →",
     bizLabelSimple: "单利", bizLabelCompound: "复利",
     bizLabelStocks: "股票 30%", bizLabelBonds: "债券 25%", bizLabelRealEstate: "房地产 25%", bizLabelCash: "现金 20%",
@@ -4883,6 +4920,17 @@ const I18N = {
     bizEndlessBestLabel: "མཐོ་ཤོས་: {n}",
     bizEndlessOverTitle: "འགྲན་བསྡུར་གྲོལ་སོང་— ནོར་འཁྲུལ་5ཐེངས་བྱུང་།",
     bizEndlessRestartBtn: "བསྐྱར་དུ་རྩེད།",
+    quizBankCardTitle: "ACCT1102 དྲི་བའི་མཛོད།", quizBankCardDesc: "འཛིན་སྐྱོང་རྩིས་ཁྲའི་བརྗོད་གཞི་4པོའི་ཐོག་གི་ཚད་ལྡན་རྒྱུགས་སྤྲོད་དྲི་བ་400",
+    quizBankMenuTitle: "ACCT1102 དྲི་བའི་མཛོད།", quizBankMenuSub: "བརྗོད་གཞི་གཅིག་འདེམས་པའམ, དྲི་བ་400ཆར་ལ་འགྲན་སྡུར་བྱོས།",
+    quizBankQuestionCount: "དྲི་བ་{n}", quizBankBestLabel: "མཐོ་ཤོས་: {n}/{total}",
+    quizBankAllTitle: "དྲི་བ་400ཆ་ཚང་།",
+    quizBankQuestionCounter: "དྲི་བ་{n} / {total}",
+    quizBankQuizEyebrow: "རྒྱུགས་སྤྲོད་སྦྱོང་བརྡར།",
+    quizBankShowAnswerBtn: "ལན་སྟོན།", quizBankAnswerLabel: "ལན།",
+    quizBankGotItRightBtn: "ངས་ལན་ཚང་སོང་།", quizBankGotItWrongBtn: "ངས་ནོར་འཁྲུལ་བྱུང་།",
+    quizBankTrueBtn: "བདེན།", quizBankFalseBtn: "རྫུན།",
+    quizBankCompleteTitle: "དྲི་བའི་མཛོད་སྦྱོང་བརྡར་གྲུབ།", quizBankScoreLabel: "རྒྱུགས་གྲངས།",
+    quizBankRetryBtn: "བསྐྱར་དུ་འགྲན་སྡུར།", backToQuizBankMenuBtn: "དྲི་བའི་མཛོད་སུ་ལོག",
     bizAxisTime: "དུས་ཚོད →", bizAxisQuantity: "གྲངས་ཚད →",
     bizLabelSimple: "རྐྱང་སྐྱེད", bizLabelCompound: "འདུས་སྐྱེད",
     bizLabelStocks: "མཛོད་ཆ 30%", bizLabelBonds: "བུ་ལོན་ཡིག་ཆ 25%", bizLabelRealEstate: "ས་ཁང 25%", bizLabelCash: "དངུལ་ཕྱོགས 20%",
@@ -5037,6 +5085,9 @@ const screens = {
   business_result: renderBusinessResult,
   business_endless: renderBusinessEndless,
   business_endless_result: renderBusinessEndlessResult,
+  quiz_bank_menu: renderQuizBankMenu,
+  quiz_bank_session: renderQuizBankSession,
+  quiz_bank_result: renderQuizBankResult,
   profile: renderProfile,
   avatar_editor: renderAvatarEditor,
 };
@@ -6673,6 +6724,50 @@ function buildUnitCostStatement(hard){
     {label:'Unit Manufacturing Cost', value:unitCost, key:'unitCost', blank:true},
   ];
 }
+function buildOverAppliedStatement(hard){
+  const actualOH = randInt(50,500)*10;
+  const appliedOH = randInt(50,500)*10;
+  const variance = actualOH-appliedOH;
+  const unadjustedCOGS = randInt(500,5000)*100;
+  const adjustedCOGS = unadjustedCOGS+variance;
+  return [
+    {label:'Actual Overhead', value:actualOH, key:'actualOH', blank:false},
+    {label:'Applied Overhead', value:appliedOH, key:'appliedOH', blank:false},
+    {label:'Under/(Over)-applied Overhead', value:variance, key:'variance', blank:true},
+    {label:'Unadjusted COGS', value:unadjustedCOGS, key:'unadjustedCOGS', blank:false},
+    {label:'Adjusted COGS', value:adjustedCOGS, key:'adjustedCOGS', blank:hard},
+  ];
+}
+function buildProductionBudgetStatement(hard){
+  const sales = randInt(500,5000)*10;
+  const endingFG = randInt(50,500)*10;
+  const beginningFG = randInt(50,500)*10;
+  const totalNeeded = sales+endingFG;
+  const unitsToProduce = totalNeeded-beginningFG;
+  return [
+    {label:'Budgeted Unit Sales', value:sales, key:'sales', blank:false},
+    {label:'Add: Desired Ending Finished Goods', value:endingFG, key:'endingFG', blank:false},
+    {label:'Total Units Needed', value:totalNeeded, key:'totalNeeded', blank:hard},
+    {label:'Less: Beginning Finished Goods', value:beginningFG, key:'beginningFG', blank:false},
+    {label:'Units to be Produced', value:unitsToProduce, key:'unitsToProduce', blank:true},
+  ];
+}
+function buildCostPlusPricingStatement(hard){
+  const dm = randInt(5,50)*100;
+  const dl = randInt(5,50)*100;
+  const oh = randInt(2,30)*100;
+  const jobCost = dm+dl+oh;
+  const markupPct = randInt(1,10)*5;
+  const price = jobCost*(100+markupPct)/100;
+  return [
+    {label:'Direct Materials', value:dm, key:'dm', blank:false},
+    {label:'Direct Labour', value:dl, key:'dl', blank:false},
+    {label:'Overhead Applied', value:oh, key:'oh', blank:false},
+    {label:'Total Job Cost', value:jobCost, key:'jobCost', blank:hard},
+    {label:'Markup (%)', value:markupPct, key:'markupPct', blank:false},
+    {label:'Price', value:price, key:'price', blank:true},
+  ];
+}
 
 const BUSINESS_CONCEPTS = {
   finance: [
@@ -6745,6 +6840,35 @@ const BUSINESS_CONCEPTS = {
     {key:'unit_manufacturing_cost', icon:'🏷️', diagram:diagramFromStatement(buildUnitCostStatement), titleKey:'bizTitle_unit_manufacturing_cost', explainKey:'bizExplain_unit_manufacturing_cost', questionKey:'bizQuestion_unit_manufacturing_cost',
       acceptedAnswers:{en:['unit manufacturing cost']},
       quizVariant:'statement', buildStatement:buildUnitCostStatement},
+    {key:'cost_object', icon:'🎯', diagram:null, titleKey:'bizTitle_cost_object', explainKey:'bizExplain_cost_object', questionKey:'bizQuestion_cost_object',
+      acceptedAnswers:{en:['cost object']}},
+    {key:'direct_costs', icon:'➡️', diagram:null, titleKey:'bizTitle_direct_costs', explainKey:'bizExplain_direct_costs', questionKey:'bizQuestion_direct_costs',
+      acceptedAnswers:{en:['direct costs','direct cost']}},
+    {key:'inventoriable_costs', icon:'📦', diagram:null, titleKey:'bizTitle_inventoriable_costs', explainKey:'bizExplain_inventoriable_costs', questionKey:'bizQuestion_inventoriable_costs',
+      acceptedAnswers:{en:['inventoriable costs','inventoriable cost','product costs']}},
+    {key:'period_costs', icon:'🗓️', diagram:null, titleKey:'bizTitle_period_costs', explainKey:'bizExplain_period_costs', questionKey:'bizQuestion_period_costs',
+      acceptedAnswers:{en:['period costs','period cost']}},
+    {key:'prime_cost', icon:'🥇', diagram:null, titleKey:'bizTitle_prime_cost', explainKey:'bizExplain_prime_cost', questionKey:'bizQuestion_prime_cost',
+      acceptedAnswers:{en:['prime cost','prime costs']}},
+    {key:'conversion_cost', icon:'🔄', diagram:null, titleKey:'bizTitle_conversion_cost', explainKey:'bizExplain_conversion_cost', questionKey:'bizQuestion_conversion_cost',
+      acceptedAnswers:{en:['conversion cost','conversion costs']}},
+    {key:'process_costing', icon:'🏗️', diagram:null, titleKey:'bizTitle_process_costing', explainKey:'bizExplain_process_costing', questionKey:'bizQuestion_process_costing',
+      acceptedAnswers:{en:['process costing']}},
+    {key:'normal_costing', icon:'📐', diagram:null, titleKey:'bizTitle_normal_costing', explainKey:'bizExplain_normal_costing', questionKey:'bizQuestion_normal_costing',
+      acceptedAnswers:{en:['normal costing']}},
+    {key:'master_budget', icon:'📚', diagram:null, titleKey:'bizTitle_master_budget', explainKey:'bizExplain_master_budget', questionKey:'bizQuestion_master_budget',
+      acceptedAnswers:{en:['master budget']}},
+    {key:'controllability', icon:'🎮', diagram:null, titleKey:'bizTitle_controllability', explainKey:'bizExplain_controllability', questionKey:'bizQuestion_controllability',
+      acceptedAnswers:{en:['controllability']}},
+    {key:'under_over_applied_overhead', icon:'⚖️', diagram:diagramFromStatement(buildOverAppliedStatement), titleKey:'bizTitle_under_over_applied_overhead', explainKey:'bizExplain_under_over_applied_overhead', questionKey:'bizQuestion_under_over_applied_overhead',
+      acceptedAnswers:{en:['under applied overhead','over applied overhead','under or over applied overhead']},
+      quizVariant:'statement', buildStatement:buildOverAppliedStatement},
+    {key:'production_budget', icon:'🏭', diagram:diagramFromStatement(buildProductionBudgetStatement), titleKey:'bizTitle_production_budget', explainKey:'bizExplain_production_budget', questionKey:'bizQuestion_production_budget',
+      acceptedAnswers:{en:['production budget']},
+      quizVariant:'statement', buildStatement:buildProductionBudgetStatement},
+    {key:'cost_plus_pricing', icon:'🏷️', diagram:diagramFromStatement(buildCostPlusPricingStatement), titleKey:'bizTitle_cost_plus_pricing', explainKey:'bizExplain_cost_plus_pricing', questionKey:'bizQuestion_cost_plus_pricing',
+      acceptedAnswers:{en:['cost plus pricing','cost-plus pricing']},
+      quizVariant:'statement', buildStatement:buildCostPlusPricingStatement},
   ],
   finacct: [
     {key:'financial_accounting', icon:'📑', diagram:null, titleKey:'bizTitle_financial_accounting', explainKey:'bizExplain_financial_accounting', questionKey:'bizQuestion_financial_accounting',
@@ -6819,6 +6943,14 @@ function renderBusinessMenu(){
       <button class="biz-switch ${endlessOn?'on':''}" onclick="toggleBusinessEndlessMode()" aria-pressed="${endlessOn}"><span class="biz-switch-knob"></span></button>
     </div>
     <div class="track-grid">${cards}</div>
+    <button class="track-card" onclick="openQuizBankMenu()">
+      <div class="glyph">📝</div>
+      <div>
+        <div class="tc-title">${t('quizBankCardTitle')}</div>
+        <div class="tc-sub">${t('quizBankCardDesc')}</div>
+      </div>
+      <div class="tc-progress">${t('startArrow')}</div>
+    </button>
   </div>
   `;
 }
@@ -7045,6 +7177,223 @@ function startBusinessEndless(category){
     correct:0, mistakes:0, combo:0, maxCombo:0, isNewBest:false, newAchievements:[],
   };
   startBusinessQuiz();
+}
+
+// ---- ACCT1102 Quiz Bank: a 400-question exam-practice deck (Topics 1-4),
+// separate from the concept-teaching engine above since MCQ/True-False/
+// Calculation/Fill-in-table/Short-answer questions don't fit the teach-then-
+// recall pattern. MCQ and True/False are auto-graded; Calculation, Fill-in-
+// table and Short-answer are reveal-and-self-mark, since those have
+// multi-part or free-form answers that aren't safely auto-gradable at this
+// scale. Runs through a finite shuffled deck (not an infinite drill) and
+// tracks a best score per part. ---------------------------------------------
+function openQuizBankMenu(){
+  state.screen = 'quiz_bank_menu';
+  render();
+}
+function renderQuizBankMenu(){
+  const bestScores = (state.game.quizBank && state.game.quizBank.best) || {};
+  const parts = QUIZ_BANK_PARTS.map(p=>{
+    const count = QUIZ_BANK.filter(q=>q.part===p.id).length;
+    const best = bestScores[p.id];
+    return `
+    <button class="track-card" onclick="startQuizBankSession(${p.id})">
+      <div class="glyph">${p.id}</div>
+      <div>
+        <div class="tc-title">${p.title}</div>
+        <div class="tc-sub">${t('quizBankQuestionCount',{n:count})}</div>
+      </div>
+      <div class="tc-progress">${best!=null ? t('quizBankBestLabel',{n:best,total:count}) : t('startArrow')}</div>
+    </button>`;
+  }).join('');
+  const bestAll = bestScores.all;
+  const allCard = `
+    <button class="track-card" onclick="startQuizBankSession('all')">
+      <div class="glyph">🏆</div>
+      <div>
+        <div class="tc-title">${t('quizBankAllTitle')}</div>
+        <div class="tc-sub">${t('quizBankQuestionCount',{n:QUIZ_BANK.length})}</div>
+      </div>
+      <div class="tc-progress">${bestAll!=null ? t('quizBankBestLabel',{n:bestAll,total:QUIZ_BANK.length}) : t('startArrow')}</div>
+    </button>`;
+  return `
+  ${topbar({back:'backToBusinessMenu()'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>${t('quizBankMenuTitle')}</h1>
+      <div class="sub">${t('quizBankMenuSub')}</div>
+    </div>
+    <div class="track-grid">${parts}${allCard}</div>
+  </div>
+  `;
+}
+
+function startQuizBankSession(partFilter){
+  partFilter = partFilter==='all' ? 'all' : Number(partFilter);
+  const pool = partFilter==='all' ? QUIZ_BANK : QUIZ_BANK.filter(q=>q.part===partFilter);
+  state.quizBankSession = {
+    partFilter, queue: shuffled(pool), index:0, correct:0, mistakes:0, combo:0, maxCombo:0,
+    xpEarned:0, lastXpGain:0, answered:false, revealed:false, selected:null, tfSelected:null, lastCorrect:null,
+    newAchievements:[], isNewBest:false,
+  };
+  state.screen = 'quiz_bank_session';
+  render();
+}
+function exitQuizBank(){ state.screen='business_menu'; render(); }
+
+function quizBankOptionsHtml(s, q){
+  if(q.type==='mcq'){
+    return `<div class="options">${q.opts.map((opt,idx)=>{
+      let cls = 'opt';
+      if(s.answered){
+        if(idx===q.ans) cls += ' correct reveal';
+        else if(idx===s.selected) cls += ' wrong reveal';
+        else cls += ' disabled reveal';
+      }
+      return `<button class="${cls}" ${s.answered?'':`onclick="submitQuizBankMcq(${idx})"`}><span>${opt}</span></button>`;
+    }).join('')}</div>`;
+  }
+  if(q.type==='tf'){
+    const opts = [{label:t('quizBankTrueBtn'), val:true}, {label:t('quizBankFalseBtn'), val:false}];
+    return `<div class="options">${opts.map(o=>{
+      let cls = 'opt';
+      if(s.answered){
+        if(o.val===q.ans) cls += ' correct reveal';
+        else if(o.val===s.tfSelected) cls += ' wrong reveal';
+        else cls += ' disabled reveal';
+      }
+      return `<button class="${cls}" ${s.answered?'':`onclick="submitQuizBankTf(${o.val})"`}><span>${o.label}</span></button>`;
+    }).join('')}</div>`;
+  }
+  // calc / table / short: reveal-and-self-mark
+  if(!s.revealed){
+    return `<button class="btn btn-primary btn-block" onclick="revealQuizBankAnswer()">${t('quizBankShowAnswerBtn')}</button>`;
+  }
+  if(!s.answered){
+    return `
+    <div class="profile-card" style="text-align:left;">
+      <div style="font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--gold); margin-bottom:6px;">${t('quizBankAnswerLabel')}</div>
+      <div style="line-height:1.6; font-size:14.5px; color:var(--snow-dim);">${q.exp}</div>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-primary btn-block" onclick="submitQuizBankSelfMark(true)">${t('quizBankGotItRightBtn')}</button>
+      <button class="btn btn-ghost btn-block" onclick="submitQuizBankSelfMark(false)">${t('quizBankGotItWrongBtn')}</button>
+    </div>`;
+  }
+  return `
+    <div class="profile-card" style="text-align:left;">
+      <div style="font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--gold); margin-bottom:6px;">${t('quizBankAnswerLabel')}</div>
+      <div style="line-height:1.6; font-size:14.5px; color:var(--snow-dim);">${q.exp}</div>
+    </div>`;
+}
+
+function renderQuizBankSession(){
+  const s = state.quizBankSession;
+  const q = s.queue[s.index];
+  const isLast = s.index >= s.queue.length-1;
+  const feedback = s.answered ? `
+    <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
+      <div class="fb-text">
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
+      </div>
+      <button class="btn btn-light" onclick="nextQuizBankQuestion()">${isLast ? t('finishBtn') : t('continueBtn')}</button>
+    </div>` : '';
+  return `
+  ${topbar({back:'exitQuizBank()'})}
+  <div class="lesson">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;">
+      <div style="font-size:12px; color:var(--snow-dim);">${t('quizBankQuestionCounter',{n:s.index+1, total:s.queue.length})}</div>
+      <div style="font-size:12px; color:var(--snow-dim); text-align:right;">${t('correctAnswersLabel')}: ${s.correct}${s.combo>=3?`<br><span style="color:var(--gold);">${comboBadge(s.combo)} ${t('comboLabel',{n:s.combo})}</span>`:''}</div>
+    </div>
+    <div class="q-wrap">
+      <div class="q-card">
+        <div class="q-eyebrow">${t('quizBankQuizEyebrow')}</div>
+        <div class="q-prompt" style="font-size:19px;">${q.q}</div>
+      </div>
+      ${quizBankOptionsHtml(s, q)}
+    </div>
+  </div>
+  ${feedback}
+  `;
+}
+
+function revealQuizBankAnswer(){
+  const s = state.quizBankSession;
+  if(s.revealed) return;
+  s.revealed = true;
+  render();
+}
+function submitQuizBankMcq(idx){
+  const s = state.quizBankSession;
+  if(s.answered) return;
+  const q = s.queue[s.index];
+  s.selected = idx;
+  s.answered = true;
+  s.lastCorrect = idx===q.ans;
+  finalizeQuizBankAnswer(s);
+  render();
+}
+function submitQuizBankTf(val){
+  const s = state.quizBankSession;
+  if(s.answered) return;
+  const q = s.queue[s.index];
+  s.tfSelected = val;
+  s.answered = true;
+  s.lastCorrect = val===q.ans;
+  finalizeQuizBankAnswer(s);
+  render();
+}
+function submitQuizBankSelfMark(gotItRight){
+  const s = state.quizBankSession;
+  if(s.answered) return;
+  s.answered = true;
+  s.lastCorrect = gotItRight;
+  finalizeQuizBankAnswer(s);
+  render();
+}
+function finalizeQuizBankAnswer(s){
+  if(s.lastCorrect) s.lastXpGain = registerCorrectAnswer(s, state.game);
+  else { registerWrongAnswer(s); s.lastXpGain = 0; }
+}
+function nextQuizBankQuestion(){
+  const s = state.quizBankSession;
+  if(s.index >= s.queue.length-1){ finishQuizBankSession(); return; }
+  s.index += 1;
+  s.answered = false; s.revealed = false; s.selected = null; s.tfSelected = null; s.lastCorrect = null;
+  render();
+}
+function finishQuizBankSession(){
+  const s = state.quizBankSession;
+  if(!state.game.quizBank) state.game.quizBank = {best:{}};
+  if(!state.game.quizBank.best) state.game.quizBank.best = {};
+  const rec = state.game.quizBank.best;
+  const key = s.partFilter;
+  s.isNewBest = s.correct > (rec[key]||0);
+  if(s.isNewBest) rec[key] = s.correct;
+  touchStreak();
+  s.newAchievements = checkAchievements(state.game);
+  state.screen = 'quiz_bank_result';
+  render();
+}
+function renderQuizBankResult(){
+  const s = state.quizBankSession;
+  const lvl = xpLevel(state.game.xp);
+  const total = s.queue.length;
+  return `
+  ${topbar()}
+  <div class="complete ${appLangClass()}">
+    <div class="medal">${s.isNewBest ? '🏆' : '🎯'}</div>
+    <h2>${s.isNewBest ? t('newBestReached') : t('quizBankCompleteTitle')}</h2>
+    <div class="stat-row">
+      <div class="stat-box"><div class="val">${s.correct}/${total}</div><div class="lab">${t('quizBankScoreLabel')}</div></div>
+      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
+    </div>
+    <div style="color:var(--snow-dim); font-size:13px;">${t('levelLabel',{n:lvl.level})}</div>
+    ${achievementBannerHtml(s.newAchievements)}
+    <button class="btn btn-primary btn-block" onclick="startQuizBankSession('${s.partFilter}')">${t('quizBankRetryBtn')}</button>
+    <button class="btn btn-ghost btn-block" onclick="openQuizBankMenu()">${t('backToQuizBankMenuBtn')}</button>
+  </div>`;
 }
 
 function submitBusinessMcq(key){
