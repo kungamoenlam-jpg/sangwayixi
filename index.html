@@ -3792,6 +3792,7 @@ function defaultGame(){
     calculus:{}, // topic key -> {best: correct-answer count}
     business:{}, // category key -> {rounds: completed-rounds count}
     conceptExposure:{}, // concept key -> times tested (drives MCQ -> typed progression)
+    conceptMastery:{}, // concept key (or "qb_<id>" for Quiz Bank questions) -> {correct, wrong, streak}
     totalCorrect:0, bestCombo:0, achievements:[] // shared across all practice modes
   };
 }
@@ -4173,6 +4174,20 @@ const I18N = {
     bizMgmtAcctTitle: "Management Accounting", bizMgmtAcctDesc: "Cost behavior, job costing and breakeven analysis",
     bizFinAcctTitle: "Financial Accounting", bizFinAcctDesc: "Financial statements and how they're built",
     bizMlTitle: "Machine Learning", bizMlDesc: "Statistical learning, probability and how models learn from data",
+    mlWeekMenuTitle: "Machine Learning", mlWeekMenuSub: "Pick a week to focus your practice, or drill everything at once.",
+    mlAllWeeksTitle: "All Weeks", mlAllWeeksDesc: "Every Machine Learning concept so far",
+    mlWeek1Title: "Week 1: Foundations", mlWeek1Desc: "Probability, uncertainty, bias-variance, overfitting",
+    mlWeek2Title: "Week 2: Linear Regression", mlWeek2Desc: "OLS, standard errors, hypothesis testing, R-squared",
+    mlWeek3Title: "Week 3: Model Selection & Regularisation", mlWeek3Desc: "Stepwise selection, ridge, lasso, cross-validation",
+    masteryNew: "New", masteryLearning: "Learning", masteryPracticing: "Practicing", masteryMastered: "Mastered",
+    mlMasteryLabel: "🏆{mastered} · 💪{practicing} · 📖{learning} · 🆕{fresh}",
+    bizMasteryRankingTitle: "Focus on these next",
+    bizCorpfinTitle: "Corporate Finance", bizCorpfinDesc: "Cost of capital, project evaluation, and capital structure (FINM2415)",
+    corpfinWeekMenuTitle: "Corporate Finance", corpfinWeekMenuSub: "Pick a week to focus your practice, or drill everything at once.",
+    corpfinAllWeeksTitle: "All Weeks", corpfinAllWeeksDesc: "Every Corporate Finance concept so far",
+    corpfinWeek1Title: "Week 1: Cost of Capital", corpfinWeek1Desc: "CAPM, cost of equity and debt, WACC",
+    corpfinWeek2Title: "Week 2: Project Evaluation", corpfinWeek2Desc: "Free cash flow, sensitivity analysis, real options",
+    corpfinWeek3Title: "Week 3: Capital Structure I", corpfinWeek3Desc: "MM Propositions I and II, leverage",
     bizStatementEyebrow: "Fill in the missing figures",
     bizTitle_indirect_costs: "Indirect Costs", bizExplain_indirect_costs: "Indirect costs (overhead) cannot be traced directly to a single product or job — like factory rent or a supervisor's salary. They must be allocated across products using a cost driver.", bizQuestion_indirect_costs: "What term describes costs like factory rent that cannot be traced directly to one product?",
     bizTitle_variable_costs: "Variable Costs", bizExplain_variable_costs: "Variable costs change in direct proportion to the level of activity — the more units produced, the higher the total variable cost, but the cost per unit stays constant.", bizQuestion_variable_costs: "What term describes costs that change in direct proportion to activity level, like raw materials?",
@@ -4244,6 +4259,53 @@ const I18N = {
     bizTitle_heteroscedasticity: "Heteroscedasticity", bizExplain_heteroscedasticity: "Heteroscedasticity means the spread of residuals grows as fitted values grow, visible as a fan shape in a residual plot — violating the assumption of constant error variance. A log or Box-Cox transformation of Y often helps.", bizQuestion_heteroscedasticity: "What term describes the spread of residuals growing with fitted values, visible as a fan shape in a residual plot?",
     bizTitle_f_test: "F-Test", bizExplain_f_test: "The F-test checks whether the predictors, as a group, explain more variation in Y than would be expected by chance — a large F statistic (with a small p-value) means at least one predictor is genuinely related to Y.", bizQuestion_f_test: "What test checks whether a group of predictors, together, explain more variation in Y than expected by chance?",
     bizTitle_r_squared: "R-Squared", bizExplain_r_squared: "R-squared is the fraction of variance in Y explained by the model: R² = (TSS − RSS) / TSS. Values close to 1 mean the model explains most of the variation; values close to 0 mean it explains very little.", bizQuestion_r_squared: "Complete the R-squared schedule below.",
+    bizTitle_subset_selection: "Best Subset / Subset Selection", bizExplain_subset_selection: "The general strategy of choosing a smaller subset of the p predictors that are believed to be most related to the response, then fitting ordinary least squares using only that subset. Best subset selection considers every possible combination of predictors, while forward and backward stepwise selection search a much smaller set of models.", bizQuestion_subset_selection: "What is the general name for choosing a smaller subset of predictors and fitting OLS on just that subset, instead of using all p predictors?",
+    bizTitle_forward_stepwise_selection: "Forward Stepwise Selection", bizExplain_forward_stepwise_selection: "Starts with a model containing no predictors, then repeatedly adds the one predictor that most improves the fit, one at a time. Produces a sequence of models M0, M1, M2, ... where each model has one more predictor than the last. Training RSS always decreases as predictors are added, so a separate method like cross-validation is needed to pick the best model in the sequence.", bizQuestion_forward_stepwise_selection: "Which subset selection method starts with no predictors and adds one predictor at a time, each step choosing the addition that most improves the fit?",
+    bizTitle_variable_selection: "Variable Selection", bizExplain_variable_selection: "The broad process of deciding which of the p available predictors should be included in the final model. Subset selection and stepwise methods choose variables explicitly, including or excluding them, while the Lasso performs variable selection implicitly by shrinking unhelpful coefficients to exactly zero.", bizQuestion_variable_selection: "What is the general term for the process of deciding which predictors to include in a regression model?",
+    bizTitle_regularization: "Regularization / Shrinkage", bizExplain_regularization: "Fits a model using all p predictors but adds a penalty that shrinks the coefficient estimates toward zero. Reduces variance at the cost of a small increase in bias, which can lower overall test error compared to ordinary least squares. Ridge regression and the Lasso are the two most common regularization methods.", bizQuestion_regularization: "What is the general term for fitting a model on all predictors while penalizing the size of the coefficients to shrink them toward zero?",
+    bizTitle_ridge_regression: "Ridge Regression", bizExplain_ridge_regression: "A shrinkage method that fits a model on all p predictors while adding a penalty proportional to the sum of the squared coefficients, the L2 penalty. Larger coefficients are penalized more, shrinking them toward zero but never forcing them to exactly zero. Predictors must be standardized first, since ridge regression is not scale invariant.", bizQuestion_ridge_regression: "Which shrinkage method penalizes the sum of squared coefficients and shrinks them toward, but never exactly to, zero?",
+    bizTitle_lasso_regression: "The Lasso", bizExplain_lasso_regression: "A shrinkage method that penalizes the sum of the absolute values of the coefficients, the L1 penalty, instead of their squares. Unlike ridge regression, the Lasso can force some coefficients to be exactly zero when the tuning parameter is large enough, which performs variable selection and produces sparser, more interpretable models.", bizQuestion_lasso_regression: "Which shrinkage method uses an L1 penalty and can shrink some coefficients to exactly zero, effectively performing variable selection?",
+    bizTitle_l2_penalty: "L2 Penalty", bizExplain_l2_penalty: "The penalty term used by ridge regression, equal to the tuning parameter lambda times the sum of the squared coefficients. Because it squares each coefficient, it shrinks large coefficients more aggressively than small ones, but it never sets a coefficient to exactly zero.", bizQuestion_l2_penalty: "What penalty term, equal to lambda times the sum of squared coefficients, does ridge regression add to the residual sum of squares?",
+    bizTitle_l1_penalty: "L1 Penalty", bizExplain_l1_penalty: "The penalty term used by the Lasso, equal to the tuning parameter lambda times the sum of the absolute values of the coefficients. Its geometry allows coefficient estimates to land exactly on zero, which is why the Lasso can perform variable selection while ridge regression cannot.", bizQuestion_l1_penalty: "What penalty term, equal to lambda times the sum of the absolute values of the coefficients, does the Lasso add to the residual sum of squares?",
+    bizTitle_tuning_parameter: "Tuning Parameter (λ)", bizExplain_tuning_parameter: "The parameter lambda that controls the strength of shrinkage in ridge regression and the Lasso. When lambda equals zero, the penalty has no effect and the fit matches ordinary least squares. As lambda increases, coefficients shrink further toward zero and the model becomes less flexible. The best value of lambda is chosen using cross-validation.", bizQuestion_tuning_parameter: "What is the name of the parameter that controls how much shrinkage ridge regression or the Lasso applies, and is typically chosen by cross-validation?",
+    bizTitle_standardization: "Standardizing Predictors", bizExplain_standardization: "Rescaling each predictor to have a standard deviation of one before fitting ridge regression or the Lasso. Unlike ordinary least squares, shrinkage penalties are not scale invariant, so predictors measured in different units would be penalized unfairly without this step.", bizQuestion_standardization: "What is the process of rescaling predictors to have standard deviation one, required before fitting ridge regression or the Lasso?",
+    bizTitle_k_fold_cross_validation: "K-Fold Cross-Validation", bizExplain_k_fold_cross_validation: "Randomly divides the data into K equally sized folds. Each fold is held out once as a validation set while the model is trained on the remaining K minus one folds, producing K estimates of test error that are averaged together. Common choices are K equals 5 or K equals 10, which balance bias and variance better than the simple validation-set approach.", bizQuestion_k_fold_cross_validation: "Which cross-validation method randomly splits the data into K equally sized groups, then trains on K-1 of them and validates on the one held out, repeating K times?",
+    bizTitle_information_criteria: "Information Criteria (Cp, AIC, BIC)", bizExplain_information_criteria: "A family of methods that adjust the training error by adding a penalty for the number of predictors in the model, allowing models of different sizes to be compared directly on the training data without a validation set. Mallow's Cp and AIC penalize each added predictor by roughly the same amount, while BIC applies a heavier penalty and tends to favor smaller models.", bizQuestion_information_criteria: "What family of methods adjusts training error with a penalty for the number of predictors, so models of different sizes can be compared without cross-validation?",
+    bizTitle_adjusted_r_squared: "Adjusted R-Squared", bizExplain_adjusted_r_squared: "A variation of R-squared that adds a penalty for the number of predictors in the model, so it does not automatically increase every time a new predictor is added the way ordinary R-squared does. A higher adjusted R-squared indicates a better balance between model fit and model size, making it useful for comparing models with different numbers of predictors.", bizQuestion_adjusted_r_squared: "Which version of R-squared adds a penalty for the number of predictors so it does not always increase when a new predictor is added?",
+    bizTitle_capm: "CAPM", bizExplain_capm: "The Capital Asset Pricing Model estimates an asset's expected return as the risk-free rate plus a risk premium: E(Ri) = rf + βi[E(Rm) − rf]. It tells an investor whether an asset's expected return compensates them fairly for the market risk they are taking on.", bizQuestion_capm: "What model estimates an asset's expected return as the risk-free rate plus beta times the market risk premium?",
+    bizTitle_cost_of_equity: "Cost of Equity", bizExplain_cost_of_equity: "The required return that equity investors expect from investing in a firm's shares, and the return the firm must earn on equity-financed projects to satisfy them. It is typically estimated using CAPM: Re = rf + βe[E(Rm) − rf].", bizQuestion_cost_of_equity: "What is the required return that shareholders expect to earn, usually estimated with CAPM?",
+    bizTitle_cost_of_debt: "Cost of Debt", bizExplain_cost_of_debt: "The expected return required by a firm's creditors, such as lenders and bondholders. If a bond has little to no default risk, its yield to maturity is a reasonable estimate of the cost of debt, but significant default risk requires adjusting that yield downward.", bizQuestion_cost_of_debt: "What is the expected return required by a firm's lenders and bondholders, usually estimated from bond yields?",
+    bizTitle_yield_to_maturity: "Yield to Maturity", bizExplain_yield_to_maturity: "The promised return on a bond if it is held to maturity and makes all scheduled interest and principal payments, calculated as the bond's internal rate of return. When default risk is significant, the yield to maturity overstates the bond's true expected return.", bizQuestion_yield_to_maturity: "What is the name for a bond's promised return assuming it makes every scheduled payment, which overstates expected return when default risk is significant?",
+    bizTitle_debt_default_adjustment: "Adjusting YTM for Default", bizExplain_debt_default_adjustment: "When a bond carries meaningful default risk, its cost of debt is estimated by subtracting the expected loss from default off the yield to maturity: Rd = YTM − pL, where p is the probability of default and L is the expected loss rate. This adjustment can also be made by estimating the bond's debt beta and applying CAPM.", bizQuestion_debt_default_adjustment: "What formula adjusts a risky bond's yield to maturity downward for the probability and expected loss rate of default?",
+    bizTitle_debt_beta: "Debt Beta", bizExplain_debt_beta: "A measure of how sensitive a bond's returns are to the overall market, used with CAPM to estimate the cost of debt when a reliable yield to maturity is unavailable. Because bond markets trade much less frequently than share markets, debt betas are usually taken from published estimates by credit rating rather than estimated directly.", bizQuestion_debt_beta: "What measure of a bond's market sensitivity, usually published by credit rating rather than estimated directly, can be used with CAPM to estimate the cost of debt?",
+    bizTitle_market_vs_firm_specific_risk: "Market vs. Firm-Specific Risk", bizExplain_market_vs_firm_specific_risk: "Total risk in an asset's return can be split into market (systematic) risk, which is driven by broad economic movements and captured by beta, and firm-specific (idiosyncratic) risk, which is unique to the company. Only market risk is priced by investors and therefore determines the cost of equity, since firm-specific risk can be diversified away.", bizQuestion_market_vs_firm_specific_risk: "Which type of risk, market or firm-specific, is priced by investors and used to determine the cost of equity?",
+    bizTitle_wacc: "WACC", bizExplain_wacc: "The Weighted Average Cost of Capital blends a firm's cost of equity and after-tax cost of debt, weighted by their share of the firm's total market value: WACC = (E/(D+E))Re + (D/(D+E))Rd(1 − tc). It represents the overall return a firm must earn on its investments to satisfy both debt and equity investors.", bizQuestion_wacc: "What single rate blends a firm's cost of equity and after-tax cost of debt, weighted by their share of total firm value?",
+    bizTitle_pretax_wacc: "Pretax-WACC", bizExplain_pretax_wacc: "Also called the asset cost of capital or unlevered cost of capital, this is the weighted average of a levered comparable firm's cost of equity and cost of debt without adjusting for the tax shield on interest: RA = RU = (E/(D+E))Re + (D/(D+E))Rd. It estimates the cost of capital for a project financed entirely by equity.", bizQuestion_pretax_wacc: "What rate, also called the asset cost of capital, estimates a project's cost of capital when it is financed entirely by equity?",
+    bizTitle_comparable_firm_method: "Comparable Firm Method", bizExplain_comparable_firm_method: "Since most projects are not themselves publicly traded, their cost of capital is often estimated using a comparable firm operating in the same line of business. If the comparable firm is unlevered, its cost of equity is used directly; if it is levered, its debt and equity are combined into a pretax-WACC or WACC estimate.", bizQuestion_comparable_firm_method: "What approach estimates a project's cost of capital using a publicly traded firm in the same line of business?",
+    bizTitle_capital_budgeting: "Capital Budgeting", bizExplain_capital_budgeting: "The process of analyzing investment projects and deciding which to accept, typically involving forecasting free cash flows, estimating the cost of capital, analyzing uncertainty, applying a decision rule such as NPV, and performing a post-audit after the project starts.", bizQuestion_capital_budgeting: "What is the process of analyzing investment projects and deciding which ones a firm should accept called?",
+    bizTitle_incremental_cash_flow: "Incremental Cash Flow", bizExplain_incremental_cash_flow: "A cash flow is incremental only if it is a direct consequence of accepting the project, meaning it would not occur if the project were rejected. Only incremental, after-tax cash flows belong in a project's free cash flow forecast.", bizQuestion_incremental_cash_flow: "What term describes a cash flow that occurs only because a project is accepted, and would not occur otherwise?",
+    bizTitle_free_cash_flow: "Free Cash Flow (FCF)", bizExplain_free_cash_flow: "A project's free cash flow starts from unlevered net income, adds back depreciation and amortization, subtracts capital expenditures, and subtracts the change in net working capital: FCF = NI + D − CapEx − ΔNWC. It excludes financing costs like interest, since the project is evaluated independently of how it is financed.", bizQuestion_free_cash_flow: "What is the formula for a project's after-tax free cash flow, starting from unlevered net income?",
+    bizTitle_project_opportunity_cost: "Opportunity Cost", bizExplain_project_opportunity_cost: "The value of the best alternative use of a resource the project consumes, such as a warehouse that could otherwise be rented out. Opportunity costs are real costs of the project and must be included in its free cash flows even though no cash changes hands directly.", bizQuestion_project_opportunity_cost: "What is the value of the best alternative use of a resource a project consumes, which must be included in its cash flows?",
+    bizTitle_sunk_cost: "Sunk Cost", bizExplain_sunk_cost: "A cost that has already been paid or will be paid regardless of whether the project is accepted or rejected, such as a market survey completed last year. Sunk costs are not incremental and must be excluded from a project's cash flow forecast: let bygones be bygones.", bizQuestion_sunk_cost: "What term describes a cost already incurred, or that will be incurred either way, which should be excluded from a project's cash flows?",
+    bizTitle_project_side_effects: "Project Side Effects", bizExplain_project_side_effects: "Also called project externalities, these are the effects a project has on a firm's other cash flows. A negative side effect, such as a new product cannibalizing sales of an existing one, is a cost; a positive side effect, such as a synergy that boosts sales elsewhere, is a benefit, and both must be included.", bizQuestion_project_side_effects: "What term describes the effect a new project has on a firm's other cash flows, whether it is negative (cannibalization) or positive (synergy)?",
+    bizTitle_net_salvage_value: "Net Salvage Value", bizExplain_net_salvage_value: "The after-tax cash flow from selling an asset at the end of a project, equal to the sale price minus tax on any capital gain or loss: Sale Price − [tax rate × (Sale Price − Net Book Value)]. Net book value equals the asset's purchase price minus accumulated depreciation.", bizQuestion_net_salvage_value: "What is the after-tax cash flow from selling a project's equipment at the end of its life called?",
+    bizTitle_sensitivity_analysis: "Sensitivity Analysis", bizExplain_sensitivity_analysis: "A method of project risk analysis that changes the value of one and only one input variable at a time, such as sales volume or unit cost, to see how it affects the project's NPV. It isolates the impact of each individual assumption on the investment decision.", bizQuestion_sensitivity_analysis: "What risk-analysis method changes one input variable at a time to see its effect on NPV?",
+    bizTitle_scenario_analysis: "Scenario Analysis", bizExplain_scenario_analysis: "A method of project risk analysis that changes the values of several input variables simultaneously, modeling a coherent scenario such as a recession or a competitor's aggressive pricing, to see how it affects the project's NPV.", bizQuestion_scenario_analysis: "What risk-analysis method changes several input variables together, as part of one coherent scenario, to see the effect on NPV?",
+    bizTitle_break_even_analysis: "Break-Even Analysis", bizExplain_break_even_analysis: "A method of project risk analysis that finds the value of an input variable, such as the level of sales, that makes a project's NPV exactly equal to zero. It identifies how far a key assumption could fall before the project stops being worthwhile.", bizQuestion_break_even_analysis: "What risk-analysis method finds the level of an input variable that makes a project's NPV equal to zero?",
+    bizTitle_real_option: "Real Option", bizExplain_real_option: "The right, but not the obligation, for managers to take some future action that alters a project's cash flows, such as expanding, abandoning, or delaying it. Real option value is not captured by a standard NPV analysis and must be added separately: NPV with option = NPV without option + value of the option.", bizQuestion_real_option: "What is the right, but not the obligation, to take a future action that alters a project's cash flows called?",
+    bizTitle_growth_option: "Growth (Expansion) Option", bizExplain_growth_option: "A real option that lets a firm invest further in a project if it creates the opportunity to make other profitable investments that would not otherwise be available. It has value when conditions such as demand turn out better than expected, since the firm can choose to expand rather than being forced to.", bizQuestion_growth_option: "Which real option lets a firm invest further in a project when it creates access to other profitable follow-on investments?",
+    bizTitle_abandonment_option: "Abandonment Option", bizExplain_abandonment_option: "A real option that lets a firm stop a project before the end of its physical life, for example by selling the equipment, if its cash flows turn out worse than expected. It raises a project's expected profitability and lowers its risk by capping the downside.", bizQuestion_abandonment_option: "Which real option lets a firm stop a project early, capping its losses, if results turn out worse than expected?",
+    bizTitle_timing_option: "Timing (Delay) Option", bizExplain_timing_option: "A real option, also called the option to delay, that lets a firm wait to start a project until more information about demand or costs is available, at the cost of giving up any cash flows during the wait. It has value when there is significant uncertainty that will be resolved over time.", bizQuestion_timing_option: "Which real option lets a firm wait for more information before committing to a project, at the cost of foregone cash flows during the delay?",
+    bizTitle_capital_structure: "Capital Structure", bizExplain_capital_structure: "The mix of debt, equity, and other securities a firm uses to raise capital from investors. A central question in corporate finance is whether some mix of debt and equity maximizes firm value, that is, whether there is an optimal debt-to-equity ratio.", bizQuestion_capital_structure: "What term describes the mix of debt and equity securities a firm uses to raise capital?",
+    bizTitle_leverage: "Leverage", bizExplain_leverage: "The extent to which a firm relies on debt financing; the more debt it carries, the more levered it is. Leverage is commonly measured with a debt ratio such as the debt-to-equity ratio (D/E) or the debt-to-capital ratio (D/(D+E)).", bizQuestion_leverage: "What term describes the extent to which a firm relies on debt financing, often measured by the debt-to-equity ratio?",
+    bizTitle_unlevered_equity: "Unlevered Equity", bizExplain_unlevered_equity: "Equity in a firm with no debt (D = 0, E > 0). Because there are no debt holders to pay first, unlevered equity holders receive the full cash flows generated by the firm's assets.", bizQuestion_unlevered_equity: "What is equity in a firm with zero debt called?",
+    bizTitle_levered_equity: "Levered Equity", bizExplain_levered_equity: "Equity in a firm that has both debt and equity outstanding (D > 0, E > 0). Levered equity holders are paid only after debt holders receive their promised payments, which makes levered equity riskier than unlevered equity in the same firm.", bizQuestion_levered_equity: "What is equity in a firm that also has debt outstanding called?",
+    bizTitle_mm_proposition_1: "MM Proposition I", bizExplain_mm_proposition_1: "MM Proposition I states that in a perfect capital market, the value of a firm does not depend on its capital structure: V = A = U = D + E. Firm value is determined solely by the cash flows its assets generate, not by how those assets are financed, because the Law of One Price implies the market value of the assets must equal the combined market value of the debt and equity claims on them.", bizQuestion_mm_proposition_1: "Which MM proposition states that, in a perfect capital market, a firm's value does not depend on its capital structure?",
+    bizTitle_law_of_one_price: "Law of One Price", bizExplain_law_of_one_price: "In competitive markets, securities or portfolios of securities with identical cash flows must have the same price. This principle underlies MM Proposition I: since a firm's total cash flows do not change with its capital structure, the combined market value of its debt and equity cannot change either.", bizQuestion_law_of_one_price: "What principle states that securities or portfolios with the same cash flows must trade at the same price?",
+    bizTitle_homemade_leverage: "Homemade Leverage", bizExplain_homemade_leverage: "Investors borrowing or lending on their own account to create a personally preferred level of leverage, when a firm's chosen capital structure does not match what they want. Because investors can borrow and lend at the same rate as the firm in a perfect market, homemade leverage is a perfect substitute for the firm's own leverage, so the firm's capital structure choice cannot affect its value.", bizQuestion_homemade_leverage: "What term describes investors borrowing or lending on their own to replicate a preferred level of leverage?",
+    bizTitle_mm_proposition_2: "MM Proposition II", bizExplain_mm_proposition_2: "MM Proposition II states that a levered firm's cost of equity equals the unlevered cost of equity plus a risk premium proportional to its degree of leverage: Re = Ru + (D/E)(Ru − Rd). Leverage increases the risk borne by equity holders, since debt holders are paid first, so equity holders demand a higher return as leverage rises.", bizQuestion_mm_proposition_2: "Which MM proposition states that a levered firm's cost of equity rises with its degree of leverage: Re = Ru + (D/E)(Ru − Rd)?",
+    bizTitle_equity_beta_leverage: "Equity Beta and Leverage", bizExplain_equity_beta_leverage: "Leverage affects the risk of a firm's equity in the same way it affects its cost of equity: βe = βU + (D/E)(βU − βd). As a firm takes on more debt, its equity beta rises, reflecting the additional risk that equity holders bear from being paid after debt holders.", bizQuestion_equity_beta_leverage: "What formula shows how a levered firm's equity beta rises with its degree of leverage?",
+    bizTitle_wacc_leverage_irrelevance: "WACC Is Unaffected by Leverage", bizExplain_wacc_leverage_irrelevance: "In a perfect capital market, leverage does not affect a firm's overall cost of capital: RA = RU = RWACC. Although debt is cheaper than equity, taking on more of it makes the remaining equity riskier and more expensive, and these two effects exactly offset each other.", bizQuestion_wacc_leverage_irrelevance: "In a perfect capital market, what happens to a firm's overall WACC as it takes on more leverage?",
     bizRoundsLabel: "{n} rounds done",
     bizLearnEyebrow: "Concept {n} of {total}",
     bizNextConceptBtn: "Next concept",
@@ -4586,6 +4648,20 @@ const I18N = {
     bizMgmtAcctTitle: "管理会计", bizMgmtAcctDesc: "成本行为、工作成本法与损益平衡分析",
     bizFinAcctTitle: "财务会计", bizFinAcctDesc: "财务报表及其编制方法",
     bizMlTitle: "机器学习", bizMlDesc: "统计学习、概率论，以及模型如何从数据中学习",
+    mlWeekMenuTitle: "机器学习", mlWeekMenuSub: "选择一周集中练习，或一次性全部练习。",
+    mlAllWeeksTitle: "全部周次", mlAllWeeksDesc: "目前所有机器学习概念",
+    mlWeek1Title: "第一周：基础概念", mlWeek1Desc: "概率、不确定性、偏差-方差、过拟合",
+    mlWeek2Title: "第二周：线性回归", mlWeek2Desc: "最小二乘法、标准误差、假设检验、R方",
+    mlWeek3Title: "第三周：模型选择与正则化", mlWeek3Desc: "逐步选择、岭回归、Lasso、交叉验证",
+    masteryNew: "新", masteryLearning: "学习中", masteryPracticing: "练习中", masteryMastered: "已掌握",
+    mlMasteryLabel: "🏆{mastered} · 💪{practicing} · 📖{learning} · 🆕{fresh}",
+    bizMasteryRankingTitle: "接下来重点练习",
+    bizCorpfinTitle: "公司理财", bizCorpfinDesc: "资本成本、项目评估与资本结构（FINM2415）",
+    corpfinWeekMenuTitle: "公司理财", corpfinWeekMenuSub: "选择一周集中练习，或一次性全部练习。",
+    corpfinAllWeeksTitle: "全部周次", corpfinAllWeeksDesc: "目前所有公司理财概念",
+    corpfinWeek1Title: "第一周：资本成本", corpfinWeek1Desc: "CAPM、股权与债务成本、加权平均资本成本",
+    corpfinWeek2Title: "第二周：项目评估", corpfinWeek2Desc: "自由现金流、敏感性分析、实物期权",
+    corpfinWeek3Title: "第三周：资本结构一", corpfinWeek3Desc: "MM第一、第二定理，财务杠杆",
     bizStatementEyebrow: "填写缺失的数字",
     bizRoundsLabel: "已完成{n}轮",
     bizLearnEyebrow: "概念 {n}/{total}",
@@ -4940,6 +5016,20 @@ const I18N = {
     bizMgmtAcctTitle: "འཛིན་སྐྱོང་རྩིས་ཁྲ།", bizMgmtAcctDesc: "འགྲོ་སོང་གི་རང་བཞིན, ལས་ཀའི་རིན་རྩིས, ཉེར་འདོན་ཆ་མཉམ་གྱི་དབྱེ་ཞིབ།",
     bizFinAcctTitle: "དངུལ་རྩིས་རྩིས་ཁྲ།", bizFinAcctDesc: "དངུལ་རྩིས་སྙན་ཐོ་དང་དེ་ཇི་ལྟར་བཟོ་མིན།",
     bizMlTitle: "འཕྲུལ་ཆས་སློབ་སྦྱོང་།", bizMlDesc: "ཚད་རྩིས་སློབ་སྦྱོང་, རྒྱུ་ཆ་ཐེབས་རྩིས, དཔེ་དབྱིབས་ཚུལ་ཇི་ལྟར་གཞི་གྲངས་ནས་སློབ་སྦྱོང་བྱེད་མིན།",
+    mlWeekMenuTitle: "འཕྲུལ་ཆས་སློབ་སྦྱོང་།", mlWeekMenuSub: "སློབ་སྦྱོང་གི་ཆེད་དུ་བདུན་ཕྲག་གཅིག་འདེམས་པའམ། ཡང་ན་ཚང་མ་ཅིག་ཅར་སྦྱང་།",
+    mlAllWeeksTitle: "བདུན་ཕྲག་ཆ་ཚང་།", mlAllWeeksDesc: "ད་བར་གྱི་འཕྲུལ་ཆས་སློབ་སྦྱོང་གི་གནད་དོན་ཚང་མ།",
+    mlWeek1Title: "བདུན་ཕྲག་དང་པོ: གཞི་རྩའི་གནད་དོན།", mlWeek1Desc: "གྲངས་ཐེབས, ངེས་མེད, bias-variance, overfitting",
+    mlWeek2Title: "བདུན་ཕྲག་གཉིས་པ: འབྲེལ་ཐིག་ཕྲེང་བ།", mlWeek2Desc: "OLS, ཚད་གཞིའི་ནོར་འཁྲུལ, དཔྱད་ཞིབ, R²",
+    mlWeek3Title: "བདུན་ཕྲག་གསུམ་པ: དཔེ་དབྱིབས་འདེམས་སྒྲུག་དང་ Regularisation།", mlWeek3Desc: "Stepwise selection, ridge, lasso, cross-validation",
+    masteryNew: "གསར་པ།", masteryLearning: "སློབ་སྦྱོང་བྱེད་བཞིན།", masteryPracticing: "སྦྱོང་བརྡར་བྱེད་བཞིན།", masteryMastered: "ཡོངས་སུ་གྲུབ།",
+    mlMasteryLabel: "🏆{mastered} · 💪{practicing} · 📖{learning} · 🆕{fresh}",
+    bizMasteryRankingTitle: "འདིར་གཙོ་བོར་སྦྱང་།",
+    bizCorpfinTitle: "ཚོང་ལས་དངུལ་རྩིས།", bizCorpfinDesc: "རྒྱུ་ཆའི་རིན་གོང་, ལས་གཞིའི་ཞིབ་འཇུག་དང་ capital structure (FINM2415)",
+    corpfinWeekMenuTitle: "ཚོང་ལས་དངུལ་རྩིས།", corpfinWeekMenuSub: "སློབ་སྦྱོང་གི་ཆེད་དུ་བདུན་ཕྲག་གཅིག་འདེམས་པའམ། ཡང་ན་ཚང་མ་ཅིག་ཅར་སྦྱང་།",
+    corpfinAllWeeksTitle: "བདུན་ཕྲག་ཆ་ཚང་།", corpfinAllWeeksDesc: "ད་བར་གྱི་ཚོང་ལས་དངུལ་རྩིས་ཀྱི་གནད་དོན་ཚང་མ།",
+    corpfinWeek1Title: "བདུན་ཕྲག་དང་པོ: རྒྱུ་ཆའི་རིན་གོང་།", corpfinWeek1Desc: "CAPM, cost of equity, cost of debt, WACC",
+    corpfinWeek2Title: "བདུན་ཕྲག་གཉིས་པ: ལས་གཞིའི་ཞིབ་འཇུག", corpfinWeek2Desc: "Free cash flow, sensitivity analysis, real options",
+    corpfinWeek3Title: "བདུན་ཕྲག་གསུམ་པ: Capital Structure I", corpfinWeek3Desc: "MM Proposition I & II, leverage",
     bizStatementEyebrow: "མེད་པའི་གྲངས་ཀ་ཁ་སྐོང་རྒྱོབ།",
     bizRoundsLabel: "ཐེངས་{n}གྲུབ་ཟིན།",
     bizLearnEyebrow: "དོན་ཚན {n}/{total}",
@@ -5118,6 +5208,7 @@ const screens = {
   calc_practice: renderCalcPractice,
   calc_complete: renderCalcComplete,
   business_menu: renderBusinessMenu,
+  biz_week_menu: renderCategoryWeekMenu,
   business_learn: renderBusinessLearn,
   business_quiz: renderBusinessQuiz,
   business_result: renderBusinessResult,
@@ -6610,6 +6701,77 @@ function diagramBreakeven(){
     <text x="8" y="80" style="fill:rgba(255,255,255,.5); font-size:9px;" transform="rotate(-90 8 80)">$</text>
   </svg>`;
 }
+function diagramBiasVarianceTradeoff(){
+  return `<svg viewBox="0 0 280 160" style="width:100%; height:auto;">
+    <line x1="30" y1="140" x2="260" y2="140" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <line x1="30" y1="140" x2="30" y2="15" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <path d="M30 30 C 90 90, 160 128, 250 134" style="stroke:var(--ice); fill:none;" stroke-width="2"/>
+    <path d="M30 134 C 110 128, 170 80, 250 25" style="stroke:var(--bad); fill:none;" stroke-width="2"/>
+    <path d="M30 105 C 95 28, 175 28, 250 112" style="stroke:var(--gold); fill:none;" stroke-width="2.5"/>
+    <line x1="148" y1="140" x2="148" y2="35" style="stroke:rgba(255,255,255,.35); stroke-dasharray:3,3;" stroke-width="1"/>
+    <text x="128" y="152" style="fill:rgba(255,255,255,.5); font-size:8.5px;">Optimal flexibility</text>
+    <text x="195" y="45" style="fill:var(--ice); font-size:9px;">Bias²</text>
+    <text x="195" y="98" style="fill:var(--bad); font-size:9px;">Variance</text>
+    <text x="52" y="55" style="fill:var(--gold); font-size:9px;">Total Error</text>
+    <text x="60" y="14" style="fill:rgba(255,255,255,.5); font-size:9px;">Model Flexibility →</text>
+  </svg>`;
+}
+function diagramOverfitting(){
+  return `<svg viewBox="0 0 280 160" style="width:100%; height:auto;">
+    <line x1="30" y1="140" x2="260" y2="140" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <line x1="30" y1="140" x2="30" y2="15" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <rect x="170" y="15" width="80" height="125" style="fill:rgba(225,88,75,.10);"/>
+    <path d="M30 21 C 90 55, 160 95, 250 125" style="stroke:var(--ice); fill:none;" stroke-width="2.5"/>
+    <path d="M30 27 C 90 70, 140 100, 170 105 C 200 90, 230 65, 250 40" style="stroke:var(--bad); fill:none;" stroke-width="2.5"/>
+    <text x="55" y="70" style="fill:var(--ice); font-size:9px;">Training Error</text>
+    <text x="176" y="98" style="fill:var(--bad); font-size:9px;">Test Error</text>
+    <text x="178" y="28" style="fill:rgba(225,88,75,.9); font-size:9px;">Overfitting</text>
+    <text x="65" y="154" style="fill:rgba(255,255,255,.5); font-size:9px;">Model Complexity →</text>
+  </svg>`;
+}
+function diagramDecisionBoundary(){
+  const classA = [[55,40],[75,60],[45,75],[90,45],[65,90],[100,70],[50,105]];
+  const classB = [[190,50],[210,80],[230,110],[175,95],[205,120],[240,60],[220,35]];
+  const dotsA = classA.map(([x,y])=>`<circle cx="${x}" cy="${y}" r="5" style="fill:var(--ice);"/>`).join('');
+  const dotsB = classB.map(([x,y])=>`<circle cx="${x}" cy="${y}" r="5" style="fill:var(--bad);"/>`).join('');
+  return `<svg viewBox="0 0 280 160" style="width:100%; height:auto;">
+    <rect x="10" y="10" width="260" height="130" style="fill:none; stroke:rgba(255,255,255,.2);" stroke-width="1"/>
+    <path d="M140 10 C 130 45, 155 80, 130 115 C 115 130, 130 135, 140 140" style="stroke:var(--gold); fill:none; stroke-dasharray:5,3;" stroke-width="2.5"/>
+    ${dotsA}${dotsB}
+    <text x="28" y="26" style="fill:var(--ice); font-size:9px;">Class A</text>
+    <text x="205" y="26" style="fill:var(--bad); font-size:9px;">Class B</text>
+    <text x="95" y="153" style="fill:var(--gold); font-size:9px;">Decision boundary</text>
+  </svg>`;
+}
+function diagramRidgeLassoPath(){
+  return `<svg viewBox="0 0 280 160" style="width:100%; height:auto;">
+    <line x1="30" y1="140" x2="260" y2="140" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <line x1="30" y1="140" x2="30" y2="15" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <line x1="30" y1="90" x2="260" y2="90" style="stroke:rgba(255,255,255,.15); stroke-dasharray:3,3;" stroke-width="1"/>
+    <path d="M35 30 C 100 55, 170 78, 255 88" style="stroke:var(--ice); fill:none;" stroke-width="2.5"/>
+    <path d="M35 30 C 80 55, 115 88, 140 90 L 255 90" style="stroke:var(--gold); fill:none;" stroke-width="2.5"/>
+    <circle cx="140" cy="90" r="3.5" style="fill:var(--gold);"/>
+    <text x="180" y="72" style="fill:var(--ice); font-size:9px;">Ridge (L2)</text>
+    <text x="145" y="110" style="fill:var(--gold); font-size:9px;">Lasso (L1) → 0</text>
+    <text x="55" y="154" style="fill:rgba(255,255,255,.5); font-size:9px;">λ (shrinkage) →</text>
+    <text x="10" y="80" style="fill:rgba(255,255,255,.5); font-size:9px;" transform="rotate(-90 10 80)">Coefficient</text>
+  </svg>`;
+}
+function diagramForwardStepwise(){
+  return `<svg viewBox="0 0 280 160" style="width:100%; height:auto;">
+    <line x1="30" y1="135" x2="260" y2="135" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <line x1="30" y1="135" x2="30" y2="15" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <path d="M45 22 L115 92 L185 112 L250 116" style="stroke:var(--ice); fill:none;" stroke-width="2.5"/>
+    <path d="M45 100 L115 112 L185 122 L250 100" style="stroke:var(--gold); fill:none;" stroke-width="2.5"/>
+    <circle cx="185" cy="122" r="4" style="fill:var(--gold);"/>
+    <text x="38" y="149" style="fill:rgba(255,255,255,.5); font-size:8.5px;">M0</text>
+    <text x="108" y="149" style="fill:rgba(255,255,255,.5); font-size:8.5px;">M1</text>
+    <text x="178" y="149" style="fill:rgba(255,255,255,.5); font-size:8.5px;">M2</text>
+    <text x="243" y="149" style="fill:rgba(255,255,255,.5); font-size:8.5px;">M3</text>
+    <text x="150" y="35" style="fill:var(--ice); font-size:9px;">Training RSS</text>
+    <text x="192" y="128" style="fill:var(--gold); font-size:9px;">CV Error (min)</text>
+  </svg>`;
+}
 
 // ---- financial statement "figures": a plain HTML table (label left, value
 // right), reused both as a read-only worked example on the Learn screen and
@@ -6990,65 +7152,161 @@ const BUSINESS_CONCEPTS = {
       quizVariant:'statement', buildStatement:buildBalanceSheetStatement},
   ],
   ml: [
-    {key:'probability', icon:'🎲', diagram:null, titleKey:'bizTitle_probability', explainKey:'bizExplain_probability', questionKey:'bizQuestion_probability',
+    {key:'probability', icon:'🎲', diagram:null, week:1, titleKey:'bizTitle_probability', explainKey:'bizExplain_probability', questionKey:'bizQuestion_probability',
       acceptedAnswers:{en:['probability']}},
-    {key:'uncertainty_quantification', icon:'🌫️', diagram:null, titleKey:'bizTitle_uncertainty_quantification', explainKey:'bizExplain_uncertainty_quantification', questionKey:'bizQuestion_uncertainty_quantification',
+    {key:'uncertainty_quantification', icon:'🌫️', diagram:null, week:1, titleKey:'bizTitle_uncertainty_quantification', explainKey:'bizExplain_uncertainty_quantification', questionKey:'bizQuestion_uncertainty_quantification',
       acceptedAnswers:{en:['uncertainty quantification','uq']}},
-    {key:'statistical_learning', icon:'📈', diagram:null, titleKey:'bizTitle_statistical_learning', explainKey:'bizExplain_statistical_learning', questionKey:'bizQuestion_statistical_learning',
+    {key:'statistical_learning', icon:'📈', diagram:null, week:1, titleKey:'bizTitle_statistical_learning', explainKey:'bizExplain_statistical_learning', questionKey:'bizQuestion_statistical_learning',
       acceptedAnswers:{en:['statistical learning']}},
-    {key:'reducible_error', icon:'🔧', diagram:null, titleKey:'bizTitle_reducible_error', explainKey:'bizExplain_reducible_error', questionKey:'bizQuestion_reducible_error',
+    {key:'reducible_error', icon:'🔧', diagram:null, week:1, titleKey:'bizTitle_reducible_error', explainKey:'bizExplain_reducible_error', questionKey:'bizQuestion_reducible_error',
       acceptedAnswers:{en:['reducible error']}},
-    {key:'irreducible_error', icon:'🌪️', diagram:null, titleKey:'bizTitle_irreducible_error', explainKey:'bizExplain_irreducible_error', questionKey:'bizQuestion_irreducible_error',
+    {key:'irreducible_error', icon:'🌪️', diagram:null, week:1, titleKey:'bizTitle_irreducible_error', explainKey:'bizExplain_irreducible_error', questionKey:'bizQuestion_irreducible_error',
       acceptedAnswers:{en:['irreducible error']}},
-    {key:'parametric_model', icon:'📐', diagram:null, titleKey:'bizTitle_parametric_model', explainKey:'bizExplain_parametric_model', questionKey:'bizQuestion_parametric_model',
+    {key:'parametric_model', icon:'📐', diagram:null, week:1, titleKey:'bizTitle_parametric_model', explainKey:'bizExplain_parametric_model', questionKey:'bizQuestion_parametric_model',
       acceptedAnswers:{en:['parametric model']}},
-    {key:'non_parametric_model', icon:'🌊', diagram:null, titleKey:'bizTitle_non_parametric_model', explainKey:'bizExplain_non_parametric_model', questionKey:'bizQuestion_non_parametric_model',
+    {key:'non_parametric_model', icon:'🌊', diagram:null, week:1, titleKey:'bizTitle_non_parametric_model', explainKey:'bizExplain_non_parametric_model', questionKey:'bizQuestion_non_parametric_model',
       acceptedAnswers:{en:['non-parametric model','non parametric model','nonparametric model']}},
-    {key:'overfitting', icon:'🪤', diagram:null, titleKey:'bizTitle_overfitting', explainKey:'bizExplain_overfitting', questionKey:'bizQuestion_overfitting',
+    {key:'overfitting', icon:'🪤', diagram:diagramOverfitting, week:1, titleKey:'bizTitle_overfitting', explainKey:'bizExplain_overfitting', questionKey:'bizQuestion_overfitting',
       acceptedAnswers:{en:['overfitting']}},
-    {key:'bias_variance_tradeoff', icon:'⚖️', diagram:null, titleKey:'bizTitle_bias_variance_tradeoff', explainKey:'bizExplain_bias_variance_tradeoff', questionKey:'bizQuestion_bias_variance_tradeoff',
+    {key:'bias_variance_tradeoff', icon:'⚖️', diagram:diagramBiasVarianceTradeoff, week:1, titleKey:'bizTitle_bias_variance_tradeoff', explainKey:'bizExplain_bias_variance_tradeoff', questionKey:'bizQuestion_bias_variance_tradeoff',
       acceptedAnswers:{en:['bias-variance tradeoff','bias variance tradeoff','bias-variance trade-off','bias variance trade-off']}},
-    {key:'decision_boundary', icon:'🚧', diagram:null, titleKey:'bizTitle_decision_boundary', explainKey:'bizExplain_decision_boundary', questionKey:'bizQuestion_decision_boundary',
+    {key:'decision_boundary', icon:'🚧', diagram:diagramDecisionBoundary, week:1, titleKey:'bizTitle_decision_boundary', explainKey:'bizExplain_decision_boundary', questionKey:'bizQuestion_decision_boundary',
       acceptedAnswers:{en:['decision boundary']}},
-    {key:'regression', icon:'📉', diagram:null, titleKey:'bizTitle_regression', explainKey:'bizExplain_regression', questionKey:'bizQuestion_regression',
+    {key:'regression', icon:'📉', diagram:null, week:1, titleKey:'bizTitle_regression', explainKey:'bizExplain_regression', questionKey:'bizQuestion_regression',
       acceptedAnswers:{en:['regression']}},
-    {key:'classification', icon:'🏷️', diagram:null, titleKey:'bizTitle_classification', explainKey:'bizExplain_classification', questionKey:'bizQuestion_classification',
+    {key:'classification', icon:'🏷️', diagram:null, week:1, titleKey:'bizTitle_classification', explainKey:'bizExplain_classification', questionKey:'bizQuestion_classification',
       acceptedAnswers:{en:['classification']}},
-    {key:'mse', icon:'📏', diagram:diagramFromStatement(buildMSEStatement), titleKey:'bizTitle_mse', explainKey:'bizExplain_mse', questionKey:'bizQuestion_mse',
+    {key:'mse', icon:'📏', diagram:diagramFromStatement(buildMSEStatement), week:1, titleKey:'bizTitle_mse', explainKey:'bizExplain_mse', questionKey:'bizQuestion_mse',
       acceptedAnswers:{en:['mean squared error','mse']},
       quizVariant:'statement', buildStatement:buildMSEStatement},
-    {key:'misclassification_rate', icon:'❌', diagram:diagramFromStatement(buildAccuracyStatement), titleKey:'bizTitle_misclassification_rate', explainKey:'bizExplain_misclassification_rate', questionKey:'bizQuestion_misclassification_rate',
+    {key:'misclassification_rate', icon:'❌', diagram:diagramFromStatement(buildAccuracyStatement), week:1, titleKey:'bizTitle_misclassification_rate', explainKey:'bizExplain_misclassification_rate', questionKey:'bizQuestion_misclassification_rate',
       acceptedAnswers:{en:['misclassification rate','test error rate']},
       quizVariant:'statement', buildStatement:buildAccuracyStatement},
-    {key:'supervised_learning', icon:'🧑‍🏫', diagram:null, titleKey:'bizTitle_supervised_learning', explainKey:'bizExplain_supervised_learning', questionKey:'bizQuestion_supervised_learning',
+    {key:'supervised_learning', icon:'🧑‍🏫', diagram:null, week:1, titleKey:'bizTitle_supervised_learning', explainKey:'bizExplain_supervised_learning', questionKey:'bizQuestion_supervised_learning',
       acceptedAnswers:{en:['supervised learning']}},
-    {key:'cross_validation', icon:'🔁', diagram:null, titleKey:'bizTitle_cross_validation', explainKey:'bizExplain_cross_validation', questionKey:'bizQuestion_cross_validation',
+    {key:'cross_validation', icon:'🔁', diagram:null, week:1, titleKey:'bizTitle_cross_validation', explainKey:'bizExplain_cross_validation', questionKey:'bizQuestion_cross_validation',
       acceptedAnswers:{en:['cross-validation','cross validation','cv']}},
-    {key:'simple_linear_regression', icon:'📏', diagram:null, titleKey:'bizTitle_simple_linear_regression', explainKey:'bizExplain_simple_linear_regression', questionKey:'bizQuestion_simple_linear_regression',
+    {key:'simple_linear_regression', icon:'📏', diagram:null, week:2, titleKey:'bizTitle_simple_linear_regression', explainKey:'bizExplain_simple_linear_regression', questionKey:'bizQuestion_simple_linear_regression',
       acceptedAnswers:{en:['simple linear regression']}},
-    {key:'ordinary_least_squares', icon:'📉', diagram:null, titleKey:'bizTitle_ordinary_least_squares', explainKey:'bizExplain_ordinary_least_squares', questionKey:'bizQuestion_ordinary_least_squares',
+    {key:'ordinary_least_squares', icon:'📉', diagram:null, week:2, titleKey:'bizTitle_ordinary_least_squares', explainKey:'bizExplain_ordinary_least_squares', questionKey:'bizQuestion_ordinary_least_squares',
       acceptedAnswers:{en:['ordinary least squares','ols']}},
-    {key:'residual_standard_error', icon:'📊', diagram:null, titleKey:'bizTitle_residual_standard_error', explainKey:'bizExplain_residual_standard_error', questionKey:'bizQuestion_residual_standard_error',
+    {key:'residual_standard_error', icon:'📊', diagram:null, week:2, titleKey:'bizTitle_residual_standard_error', explainKey:'bizExplain_residual_standard_error', questionKey:'bizQuestion_residual_standard_error',
       acceptedAnswers:{en:['residual standard error','rse']}},
-    {key:'standard_error', icon:'📶', diagram:null, titleKey:'bizTitle_standard_error', explainKey:'bizExplain_standard_error', questionKey:'bizQuestion_standard_error',
+    {key:'standard_error', icon:'📶', diagram:null, week:2, titleKey:'bizTitle_standard_error', explainKey:'bizExplain_standard_error', questionKey:'bizQuestion_standard_error',
       acceptedAnswers:{en:['standard error','se']}},
-    {key:'confidence_interval', icon:'🎯', diagram:null, titleKey:'bizTitle_confidence_interval', explainKey:'bizExplain_confidence_interval', questionKey:'bizQuestion_confidence_interval',
+    {key:'confidence_interval', icon:'🎯', diagram:null, week:2, titleKey:'bizTitle_confidence_interval', explainKey:'bizExplain_confidence_interval', questionKey:'bizQuestion_confidence_interval',
       acceptedAnswers:{en:['confidence interval']}},
-    {key:'hypothesis_testing', icon:'🔬', diagram:null, titleKey:'bizTitle_hypothesis_testing', explainKey:'bizExplain_hypothesis_testing', questionKey:'bizQuestion_hypothesis_testing',
+    {key:'hypothesis_testing', icon:'🔬', diagram:null, week:2, titleKey:'bizTitle_hypothesis_testing', explainKey:'bizExplain_hypothesis_testing', questionKey:'bizQuestion_hypothesis_testing',
       acceptedAnswers:{en:['hypothesis testing']}},
-    {key:'multiple_linear_regression', icon:'➕', diagram:null, titleKey:'bizTitle_multiple_linear_regression', explainKey:'bizExplain_multiple_linear_regression', questionKey:'bizQuestion_multiple_linear_regression',
+    {key:'multiple_linear_regression', icon:'➕', diagram:null, week:2, titleKey:'bizTitle_multiple_linear_regression', explainKey:'bizExplain_multiple_linear_regression', questionKey:'bizQuestion_multiple_linear_regression',
       acceptedAnswers:{en:['multiple linear regression']}},
-    {key:'dummy_variable', icon:'0️⃣', diagram:null, titleKey:'bizTitle_dummy_variable', explainKey:'bizExplain_dummy_variable', questionKey:'bizQuestion_dummy_variable',
+    {key:'dummy_variable', icon:'0️⃣', diagram:null, week:2, titleKey:'bizTitle_dummy_variable', explainKey:'bizExplain_dummy_variable', questionKey:'bizQuestion_dummy_variable',
       acceptedAnswers:{en:['dummy variable']}},
-    {key:'collinearity', icon:'🔗', diagram:null, titleKey:'bizTitle_collinearity', explainKey:'bizExplain_collinearity', questionKey:'bizQuestion_collinearity',
+    {key:'collinearity', icon:'🔗', diagram:null, week:2, titleKey:'bizTitle_collinearity', explainKey:'bizExplain_collinearity', questionKey:'bizQuestion_collinearity',
       acceptedAnswers:{en:['collinearity','multicollinearity']}},
-    {key:'heteroscedasticity', icon:'📣', diagram:null, titleKey:'bizTitle_heteroscedasticity', explainKey:'bizExplain_heteroscedasticity', questionKey:'bizQuestion_heteroscedasticity',
+    {key:'heteroscedasticity', icon:'📣', diagram:null, week:2, titleKey:'bizTitle_heteroscedasticity', explainKey:'bizExplain_heteroscedasticity', questionKey:'bizQuestion_heteroscedasticity',
       acceptedAnswers:{en:['heteroscedasticity']}},
-    {key:'f_test', icon:'🧪', diagram:null, titleKey:'bizTitle_f_test', explainKey:'bizExplain_f_test', questionKey:'bizQuestion_f_test',
+    {key:'f_test', icon:'🧪', diagram:null, week:2, titleKey:'bizTitle_f_test', explainKey:'bizExplain_f_test', questionKey:'bizQuestion_f_test',
       acceptedAnswers:{en:['f-test','f test']}},
-    {key:'r_squared', icon:'🥧', diagram:diagramFromStatement(buildRSquaredStatement), titleKey:'bizTitle_r_squared', explainKey:'bizExplain_r_squared', questionKey:'bizQuestion_r_squared',
+    {key:'r_squared', icon:'🥧', diagram:diagramFromStatement(buildRSquaredStatement), week:2, titleKey:'bizTitle_r_squared', explainKey:'bizExplain_r_squared', questionKey:'bizQuestion_r_squared',
       acceptedAnswers:{en:['r-squared','r squared']},
       quizVariant:'statement', buildStatement:buildRSquaredStatement},
+    {key:'subset_selection', icon:'🧺', diagram:null, week:3, titleKey:'bizTitle_subset_selection', explainKey:'bizExplain_subset_selection', questionKey:'bizQuestion_subset_selection',
+      acceptedAnswers:{en:['subset selection','best subset selection']}},
+    {key:'forward_stepwise_selection', icon:'🪜', diagram:diagramForwardStepwise, week:3, titleKey:'bizTitle_forward_stepwise_selection', explainKey:'bizExplain_forward_stepwise_selection', questionKey:'bizQuestion_forward_stepwise_selection',
+      acceptedAnswers:{en:['forward stepwise selection','forward selection']}},
+    {key:'variable_selection', icon:'🧹', diagram:null, week:3, titleKey:'bizTitle_variable_selection', explainKey:'bizExplain_variable_selection', questionKey:'bizQuestion_variable_selection',
+      acceptedAnswers:{en:['variable selection','feature selection']}},
+    {key:'regularization', icon:'🪢', diagram:null, week:3, titleKey:'bizTitle_regularization', explainKey:'bizExplain_regularization', questionKey:'bizQuestion_regularization',
+      acceptedAnswers:{en:['regularization','shrinkage','regularisation']}},
+    {key:'ridge_regression', icon:'🏔️', diagram:diagramRidgeLassoPath, week:3, titleKey:'bizTitle_ridge_regression', explainKey:'bizExplain_ridge_regression', questionKey:'bizQuestion_ridge_regression',
+      acceptedAnswers:{en:['ridge regression','ridge']}},
+    {key:'lasso_regression', icon:'🤠', diagram:null, week:3, titleKey:'bizTitle_lasso_regression', explainKey:'bizExplain_lasso_regression', questionKey:'bizQuestion_lasso_regression',
+      acceptedAnswers:{en:['the lasso','lasso','lasso regression']}},
+    {key:'l2_penalty', icon:'🔵', diagram:null, week:3, titleKey:'bizTitle_l2_penalty', explainKey:'bizExplain_l2_penalty', questionKey:'bizQuestion_l2_penalty',
+      acceptedAnswers:{en:['l2 penalty','l2 norm penalty','squared penalty']}},
+    {key:'l1_penalty', icon:'🔶', diagram:null, week:3, titleKey:'bizTitle_l1_penalty', explainKey:'bizExplain_l1_penalty', questionKey:'bizQuestion_l1_penalty',
+      acceptedAnswers:{en:['l1 penalty','l1 norm penalty','absolute value penalty']}},
+    {key:'tuning_parameter', icon:'🎚️', diagram:null, week:3, titleKey:'bizTitle_tuning_parameter', explainKey:'bizExplain_tuning_parameter', questionKey:'bizQuestion_tuning_parameter',
+      acceptedAnswers:{en:['tuning parameter','lambda','regularization parameter']}},
+    {key:'standardization', icon:'🧵', diagram:null, week:3, titleKey:'bizTitle_standardization', explainKey:'bizExplain_standardization', questionKey:'bizQuestion_standardization',
+      acceptedAnswers:{en:['standardization','standardisation']}},
+    {key:'k_fold_cross_validation', icon:'🔢', diagram:null, week:3, titleKey:'bizTitle_k_fold_cross_validation', explainKey:'bizExplain_k_fold_cross_validation', questionKey:'bizQuestion_k_fold_cross_validation',
+      acceptedAnswers:{en:['k-fold cross-validation','k fold cross validation','k-fold cv']}},
+    {key:'information_criteria', icon:'🧮', diagram:null, week:3, titleKey:'bizTitle_information_criteria', explainKey:'bizExplain_information_criteria', questionKey:'bizQuestion_information_criteria',
+      acceptedAnswers:{en:['information criteria','cp, aic, bic','aic/bic/cp']}},
+    {key:'adjusted_r_squared', icon:'📐', diagram:null, week:3, titleKey:'bizTitle_adjusted_r_squared', explainKey:'bizExplain_adjusted_r_squared', questionKey:'bizQuestion_adjusted_r_squared',
+      acceptedAnswers:{en:['adjusted r-squared','adjusted r squared']}},
+  ],
+  corpfin: [
+    {key:'capm', icon:'📊', diagram:null, week:1, titleKey:'bizTitle_capm', explainKey:'bizExplain_capm', questionKey:'bizQuestion_capm',
+      acceptedAnswers:{en:['capm','capital asset pricing model']}},
+    {key:'cost_of_equity', icon:'💹', diagram:null, week:1, titleKey:'bizTitle_cost_of_equity', explainKey:'bizExplain_cost_of_equity', questionKey:'bizQuestion_cost_of_equity',
+      acceptedAnswers:{en:['cost of equity','equity cost of capital']}},
+    {key:'cost_of_debt', icon:'💳', diagram:null, week:1, titleKey:'bizTitle_cost_of_debt', explainKey:'bizExplain_cost_of_debt', questionKey:'bizQuestion_cost_of_debt',
+      acceptedAnswers:{en:['cost of debt','debt cost of capital']}},
+    {key:'yield_to_maturity', icon:'🎫', diagram:null, week:1, titleKey:'bizTitle_yield_to_maturity', explainKey:'bizExplain_yield_to_maturity', questionKey:'bizQuestion_yield_to_maturity',
+      acceptedAnswers:{en:['yield to maturity','ytm']}},
+    {key:'debt_default_adjustment', icon:'🛡️', diagram:null, week:1, titleKey:'bizTitle_debt_default_adjustment', explainKey:'bizExplain_debt_default_adjustment', questionKey:'bizQuestion_debt_default_adjustment',
+      acceptedAnswers:{en:['rd = ytm - pl','ytm - pl','ytm minus probability of default times loss rate']}},
+    {key:'debt_beta', icon:'🪙', diagram:null, week:1, titleKey:'bizTitle_debt_beta', explainKey:'bizExplain_debt_beta', questionKey:'bizQuestion_debt_beta',
+      acceptedAnswers:{en:['debt beta']}},
+    {key:'market_vs_firm_specific_risk', icon:'🌐', diagram:null, week:1, titleKey:'bizTitle_market_vs_firm_specific_risk', explainKey:'bizExplain_market_vs_firm_specific_risk', questionKey:'bizQuestion_market_vs_firm_specific_risk',
+      acceptedAnswers:{en:['market risk','systematic risk']}},
+    {key:'wacc', icon:'⚖️', diagram:null, week:1, titleKey:'bizTitle_wacc', explainKey:'bizExplain_wacc', questionKey:'bizQuestion_wacc',
+      acceptedAnswers:{en:['wacc','weighted average cost of capital']}},
+    {key:'pretax_wacc', icon:'🏗️', diagram:null, week:1, titleKey:'bizTitle_pretax_wacc', explainKey:'bizExplain_pretax_wacc', questionKey:'bizQuestion_pretax_wacc',
+      acceptedAnswers:{en:['pretax-wacc','pretax wacc','asset cost of capital','unlevered cost of capital']}},
+    {key:'comparable_firm_method', icon:'🔍', diagram:null, week:1, titleKey:'bizTitle_comparable_firm_method', explainKey:'bizExplain_comparable_firm_method', questionKey:'bizQuestion_comparable_firm_method',
+      acceptedAnswers:{en:['comparable firm method','using a comparable firm']}},
+    {key:'capital_budgeting', icon:'🏦', diagram:null, week:2, titleKey:'bizTitle_capital_budgeting', explainKey:'bizExplain_capital_budgeting', questionKey:'bizQuestion_capital_budgeting',
+      acceptedAnswers:{en:['capital budgeting']}},
+    {key:'incremental_cash_flow', icon:'🔀', diagram:null, week:2, titleKey:'bizTitle_incremental_cash_flow', explainKey:'bizExplain_incremental_cash_flow', questionKey:'bizQuestion_incremental_cash_flow',
+      acceptedAnswers:{en:['incremental cash flow']}},
+    {key:'free_cash_flow', icon:'💵', diagram:null, week:2, titleKey:'bizTitle_free_cash_flow', explainKey:'bizExplain_free_cash_flow', questionKey:'bizQuestion_free_cash_flow',
+      acceptedAnswers:{en:['fcf = ni + d - capex - dnwc','ni + depreciation - capex - change in nwc']}},
+    {key:'project_opportunity_cost', icon:'🔁', diagram:null, week:2, titleKey:'bizTitle_project_opportunity_cost', explainKey:'bizExplain_project_opportunity_cost', questionKey:'bizQuestion_project_opportunity_cost',
+      acceptedAnswers:{en:['opportunity cost']}},
+    {key:'sunk_cost', icon:'⚓', diagram:null, week:2, titleKey:'bizTitle_sunk_cost', explainKey:'bizExplain_sunk_cost', questionKey:'bizQuestion_sunk_cost',
+      acceptedAnswers:{en:['sunk cost']}},
+    {key:'project_side_effects', icon:'🌊', diagram:null, week:2, titleKey:'bizTitle_project_side_effects', explainKey:'bizExplain_project_side_effects', questionKey:'bizQuestion_project_side_effects',
+      acceptedAnswers:{en:['side effects','project externalities']}},
+    {key:'net_salvage_value', icon:'♻️', diagram:null, week:2, titleKey:'bizTitle_net_salvage_value', explainKey:'bizExplain_net_salvage_value', questionKey:'bizQuestion_net_salvage_value',
+      acceptedAnswers:{en:['net salvage value','salvage value']}},
+    {key:'sensitivity_analysis', icon:'🎚️', diagram:null, week:2, titleKey:'bizTitle_sensitivity_analysis', explainKey:'bizExplain_sensitivity_analysis', questionKey:'bizQuestion_sensitivity_analysis',
+      acceptedAnswers:{en:['sensitivity analysis']}},
+    {key:'scenario_analysis', icon:'🌦️', diagram:null, week:2, titleKey:'bizTitle_scenario_analysis', explainKey:'bizExplain_scenario_analysis', questionKey:'bizQuestion_scenario_analysis',
+      acceptedAnswers:{en:['scenario analysis']}},
+    {key:'break_even_analysis', icon:'🎯', diagram:null, week:2, titleKey:'bizTitle_break_even_analysis', explainKey:'bizExplain_break_even_analysis', questionKey:'bizQuestion_break_even_analysis',
+      acceptedAnswers:{en:['break-even analysis','breakeven analysis']}},
+    {key:'real_option', icon:'🗝️', diagram:null, week:2, titleKey:'bizTitle_real_option', explainKey:'bizExplain_real_option', questionKey:'bizQuestion_real_option',
+      acceptedAnswers:{en:['real option']}},
+    {key:'growth_option', icon:'🌱', diagram:null, week:2, titleKey:'bizTitle_growth_option', explainKey:'bizExplain_growth_option', questionKey:'bizQuestion_growth_option',
+      acceptedAnswers:{en:['growth option','option to expand','expansion option']}},
+    {key:'abandonment_option', icon:'🚪', diagram:null, week:2, titleKey:'bizTitle_abandonment_option', explainKey:'bizExplain_abandonment_option', questionKey:'bizQuestion_abandonment_option',
+      acceptedAnswers:{en:['abandonment option','option to abandon']}},
+    {key:'timing_option', icon:'⏳', diagram:null, week:2, titleKey:'bizTitle_timing_option', explainKey:'bizExplain_timing_option', questionKey:'bizQuestion_timing_option',
+      acceptedAnswers:{en:['timing option','option to delay','investment timing option']}},
+    {key:'capital_structure', icon:'🥧', diagram:null, week:3, titleKey:'bizTitle_capital_structure', explainKey:'bizExplain_capital_structure', questionKey:'bizQuestion_capital_structure',
+      acceptedAnswers:{en:['capital structure']}},
+    {key:'leverage', icon:'🏋️', diagram:null, week:3, titleKey:'bizTitle_leverage', explainKey:'bizExplain_leverage', questionKey:'bizQuestion_leverage',
+      acceptedAnswers:{en:['leverage']}},
+    {key:'unlevered_equity', icon:'🧍', diagram:null, week:3, titleKey:'bizTitle_unlevered_equity', explainKey:'bizExplain_unlevered_equity', questionKey:'bizQuestion_unlevered_equity',
+      acceptedAnswers:{en:['unlevered equity']}},
+    {key:'levered_equity', icon:'🔗', diagram:null, week:3, titleKey:'bizTitle_levered_equity', explainKey:'bizExplain_levered_equity', questionKey:'bizQuestion_levered_equity',
+      acceptedAnswers:{en:['levered equity']}},
+    {key:'mm_proposition_1', icon:'1️⃣', diagram:null, week:3, titleKey:'bizTitle_mm_proposition_1', explainKey:'bizExplain_mm_proposition_1', questionKey:'bizQuestion_mm_proposition_1',
+      acceptedAnswers:{en:['mm proposition i','mm i','modigliani-miller proposition i']}},
+    {key:'law_of_one_price', icon:'🧭', diagram:null, week:3, titleKey:'bizTitle_law_of_one_price', explainKey:'bizExplain_law_of_one_price', questionKey:'bizQuestion_law_of_one_price',
+      acceptedAnswers:{en:['law of one price','loop']}},
+    {key:'homemade_leverage', icon:'🏠', diagram:null, week:3, titleKey:'bizTitle_homemade_leverage', explainKey:'bizExplain_homemade_leverage', questionKey:'bizQuestion_homemade_leverage',
+      acceptedAnswers:{en:['homemade leverage']}},
+    {key:'mm_proposition_2', icon:'2️⃣', diagram:null, week:3, titleKey:'bizTitle_mm_proposition_2', explainKey:'bizExplain_mm_proposition_2', questionKey:'bizQuestion_mm_proposition_2',
+      acceptedAnswers:{en:['mm proposition ii','mm ii','modigliani-miller proposition ii']}},
+    {key:'equity_beta_leverage', icon:'📡', diagram:null, week:3, titleKey:'bizTitle_equity_beta_leverage', explainKey:'bizExplain_equity_beta_leverage', questionKey:'bizQuestion_equity_beta_leverage',
+      acceptedAnswers:{en:['βe = βu + (d/e)(βu - βd)','equity beta = unlevered beta + d/e times (unlevered beta minus debt beta)']}},
+    {key:'wacc_leverage_irrelevance', icon:'➗', diagram:null, week:3, titleKey:'bizTitle_wacc_leverage_irrelevance', explainKey:'bizExplain_wacc_leverage_irrelevance', questionKey:'bizQuestion_wacc_leverage_irrelevance',
+      acceptedAnswers:{en:['it stays the same','unchanged','remains constant']}},
   ],
 };
 function bizConceptByKey(category, key){ return BUSINESS_CONCEPTS[category].find(c=>c.key===key); }
@@ -7070,6 +7328,7 @@ function renderBusinessMenu(){
     {key:'mgmtacct', icon:'📊', titleKey:'bizMgmtAcctTitle', descKey:'bizMgmtAcctDesc'},
     {key:'finacct', icon:'📑', titleKey:'bizFinAcctTitle', descKey:'bizFinAcctDesc'},
     {key:'ml', icon:'🤖', titleKey:'bizMlTitle', descKey:'bizMlDesc'},
+    {key:'corpfin', icon:'🏛️', titleKey:'bizCorpfinTitle', descKey:'bizCorpfinDesc'},
   ];
   const endlessOn = !!state.businessEndlessMode;
   const cards = cats.map(cat=>{
@@ -7079,7 +7338,7 @@ function renderBusinessMenu(){
     const progressLabel = endlessOn
       ? (bestEndless ? t('bizEndlessBestLabel',{n:bestEndless}) : t('startArrow'))
       : (rounds ? t('bizRoundsLabel',{n:rounds}) : t('startArrow'));
-    const action = endlessOn ? `startBusinessEndless('${cat.key}')` : `startBusinessRound('${cat.key}')`;
+    const action = WEEK_META[cat.key] ? `openCategoryWeekMenu('${cat.key}')` : (endlessOn ? `startBusinessEndless('${cat.key}')` : `startBusinessRound('${cat.key}')`);
     return `
     <button class="track-card" onclick="${action}">
       <div class="glyph">${cat.icon}</div>
@@ -7123,10 +7382,112 @@ function toggleBusinessEndlessMode(){
   render();
 }
 
-function startBusinessRound(category){
-  const picks = shuffled(BUSINESS_CONCEPTS[category]).slice(0,3);
+// ---- Week picker: any category whose concepts span several lecture weeks
+// (currently Machine Learning and Corporate Finance) gets a shared sub-menu
+// (mirroring the Quiz Bank's part picker), letting learners drill one week
+// at a time or everything at once. Each card also surfaces a mastery
+// breakdown, and the ranked list below the cards sorts every concept
+// weakest-first so learners see what to review. Chrome i18n keys follow the
+// pattern `${category}WeekMenuTitle`, `${category}Week${n}Title/Desc`, etc.
+const WEEK_META = {
+  ml: {
+    1: {titleKey:'mlWeek1Title', descKey:'mlWeek1Desc'},
+    2: {titleKey:'mlWeek2Title', descKey:'mlWeek2Desc'},
+    3: {titleKey:'mlWeek3Title', descKey:'mlWeek3Desc'},
+  },
+  corpfin: {
+    1: {titleKey:'corpfinWeek1Title', descKey:'corpfinWeek1Desc'},
+    2: {titleKey:'corpfinWeek2Title', descKey:'corpfinWeek2Desc'},
+    3: {titleKey:'corpfinWeek3Title', descKey:'corpfinWeek3Desc'},
+  },
+};
+const WEEK_MENU_GLYPH = {ml:'🤖', corpfin:'🏛️'};
+function bizMasteryCounts(category, weekFilter){
+  const pool = bizConceptPool(category, weekFilter);
+  const counts = {mastered:0, practicing:0, learning:0, fresh:0};
+  pool.forEach(c=>{
+    const lvl = masteryLevel(c.key);
+    if(lvl==='mastered') counts.mastered++;
+    else if(lvl==='practicing') counts.practicing++;
+    else if(lvl==='learning') counts.learning++;
+    else counts.fresh++;
+  });
+  return counts;
+}
+function bizMasteryLabelHtml(category, weekFilter){
+  const mc = bizMasteryCounts(category, weekFilter);
+  return t('mlMasteryLabel',{mastered:mc.mastered, practicing:mc.practicing, learning:mc.learning, fresh:mc.fresh});
+}
+function openCategoryWeekMenu(category){ state.weekMenuCategory = category; state.screen='biz_week_menu'; render(); }
+function categoryStartFromWeekMenu(weekFilter){
+  const category = state.weekMenuCategory;
+  if(state.businessEndlessMode) startBusinessEndless(category, weekFilter);
+  else startBusinessRound(category, weekFilter);
+}
+function renderCategoryWeekMenu(){
+  const category = state.weekMenuCategory;
+  const weekMeta = WEEK_META[category];
+  const weekCards = Object.keys(weekMeta).map(Number).map(w=>{
+    const meta = weekMeta[w];
+    const count = bizConceptPool(category, w).length;
+    return `
+    <button class="track-card" onclick="categoryStartFromWeekMenu(${w})">
+      <div class="glyph">${w}</div>
+      <div>
+        <div class="tc-title">${t(meta.titleKey)}</div>
+        <div class="tc-sub">${t(meta.descKey)}</div>
+        <div class="tc-sub" style="margin-top:2px; font-size:11px;">${bizMasteryLabelHtml(category, w)}</div>
+      </div>
+      <div class="tc-progress">${count}</div>
+    </button>`;
+  }).join('');
+  const allCard = `
+    <button class="track-card" onclick="categoryStartFromWeekMenu(null)">
+      <div class="glyph">${WEEK_MENU_GLYPH[category]||'📚'}</div>
+      <div>
+        <div class="tc-title">${t(category+'AllWeeksTitle')}</div>
+        <div class="tc-sub">${t(category+'AllWeeksDesc')}</div>
+        <div class="tc-sub" style="margin-top:2px; font-size:11px;">${bizMasteryLabelHtml(category, null)}</div>
+      </div>
+      <div class="tc-progress">${BUSINESS_CONCEPTS[category].length}</div>
+    </button>`;
+  const rankOrder = {new:0, learning:1, practicing:2, mastered:3};
+  const ranked = [...BUSINESS_CONCEPTS[category]].sort((a,b)=>rankOrder[masteryLevel(a.key)] - rankOrder[masteryLevel(b.key)]).slice(0,8);
+  const rankedHtml = ranked.map(c=>{
+    const lvl = masteryLevel(c.key);
+    return `
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(255,255,255,.06);">
+      <div style="font-size:13.5px;">${c.icon} ${t(c.titleKey)} <span style="color:var(--snow-dim); font-size:11px;">· W${c.week}</span></div>
+      <div style="font-size:12px; white-space:nowrap;">${masteryBadge(lvl)} ${t(masteryLabelKey(lvl))}</div>
+    </div>`;
+  }).join('');
+  return `
+  ${topbar({back:'backToBusinessMenu()'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>${t(category+'WeekMenuTitle')}</h1>
+      <div class="sub">${t(category+'WeekMenuSub')}</div>
+    </div>
+    <div class="track-grid">${allCard}${weekCards}</div>
+    <div class="profile-card" style="text-align:left;">
+      <div class="tc-title" style="font-size:15px; margin-bottom:4px;">${t('bizMasteryRankingTitle')}</div>
+      ${rankedHtml}
+    </div>
+  </div>
+  `;
+}
+
+// Some categories (currently only Machine Learning) tag each concept with
+// the lecture week it came from. weekFilter narrows the round/endless pool
+// to just that week; categories/concepts without week tags ignore it.
+function bizConceptPool(category, weekFilter){
+  const list = BUSINESS_CONCEPTS[category];
+  return weekFilter ? list.filter(c=>c.week===weekFilter) : list;
+}
+function startBusinessRound(category, weekFilter){
+  const picks = shuffled(bizConceptPool(category, weekFilter)).slice(0,3);
   state.businessSession = {
-    category, concepts:picks, learnIndex:0, endless:false,
+    category, weekFilter: weekFilter||null, concepts:picks, learnIndex:0, endless:false,
     quizConcept:null, quizType:null, quizOptions:null, selected:null, input:'', answered:false, lastCorrect:null,
     xpEarned:0, lastXpGain:0, statementRows:null, stmtInputs:{},
   };
@@ -7139,7 +7500,7 @@ function renderBusinessLearn(){
   const concept = s.concepts[s.learnIndex];
   const isLast = s.learnIndex >= s.concepts.length - 1;
   return `
-  ${topbar({back:'backToBusinessMenu()'})}
+  ${topbar({back:'backFromBusinessSession()'})}
   <div class="home ${appLangClass()}">
     <div style="font-size:12px; color:var(--snow-dim); text-align:center;">${t('bizLearnEyebrow',{n:s.learnIndex+1, total:s.concepts.length})}</div>
     <div class="hero" style="padding-top:4px;">
@@ -7163,7 +7524,7 @@ function nextBusinessLearn(){
 
 function startBusinessQuiz(){
   const s = state.businessSession;
-  const pool = s.endless ? BUSINESS_CONCEPTS[s.category] : s.concepts;
+  const pool = s.endless ? bizConceptPool(s.category, s.weekFilter) : s.concepts;
   const concept = pool[randInt(0, pool.length-1)];
   const exposure = (state.game.conceptExposure && state.game.conceptExposure[concept.key]) || 0;
   s.quizConcept = concept;
@@ -7176,7 +7537,7 @@ function startBusinessQuiz(){
   } else {
     s.quizType = exposure===0 ? 'mcq' : 'typed';
     if(s.quizType==='mcq'){
-      const distractorPool = BUSINESS_CONCEPTS[s.category].filter(c=>c.key!==concept.key);
+      const distractorPool = bizConceptPool(s.category, s.weekFilter).filter(c=>c.key!==concept.key);
       const distractors = shuffled(distractorPool).slice(0,3);
       s.quizOptions = shuffled([concept, ...distractors]).map(c=>({key:c.key, label:t(c.titleKey), correct:c.key===concept.key}));
     }
@@ -7253,7 +7614,7 @@ function renderBusinessQuiz(){
   const s = state.businessSession;
   const concept = s.quizConcept;
   return `
-  ${topbar({back:'backToBusinessMenu()'})}
+  ${topbar({back:'backFromBusinessSession()'})}
   <div class="lesson">
     <div style="font-size:12px; color:var(--snow-dim); text-align:center; margin-bottom:6px;">${t(businessEyebrowKey(s))}</div>
     <div class="q-wrap">
@@ -7297,7 +7658,15 @@ function nextBusinessEndlessQuestion(){
   startBusinessQuiz();
 }
 
-function exitBusinessEndless(){ state.screen='business_menu'; render(); }
+// Categories with a week picker should send the topbar back button to that
+// picker instead of straight to the Business Concepts menu, so leaving a
+// mid-week round doesn't lose the learner's week filter.
+function backFromBusinessSession(){
+  const s = state.businessSession;
+  if(s && WEEK_META[s.category]){ state.weekMenuCategory = s.category; state.screen='biz_week_menu'; render(); return; }
+  state.screen='business_menu'; render();
+}
+function exitBusinessEndless(){ backFromBusinessSession(); }
 
 function finishBusinessEndless(){
   const s = state.businessSession;
@@ -7327,14 +7696,14 @@ function renderBusinessEndlessResult(){
     </div>
     <div style="color:var(--snow-dim); font-size:13px;">${t('bizEndlessBestLabel',{n:rec.bestEndless||0})} · ${t('levelLabel',{n:lvl.level})}</div>
     ${achievementBannerHtml(s.newAchievements)}
-    <button class="btn btn-primary btn-block" onclick="startBusinessEndless('${s.category}')">${t('bizEndlessRestartBtn')}</button>
+    <button class="btn btn-primary btn-block" onclick="startBusinessEndless('${s.category}', ${s.weekFilter||'null'})">${t('bizEndlessRestartBtn')}</button>
     <button class="btn btn-ghost btn-block" onclick="backToBusinessMenu()">${t('backToBusinessMenuBtn')}</button>
   </div>`;
 }
 
-function startBusinessEndless(category){
+function startBusinessEndless(category, weekFilter){
   state.businessSession = {
-    category, concepts:null, learnIndex:0, endless:true,
+    category, weekFilter: weekFilter||null, concepts:null, learnIndex:0, endless:true,
     quizConcept:null, quizType:null, quizOptions:null, selected:null, input:'', answered:false, lastCorrect:null,
     xpEarned:0, lastXpGain:0, statementRows:null, stmtInputs:{},
     correct:0, mistakes:0, combo:0, maxCombo:0, isNewBest:false, newAchievements:[],
@@ -7519,7 +7888,38 @@ function submitQuizBankSelfMark(gotItRight){
   finalizeQuizBankAnswer(s);
   render();
 }
+// ---- mastery tracking: per-question/per-concept correct-vs-wrong history,
+// independent of conceptExposure (which only counts exposures, not
+// correctness, and drives MCQ -> typed progression). A "streak" of 3+
+// consecutive correct answers marks a concept mastered; used to rank
+// concepts on the Machine Learning week menu so learners see what to
+// review next. -----------------------------------------------------------
+function recordMastery(key, correct){
+  if(!state.game.conceptMastery) state.game.conceptMastery = {};
+  const m = state.game.conceptMastery[key] || (state.game.conceptMastery[key] = {correct:0, wrong:0, streak:0});
+  if(correct){ m.correct += 1; m.streak += 1; }
+  else { m.wrong += 1; m.streak = 0; }
+}
+function masteryStats(key){
+  return (state.game.conceptMastery && state.game.conceptMastery[key]) || {correct:0, wrong:0, streak:0};
+}
+function masteryLevel(key){
+  const m = masteryStats(key);
+  const attempts = m.correct + m.wrong;
+  if(attempts===0) return 'new';
+  if(m.streak>=3) return 'mastered';
+  if(attempts>=2 && m.correct/attempts>=0.6) return 'practicing';
+  return 'learning';
+}
+function masteryBadge(level){
+  return {new:'🆕', learning:'📖', practicing:'💪', mastered:'🏆'}[level] || '🆕';
+}
+function masteryLabelKey(level){
+  return {new:'masteryNew', learning:'masteryLearning', practicing:'masteryPracticing', mastered:'masteryMastered'}[level];
+}
+
 function finalizeQuizBankAnswer(s){
+  recordMastery('qb_'+s.queue[s.index].id, s.lastCorrect);
   if(s.lastCorrect) s.lastXpGain = registerCorrectAnswer(s, state.game);
   else { registerWrongAnswer(s); s.lastXpGain = 0; }
 }
@@ -7595,6 +7995,7 @@ function finalizeBusinessAnswer(s){
   if(!state.game.conceptExposure) state.game.conceptExposure = {};
   const key = s.quizConcept.key;
   state.game.conceptExposure[key] = (state.game.conceptExposure[key]||0) + 1;
+  recordMastery(key, s.lastCorrect);
 
   if(s.endless){
     if(s.lastCorrect) s.lastXpGain = registerCorrectAnswer(s, state.game);
@@ -7638,7 +8039,7 @@ function renderBusinessResult(){
     </div>
     <div style="color:var(--snow-dim); font-size:13px;">${t('levelLabel',{n:lvl.level})}</div>
     ${achievementBannerHtml(s.newAchievements)}
-    <button class="btn btn-primary btn-block" onclick="startBusinessRound('${s.category}')">${t('bizNextRoundBtn')}</button>
+    <button class="btn btn-primary btn-block" onclick="startBusinessRound('${s.category}', ${s.weekFilter||'null'})">${t('bizNextRoundBtn')}</button>
     <button class="btn btn-ghost btn-block" onclick="backToBusinessMenu()">${t('backToBusinessMenuBtn')}</button>
   </div>`;
 }
