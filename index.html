@@ -4400,6 +4400,9 @@ function defaultGame(){
     discrete:{}, // topic key -> {best: correct-answer count}
     probability:{}, // topic key -> {best: correct-answer count}
     statistics:{}, // topic key -> {best: correct-answer count}
+    geometry:{}, // topic key -> {best: correct-answer count}
+    trig:{}, // topic key -> {best: correct-answer count}
+    complex:{}, // topic key -> {best: correct-answer count}
     business:{}, // category key -> {rounds: completed-rounds count}
     conceptExposure:{}, // concept key -> times tested (drives MCQ -> typed progression)
     conceptMastery:{}, // concept key (or "qb_<id>" for Quiz Bank questions) -> {correct, wrong, streak}
@@ -5061,6 +5064,218 @@ const I18N = {
     statLearn_cumulative_count: "A cumulative count tells you how many values in a dataset fall at or below a certain threshold.\n\nExample: how many values in 3, 8, 12, 5, 20, 15 are ≤ 10?\n3, 8 and 5 are ≤ 10 — that's 3 values.",
     statCumulativePrompt: "How many values in this dataset are less than or equal to {threshold}: {vals}?",
     statCumulativeExplain: "Counting the values ≤ {threshold} gives {answer}.",
+
+    geometryTitle: "Geometry",
+    geometrySub: "Month 7: shapes, angles, area, volume and the coordinate plane. Pick a topic to learn the concept, then practice.",
+    backToGeomMenuBtn: "Back to Geometry",
+    geomPiCoeffPlaceholder: "e.g. 16 (for 16π)",
+
+    geomTopicTitle_rectangle_area: "Rectangle Area", geomTopicDesc_rectangle_area: "Find the area of a rectangle",
+    geomLearn_rectangle_area: "The area of a rectangle is its length times its width: A = l × w.\n\nExample: find the area of a rectangle with length 8 and width 5.\nA = 8 × 5 = 40.",
+    geomRectAreaPrompt: "Find the area of a rectangle with length {l} and width {w}.",
+    geomRectAreaExplain: "A = l × w = {l} × {w} = {answer}.",
+
+    geomTopicTitle_rectangle_perimeter: "Rectangle Perimeter", geomTopicDesc_rectangle_perimeter: "Find the perimeter of a rectangle",
+    geomLearn_rectangle_perimeter: "The perimeter of a rectangle is the distance around it: P = 2(l + w).\n\nExample: find the perimeter of a rectangle with length 8 and width 5.\nP = 2(8 + 5) = 2(13) = 26.",
+    geomRectPerimeterPrompt: "Find the perimeter of a rectangle with length {l} and width {w}.",
+    geomRectPerimeterExplain: "P = 2(l + w) = 2({l} + {w}) = 2({sum}) = {answer}.",
+
+    geomTopicTitle_triangle_area: "Triangle Area", geomTopicDesc_triangle_area: "Find the area of a triangle",
+    geomLearn_triangle_area: "The area of a triangle is half its base times its height: A = (1/2) × b × h.\n\nExample: find the area of a triangle with base 6 and height 4.\nA = (1/2) × 6 × 4 = 24/2 = 12.",
+    geomTriAreaPrompt: "Find the area of a triangle with base {b} and height {h}.",
+    geomTriAreaExplain: "A = (1/2) × b × h = (1/2) × {b} × {h} = {product}/2 = {answer}.",
+
+    geomTopicTitle_triangle_perimeter: "Triangle Perimeter", geomTopicDesc_triangle_perimeter: "Find the perimeter of a triangle",
+    geomLearn_triangle_perimeter: "The perimeter of a triangle is the sum of all three side lengths.\n\nExample: find the perimeter of a triangle with sides 5, 7 and 9.\nP = 5 + 7 + 9 = 21.",
+    geomTriPerimeterPrompt: "Find the perimeter of a triangle with sides {a}, {b} and {c}.",
+    geomTriPerimeterExplain: "P = {a} + {b} + {c} = {answer}.",
+
+    geomTopicTitle_triangle_angle_sum: "Triangle Angle Sum", geomTopicDesc_triangle_angle_sum: "Find a missing angle in a triangle",
+    geomLearn_triangle_angle_sum: "The interior angles of any triangle always add up to 180°.\n\nExample: a triangle has angles 50° and 70°. Find the third angle.\nThird angle = 180 - 50 - 70 = 60°.",
+    geomTriAngleSumPrompt: "A triangle has angles {a}° and {b}°. Find the third angle.",
+    geomTriAngleSumExplain: "The three angles sum to 180°: 180 - {a} - {b} = {answer}°.",
+
+    geomTopicTitle_quadrilateral_angle_sum: "Quadrilateral Angle Sum", geomTopicDesc_quadrilateral_angle_sum: "Find a missing angle in a quadrilateral",
+    geomLearn_quadrilateral_angle_sum: "The interior angles of any quadrilateral always add up to 360°.\n\nExample: a quadrilateral has angles 80°, 90° and 100°. Find the fourth angle.\nFourth angle = 360 - 80 - 90 - 100 = 90°.",
+    geomQuadAngleSumPrompt: "A quadrilateral has angles {a}°, {b}° and {c}°. Find the fourth angle.",
+    geomQuadAngleSumExplain: "The four angles sum to 360°: 360 - {a} - {b} - {c} = {answer}°.",
+
+    geomTopicTitle_circle_area: "Circle Area", geomTopicDesc_circle_area: "Find the area of a circle, in terms of π",
+    geomLearn_circle_area: "The area of a circle is π times the radius squared: A = πr². Since π can't be written exactly as a decimal, express the answer as a coefficient of π — just type the number that multiplies π.\n\nExample: find the area of a circle with radius 4, in terms of π.\nA = π(4²) = 16π. Type 16.",
+    geomCircleAreaPrompt: "Find the area of a circle with radius {r}, in terms of π. (Type just the coefficient of π.)",
+    geomCircleAreaExplain: "A = πr² = π({r}²) = {answer}π. Type {answer}.",
+
+    geomTopicTitle_circle_circumference: "Circle Circumference", geomTopicDesc_circle_circumference: "Find the circumference of a circle, in terms of π",
+    geomLearn_circle_circumference: "The circumference of a circle is 2π times the radius: C = 2πr. Express the answer as a coefficient of π.\n\nExample: find the circumference of a circle with radius 5, in terms of π.\nC = 2π(5) = 10π. Type 10.",
+    geomCircleCircPrompt: "Find the circumference of a circle with radius {r}, in terms of π. (Type just the coefficient of π.)",
+    geomCircleCircExplain: "C = 2πr = 2π({r}) = {answer}π. Type {answer}.",
+
+    geomTopicTitle_pythagorean_theorem: "Pythagorean Theorem", geomTopicDesc_pythagorean_theorem: "Find the hypotenuse of a right triangle",
+    geomLearn_pythagorean_theorem: "In a right triangle, the square of the hypotenuse equals the sum of the squares of the other two sides: a² + b² = c².\n\nExample: a right triangle has legs 3 and 4. Find the hypotenuse.\nc² = 3² + 4² = 9 + 16 = 25. c = 5.",
+    geomPythagoreanPrompt: "A right triangle has legs {a} and {b}. Find the hypotenuse.",
+    geomPythagoreanExplain: "c² = a² + b² = {a}² + {b}² = {aSq} + {bSq} = {sum}. c = {c}.",
+
+    geomTopicTitle_prism_volume: "Rectangular Prism Volume", geomTopicDesc_prism_volume: "Find the volume of a rectangular prism",
+    geomLearn_prism_volume: "The volume of a rectangular prism (box) is length × width × height: V = l × w × h.\n\nExample: find the volume of a box with length 4, width 3 and height 5.\nV = 4 × 3 × 5 = 60.",
+    geomPrismVolumePrompt: "Find the volume of a rectangular prism with length {l}, width {w} and height {h}.",
+    geomPrismVolumeExplain: "V = l × w × h = {l} × {w} × {h} = {answer}.",
+
+    geomTopicTitle_cylinder_volume: "Cylinder Volume", geomTopicDesc_cylinder_volume: "Find the volume of a cylinder, in terms of π",
+    geomLearn_cylinder_volume: "The volume of a cylinder is π times the radius squared, times the height: V = πr²h. Express the answer as a coefficient of π.\n\nExample: find the volume of a cylinder with radius 3 and height 5, in terms of π.\nV = π(3²)(5) = 45π. Type 45.",
+    geomCylinderVolumePrompt: "Find the volume of a cylinder with radius {r} and height {h}, in terms of π. (Type just the coefficient of π.)",
+    geomCylinderVolumeExplain: "V = πr²h = π({r}²)({h}) = π({rSq})({h}) = {answer}π. Type {answer}.",
+
+    geomTopicTitle_cube_surface_area: "Cube Surface Area", geomTopicDesc_cube_surface_area: "Find the total surface area of a cube",
+    geomLearn_cube_surface_area: "A cube has 6 identical square faces, so its surface area is 6 times the side length squared: SA = 6s².\n\nExample: find the surface area of a cube with side 4.\nSA = 6(4²) = 6(16) = 96.",
+    geomCubeSurfacePrompt: "Find the surface area of a cube with side length {s}.",
+    geomCubeSurfaceExplain: "SA = 6s² = 6({s}²) = 6({sSq}) = {answer}.",
+
+    geomTopicTitle_distance_formula: "Distance Formula", geomTopicDesc_distance_formula: "Find the distance between two points",
+    geomLearn_distance_formula: "The distance between two points (x₁,y₁) and (x₂,y₂) comes from the Pythagorean theorem: d = √((x₂-x₁)² + (y₂-y₁)²).\n\nExample: find the distance between (1, 2) and (4, 6).\nd = √((4-1)² + (6-2)²) = √(9 + 16) = √25 = 5.",
+    geomDistancePrompt: "Find the distance between ({x1}, {y1}) and ({x2}, {y2}).",
+    geomDistanceExplain: "d = √(({dx})² + ({dy})²) = √({dxSq} + {dySq}) = √{sum} = {dist}.",
+
+    trigonometryTitle: "Trigonometry",
+    trigonometrySub: "Month 8: angles, the unit circle, and triangles beyond right angles. Pick a topic to learn the concept, then practice.",
+    backToTrigMenuBtn: "Back to Trigonometry",
+    trigRadianAnswerPlaceholder: "e.g. 1/6 (for π/6)",
+    trigAmplitudeLabel: "Amplitude", trigPeriodLabel: "Period (coefficient of π)",
+
+    trigTopicTitle_degrees_to_radians: "Degrees to Radians", trigTopicDesc_degrees_to_radians: "Convert an angle to radians",
+    trigLearn_degrees_to_radians: "To convert degrees to radians, multiply by π/180. The answer is expressed as a coefficient of π — type it as a fraction p/q meaning (p/q)π.\n\nExample: convert 60° to radians.\n60 × π/180 = π/3. Type 1/3.",
+    trigDegToRadPrompt: "Convert {deg}° to radians. (Type the coefficient of π as a fraction, e.g. 1/6 for π/6.)",
+    trigDegToRadExplain: "{deg}° × π/180 = {p}/{q}π = {radText}. Type {p}/{q}.",
+
+    trigTopicTitle_radians_to_degrees: "Radians to Degrees", trigTopicDesc_radians_to_degrees: "Convert radians to an angle in degrees",
+    trigLearn_radians_to_degrees: "To convert radians to degrees, multiply by 180/π.\n\nExample: convert π/3 radians to degrees.\nπ/3 × 180/π = 180/3 = 60°.",
+    trigRadToDegPrompt: "Convert {radText} radians to degrees.",
+    trigRadToDegExplain: "{radText} × 180/π = {deg}°.",
+
+    trigTopicTitle_unit_circle_values: "Unit Circle Values", trigTopicDesc_unit_circle_values: "Exact sin, cos and tan values around the full circle",
+    trigLearn_unit_circle_values: "The unit circle gives exact sin, cos and tan values for every multiple of 30° and 45°, in every quadrant — the sign just follows which quadrant the angle lands in (positive x/y in quadrant I, and so on).\n\nExample: evaluate sin(150°).\n150° is in quadrant II, with a reference angle of 30°. sin is positive in quadrant II, so sin(150°) = sin(30°) = 1/2.",
+    trigUnitCirclePrompt: "Evaluate: {expr}",
+    trigUnitCircleExplain: "{expr} = {answer}.",
+
+    trigTopicTitle_pythagorean_identity: "Pythagorean Identity", trigTopicDesc_pythagorean_identity: "Find cos θ from sin θ (or vice versa)",
+    trigLearn_pythagorean_identity: "The Pythagorean identity says sin²θ + cos²θ = 1 for any angle θ. Given one value, you can solve for the other (assuming θ is in the first quadrant, so both are positive).\n\nExample: if sin θ = 3/5, find cos θ.\ncos²θ = 1 - (3/5)² = 1 - 9/25 = 16/25. cos θ = 4/5.",
+    trigPythagIdentitySinPrompt: "If sin θ = {given}/{c}, find cos θ (assume θ is in the first quadrant).",
+    trigPythagIdentityCosPrompt: "If cos θ = {given}/{c}, find sin θ (assume θ is in the first quadrant).",
+    trigPythagIdentityExplain: "Using sin²θ + cos²θ = 1: the other value squared is ({c}² - {given}²)/{c}² = ({cSq} - {givenSq})/{cSq} = {diff}/{cSq}, so the value is {answer}/{c}.",
+
+    trigTopicTitle_reference_angle: "Reference Angle", trigTopicDesc_reference_angle: "Find the acute angle to the x-axis",
+    trigLearn_reference_angle: "A reference angle is the acute angle (between 0° and 90°) formed between the terminal side of an angle and the x-axis. In quadrant II it's 180° - θ, in quadrant III it's θ - 180°, and in quadrant IV it's 360° - θ.\n\nExample: find the reference angle of 200°.\n200° is in quadrant III. Reference angle = 200° - 180° = 20°.",
+    trigReferenceAnglePrompt: "Find the reference angle of {angle}°.",
+    trigReferenceAngleExplain: "The reference angle is {ref}°.",
+
+    trigTopicTitle_coterminal_angle: "Coterminal Angles", trigTopicDesc_coterminal_angle: "Find an equivalent angle between 0° and 360°",
+    trigLearn_coterminal_angle: "Coterminal angles point in the same direction but differ by a multiple of 360°. Adding or subtracting 360° repeatedly brings any angle into the standard range [0°, 360°).\n\nExample: find a coterminal angle of 400° in [0°, 360°).\n400° - 360° = 40°.",
+    trigCoterminalPrompt: "Find the angle coterminal with {given}° that lies in [0°, 360°).",
+    trigCoterminalExplain: "Adding or subtracting multiples of 360° from {given}° gives {answer}°.",
+
+    trigTopicTitle_arc_length: "Arc Length", trigTopicDesc_arc_length: "Find the length of a circular arc, in terms of π",
+    trigLearn_arc_length: "Arc length is s = rθ, where θ is in radians. If θ is a coefficient of π, the arc length keeps that π. Express the answer as a coefficient of π.\n\nExample: find the arc length for radius 6 and central angle π/3.\ns = 6 × π/3 = 2π. Type 2.",
+    trigArcLengthPrompt: "A circle has radius {r}. Find the arc length for a central angle of {angleText}, in terms of π. (Type just the coefficient of π.)",
+    trigArcLengthExplain: "s = rθ = {r} × {angleText} = {answer}π. Type {answer}.",
+
+    trigTopicTitle_sector_area: "Sector Area", trigTopicDesc_sector_area: "Find the area of a circular sector, in terms of π",
+    trigLearn_sector_area: "The area of a circular sector is A = (1/2)r²θ, where θ is in radians. Express the answer as a coefficient of π.\n\nExample: find the sector area for radius 4 and central angle π/2.\nA = (1/2)(16)(π/2) = 4π. Type 4.",
+    trigSectorAreaPrompt: "A circle has radius {r}. Find the area of the sector with central angle {angleText}, in terms of π. (Type just the coefficient of π.)",
+    trigSectorAreaExplain: "A = (1/2)r²θ = (1/2)({r}²)({angleText}) = {answer}π. Type {answer}.",
+
+    trigTopicTitle_law_of_cosines: "Law of Cosines", trigTopicDesc_law_of_cosines: "Find a missing side using two sides and the included angle",
+    trigLearn_law_of_cosines: "The law of cosines extends the Pythagorean theorem to any triangle: c² = a² + b² - 2ab·cos(C), where C is the angle between sides a and b.\n\nExample: a triangle has sides 3 and 8 with a 60° angle between them. Find the third side.\nc² = 3² + 8² - 2(3)(8)cos(60°) = 9 + 64 - 24 = 49. c = 7.",
+    trigLawCosPrompt: "A triangle has sides {a} and {b} with a {angle}° angle between them. Find the third side.",
+    trigLawCosExplain60: "c² = a² + b² - 2ab·cos(60°) = {aSq} + {bSq} - {ab} = {cSq}. c = {c}.",
+    trigLawCosExplain120: "c² = a² + b² - 2ab·cos(120°) = {aSq} + {bSq} + {ab} = {cSq}. c = {c}.",
+
+    trigTopicTitle_law_of_sines: "Law of Sines", trigTopicDesc_law_of_sines: "Find a missing side using the law of sines",
+    trigLearn_law_of_sines: "The law of sines relates each side of a triangle to the sine of its opposite angle: a/sin(A) = b/sin(B) = c/sin(C).\n\nExample: a triangle has angle A = 30° opposite side a = 5, and angle B = 90°. Find side b.\nb/sin(90°) = a/sin(30°), so b = a × sin(90°)/sin(30°) = 5 × 1/(1/2) = 10.",
+    trigLawSinesPrompt: "A triangle has angle A = {angleA}° opposite side a = {a}, and angle B = {angleB}°. Find side b.",
+    trigLawSinesExplain: "b = a × sin(B)/sin(A) = {a} × sin({angleB}°)/sin({angleA}°) = {answer}.",
+
+    trigTopicTitle_amplitude_and_period: "Amplitude and Period", trigTopicDesc_amplitude_and_period: "Find the amplitude and period of a sine wave",
+    trigLearn_amplitude_and_period: "For y = A sin(Bx), the amplitude is |A| (how far the wave rises and falls from its middle), and the period is 2π/B (how long it takes to complete one full cycle), expressed as a coefficient of π.\n\nExample: find the amplitude and period of y = 3 sin(2x).\nAmplitude = |3| = 3. Period = 2π/2 = π, so the coefficient is 1.",
+    trigAmplitudePeriodPrompt: "Find the amplitude and period of y = {A} sin({B}x). (Give the period as a coefficient of π.)",
+    trigAmplitudePeriodExplain: "Amplitude = |A| = {amplitude}. Period = 2π/B = {periodText}.",
+
+    trigTopicTitle_inverse_trig: "Inverse Trig Functions", trigTopicDesc_inverse_trig: "Find the angle for a standard trig value",
+    trigLearn_inverse_trig: "An inverse trig function asks the reverse question: given a sin/cos/tan value, what angle produces it? Restricted to the first quadrant, each standard value has exactly one answer.\n\nExample: evaluate arcsin(1/2).\nsin(30°) = 1/2, so arcsin(1/2) = 30°.",
+    trigInverseTrigPrompt: "Evaluate: {expr} (answer in degrees)",
+    trigInverseTrigExplain: "{expr} = {answer}°.",
+
+    trigTopicTitle_trig_equation: "Solving Trig Equations", trigTopicDesc_trig_equation: "Solve a simple equation for θ in [0°, 90°]",
+    trigLearn_trig_equation: "To solve a trig equation, isolate the trig function, then use known exact values to find the angle. Restricted to [0°, 90°], each equation here has exactly one solution.\n\nExample: solve 2sin(θ) = 1 for θ in [0°, 90°].\nsin(θ) = 1/2, so θ = 30°.",
+    trigEquationPrompt: "Solve for θ in [0°, 90°]: {lhs} = {rhs}",
+    trigEquationExplain: "{lhs} = {rhs} means the trig value is {rhs}/2, which matches θ = {angle}°.",
+
+    complexTitle: "Complex Numbers",
+    complexSub: "Month 9: numbers beyond the real line — arithmetic, the complex plane, and polar form. Pick a topic to learn the concept, then practice.",
+    backToCplxMenuBtn: "Back to Complex Numbers",
+
+    cplxTopicTitle_complex_addition: "Complex Addition", cplxTopicDesc_complex_addition: "Add two complex numbers",
+    cplxLearn_complex_addition: "To add complex numbers, add the real parts and add the imaginary parts separately: (a+bi) + (c+di) = (a+c) + (b+d)i.\n\nExample: add (3 + 2i) and (1 - 5i).\n(3+1) + (2-5)i = 4 - 3i.",
+    cplxAddPrompt: "Add: ({z1}) + ({z2})",
+    cplxAddExplain: "Real: {a} + {c} = {re}. Imaginary: {b} + {d} = {im}. Result: {re} and {im}i.",
+
+    cplxTopicTitle_complex_subtraction: "Complex Subtraction", cplxTopicDesc_complex_subtraction: "Subtract two complex numbers",
+    cplxLearn_complex_subtraction: "To subtract complex numbers, subtract the real parts and subtract the imaginary parts separately: (a+bi) - (c+di) = (a-c) + (b-d)i.\n\nExample: subtract (1 - 5i) from (3 + 2i).\n(3-1) + (2-(-5))i = 2 + 7i.",
+    cplxSubPrompt: "Subtract: ({z1}) - ({z2})",
+    cplxSubExplain: "Real: {a} - {c} = {re}. Imaginary: {b} - {d} = {im}. Result: {re} and {im}i.",
+
+    cplxTopicTitle_complex_multiplication: "Complex Multiplication", cplxTopicDesc_complex_multiplication: "Multiply two complex numbers",
+    cplxLearn_complex_multiplication: "To multiply complex numbers, expand like binomials and use i² = -1: (a+bi)(c+di) = (ac - bd) + (ad + bc)i.\n\nExample: multiply (2 + 3i) and (1 - 2i).\n(2)(1) - (3)(-2) = 2 + 6 = 8. (2)(-2) + (3)(1) = -4 + 3 = -1.\nResult: 8 - i.",
+    cplxMulPrompt: "Multiply: ({z1}) × ({z2})",
+    cplxMulExplain: "Real: ac - bd = ({a})({c}) - ({b})({d}) = {ac} - {bd} = {re}. Imaginary: ad + bc = ({a})({d}) + ({b})({c}) = {ad} + {bc} = {im}.",
+
+    cplxTopicTitle_complex_division: "Complex Division", cplxTopicDesc_complex_division: "Divide two complex numbers",
+    cplxLearn_complex_division: "To divide complex numbers, multiply top and bottom by the conjugate of the denominator, which clears the imaginary part from the bottom.\n\nExample: divide (8 - i) by (2 - 2i).\n(8-i)(2+2i) / [(2-2i)(2+2i)] = (16+16i-2i-2i²)/(4+4) = (16+14i+2)/8 = (18+14i)/8 = 2.25 + 1.75i (not always this clean — this app only asks for divisions that land on whole numbers).",
+    cplxDivPrompt: "Divide: ({z1}) ÷ ({z2})",
+    cplxDivExplain: "Multiply by the conjugate {conj}: the denominator becomes {c}² + {d}² = {denom}. The result simplifies to {p} + {q}i.",
+
+    cplxTopicTitle_complex_conjugate: "Complex Conjugate", cplxTopicDesc_complex_conjugate: "Find the conjugate of a complex number",
+    cplxLearn_complex_conjugate: "The conjugate of a+bi, written a-bi, flips the sign of the imaginary part.\n\nExample: find the conjugate of 5 - 3i.\n5 + 3i.",
+    cplxConjPrompt: "Find the conjugate of {z}.",
+    cplxConjExplain: "Flip the sign of the imaginary part: {answer}.",
+
+    cplxTopicTitle_complex_modulus: "Complex Modulus", cplxTopicDesc_complex_modulus: "Find the distance from a complex number to the origin",
+    cplxLearn_complex_modulus: "The modulus of a+bi is its distance from the origin in the complex plane: |a+bi| = √(a² + b²).\n\nExample: find the modulus of 3 + 4i.\n|3+4i| = √(9+16) = √25 = 5.",
+    cplxModulusPrompt: "Find the modulus of {z}.",
+    cplxModulusExplain: "|z| = √({aSq} + {bSq}) = √{sum} = {c}.",
+
+    cplxTopicTitle_powers_of_i: "Powers of i", cplxTopicDesc_powers_of_i: "Find i raised to a power",
+    cplxLearn_powers_of_i: "Powers of i cycle every 4: i¹=i, i²=-1, i³=-i, i⁴=1, then it repeats. To find iⁿ, find the remainder of n divided by 4.\n\nExample: find i⁷.\n7 ÷ 4 leaves remainder 3, and i³ = -i. So i⁷ = -i.",
+    cplxPowersIPrompt: "Find i^{n}.",
+    cplxPowersIExplain: "{n} ÷ 4 leaves remainder {rem}, and that power of i is {answer}.",
+
+    cplxTopicTitle_argument: "Argument of a Complex Number", cplxTopicDesc_argument: "Find the angle of a complex number in standard position",
+    cplxLearn_argument: "The argument of a complex number is the angle its position makes with the positive real axis, measured counterclockwise.\n\nExample: find the argument of 1 + i.\nThis point is at 45° — equally far along the real and imaginary axes in the first quadrant.",
+    cplxArgumentPrompt: "Find the argument (in degrees) of {z}.",
+    cplxArgumentExplain: "This point lies at {angle}° from the positive real axis.",
+
+    cplxTopicTitle_polar_to_rectangular: "Polar to Rectangular", cplxTopicDesc_polar_to_rectangular: "Convert a complex number from polar to rectangular form",
+    cplxLearn_polar_to_rectangular: "A complex number with modulus r and argument θ converts to rectangular form a+bi using a = r·cos(θ), b = r·sin(θ). At the axis angles (0°, 90°, 180°, 270°), this is especially clean since cos and sin are each 0, 1 or -1.\n\nExample: convert r=5, θ=90° to rectangular form.\na = 5·cos(90°) = 0, b = 5·sin(90°) = 5. Result: 5i.",
+    cplxPolarToRectPrompt: "Convert to rectangular form: modulus {r}, argument {angle}°.",
+    cplxPolarToRectExplain: "At {angle}°, the result is {answer}.",
+
+    cplxTopicTitle_de_moivre: "De Moivre's Theorem", cplxTopicDesc_de_moivre: "Find the resulting angle after raising a complex number to a power",
+    cplxLearn_de_moivre: "De Moivre's theorem says [r(cos θ + i sin θ)]ⁿ = rⁿ(cos(nθ) + i sin(nθ)) — raising to the nth power multiplies the argument by n. For a number with modulus 1, only the angle matters.\n\nExample: a complex number has argument 60°. Find the argument of its cube (n=3).\n60° × 3 = 180°.",
+    cplxDeMoivrePrompt: "A complex number with modulus 1 has argument {angle}°. Find the argument of its {nOrd} power (reduced to [0°, 360°)).",
+    cplxDeMoivreExplain: "{angle}° × {n} = {product}°, which reduces to {answer}° within [0°, 360°).",
+
+    cplxTopicTitle_roots_of_unity: "Roots of Unity", cplxTopicDesc_roots_of_unity: "Find the angle spacing between the nth roots of unity",
+    cplxLearn_roots_of_unity: "The n complex nth roots of unity are evenly spaced around the unit circle, 360°/n apart.\n\nExample: find the spacing between the 6th roots of unity.\n360°/6 = 60°.",
+    cplxRootsUnityPrompt: "Find the angle spacing between the {nOrd} roots of unity.",
+    cplxRootsUnityExplain: "360° / {n} = {answer}°.",
+
+    cplxTopicTitle_quadratic_roots: "Complex Roots of a Quadratic", cplxTopicDesc_quadratic_roots: "Find the complex roots of a quadratic equation",
+    cplxLearn_quadratic_roots: "When a quadratic's discriminant is negative, its roots are a complex conjugate pair: p ± qi. Since the equation always factors as x² - 2px + (p²+q²) = 0 for roots p±qi, you can find p and q directly from the coefficients.\n\nExample: solve x² - 4x + 13 = 0.\nHere -2p = -4, so p = 2. And p²+q² = 13, so 4+q² = 13, q² = 9, q = 3. Roots: 2 ± 3i.",
+    cplxQuadRootsPrompt: "Solve: {expr}. Give the root with positive imaginary part.",
+    cplxQuadRootsExplain: "Since the constant term is p² + q² = {c} and the x-coefficient is -2p = {b}, this gives p = {p} and q = {q}. The root is {p} + {q}i.",
+
+    cplxTopicTitle_modulus_of_product: "Modulus of a Product", cplxTopicDesc_modulus_of_product: "Find |z₁z₂| using the moduli of z₁ and z₂",
+    cplxLearn_modulus_of_product: "The modulus of a product equals the product of the moduli: |z₁z₂| = |z₁| × |z₂| — no need to actually multiply the complex numbers out.\n\nExample: |3+4i| = 5 and |5+12i| = 13. Find |(3+4i)(5+12i)|.\n5 × 13 = 65.",
+    cplxModulusProductPrompt: "Find |z₁z₂|, where z₁ = {z1} and z₂ = {z2}.",
+    cplxModulusProductExplain: "|z₁| = {m1} and |z₂| = {m2}. |z₁z₂| = |z₁| × |z₂| = {m1} × {m2} = {answer}.",
 
     businessTitle: "Business Concepts",
     businessSub: "Finance, economics and the tech companies shaping them. Learn 3 concepts, then get quizzed on one — multiple choice the first time, typed from memory after that.",
@@ -5823,6 +6038,218 @@ const I18N = {
     statCumulativePrompt: "这组数据中有多少个值小于等于 {threshold}：{vals}？",
     statCumulativeExplain: "统计 ≤ {threshold} 的值，共有 {answer} 个。",
 
+    geometryTitle: "几何",
+    geometrySub: "第七个月：图形、角度、面积、体积与坐标平面。选择一个主题学习概念，然后练习。",
+    backToGeomMenuBtn: "返回几何",
+    geomPiCoeffPlaceholder: "例如 16（表示 16π）",
+
+    geomTopicTitle_rectangle_area: "矩形面积", geomTopicDesc_rectangle_area: "求矩形的面积",
+    geomLearn_rectangle_area: "矩形的面积是长乘以宽：A = l × w。\n\n例如：求长8宽5的矩形面积。\nA = 8 × 5 = 40。",
+    geomRectAreaPrompt: "求长 {l} 宽 {w} 的矩形面积。",
+    geomRectAreaExplain: "A = l × w = {l} × {w} = {answer}。",
+
+    geomTopicTitle_rectangle_perimeter: "矩形周长", geomTopicDesc_rectangle_perimeter: "求矩形的周长",
+    geomLearn_rectangle_perimeter: "矩形的周长是围绕它一周的距离：P = 2(l + w)。\n\n例如：求长8宽5的矩形周长。\nP = 2(8 + 5) = 2(13) = 26。",
+    geomRectPerimeterPrompt: "求长 {l} 宽 {w} 的矩形周长。",
+    geomRectPerimeterExplain: "P = 2(l + w) = 2({l} + {w}) = 2({sum}) = {answer}。",
+
+    geomTopicTitle_triangle_area: "三角形面积", geomTopicDesc_triangle_area: "求三角形的面积",
+    geomLearn_triangle_area: "三角形的面积是底乘以高的一半：A = (1/2) × b × h。\n\n例如：求底6高4的三角形面积。\nA = (1/2) × 6 × 4 = 24/2 = 12。",
+    geomTriAreaPrompt: "求底 {b} 高 {h} 的三角形面积。",
+    geomTriAreaExplain: "A = (1/2) × b × h = (1/2) × {b} × {h} = {product}/2 = {answer}。",
+
+    geomTopicTitle_triangle_perimeter: "三角形周长", geomTopicDesc_triangle_perimeter: "求三角形的周长",
+    geomLearn_triangle_perimeter: "三角形的周长是三条边长之和。\n\n例如：求边长为5、7、9的三角形周长。\nP = 5 + 7 + 9 = 21。",
+    geomTriPerimeterPrompt: "求边长为 {a}、{b}、{c} 的三角形周长。",
+    geomTriPerimeterExplain: "P = {a} + {b} + {c} = {answer}。",
+
+    geomTopicTitle_triangle_angle_sum: "三角形内角和", geomTopicDesc_triangle_angle_sum: "求三角形中缺失的角",
+    geomLearn_triangle_angle_sum: "任意三角形的内角和总是180°。\n\n例如：一个三角形的两个角是50°和70°，求第三个角。\n第三个角 = 180 - 50 - 70 = 60°。",
+    geomTriAngleSumPrompt: "一个三角形的两个角是 {a}° 和 {b}°。求第三个角。",
+    geomTriAngleSumExplain: "三个角之和为180°：180 - {a} - {b} = {answer}°。",
+
+    geomTopicTitle_quadrilateral_angle_sum: "四边形内角和", geomTopicDesc_quadrilateral_angle_sum: "求四边形中缺失的角",
+    geomLearn_quadrilateral_angle_sum: "任意四边形的内角和总是360°。\n\n例如：一个四边形的三个角是80°、90°和100°，求第四个角。\n第四个角 = 360 - 80 - 90 - 100 = 90°。",
+    geomQuadAngleSumPrompt: "一个四边形的三个角是 {a}°、{b}° 和 {c}°。求第四个角。",
+    geomQuadAngleSumExplain: "四个角之和为360°：360 - {a} - {b} - {c} = {answer}°。",
+
+    geomTopicTitle_circle_area: "圆的面积", geomTopicDesc_circle_area: "用 π 表示圆的面积",
+    geomLearn_circle_area: "圆的面积是 π 乘以半径的平方：A = πr²。由于 π 不能精确写成小数，答案用 π 的系数表示——只需输入乘以 π 的那个数。\n\n例如：求半径为4的圆的面积（用 π 表示）。\nA = π(4²) = 16π。输入16。",
+    geomCircleAreaPrompt: "求半径为 {r} 的圆的面积（用 π 表示，只需输入 π 的系数）。",
+    geomCircleAreaExplain: "A = πr² = π({r}²) = {answer}π。输入 {answer}。",
+
+    geomTopicTitle_circle_circumference: "圆的周长", geomTopicDesc_circle_circumference: "用 π 表示圆的周长",
+    geomLearn_circle_circumference: "圆的周长是 2π 乘以半径：C = 2πr。答案用 π 的系数表示。\n\n例如：求半径为5的圆的周长（用 π 表示）。\nC = 2π(5) = 10π。输入10。",
+    geomCircleCircPrompt: "求半径为 {r} 的圆的周长（用 π 表示，只需输入 π 的系数）。",
+    geomCircleCircExplain: "C = 2πr = 2π({r}) = {answer}π。输入 {answer}。",
+
+    geomTopicTitle_pythagorean_theorem: "勾股定理", geomTopicDesc_pythagorean_theorem: "求直角三角形的斜边",
+    geomLearn_pythagorean_theorem: "在直角三角形中，斜边的平方等于另外两条边的平方和：a² + b² = c²。\n\n例如：一个直角三角形的两条直角边是3和4，求斜边。\nc² = 3² + 4² = 9 + 16 = 25。c = 5。",
+    geomPythagoreanPrompt: "一个直角三角形的两条直角边是 {a} 和 {b}。求斜边。",
+    geomPythagoreanExplain: "c² = a² + b² = {a}² + {b}² = {aSq} + {bSq} = {sum}。c = {c}。",
+
+    geomTopicTitle_prism_volume: "长方体体积", geomTopicDesc_prism_volume: "求长方体的体积",
+    geomLearn_prism_volume: "长方体的体积是长×宽×高：V = l × w × h。\n\n例如：求长4宽3高5的长方体体积。\nV = 4 × 3 × 5 = 60。",
+    geomPrismVolumePrompt: "求长 {l}、宽 {w}、高 {h} 的长方体体积。",
+    geomPrismVolumeExplain: "V = l × w × h = {l} × {w} × {h} = {answer}。",
+
+    geomTopicTitle_cylinder_volume: "圆柱体体积", geomTopicDesc_cylinder_volume: "用 π 表示圆柱体的体积",
+    geomLearn_cylinder_volume: "圆柱体的体积是 π 乘以半径的平方，再乘以高：V = πr²h。答案用 π 的系数表示。\n\n例如：求半径为3高为5的圆柱体体积（用 π 表示）。\nV = π(3²)(5) = 45π。输入45。",
+    geomCylinderVolumePrompt: "求半径为 {r}、高为 {h} 的圆柱体体积（用 π 表示，只需输入 π 的系数）。",
+    geomCylinderVolumeExplain: "V = πr²h = π({r}²)({h}) = π({rSq})({h}) = {answer}π。输入 {answer}。",
+
+    geomTopicTitle_cube_surface_area: "正方体表面积", geomTopicDesc_cube_surface_area: "求正方体的总表面积",
+    geomLearn_cube_surface_area: "正方体有6个完全相同的正方形面，所以它的表面积是边长平方的6倍：SA = 6s²。\n\n例如：求边长为4的正方体表面积。\nSA = 6(4²) = 6(16) = 96。",
+    geomCubeSurfacePrompt: "求边长为 {s} 的正方体表面积。",
+    geomCubeSurfaceExplain: "SA = 6s² = 6({s}²) = 6({sSq}) = {answer}。",
+
+    geomTopicTitle_distance_formula: "距离公式", geomTopicDesc_distance_formula: "求两点之间的距离",
+    geomLearn_distance_formula: "两点 (x₁,y₁) 和 (x₂,y₂) 之间的距离由勾股定理得出：d = √((x₂-x₁)² + (y₂-y₁)²)。\n\n例如：求 (1, 2) 和 (4, 6) 之间的距离。\nd = √((4-1)² + (6-2)²) = √(9 + 16) = √25 = 5。",
+    geomDistancePrompt: "求 ({x1}, {y1}) 和 ({x2}, {y2}) 之间的距离。",
+    geomDistanceExplain: "d = √(({dx})² + ({dy})²) = √({dxSq} + {dySq}) = √{sum} = {dist}。",
+
+    trigonometryTitle: "三角学",
+    trigonometrySub: "第八个月：角度、单位圆，以及超越直角三角形的更多三角形。选择一个主题学习概念，然后练习。",
+    backToTrigMenuBtn: "返回三角学",
+    trigRadianAnswerPlaceholder: "例如 1/6（表示 π/6）",
+    trigAmplitudeLabel: "振幅", trigPeriodLabel: "周期（π 的系数）",
+
+    trigTopicTitle_degrees_to_radians: "角度转弧度", trigTopicDesc_degrees_to_radians: "把角度转换成弧度",
+    trigLearn_degrees_to_radians: "把角度转换成弧度时，乘以 π/180。答案用 π 的系数表示——以分数 p/q 的形式输入，表示 (p/q)π。\n\n例如：把60°转换成弧度。\n60 × π/180 = π/3。输入 1/3。",
+    trigDegToRadPrompt: "把 {deg}° 转换成弧度。（以分数形式输入 π 的系数，例如 π/6 输入 1/6。）",
+    trigDegToRadExplain: "{deg}° × π/180 = {p}/{q}π = {radText}。输入 {p}/{q}。",
+
+    trigTopicTitle_radians_to_degrees: "弧度转角度", trigTopicDesc_radians_to_degrees: "把弧度转换成角度",
+    trigLearn_radians_to_degrees: "把弧度转换成角度时，乘以 180/π。\n\n例如：把 π/3 弧度转换成角度。\nπ/3 × 180/π = 180/3 = 60°。",
+    trigRadToDegPrompt: "把 {radText} 弧度转换成角度。",
+    trigRadToDegExplain: "{radText} × 180/π = {deg}°。",
+
+    trigTopicTitle_unit_circle_values: "单位圆的值", trigTopicDesc_unit_circle_values: "整个圆周上精确的 sin、cos、tan 值",
+    trigLearn_unit_circle_values: "单位圆给出每个30°和45°倍数角在各个象限的精确 sin、cos、tan 值——符号只取决于角所在的象限（第一象限 x、y 都为正，以此类推）。\n\n例如：求 sin(150°)。\n150°在第二象限，参考角是30°。第二象限中 sin 为正，所以 sin(150°) = sin(30°) = 1/2。",
+    trigUnitCirclePrompt: "求值：{expr}",
+    trigUnitCircleExplain: "{expr} = {answer}。",
+
+    trigTopicTitle_pythagorean_identity: "毕达哥拉斯恒等式", trigTopicDesc_pythagorean_identity: "由 sin θ 求 cos θ（或反过来）",
+    trigLearn_pythagorean_identity: "毕达哥拉斯恒等式指出，对任意角 θ 都有 sin²θ + cos²θ = 1。已知其中一个值，就能求出另一个（假设 θ 在第一象限，两者都为正）。\n\n例如：若 sin θ = 3/5，求 cos θ。\ncos²θ = 1 - (3/5)² = 1 - 9/25 = 16/25。cos θ = 4/5。",
+    trigPythagIdentitySinPrompt: "若 sin θ = {given}/{c}，求 cos θ（假设 θ 在第一象限）。",
+    trigPythagIdentityCosPrompt: "若 cos θ = {given}/{c}，求 sin θ（假设 θ 在第一象限）。",
+    trigPythagIdentityExplain: "利用 sin²θ + cos²θ = 1：另一个值的平方是 ({c}² - {given}²)/{c}² = ({cSq} - {givenSq})/{cSq} = {diff}/{cSq}，所以该值是 {answer}/{c}。",
+
+    trigTopicTitle_reference_angle: "参考角", trigTopicDesc_reference_angle: "求与 x 轴形成的锐角",
+    trigLearn_reference_angle: "参考角是某个角的终边与 x 轴之间形成的锐角（0°到90°之间）。第二象限中是180° - θ，第三象限中是θ - 180°，第四象限中是360° - θ。\n\n例如：求200°的参考角。\n200°在第三象限。参考角 = 200° - 180° = 20°。",
+    trigReferenceAnglePrompt: "求 {angle}° 的参考角。",
+    trigReferenceAngleExplain: "参考角是 {ref}°。",
+
+    trigTopicTitle_coterminal_angle: "终边相同的角", trigTopicDesc_coterminal_angle: "求0°到360°之间等价的角",
+    trigLearn_coterminal_angle: "终边相同的角指向同一方向，但相差360°的整数倍。反复加上或减去360°，可以把任意角化到标准范围[0°, 360°)内。\n\n例如：求与400°终边相同、落在[0°, 360°)内的角。\n400° - 360° = 40°。",
+    trigCoterminalPrompt: "求与 {given}° 终边相同、落在 [0°, 360°) 内的角。",
+    trigCoterminalExplain: "对 {given}° 加上或减去360°的整数倍，得到 {answer}°。",
+
+    trigTopicTitle_arc_length: "弧长", trigTopicDesc_arc_length: "用 π 表示圆弧的长度",
+    trigLearn_arc_length: "弧长公式是 s = rθ，其中 θ 用弧度表示。如果 θ 是 π 的系数，弧长也会保留 π。答案用 π 的系数表示。\n\n例如：求半径为6、圆心角为π/3的弧长。\ns = 6 × π/3 = 2π。输入2。",
+    trigArcLengthPrompt: "一个圆的半径为 {r}。求圆心角为 {angleText} 的弧长（用 π 表示，只需输入 π 的系数）。",
+    trigArcLengthExplain: "s = rθ = {r} × {angleText} = {answer}π。输入 {answer}。",
+
+    trigTopicTitle_sector_area: "扇形面积", trigTopicDesc_sector_area: "用 π 表示扇形的面积",
+    trigLearn_sector_area: "扇形的面积是 A = (1/2)r²θ，其中 θ 用弧度表示。答案用 π 的系数表示。\n\n例如：求半径为4、圆心角为π/2的扇形面积。\nA = (1/2)(16)(π/2) = 4π。输入4。",
+    trigSectorAreaPrompt: "一个圆的半径为 {r}。求圆心角为 {angleText} 的扇形面积（用 π 表示，只需输入 π 的系数）。",
+    trigSectorAreaExplain: "A = (1/2)r²θ = (1/2)({r}²)({angleText}) = {answer}π。输入 {answer}。",
+
+    trigTopicTitle_law_of_cosines: "余弦定理", trigTopicDesc_law_of_cosines: "用两边及其夹角求第三边",
+    trigLearn_law_of_cosines: "余弦定理把勾股定理推广到任意三角形：c² = a² + b² - 2ab·cos(C)，其中 C 是边 a、b 之间的夹角。\n\n例如：一个三角形的两边是3和8，夹角是60°，求第三边。\nc² = 3² + 8² - 2(3)(8)cos(60°) = 9 + 64 - 24 = 49。c = 7。",
+    trigLawCosPrompt: "一个三角形的两边是 {a} 和 {b}，夹角是 {angle}°。求第三边。",
+    trigLawCosExplain60: "c² = a² + b² - 2ab·cos(60°) = {aSq} + {bSq} - {ab} = {cSq}。c = {c}。",
+    trigLawCosExplain120: "c² = a² + b² - 2ab·cos(120°) = {aSq} + {bSq} + {ab} = {cSq}。c = {c}。",
+
+    trigTopicTitle_law_of_sines: "正弦定理", trigTopicDesc_law_of_sines: "用正弦定理求缺失的边",
+    trigLearn_law_of_sines: "正弦定理把三角形的每条边与其对角的正弦联系起来：a/sin(A) = b/sin(B) = c/sin(C)。\n\n例如：一个三角形的角 A = 30°，其对边 a = 5，角 B = 90°，求边 b。\nb/sin(90°) = a/sin(30°)，所以 b = a × sin(90°)/sin(30°) = 5 × 1/(1/2) = 10。",
+    trigLawSinesPrompt: "一个三角形的角 A = {angleA}°，其对边 a = {a}，角 B = {angleB}°。求边 b。",
+    trigLawSinesExplain: "b = a × sin(B)/sin(A) = {a} × sin({angleB}°)/sin({angleA}°) = {answer}。",
+
+    trigTopicTitle_amplitude_and_period: "振幅与周期", trigTopicDesc_amplitude_and_period: "求正弦波的振幅和周期",
+    trigLearn_amplitude_and_period: "对于 y = A sin(Bx)，振幅是 |A|（波从中线上下浮动的幅度），周期是 2π/B（完成一个完整周期所需的长度），用 π 的系数表示。\n\n例如：求 y = 3 sin(2x) 的振幅和周期。\n振幅 = |3| = 3。周期 = 2π/2 = π，所以系数是1。",
+    trigAmplitudePeriodPrompt: "求 y = {A} sin({B}x) 的振幅和周期。（周期用 π 的系数表示。）",
+    trigAmplitudePeriodExplain: "振幅 = |A| = {amplitude}。周期 = 2π/B = {periodText}。",
+
+    trigTopicTitle_inverse_trig: "反三角函数", trigTopicDesc_inverse_trig: "由标准三角函数值求角度",
+    trigLearn_inverse_trig: "反三角函数问的是反过来的问题：已知一个 sin/cos/tan 值，是哪个角产生的？限定在第一象限内，每个标准值都恰好对应一个角。\n\n例如：求 arcsin(1/2)。\nsin(30°) = 1/2，所以 arcsin(1/2) = 30°。",
+    trigInverseTrigPrompt: "求值：{expr}（用角度作答）",
+    trigInverseTrigExplain: "{expr} = {answer}°。",
+
+    trigTopicTitle_trig_equation: "解三角方程", trigTopicDesc_trig_equation: "在 [0°, 90°] 范围内解一个简单方程求 θ",
+    trigLearn_trig_equation: "解三角方程时，先把三角函数单独分离出来，再用已知的精确值求角度。限定在[0°, 90°]内，这里的每个方程都恰好有一个解。\n\n例如：解 2sin(θ) = 1，θ ∈ [0°, 90°]。\nsin(θ) = 1/2，所以 θ = 30°。",
+    trigEquationPrompt: "在 [0°, 90°] 范围内解 θ：{lhs} = {rhs}",
+    trigEquationExplain: "{lhs} = {rhs} 意味着三角函数值是 {rhs}/2，对应 θ = {angle}°。",
+
+    complexTitle: "复数",
+    complexSub: "第九个月：超越实数轴的数——四则运算、复平面与极坐标形式。选择一个主题学习概念，然后练习。",
+    backToCplxMenuBtn: "返回复数",
+
+    cplxTopicTitle_complex_addition: "复数加法", cplxTopicDesc_complex_addition: "两个复数相加",
+    cplxLearn_complex_addition: "复数相加时，实部与实部相加，虚部与虚部分别相加：(a+bi) + (c+di) = (a+c) + (b+d)i。\n\n例如：求 (3 + 2i) 与 (1 - 5i) 的和。\n(3+1) + (2-5)i = 4 - 3i。",
+    cplxAddPrompt: "求和：({z1}) + ({z2})",
+    cplxAddExplain: "实部：{a} + {c} = {re}。虚部：{b} + {d} = {im}。结果：{re} 和 {im}i。",
+
+    cplxTopicTitle_complex_subtraction: "复数减法", cplxTopicDesc_complex_subtraction: "两个复数相减",
+    cplxLearn_complex_subtraction: "复数相减时，实部与实部相减，虚部与虚部分别相减：(a+bi) - (c+di) = (a-c) + (b-d)i。\n\n例如：用 (3 + 2i) 减去 (1 - 5i)。\n(3-1) + (2-(-5))i = 2 + 7i。",
+    cplxSubPrompt: "求差：({z1}) - ({z2})",
+    cplxSubExplain: "实部：{a} - {c} = {re}。虚部：{b} - {d} = {im}。结果：{re} 和 {im}i。",
+
+    cplxTopicTitle_complex_multiplication: "复数乘法", cplxTopicDesc_complex_multiplication: "两个复数相乘",
+    cplxLearn_complex_multiplication: "复数相乘时，像二项式一样展开，并用 i² = -1 化简：(a+bi)(c+di) = (ac - bd) + (ad + bc)i。\n\n例如：求 (2 + 3i) 与 (1 - 2i) 的积。\n(2)(1) - (3)(-2) = 2 + 6 = 8。(2)(-2) + (3)(1) = -4 + 3 = -1。\n结果：8 - i。",
+    cplxMulPrompt: "求积：({z1}) × ({z2})",
+    cplxMulExplain: "实部：ac - bd = ({a})({c}) - ({b})({d}) = {ac} - {bd} = {re}。虚部：ad + bc = ({a})({d}) + ({b})({c}) = {ad} + {bc} = {im}。",
+
+    cplxTopicTitle_complex_division: "复数除法", cplxTopicDesc_complex_division: "两个复数相除",
+    cplxLearn_complex_division: "复数相除时，分子分母都乘以分母的共轭复数，这样就能消去分母中的虚部。\n\n例如：求 (8 - i) 除以 (2 - 2i)。\n(8-i)(2+2i) / [(2-2i)(2+2i)] = (16+16i-2i-2i²)/(4+4) = (16+14i+2)/8 = (18+14i)/8 = 2.25 + 1.75i（结果并不总是这么干净——本应用只出恰好能整除的除法题目）。",
+    cplxDivPrompt: "求商：({z1}) ÷ ({z2})",
+    cplxDivExplain: "乘以共轭复数 {conj}：分母变为 {c}² + {d}² = {denom}。结果化简为 {p} + {q}i。",
+
+    cplxTopicTitle_complex_conjugate: "复数的共轭", cplxTopicDesc_complex_conjugate: "求一个复数的共轭复数",
+    cplxLearn_complex_conjugate: "a+bi 的共轭复数记作 a-bi，把虚部的符号取反。\n\n例如：求 5 - 3i 的共轭复数。\n5 + 3i。",
+    cplxConjPrompt: "求 {z} 的共轭复数。",
+    cplxConjExplain: "把虚部的符号取反：{answer}。",
+
+    cplxTopicTitle_complex_modulus: "复数的模", cplxTopicDesc_complex_modulus: "求复数到原点的距离",
+    cplxLearn_complex_modulus: "a+bi 的模是它在复平面上到原点的距离：|a+bi| = √(a² + b²)。\n\n例如：求 3 + 4i 的模。\n|3+4i| = √(9+16) = √25 = 5。",
+    cplxModulusPrompt: "求 {z} 的模。",
+    cplxModulusExplain: "|z| = √({aSq} + {bSq}) = √{sum} = {c}。",
+
+    cplxTopicTitle_powers_of_i: "i 的幂", cplxTopicDesc_powers_of_i: "求 i 的某次幂",
+    cplxLearn_powers_of_i: "i 的幂每4次一循环：i¹=i, i²=-1, i³=-i, i⁴=1，然后重复。求 iⁿ 时，只需求 n 除以4的余数。\n\n例如：求 i⁷。\n7 ÷ 4 余3，而 i³ = -i。所以 i⁷ = -i。",
+    cplxPowersIPrompt: "求 i^{n}。",
+    cplxPowersIExplain: "{n} ÷ 4 余 {rem}，该余数对应的 i 的幂是 {answer}。",
+
+    cplxTopicTitle_argument: "复数的辐角", cplxTopicDesc_argument: "求复数在标准位置的角度",
+    cplxLearn_argument: "复数的辐角是它的位置与正实轴之间的夹角，按逆时针方向度量。\n\n例如：求 1 + i 的辐角。\n这个点在45°——在第一象限中实轴和虚轴方向的距离相等。",
+    cplxArgumentPrompt: "求 {z} 的辐角（用角度表示）。",
+    cplxArgumentExplain: "该点与正实轴的夹角是 {angle}°。",
+
+    cplxTopicTitle_polar_to_rectangular: "极坐标转直角坐标", cplxTopicDesc_polar_to_rectangular: "把复数从极坐标形式转换成直角坐标形式",
+    cplxLearn_polar_to_rectangular: "模为 r、辐角为 θ 的复数可用 a = r·cos(θ)，b = r·sin(θ) 转换成直角坐标形式 a+bi。在坐标轴角度（0°、90°、180°、270°）上尤其简单，因为 cos 和 sin 分别只取 0、1 或 -1。\n\n例如：把 r=5，θ=90° 转换成直角坐标形式。\na = 5·cos(90°) = 0，b = 5·sin(90°) = 5。结果：5i。",
+    cplxPolarToRectPrompt: "转换成直角坐标形式：模 {r}，辐角 {angle}°。",
+    cplxPolarToRectExplain: "在 {angle}° 处，结果是 {answer}。",
+
+    cplxTopicTitle_de_moivre: "棣莫弗定理", cplxTopicDesc_de_moivre: "求复数乘幂后的辐角",
+    cplxLearn_de_moivre: "棣莫弗定理指出 [r(cos θ + i sin θ)]ⁿ = rⁿ(cos(nθ) + i sin(nθ))——乘n次幂时辐角乘以n。对于模为1的数，只需关注角度。\n\n例如：某复数的辐角是60°，求它的三次方（n=3）的辐角。\n60° × 3 = 180°。",
+    cplxDeMoivrePrompt: "某模为1的复数辐角为 {angle}°。求它的 {n} 次方的辐角（化到 [0°, 360°) 内）。",
+    cplxDeMoivreExplain: "{angle}° × {n} = {product}°，化到 [0°, 360°) 内为 {answer}°。",
+
+    cplxTopicTitle_roots_of_unity: "单位根", cplxTopicDesc_roots_of_unity: "求 n 次单位根之间的角度间隔",
+    cplxLearn_roots_of_unity: "n 个复数的 n 次单位根均匀分布在单位圆上，彼此间隔360°/n。\n\n例如：求6次单位根之间的间隔。\n360°/6 = 60°。",
+    cplxRootsUnityPrompt: "求 {n} 次单位根之间的角度间隔。",
+    cplxRootsUnityExplain: "360° / {n} = {answer}°。",
+
+    cplxTopicTitle_quadratic_roots: "二次方程的复数根", cplxTopicDesc_quadratic_roots: "求二次方程的复数根",
+    cplxLearn_quadratic_roots: "当二次方程的判别式为负时，它的根是一对共轭复数：p ± qi。由于方程总能因式分解为 x² - 2px + (p²+q²) = 0（根为 p±qi），可以直接从系数求出 p 和 q。\n\n例如：解 x² - 4x + 13 = 0。\n这里 -2p = -4，所以 p = 2。又 p²+q² = 13，所以 4+q² = 13，q² = 9，q = 3。根为 2 ± 3i。",
+    cplxQuadRootsPrompt: "解方程：{expr}。给出虚部为正的那个根。",
+    cplxQuadRootsExplain: "由于常数项 p² + q² = {c}，x 的系数 -2p = {b}，可得 p = {p}，q = {q}。该根是 {p} + {q}i。",
+
+    cplxTopicTitle_modulus_of_product: "乘积的模", cplxTopicDesc_modulus_of_product: "用 z₁、z₂ 各自的模求 |z₁z₂|",
+    cplxLearn_modulus_of_product: "乘积的模等于各自模的乘积：|z₁z₂| = |z₁| × |z₂|——不需要真的把两个复数相乘展开。\n\n例如：|3+4i| = 5，|5+12i| = 13，求 |(3+4i)(5+12i)|。\n5 × 13 = 65。",
+    cplxModulusProductPrompt: "求 |z₁z₂|，其中 z₁ = {z1}，z₂ = {z2}。",
+    cplxModulusProductExplain: "|z₁| = {m1}，|z₂| = {m2}。|z₁z₂| = |z₁| × |z₂| = {m1} × {m2} = {answer}。",
+
     businessTitle: "商业概念",
     businessSub: "金融、经济学，以及塑造它们的科技公司。先学习3个概念，再接受其中一个的测验——第一次是选择题，之后要凭记忆手动输入。",
     bizFinanceTitle: "金融", bizFinanceDesc: "金钱、投资，以及企业如何管理它们",
@@ -6477,6 +6904,218 @@ const I18N = {
     statCumulativePrompt: "གནས་ཚུལ་ཚོགས་འདིའི་ནང {threshold} ལས་ཉུང་བའམ་མཉམ་པའི་ཐང་ག་ཚོད་ཡོད: {vals}?",
     statCumulativeExplain: "{threshold} ལས་ཉུང་བའམ་མཉམ་པའི་ཐང་བགྲངས་ན {answer} ཡོད།",
 
+    geometryTitle: "ས་དཔྱད་རྩིས།",
+    geometrySub: "ཟླ་བ་བདུན་པ། དབྱིབས, ཟུར་ཐང, ཞིང་ཁྱོན, བུམ་ཁྱོན་དང་ཐིག་ཁྲམ་ཐང་ཁྱོན། བརྗོད་གཞི་ཞིག་འདེམས་ནས་གོ་དོན་སློབ་ཞིང་རྗེས་སུ་སྦྱོང་བརྡར་གྱིས།",
+    backToGeomMenuBtn: "ས་དཔྱད་རྩིས་སུ་ལོག",
+    geomPiCoeffPlaceholder: "དཔེར་ན་ 16 (16π ཡི་དོན་དུ)",
+
+    geomTopicTitle_rectangle_area: "གྲུ་བཞིའི་ཞིང་ཁྱོན།", geomTopicDesc_rectangle_area: "གྲུ་བཞིའི་ཞིང་ཁྱོན་འཚོལ།",
+    geomLearn_rectangle_area: "གྲུ་བཞིའི་ཞིང་ཁྱོན་ནི་རིང་ཚད་དང་ཞེང་ཚད་གཉིས་འཕར་བ་ཡིན: A = l × w།\n\nདཔེར་བརྗོད། རིང་ཚད8, ཞེང་ཚད5ཡིན་པའི་གྲུ་བཞིའི་ཞིང་ཁྱོན་འཚོལ་ཤིག།\nA = 8 × 5 = 40།",
+    geomRectAreaPrompt: "རིང་ཚད {l}, ཞེང་ཚད {w} ཡིན་པའི་གྲུ་བཞིའི་ཞིང་ཁྱོན་འཚོལ་ཤིག།",
+    geomRectAreaExplain: "A = l × w = {l} × {w} = {answer}།",
+
+    geomTopicTitle_rectangle_perimeter: "གྲུ་བཞིའི་མཐའ་སྐོར་ཚད།", geomTopicDesc_rectangle_perimeter: "གྲུ་བཞིའི་མཐའ་སྐོར་ཚད་འཚོལ།",
+    geomLearn_rectangle_perimeter: "གྲུ་བཞིའི་མཐའ་སྐོར་ཚད་ནི་དེའི་མཐའ་སྐོར་གྱི་ཐག་རིང་ཡིན: P = 2(l + w)།\n\nདཔེར་བརྗོད། རིང་ཚད8, ཞེང་ཚད5ཡིན་པའི་གྲུ་བཞིའི་མཐའ་སྐོར་ཚད་འཚོལ་ཤིག།\nP = 2(8 + 5) = 2(13) = 26།",
+    geomRectPerimeterPrompt: "རིང་ཚད {l}, ཞེང་ཚད {w} ཡིན་པའི་གྲུ་བཞིའི་མཐའ་སྐོར་ཚད་འཚོལ་ཤིག།",
+    geomRectPerimeterExplain: "P = 2(l + w) = 2({l} + {w}) = 2({sum}) = {answer}།",
+
+    geomTopicTitle_triangle_area: "གྲུ་གསུམ་གྱི་ཞིང་ཁྱོན།", geomTopicDesc_triangle_area: "གྲུ་གསུམ་གྱི་ཞིང་ཁྱོན་འཚོལ།",
+    geomLearn_triangle_area: "གྲུ་གསུམ་གྱི་ཞིང་ཁྱོན་ནི་གཞི་ཚད་དང་མཐོ་ཚད་འཕར་བའི་ཕྱེད་ཡིན: A = (1/2) × b × h།\n\nདཔེར་བརྗོད། གཞི་ཚད6, མཐོ་ཚད4ཡིན་པའི་གྲུ་གསུམ་གྱི་ཞིང་ཁྱོན་འཚོལ་ཤིག།\nA = (1/2) × 6 × 4 = 24/2 = 12།",
+    geomTriAreaPrompt: "གཞི་ཚད {b}, མཐོ་ཚད {h} ཡིན་པའི་གྲུ་གསུམ་གྱི་ཞིང་ཁྱོན་འཚོལ་ཤིག།",
+    geomTriAreaExplain: "A = (1/2) × b × h = (1/2) × {b} × {h} = {product}/2 = {answer}།",
+
+    geomTopicTitle_triangle_perimeter: "གྲུ་གསུམ་གྱི་མཐའ་སྐོར་ཚད།", geomTopicDesc_triangle_perimeter: "གྲུ་གསུམ་གྱི་མཐའ་སྐོར་ཚད་འཚོལ།",
+    geomLearn_triangle_perimeter: "གྲུ་གསུམ་གྱི་མཐའ་སྐོར་ཚད་ནི་ཟུར་ཐིག་གསུམ་ཀའི་བསྡོམས་ཡིན།\n\nདཔེར་བརྗོད། ཟུར་ཐིག5, 7, 9ཡིན་པའི་གྲུ་གསུམ་གྱི་མཐའ་སྐོར་ཚད་འཚོལ་ཤིག།\nP = 5 + 7 + 9 = 21།",
+    geomTriPerimeterPrompt: "ཟུར་ཐིག {a}, {b}, {c} ཡིན་པའི་གྲུ་གསུམ་གྱི་མཐའ་སྐོར་ཚད་འཚོལ་ཤིག།",
+    geomTriPerimeterExplain: "P = {a} + {b} + {c} = {answer}།",
+
+    geomTopicTitle_triangle_angle_sum: "གྲུ་གསུམ་གྱི་ཟུར་ཐང་བསྡོམས།", geomTopicDesc_triangle_angle_sum: "གྲུ་གསུམ་ནང་མི་འདུག་པའི་ཟུར་ཐང་འཚོལ།",
+    geomLearn_triangle_angle_sum: "གྲུ་གསུམ་གང་རུང་གི་ནང་ཟུར་ཐང་བསྡོམས་ནམ་ཡང180°ཡིན།\n\nདཔེར་བརྗོད། གྲུ་གསུམ་ཞིག་གི་ཟུར་ཐང50°དང70°ཡོད་ན, གསུམ་པ་འཚོལ་ཤིག།\nགསུམ་པ = 180 - 50 - 70 = 60°།",
+    geomTriAngleSumPrompt: "གྲུ་གསུམ་ཞིག་གི་ཟུར་ཐང {a}° དང {b}° ཡོད། གསུམ་པ་འཚོལ་ཤིག།",
+    geomTriAngleSumExplain: "ཟུར་ཐང་གསུམ་ཀའི་བསྡོམས180°ཡིན: 180 - {a} - {b} = {answer}°།",
+
+    geomTopicTitle_quadrilateral_angle_sum: "གྲུ་བཞིའི་ཟུར་ཐང་བསྡོམས།", geomTopicDesc_quadrilateral_angle_sum: "གྲུ་བཞི་ནང་མི་འདུག་པའི་ཟུར་ཐང་འཚོལ།",
+    geomLearn_quadrilateral_angle_sum: "གྲུ་བཞི་གང་རུང་གི་ནང་ཟུར་ཐང་བསྡོམས་ནམ་ཡང360°ཡིན།\n\nདཔེར་བརྗོད། གྲུ་བཞི་ཞིག་གི་ཟུར་ཐང80°, 90°, 100°ཡོད་ན, བཞི་པ་འཚོལ་ཤིག།\nབཞི་པ = 360 - 80 - 90 - 100 = 90°།",
+    geomQuadAngleSumPrompt: "གྲུ་བཞི་ཞིག་གི་ཟུར་ཐང {a}°, {b}°, {c}° ཡོད། བཞི་པ་འཚོལ་ཤིག།",
+    geomQuadAngleSumExplain: "ཟུར་ཐང་བཞི་ཀའི་བསྡོམས360°ཡིན: 360 - {a} - {b} - {c} = {answer}°།",
+
+    geomTopicTitle_circle_area: "ཟླུམ་པོའི་ཞིང་ཁྱོན།", geomTopicDesc_circle_area: "ཟླུམ་པོའི་ཞིང་ཁྱོན π ཡི་ཐོག་ནས་སྟོན།",
+    geomLearn_circle_area: "ཟླུམ་པོའི་ཞིང་ཁྱོན་ནི π ལ་དབུས་ཐིག་སྒྲིལ་མ་འཕར་བ་ཡིན: A = πr²། π ཐད་ཀར་བཅུ་ཚན་གྱིས་འབྲི་མི་ཐུབ་སྟབས, ལན་ནི π ཡི་གྲངས་ཐང་ཙམ་སྟོན—π ལ་འཕར་བའི་གྲངས་དེ་ཙམ་འབྲི་རོགས།\n\nདཔེར་བརྗོད། དབུས་ཐིག4ཡིན་པའི་ཟླུམ་པོའི་ཞིང་ཁྱོན (πཡི་ཐོག་ནས) འཚོལ་ཤིག།\nA = π(4²) = 16π། 16 འབྲི།",
+    geomCircleAreaPrompt: "དབུས་ཐིག {r} ཡིན་པའི་ཟླུམ་པོའི་ཞིང་ཁྱོན (πཡི་ཐོག་ནས) འཚོལ་ཤིག། (πཡི་གྲངས་ཐང་ཙམ་འབྲི།)",
+    geomCircleAreaExplain: "A = πr² = π({r}²) = {answer}π། {answer} འབྲི།",
+
+    geomTopicTitle_circle_circumference: "ཟླུམ་མཐའི་ཚད།", geomTopicDesc_circle_circumference: "ཟླུམ་མཐའི་ཚད π ཡི་ཐོག་ནས་སྟོན།",
+    geomLearn_circle_circumference: "ཟླུམ་མཐའི་ཚད་ནི 2π ལ་དབུས་ཐིག་འཕར་བ་ཡིན: C = 2πr། ལན་ནི π ཡི་གྲངས་ཐང་ཙམ་སྟོན།\n\nདཔེར་བརྗོད། དབུས་ཐིག5ཡིན་པའི་ཟླུམ་མཐའི་ཚད (πཡི་ཐོག་ནས) འཚོལ་ཤིག།\nC = 2π(5) = 10π། 10 འབྲི།",
+    geomCircleCircPrompt: "དབུས་ཐིག {r} ཡིན་པའི་ཟླུམ་མཐའི་ཚད (πཡི་ཐོག་ནས) འཚོལ་ཤིག། (πཡི་གྲངས་ཐང་ཙམ་འབྲི།)",
+    geomCircleCircExplain: "C = 2πr = 2π({r}) = {answer}π། {answer} འབྲི།",
+
+    geomTopicTitle_pythagorean_theorem: "ཟུར་དྲང་གྲུ་གསུམ་གྱི་གྲུབ་དོན།", geomTopicDesc_pythagorean_theorem: "ཟུར་དྲང་གྲུ་གསུམ་གྱི་ཟུར་དྲང་ཐིག་ཆེ་ཤོས་འཚོལ།",
+    geomLearn_pythagorean_theorem: "ཟུར་དྲང་གྲུ་གསུམ་ཞིག་ནང་, ཟུར་དྲང་ཐིག་ཆེ་ཤོས་ (hypotenuse) ཀྱི་སྒྲིལ་མ་ནི་ཟུར་གཞན་གཉིས་ཀྱི་སྒྲིལ་མའི་བསྡོམས་དང་མཚུངས: a² + b² = c²།\n\nདཔེར་བརྗོད། ཟུར་དྲང་གྲུ་གསུམ་ཞིག་གི་ཟུར3དང4ཡོད་ན, ཟུར་དྲང་ཐིག་ཆེ་ཤོས་འཚོལ་ཤིག།\nc² = 3² + 4² = 9 + 16 = 25། c = 5།",
+    geomPythagoreanPrompt: "ཟུར་དྲང་གྲུ་གསུམ་ཞིག་གི་ཟུར {a} དང {b} ཡོད། ཟུར་དྲང་ཐིག་ཆེ་ཤོས་འཚོལ་ཤིག།",
+    geomPythagoreanExplain: "c² = a² + b² = {a}² + {b}² = {aSq} + {bSq} = {sum}། c = {c}།",
+
+    geomTopicTitle_prism_volume: "གྲུ་བཞིའི་བུམ་པའི་བུམ་ཁྱོན།", geomTopicDesc_prism_volume: "གྲུ་བཞིའི་བུམ་པའི་བུམ་ཁྱོན་འཚོལ།",
+    geomLearn_prism_volume: "གྲུ་བཞིའི་བུམ་པ (ཏོག་ཏོ)ཡི་བུམ་ཁྱོན་ནི་རིང་ཚད × ཞེང་ཚད × མཐོ་ཚད་ཡིན: V = l × w × h།\n\nདཔེར་བརྗོད། རིང་ཚད4, ཞེང་ཚད3, མཐོ་ཚད5ཡིན་པའི་ཏོག་ཏོའི་བུམ་ཁྱོན་འཚོལ་ཤིག།\nV = 4 × 3 × 5 = 60།",
+    geomPrismVolumePrompt: "རིང་ཚད {l}, ཞེང་ཚད {w}, མཐོ་ཚད {h} ཡིན་པའི་གྲུ་བཞིའི་བུམ་པའི་བུམ་ཁྱོན་འཚོལ་ཤིག།",
+    geomPrismVolumeExplain: "V = l × w × h = {l} × {w} × {h} = {answer}།",
+
+    geomTopicTitle_cylinder_volume: "སྦུབས་རིང་གི་བུམ་ཁྱོན།", geomTopicDesc_cylinder_volume: "སྦུབས་རིང་གི་བུམ་ཁྱོན π ཡི་ཐོག་ནས་སྟོན།",
+    geomLearn_cylinder_volume: "སྦུབས་རིང་གི་བུམ་ཁྱོན་ནི π ལ་དབུས་ཐིག་སྒྲིལ་མ་དང་མཐོ་ཚད་འཕར་བ་ཡིན: V = πr²h། ལན་ནི π ཡི་གྲངས་ཐང་ཙམ་སྟོན།\n\nདཔེར་བརྗོད། དབུས་ཐིག3, མཐོ་ཚད5ཡིན་པའི་སྦུབས་རིང་གི་བུམ་ཁྱོན (πཡི་ཐོག་ནས) འཚོལ་ཤིག།\nV = π(3²)(5) = 45π། 45 འབྲི།",
+    geomCylinderVolumePrompt: "དབུས་ཐིག {r}, མཐོ་ཚད {h} ཡིན་པའི་སྦུབས་རིང་གི་བུམ་ཁྱོན (πཡི་ཐོག་ནས) འཚོལ་ཤིག། (πཡི་གྲངས་ཐང་ཙམ་འབྲི།)",
+    geomCylinderVolumeExplain: "V = πr²h = π({r}²)({h}) = π({rSq})({h}) = {answer}π། {answer} འབྲི།",
+
+    geomTopicTitle_cube_surface_area: "གྲུ་བཞིའི་བུམ་པའི་ངོས་ཁྱོན།", geomTopicDesc_cube_surface_area: "གྲུ་བཞིའི་བུམ་པའི་ངོས་ཁྱོན་སྤྱི་འཚོལ།",
+    geomLearn_cube_surface_area: "གྲུ་བཞིའི་བུམ་པ (ཟུར་མཉམ)ལ་ངོས་གྲུ་བཞི་མཚུངས་པ6ཡོད་སྟབས, ངོས་ཁྱོན་ནི་ཟུར་ཚད་སྒྲིལ་མའི6འཕར: SA = 6s²།\n\nདཔེར་བརྗོད། ཟུར་ཚད4ཡིན་པའི་གྲུ་བཞིའི་བུམ་པའི་ངོས་ཁྱོན་འཚོལ་ཤིག།\nSA = 6(4²) = 6(16) = 96།",
+    geomCubeSurfacePrompt: "ཟུར་ཚད {s} ཡིན་པའི་གྲུ་བཞིའི་བུམ་པའི་ངོས་ཁྱོན་འཚོལ་ཤིག།",
+    geomCubeSurfaceExplain: "SA = 6s² = 6({s}²) = 6({sSq}) = {answer}།",
+
+    geomTopicTitle_distance_formula: "གནས་ཐག་གི་གྲུབ་དོན།", geomTopicDesc_distance_formula: "ཐིག་ཁྲམ་ཐང་ཁྱོན་ནང་གནས་ས་གཉིས་ཀྱི་ཐག་རིང་འཚོལ།",
+    geomLearn_distance_formula: "གནས་ས (x₁,y₁) དང (x₂,y₂) གཉིས་ཀྱི་ཐག་རིང་ནི་ཟུར་དྲང་གྲུ་གསུམ་གྱི་གྲུབ་དོན་ལས་ཐོན: d = √((x₂-x₁)² + (y₂-y₁)²)།\n\nདཔེར་བརྗོད། (1, 2) དང (4, 6) གཉིས་ཀྱི་ཐག་རིང་འཚོལ་ཤིག།\nd = √((4-1)² + (6-2)²) = √(9 + 16) = √25 = 5།",
+    geomDistancePrompt: "({x1}, {y1}) དང ({x2}, {y2}) གཉིས་ཀྱི་ཐག་རིང་འཚོལ་ཤིག།",
+    geomDistanceExplain: "d = √(({dx})² + ({dy})²) = √({dxSq} + {dySq}) = √{sum} = {dist}།",
+
+    trigonometryTitle: "ཟུར་རྩིས།",
+    trigonometrySub: "ཟླ་བ་བརྒྱད་པ། ཟུར་ཐང, ཆ་སྙོམས་འཁོར་ལོ, ཟུར་དྲང་མིན་པའི་གྲུ་གསུམ། བརྗོད་གཞི་ཞིག་འདེམས་ནས་གོ་དོན་སློབ་ཞིང་རྗེས་སུ་སྦྱོང་བརྡར་གྱིས།",
+    backToTrigMenuBtn: "ཟུར་རྩིས་སུ་ལོག",
+    trigRadianAnswerPlaceholder: "དཔེར་ན་ 1/6 (π/6 ཡི་དོན་དུ)",
+    trigAmplitudeLabel: "འཕར་ཚད།", trigPeriodLabel: "དུས་ཡུན (πཡི་གྲངས་ཐང)",
+
+    trigTopicTitle_degrees_to_radians: "ཟུར་ཐང་ནས་ཟུར་རྩིས་གྲངས།", trigTopicDesc_degrees_to_radians: "ཟུར་ཐང་ཞིག་ཟུར་རྩིས་གྲངས་སུ་བསྒྱུར།",
+    trigLearn_degrees_to_radians: "ཟུར་ཐང་ཟུར་རྩིས་གྲངས་སུ་བསྒྱུར་བར π/180 འཕར། ལན་ནི π ཡི་གྲངས་ཐང་སྟེ, ཆ་ཤས p/q ཞེས (p/q)π ཡི་དོན་དུ་འབྲི།\n\nདཔེར་བརྗོད། 60° ཟུར་རྩིས་གྲངས་སུ་བསྒྱུར་ཤིག།\n60 × π/180 = π/3། 1/3 འབྲི།",
+    trigDegToRadPrompt: "{deg}° ཟུར་རྩིས་གྲངས་སུ་བསྒྱུར་ཤིག། (π ཡི་གྲངས་ཐང་ཆ་ཤས་སུ་འབྲི, དཔེར་ན π/6 ལ 1/6།)",
+    trigDegToRadExplain: "{deg}° × π/180 = {p}/{q}π = {radText}། {p}/{q} འབྲི།",
+
+    trigTopicTitle_radians_to_degrees: "ཟུར་རྩིས་གྲངས་ནས་ཟུར་ཐང་།", trigTopicDesc_radians_to_degrees: "ཟུར་རྩིས་གྲངས་ཟུར་ཐང་དུ་བསྒྱུར།",
+    trigLearn_radians_to_degrees: "ཟུར་རྩིས་གྲངས་ཟུར་ཐང་དུ་བསྒྱུར་བར 180/π འཕར།\n\nདཔེར་བརྗོད། π/3 ཟུར་རྩིས་གྲངས་ཟུར་ཐང་དུ་བསྒྱུར་ཤིག།\nπ/3 × 180/π = 180/3 = 60°།",
+    trigRadToDegPrompt: "{radText} ཟུར་རྩིས་གྲངས་ཟུར་ཐང་དུ་བསྒྱུར་ཤིག།",
+    trigRadToDegExplain: "{radText} × 180/π = {deg}°།",
+
+    trigTopicTitle_unit_circle_values: "ཆ་སྙོམས་འཁོར་ལོའི་ཐང་།", trigTopicDesc_unit_circle_values: "འཁོར་ལོ་ཧྲིལ་པོའི་ཐད་ཀར sin, cos, tan ཐང་།",
+    trigLearn_unit_circle_values: "ཆ་སྙོམས་འཁོར་ལོས་ཟུར་ཆ30°དང45°ཡི་འཕར་ཆ་རེ་རེར, ཟུར་ཁུལ་གང་རུང་ནང sin, cos, tan ཐད་ཀར་ཐང་སྟོན—རྟགས་ནི་ཟུར་ཐང་གནས་པའི་ཟུར་ཁུལ་ལ་རག་ལས (ཟུར་ཁུལ1པར x,y གཉིས་ཀ་མཐུན)།\n\nདཔེར་བརྗོད། sin(150°) རྩིས་ཤིག།\n150°ནི་ཟུར་ཁུལ2པར་ཡོད, དཔེ་ཟུར་ཐང30°ཡིན། ཟུར་ཁུལ2པར sin མཐུན་སྟབས sin(150°) = sin(30°) = 1/2།",
+    trigUnitCirclePrompt: "རྩིས་ཤིག: {expr}",
+    trigUnitCircleExplain: "{expr} = {answer}།",
+
+    trigTopicTitle_pythagorean_identity: "sin/cos གྲུབ་དོན།", trigTopicDesc_pythagorean_identity: "sin θ ལས cos θ འཚོལ (ཡང་ན ལྡོག་ཕྱོགས)།",
+    trigLearn_pythagorean_identity: "sin²θ + cos²θ = 1 ནི་ཟུར་ཐང θ གང་རུང་ལ་མཐུན། ཐང་གཅིག་ཤེས་ན་གཞན་འཚོལ་ཐུབ (θ ཟུར་ཁུལ1པར་ཡོད་པར་བརྩི, གཉིས་ཀ་མཐུན)།\n\nདཔེར་བརྗོད། sin θ = 3/5 ཡིན་ན cos θ འཚོལ་ཤིག།\ncos²θ = 1 - (3/5)² = 1 - 9/25 = 16/25། cos θ = 4/5།",
+    trigPythagIdentitySinPrompt: "sin θ = {given}/{c} ཡིན་ན cos θ འཚོལ་ཤིག (θ ཟུར་ཁུལ1པར་ཡོད་པར་བརྩི)།",
+    trigPythagIdentityCosPrompt: "cos θ = {given}/{c} ཡིན་ན sin θ འཚོལ་ཤིག (θ ཟུར་ཁུལ1པར་ཡོད་པར་བརྩི)།",
+    trigPythagIdentityExplain: "sin²θ + cos²θ = 1 བེད་སྤྱོད: གཞན་ཐང་གི་སྒྲིལ་མ ({c}² - {given}²)/{c}² = ({cSq} - {givenSq})/{cSq} = {diff}/{cSq}, དེས་ན་ཐང་ནི {answer}/{c}།",
+
+    trigTopicTitle_reference_angle: "དཔེ་ཟུར་ཐང་།", trigTopicDesc_reference_angle: "x-གཞུང་ཐིག་དང་བཟུང་བའི་ཟུར་ཟུར་ཐང་འཚོལ།",
+    trigLearn_reference_angle: "དཔེ་ཟུར་ཐང་ནི་ཟུར་ཐང་ཞིག་གི་མཇུག་ཐིག་དང x-གཞུང་ཐིག་བར་གྱི་ཟུར་ཟུར (0°ནས90°བར) ཡིན། ཟུར་ཁུལ2པར 180° - θ, ཟུར་ཁུལ3པར θ - 180°, ཟུར་ཁུལ4པར 360° - θ།\n\nདཔེར་བརྗོད། 200°ཡི་དཔེ་ཟུར་ཐང་འཚོལ་ཤིག།\n200°ནི་ཟུར་ཁུལ3པར་ཡོད། དཔེ་ཟུར་ཐང = 200° - 180° = 20°།",
+    trigReferenceAnglePrompt: "{angle}° ཡི་དཔེ་ཟུར་ཐང་འཚོལ་ཤིག།",
+    trigReferenceAngleExplain: "དཔེ་ཟུར་ཐང་ནི {ref}° ཡིན།",
+
+    trigTopicTitle_coterminal_angle: "མཇུག་མཚུངས་ཟུར་ཐང་།", trigTopicDesc_coterminal_angle: "0°ནས360°བར་མཚུངས་པའི་ཟུར་ཐང་འཚོལ།",
+    trigLearn_coterminal_angle: "མཇུག་མཚུངས་ཟུར་ཐང་ནི་ཕྱོགས་གཅིག་མཚུངས་ལ 360°ཡི་འཕར་ཆས་ཁྱད་པར་ཡོད། ཡང་ཡང360°སྣོན་ནམ་ཕུད་ན་ཟུར་ཐང་གང་རུང་ཚད་གཞི [0°, 360°) ནང་ཐོན།\n\nདཔེར་བརྗོད། 400°དང་མཇུག་མཚུངས་པའི་ཟུར་ཐང [0°, 360°) ནང་འཚོལ་ཤིག།\n400° - 360° = 40°།",
+    trigCoterminalPrompt: "{given}° དང་མཇུག་མཚུངས་ལ [0°, 360°) ནང་ཡོད་པའི་ཟུར་ཐང་འཚོལ་ཤིག།",
+    trigCoterminalExplain: "{given}° ལ360°ཡི་འཕར་ཆ་སྣོན་ནམ་ཕུད་ན {answer}° ཐོན།",
+
+    trigTopicTitle_arc_length: "ཟླུམ་ཐིག་ཚད།", trigTopicDesc_arc_length: "ཟླུམ་ཐིག་ཚད π ཡི་ཐོག་ནས་སྟོན།",
+    trigLearn_arc_length: "ཟླུམ་ཐིག་ཚད་ནི s = rθ, θ ནི་ཟུར་རྩིས་གྲངས་ཡིན། θ ནི π ཡི་གྲངས་ཐང་ཡིན་ན, ཟླུམ་ཐིག་ཚད་ལའང π འདུག། ལན་ནི π ཡི་གྲངས་ཐང་ཙམ་སྟོན།\n\nདཔེར་བརྗོད། དབུས་ཐིག6, དབུས་ཟུར π/3 ཡིན་པའི་ཟླུམ་ཐིག་ཚད་འཚོལ་ཤིག།\ns = 6 × π/3 = 2π། 2 འབྲི།",
+    trigArcLengthPrompt: "ཟླུམ་པོ་ཞིག་གི་དབུས་ཐིག {r} ཡིན། དབུས་ཟུར {angleText} ཡིན་པའི་ཟླུམ་ཐིག་ཚད (πཡི་ཐོག་ནས) འཚོལ་ཤིག། (πཡི་གྲངས་ཐང་ཙམ་འབྲི།)",
+    trigArcLengthExplain: "s = rθ = {r} × {angleText} = {answer}π། {answer} འབྲི།",
+
+    trigTopicTitle_sector_area: "ཟླུམ་ཆའི་ཞིང་ཁྱོན།", trigTopicDesc_sector_area: "ཟླུམ་ཆའི་ཞིང་ཁྱོན π ཡི་ཐོག་ནས་སྟོན།",
+    trigLearn_sector_area: "ཟླུམ་ཆའི་ཞིང་ཁྱོན་ནི A = (1/2)r²θ, θ ནི་ཟུར་རྩིས་གྲངས་ཡིན། ལན་ནི π ཡི་གྲངས་ཐང་ཙམ་སྟོན།\n\nདཔེར་བརྗོད། དབུས་ཐིག4, དབུས་ཟུར π/2 ཡིན་པའི་ཟླུམ་ཆའི་ཞིང་ཁྱོན་འཚོལ་ཤིག།\nA = (1/2)(16)(π/2) = 4π། 4 འབྲི།",
+    trigSectorAreaPrompt: "ཟླུམ་པོ་ཞིག་གི་དབུས་ཐིག {r} ཡིན། དབུས་ཟུར {angleText} ཡིན་པའི་ཟླུམ་ཆའི་ཞིང་ཁྱོན (πཡི་ཐོག་ནས) འཚོལ་ཤིག། (πཡི་གྲངས་ཐང་ཙམ་འབྲི།)",
+    trigSectorAreaExplain: "A = (1/2)r²θ = (1/2)({r}²)({angleText}) = {answer}π། {answer} འབྲི།",
+
+    trigTopicTitle_law_of_cosines: "cos གྲུབ་དོན།", trigTopicDesc_law_of_cosines: "ཟུར་གཉིས་དང་བར་ཟུར་ཐང་བེད་སྤྱོད་ཀྱིས་ཟུར་གསུམ་པ་འཚོལ།",
+    trigLearn_law_of_cosines: "cos གྲུབ་དོན་གྱིས་ཟུར་དྲང་གྲུ་གསུམ་གྱི་གྲུབ་དོན་གྲུ་གསུམ་གང་རུང་ལ་སྤེལ: c² = a² + b² - 2ab·cos(C), C ནི a དང b ཟུར་གཉིས་བར་གྱི་ཟུར་ཐང་ཡིན།\n\nདཔེར་བརྗོད། གྲུ་གསུམ་ཞིག་ལ་ཟུར3དང8ཡོད, བར་ཟུར་ཐང60°ཡིན་ན, གསུམ་པ་འཚོལ་ཤིག།\nc² = 3² + 8² - 2(3)(8)cos(60°) = 9 + 64 - 24 = 49། c = 7།",
+    trigLawCosPrompt: "གྲུ་གསུམ་ཞིག་ལ་ཟུར {a} དང {b} ཡོད, བར་ཟུར་ཐང {angle}° ཡིན། གསུམ་པ་འཚོལ་ཤིག།",
+    trigLawCosExplain60: "c² = a² + b² - 2ab·cos(60°) = {aSq} + {bSq} - {ab} = {cSq}། c = {c}།",
+    trigLawCosExplain120: "c² = a² + b² - 2ab·cos(120°) = {aSq} + {bSq} + {ab} = {cSq}། c = {c}།",
+
+    trigTopicTitle_law_of_sines: "sin གྲུབ་དོན།", trigTopicDesc_law_of_sines: "sin གྲུབ་དོན་བེད་སྤྱོད་ཀྱིས་ཟུར་མི་འདུག་པ་འཚོལ།",
+    trigLearn_law_of_sines: "sin གྲུབ་དོན་གྱིས་གྲུ་གསུམ་གྱི་ཟུར་རེ་རེ་དེའི་ཟུར་ཡང་ཟུར་ཐང་གི sin དང་འབྲེལ: a/sin(A) = b/sin(B) = c/sin(C)།\n\nདཔེར་བརྗོད། གྲུ་གསུམ་ཞིག་ལ་ཟུར་ཐང A = 30° ཡི་ཡང་ཟུར a = 5, ཟུར་ཐང B = 90° ཡོད་ན, ཟུར b འཚོལ་ཤིག།\nb/sin(90°) = a/sin(30°), དེས་ན b = a × sin(90°)/sin(30°) = 5 × 1/(1/2) = 10།",
+    trigLawSinesPrompt: "གྲུ་གསུམ་ཞིག་ལ་ཟུར་ཐང A = {angleA}° ཡི་ཡང་ཟུར a = {a}, ཟུར་ཐང B = {angleB}° ཡོད། ཟུར b འཚོལ་ཤིག།",
+    trigLawSinesExplain: "b = a × sin(B)/sin(A) = {a} × sin({angleB}°)/sin({angleA}°) = {answer}།",
+
+    trigTopicTitle_amplitude_and_period: "འཕར་ཚད་དང་དུས་ཡུན།", trigTopicDesc_amplitude_and_period: "sin རླབས་ཀྱི་འཕར་ཚད་དང་དུས་ཡུན་འཚོལ།",
+    trigLearn_amplitude_and_period: "y = A sin(Bx) ལ, འཕར་ཚད་ནི |A| (རླབས་དབུས་ནས་སྟེང་འོག་ཇི་ཙམ་འཕར་མིན), དུས་ཡུན་ནི 2π/B (བསྐོར་བ1ཚང་བར་ཐང་ག་ཚོད་དགོས་མིན), πཡི་གྲངས་ཐང་གིས་སྟོན།\n\nདཔེར་བརྗོད། y = 3 sin(2x) ཡི་འཕར་ཚད་དང་དུས་ཡུན་འཚོལ་ཤིག།\nའཕར་ཚད = |3| = 3། དུས་ཡུན = 2π/2 = π, དེས་ན་གྲངས་ཐང་ནི1ཡིན།",
+    trigAmplitudePeriodPrompt: "y = {A} sin({B}x) ཡི་འཕར་ཚད་དང་དུས་ཡུན་འཚོལ་ཤིག། (དུས་ཡུན πཡི་གྲངས་ཐང་གིས་སྟོན།)",
+    trigAmplitudePeriodExplain: "འཕར་ཚད = |A| = {amplitude}། དུས་ཡུན = 2π/B = {periodText}།",
+
+    trigTopicTitle_inverse_trig: "ལྡོག་ཟུར་རྩིས་བྱ་ཚབ།", trigTopicDesc_inverse_trig: "ཟུར་རྩིས་ཐད་ཀར་ཐང་ལས་ཟུར་ཐང་འཚོལ།",
+    trigLearn_inverse_trig: "ལྡོག་ཟུར་རྩིས་བྱ་ཚབ་ཀྱིས་ལྡོག་ཕྱོགས་ཀྱི་དྲི་བ་འདྲི: sin/cos/tan ཐང་ཤེས་ན ཟུར་ཐང་གང་ཡིན? ཟུར་ཁུལ1པར་ཚུད་ན, ཐད་ཀར་ཐང་རེ་རེར་ལན་གཅིག་པུ་ཡོད།\n\nདཔེར་བརྗོད། arcsin(1/2) རྩིས་ཤིག།\nsin(30°) = 1/2, དེས་ན arcsin(1/2) = 30°།",
+    trigInverseTrigPrompt: "རྩིས་ཤིག: {expr} (ཟུར་ཐང་གིས་ལན་འབྲི།)",
+    trigInverseTrigExplain: "{expr} = {answer}°།",
+
+    trigTopicTitle_trig_equation: "ཟུར་རྩིས་མཉམ་སྒྲིག་སེལ་བ།", trigTopicDesc_trig_equation: "[0°, 90°] ནང θ འཚོལ་བའི་མཉམ་སྒྲིག་སླ་མོ་སེལ།",
+    trigLearn_trig_equation: "ཟུར་རྩིས་མཉམ་སྒྲིག་སེལ་བར, ཐོག་མར ཟུར་རྩིས་བྱ་ཚབ་གཅིག་པུར་བཞག, དེ་ནས་ཐད་ཀར་ཐང་ཤེས་པས་ཟུར་ཐང་འཚོལ། [0°, 90°]ནང་ཚུད་ན, འདིར་མཉམ་སྒྲིག་རེ་རེར་ལན་གཅིག་པུ་ཡོད།\n\nདཔེར་བརྗོད། 2sin(θ) = 1, θ ∈ [0°, 90°] སེལ་ཤིག།\nsin(θ) = 1/2, དེས་ན θ = 30°།",
+    trigEquationPrompt: "[0°, 90°] ནང θ སེལ་ཤིག: {lhs} = {rhs}",
+    trigEquationExplain: "{lhs} = {rhs} གིས་ཟུར་རྩིས་ཐང་ནི {rhs}/2 ཡིན་པར་སྟོན, འདི θ = {angle}° དང་མཐུན།",
+
+    complexTitle: "འདྲེས་གྲངས་རྩིས།",
+    complexSub: "ཟླ་བ་དགུ་པ། བདེན་གྲངས་ཐིག་ལས་བརྒལ་བའི་གྲངས—རྩིས་བྱ, འདྲེས་གྲངས་ཐང་ཁྱོན, དང་ཟུར་ཐང་རྣམ་པ། བརྗོད་གཞི་ཞིག་འདེམས་ནས་གོ་དོན་སློབ་ཞིང་རྗེས་སུ་སྦྱོང་བརྡར་གྱིས།",
+    backToCplxMenuBtn: "འདྲེས་གྲངས་རྩིས་སུ་ལོག",
+
+    cplxTopicTitle_complex_addition: "འདྲེས་གྲངས་སྣོན་འཐེན།", cplxTopicDesc_complex_addition: "འདྲེས་གྲངས་གཉིས་སྣོན།",
+    cplxLearn_complex_addition: "འདྲེས་གྲངས་སྣོན་སྐབས, བདེན་ཆ་བདེན་ཆ་དང་སྣོན, དམིགས་མེད་ཆ་དམིགས་མེད་ཆ་དང་སོ་སོར་སྣོན: (a+bi) + (c+di) = (a+c) + (b+d)i།\n\nདཔེར་བརྗོད། (3 + 2i) དང (1 - 5i) སྣོན་ཤིག།\n(3+1) + (2-5)i = 4 - 3i།",
+    cplxAddPrompt: "སྣོན་ཤིག: ({z1}) + ({z2})",
+    cplxAddExplain: "བདེན་ཆ: {a} + {c} = {re}། དམིགས་མེད་ཆ: {b} + {d} = {im}། འབྲས་བུ: {re} དང {im}i།",
+
+    cplxTopicTitle_complex_subtraction: "འདྲེས་གྲངས་འཐེན།", cplxTopicDesc_complex_subtraction: "འདྲེས་གྲངས་གཉིས་འཐེན།",
+    cplxLearn_complex_subtraction: "འདྲེས་གྲངས་འཐེན་སྐབས, བདེན་ཆ་བདེན་ཆ་ནས་འཐེན, དམིགས་མེད་ཆ་དམིགས་མེད་ཆ་ནས་སོ་སོར་འཐེན: (a+bi) - (c+di) = (a-c) + (b-d)i།\n\nདཔེར་བརྗོད། (3 + 2i) ནས (1 - 5i) འཐེན་ཤིག།\n(3-1) + (2-(-5))i = 2 + 7i།",
+    cplxSubPrompt: "འཐེན་ཤིག: ({z1}) - ({z2})",
+    cplxSubExplain: "བདེན་ཆ: {a} - {c} = {re}། དམིགས་མེད་ཆ: {b} - {d} = {im}། འབྲས་བུ: {re} དང {im}i།",
+
+    cplxTopicTitle_complex_multiplication: "འདྲེས་གྲངས་འཕར་བ།", cplxTopicDesc_complex_multiplication: "འདྲེས་གྲངས་གཉིས་འཕར།",
+    cplxLearn_complex_multiplication: "འདྲེས་གྲངས་འཕར་སྐབས, མིང་ཚིག་གཉིས་ལྡན་བཞིན་བཀྲམ་ནས i² = -1 བེད་སྤྱོད: (a+bi)(c+di) = (ac - bd) + (ad + bc)i།\n\nདཔེར་བརྗོད། (2 + 3i) དང (1 - 2i) འཕར་ཤིག།\n(2)(1) - (3)(-2) = 2 + 6 = 8། (2)(-2) + (3)(1) = -4 + 3 = -1།\nའབྲས་བུ: 8 - i།",
+    cplxMulPrompt: "འཕར་ཤིག: ({z1}) × ({z2})",
+    cplxMulExplain: "བདེན་ཆ: ac - bd = ({a})({c}) - ({b})({d}) = {ac} - {bd} = {re}། དམིགས་མེད་ཆ: ad + bc = ({a})({d}) + ({b})({c}) = {ad} + {bc} = {im}།",
+
+    cplxTopicTitle_complex_division: "འདྲེས་གྲངས་འགོ་བ།", cplxTopicDesc_complex_division: "འདྲེས་གྲངས་གཉིས་འགོ།",
+    cplxLearn_complex_division: "འདྲེས་གྲངས་འགོ་སྐབས, འོག་གི་ལྡོག་མཚུངས་ཀྱིས་སྟེང་འོག་གཉིས་ཀར་འཕར, དེས་འོག་གི་དམིགས་མེད་ཆ་བསལ་ཐུབ།\n\nདཔེར་བརྗོད། (8 - i) ལ (2 - 2i) ཡིས་འགོ་ཤིག།\n(8-i)(2+2i) / [(2-2i)(2+2i)] = (16+16i-2i-2i²)/(4+4) = (16+14i+2)/8 = (18+14i)/8 = 2.25 + 1.75i (ནམ་ཡང་འདི་ལྟར་གསལ་པོ་མིན—སྦྱོང་བརྡར་འདིར་འགོ་བའི་འབྲས་བུ་གྲངས་ཧྲིལ་པོར་ཐོན་པ་ཁོ་ན་བཙལ)།",
+    cplxDivPrompt: "འགོ་ཤིག: ({z1}) ÷ ({z2})",
+    cplxDivExplain: "ལྡོག་མཚུངས {conj} ཡིས་འཕར: འོག་གི་ཆ་ {c}² + {d}² = {denom} ལ་འགྱུར། འབྲས་བུ་བསྡུས་ན {p} + {q}i།",
+
+    cplxTopicTitle_complex_conjugate: "འདྲེས་གྲངས་ལྡོག་མཚུངས།", cplxTopicDesc_complex_conjugate: "འདྲེས་གྲངས་ཤིག་གི་ལྡོག་མཚུངས་འཚོལ།",
+    cplxLearn_complex_conjugate: "a+bi ཡི་ལྡོག་མཚུངས, a-bi ཞེས་འབྲི་བ, ནི་དམིགས་མེད་ཆའི་རྟགས་ལྡོག་པ་ཡིན།\n\nདཔེར་བརྗོད། 5 - 3i ཡི་ལྡོག་མཚུངས་འཚོལ་ཤིག།\n5 + 3i།",
+    cplxConjPrompt: "{z} ཡི་ལྡོག་མཚུངས་འཚོལ་ཤིག།",
+    cplxConjExplain: "དམིགས་མེད་ཆའི་རྟགས་ལྡོག: {answer}།",
+
+    cplxTopicTitle_complex_modulus: "འདྲེས་གྲངས་ཀྱི་རིང་ཚད།", cplxTopicDesc_complex_modulus: "འདྲེས་གྲངས་ཀྱི་ཐོག་མའི་གནས་ནས་ཐག་རིང་འཚོལ།",
+    cplxLearn_complex_modulus: "a+bi ཡི་རིང་ཚད་ནི་འདྲེས་གྲངས་ཐང་ཁྱོན་ནང་ཐོག་མའི་གནས་ (origin) ནས་ཐག་རིང་ཡིན: |a+bi| = √(a² + b²)།\n\nདཔེར་བརྗོད། 3 + 4i ཡི་རིང་ཚད་འཚོལ་ཤིག།\n|3+4i| = √(9+16) = √25 = 5།",
+    cplxModulusPrompt: "{z} ཡི་རིང་ཚད་འཚོལ་ཤིག།",
+    cplxModulusExplain: "|z| = √({aSq} + {bSq}) = √{sum} = {c}།",
+
+    cplxTopicTitle_powers_of_i: "i ཡི་འཕར་ཆ།", cplxTopicDesc_powers_of_i: "i ལ་འཕར་ཆ་བརྒྱབ་པའི་ཐང་འཚོལ།",
+    cplxLearn_powers_of_i: "i ཡི་འཕར་ཆ4རེར་ལན1འཁོར: i¹=i, i²=-1, i³=-i, i⁴=1, དེ་ནས་ཡང་བསྐྱར། iⁿ འཚོལ་བར, n ལ4ཡིས་བགོས་པའི་ལྷག་མ་འཚོལ།\n\nདཔེར་བརྗོད། i⁷ འཚོལ་ཤིག།\n7 ÷ 4 ལྷག་མ3ཐོན, i³ = -i། དེས་ན i⁷ = -i།",
+    cplxPowersIPrompt: "i^{n} འཚོལ་ཤིག།",
+    cplxPowersIExplain: "{n} ÷ 4 ལྷག་མ {rem} ཐོན, དེ་དང་མཐུན་པའི i ཡི་འཕར་ཆ་ནི {answer}།",
+
+    cplxTopicTitle_argument: "འདྲེས་གྲངས་ཀྱི་ཟུར་ཐང་།", cplxTopicDesc_argument: "འདྲེས་གྲངས་ཀྱི་ཚད་ལྡན་གནས་སའི་ཟུར་ཐང་འཚོལ།",
+    cplxLearn_argument: "འདྲེས་གྲངས་ཤིག་གི་ཟུར་ཐང་ནི་དེའི་གནས་ས་དང་བདེན་ཆའི་གཞུང་ཐིག་མཐུན་ཕྱོགས་བར་གྱི་ཟུར་ཐང་ཡིན, ལག་གཡོན་ཕྱོགས་སུ་བགྲང་།\n\nདཔེར་བརྗོད། 1 + i ཡི་ཟུར་ཐང་འཚོལ་ཤིག།\nགནས་ས་འདི45°རུ་ཡོད—ཟུར་ཁུལ1པར་བདེན་དམིགས་མེད་གཞུང་ཐིག་གཉིས་ཀར་ཐག་མཉམ།",
+    cplxArgumentPrompt: "{z} ཡི་ཟུར་ཐང (ཟུར་ཐང་ཐོག་ནས) འཚོལ་ཤིག།",
+    cplxArgumentExplain: "གནས་ས་འདི་བདེན་ཆའི་མཐུན་ཕྱོགས་ནས {angle}° རུ་ཡོད།",
+
+    cplxTopicTitle_polar_to_rectangular: "ཟུར་ཐང་རྣམ་པ་ནས་གྲུ་བཞིའི་རྣམ་པ།", cplxTopicDesc_polar_to_rectangular: "འདྲེས་གྲངས་ཟུར་ཐང་རྣམ་པ་ནས་གྲུ་བཞིའི་རྣམ་པར་བསྒྱུར།",
+    cplxLearn_polar_to_rectangular: "རིང་ཚད r, ཟུར་ཐང θ ཡོད་པའི་འདྲེས་གྲངས, a = r·cos(θ), b = r·sin(θ) བེད་སྤྱོད་ཀྱིས་གྲུ་བཞིའི་རྣམ་པ a+bi ལ་བསྒྱུར། ཟུར་ཐང (0°, 90°, 180°, 270°) ལ, cos དང sin རེ་རེ0, 1, ཡང་ན-1ཡིན་སྟབས་ཧ་ཅང་གསལ།\n\nདཔེར་བརྗོད། r=5, θ=90° གྲུ་བཞིའི་རྣམ་པར་བསྒྱུར་ཤིག།\na = 5·cos(90°) = 0, b = 5·sin(90°) = 5། འབྲས་བུ: 5i།",
+    cplxPolarToRectPrompt: "གྲུ་བཞིའི་རྣམ་པར་བསྒྱུར་ཤིག: རིང་ཚད {r}, ཟུར་ཐང {angle}°།",
+    cplxPolarToRectExplain: "{angle}° ལ, འབྲས་བུ་ནི {answer}།",
+
+    cplxTopicTitle_de_moivre: "འཕར་ཆའི་ཟུར་ཐང་གྲུབ་དོན།", cplxTopicDesc_de_moivre: "འདྲེས་གྲངས་ལ་འཕར་ཆ་བརྒྱབ་རྗེས་ཀྱི་ཟུར་ཐང་འཚོལ།",
+    cplxLearn_de_moivre: "འཕར་ཆའི་ཟུར་ཐང་གྲུབ་དོན་ལྟར [r(cos θ + i sin θ)]ⁿ = rⁿ(cos(nθ) + i sin(nθ))—n ལ་འཕར་སྐབས་ཟུར་ཐང་ལའང n འཕར། རིང་ཚད1ཡིན་པའི་གྲངས་ལ, ཟུར་ཐང་ཙམ་གལ་ཆེ།\n\nདཔེར་བརྗོད། འདྲེས་གྲངས་ཤིག་གི་ཟུར་ཐང60°ཡིན། དེའི་འཕར་གསུམ (n=3) གྱི་ཟུར་ཐང་འཚོལ་ཤིག།\n60° × 3 = 180°།",
+    cplxDeMoivrePrompt: "རིང་ཚད1ཡིན་པའི་འདྲེས་གྲངས་ཤིག་གི་ཟུར་ཐང {angle}° ཡིན། དེའི་འཕར་ {n} པའི་ཟུར་ཐང ([0°, 360°) ནང་བསྡུས) འཚོལ་ཤིག།",
+    cplxDeMoivreExplain: "{angle}° × {n} = {product}°, འདི [0°, 360°) ནང་བསྡུས་ན {answer}° ཡིན།",
+
+    cplxTopicTitle_roots_of_unity: "གཅིག་གི་རྩ་བ།", cplxTopicDesc_roots_of_unity: "n འཕར་གྱི་གཅིག་རྩ་བ་བར་གྱི་ཟུར་ཐང་ཁྱད་པར་འཚོལ།",
+    cplxLearn_roots_of_unity: "འདྲེས་གྲངས n འཕར་གྱི་གཅིག་རྩ་བ n ནི་ཆ་སྙོམས་འཁོར་ལོའི་སྟེང་ཆ་མཉམ་དུ་བགོས་ཏེ, 360°/n རེར་ཁྱད་པར་ཡོད།\n\nདཔེར་བརྗོད། འཕར6པའི་གཅིག་རྩ་བ་བར་གྱི་ཁྱད་པར་འཚོལ་ཤིག།\n360°/6 = 60°།",
+    cplxRootsUnityPrompt: "འཕར {n} པའི་གཅིག་རྩ་བ་བར་གྱི་ཟུར་ཐང་ཁྱད་པར་འཚོལ་ཤིག།",
+    cplxRootsUnityExplain: "360° / {n} = {answer}°།",
+
+    cplxTopicTitle_quadratic_roots: "གཉིས་འཕར་མང་ཚིག་གི་འདྲེས་གྲངས་རྩ་བ།", cplxTopicDesc_quadratic_roots: "གཉིས་འཕར་མཉམ་སྒྲིག་གི་འདྲེས་གྲངས་རྩ་བ་འཚོལ།",
+    cplxLearn_quadratic_roots: "གཉིས་འཕར་མཉམ་སྒྲིག་ཤིག་གི་འཇིག་རྟེན་གྲངས (discriminant) ཞན་ཡིན་ན, རྩ་བ་ནི་ལྡོག་མཚུངས་ཟུང p ± qi ཡིན། མཉམ་སྒྲིག་ནམ་ཡང x² - 2px + (p²+q²) = 0 ལ་ཆ་བགོས་ཐུབ་སྟབས (རྩ་བ p±qi), ཆ་མཉམ་གྲངས་ལས p དང q ཐད་ཀར་འཚོལ་ཐུབ།\n\nདཔེར་བརྗོད། x² - 4x + 13 = 0 སེལ་ཤིག།\nའདིར -2p = -4, དེས་ན p = 2། p²+q² = 13, དེས་ན 4+q² = 13, q² = 9, q = 3། རྩ་བ: 2 ± 3i།",
+    cplxQuadRootsPrompt: "སེལ་ཤིག: {expr}། དམིགས་མེད་ཆ་མཐུན་པའི་རྩ་བ་སྟོན།",
+    cplxQuadRootsExplain: "རྟག་ཆ p² + q² = {c} ཡིན་ལ x ཡི་ཆ་མཉམ་གྲངས -2p = {b} ཡིན་སྟབས, p = {p} དང q = {q} ཐོན། རྩ་བ་ནི {p} + {q}i།",
+
+    cplxTopicTitle_modulus_of_product: "འཕར་འབྲས་ཀྱི་རིང་ཚད།", cplxTopicDesc_modulus_of_product: "z₁, z₂ ཡི་རིང་ཚད་བེད་སྤྱོད་ཀྱིས |z₁z₂| འཚོལ།",
+    cplxLearn_modulus_of_product: "འཕར་འབྲས་ཀྱི་རིང་ཚད་ནི་རིང་ཚད་སོ་སོའི་འཕར་འབྲས་དང་མཚུངས: |z₁z₂| = |z₁| × |z₂|—འདྲེས་གྲངས་གཉིས་ཐད་ཀར་འཕར་མི་དགོས།\n\nདཔེར་བརྗོད། |3+4i| = 5, |5+12i| = 13། |(3+4i)(5+12i)| འཚོལ་ཤིག།\n5 × 13 = 65།",
+    cplxModulusProductPrompt: "|z₁z₂| འཚོལ་ཤིག, z₁ = {z1}, z₂ = {z2}།",
+    cplxModulusProductExplain: "|z₁| = {m1}, |z₂| = {m2}། |z₁z₂| = |z₁| × |z₂| = {m1} × {m2} = {answer}།",
+
     businessTitle: "ཚོང་ལས་དོན་ཚན།",
     businessSub: "དངུལ་རྩིས, དཔལ་འབྱོར་རིག་པ, དེ་དག་བཟོ་མཁན་གྱི་ལག་རྩལ་ཚོང་ལས། དོན་ཚན 3 སློབ་ནས་གཅིག་གི་ཐད་ཀར་བརྟག་ཞིབ་བྱེད། ཐོག་མར་གདམ་ཁ་བཞིའི་དྲི་བ, རྗེས་སུ་དྲན་པ་ལས་ཡིག་འབྲི་དགོས།",
     bizFinanceTitle: "དངུལ་རྩིས།", bizFinanceDesc: "དངུལ, རྩ་ཆེའི་བཙོང་ཉོ, ཚོང་ལས་ཀྱིས་དེ་དག་ཇི་ལྟར་སྐྱོང་མིན།",
@@ -6647,6 +7286,15 @@ document.addEventListener('keydown', function(e){
   } else if(state.screen === 'stat_practice' && state.statSession){
     if(state.statSession.answered) nextStatQuestion();
     else submitStatAnswer();
+  } else if(state.screen === 'geom_practice' && state.geomSession){
+    if(state.geomSession.answered) nextGeomQuestion();
+    else submitGeomAnswer();
+  } else if(state.screen === 'trig_practice' && state.trigSession){
+    if(state.trigSession.answered) nextTrigQuestion();
+    else submitTrigAnswer();
+  } else if(state.screen === 'cplx_practice' && state.cplxSession){
+    if(state.cplxSession.answered) nextCplxQuestion();
+    else submitCplxAnswer();
   }
 });
 
@@ -6704,6 +7352,18 @@ const screens = {
   stat_learn: renderStatLearn,
   stat_practice: renderStatPractice,
   stat_complete: renderStatComplete,
+  geom_menu: renderGeomMenu,
+  geom_learn: renderGeomLearn,
+  geom_practice: renderGeomPractice,
+  geom_complete: renderGeomComplete,
+  trig_menu: renderTrigMenu,
+  trig_learn: renderTrigLearn,
+  trig_practice: renderTrigPractice,
+  trig_complete: renderTrigComplete,
+  cplx_menu: renderCplxMenu,
+  cplx_learn: renderCplxLearn,
+  cplx_practice: renderCplxPractice,
+  cplx_complete: renderCplxComplete,
   business_menu: renderBusinessMenu,
   biz_week_menu: renderCategoryWeekMenu,
   business_learn: renderBusinessLearn,
@@ -6973,6 +7633,18 @@ function renderHome(){
       <button class="practice-tile" onclick="state.screen='stat_menu'; render();">
         <div class="glyph">📊</div>
         <div class="pt-title">${t('statisticsTitle')}</div>
+      </button>
+      <button class="practice-tile" onclick="state.screen='geom_menu'; render();">
+        <div class="glyph">📐</div>
+        <div class="pt-title">${t('geometryTitle')}</div>
+      </button>
+      <button class="practice-tile" onclick="state.screen='trig_menu'; render();">
+        <div class="glyph">📏</div>
+        <div class="pt-title">${t('trigonometryTitle')}</div>
+      </button>
+      <button class="practice-tile" onclick="state.screen='cplx_menu'; render();">
+        <div class="glyph">🌀</div>
+        <div class="pt-title">${t('complexTitle')}</div>
       </button>
       <button class="practice-tile" onclick="state.screen='business_menu'; render();">
         <div class="glyph">💼</div>
@@ -9585,6 +10257,1072 @@ function renderStatComplete(){
 
 function backToStatMenu(){ state.screen='stat_menu'; render(); }
 function exitStatPractice(){ state.screen='stat_menu'; render(); }
+
+// ---- geometry learning: Month 7, extending the planned progression beyond
+// its original algebra -> calculus -> linear algebra -> discrete math ->
+// probability -> statistics arc. Same architecture as the previous six
+// months. Circle/cylinder formulas involve π, which can't be typed exactly
+// as a decimal, so those topics ask for just the coefficient of π (e.g.
+// "16" for an area of 16π) rather than a numeric approximation — the
+// explain text always shows the full symbolic form.
+function geomProblemRectangleArea(){
+  const l = randInt(3,20), w = randInt(3,20);
+  const answer = l*w;
+  return {
+    promptText: t('geomRectAreaPrompt', {l, w}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('geomRectAreaExplain', {l, w, answer}),
+  };
+}
+function geomProblemRectanglePerimeter(){
+  const l = randInt(3,30), w = randInt(3,30);
+  const answer = 2*(l+w);
+  return {
+    promptText: t('geomRectPerimeterPrompt', {l, w}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('geomRectPerimeterExplain', {l, w, sum:l+w, answer}),
+  };
+}
+function geomProblemTriangleArea(){
+  const b = randInt(2,20);
+  const h = randInt(2,20) * (b%2===0 ? 1 : 2);
+  const answer = (b*h)/2;
+  return {
+    promptText: t('geomTriAreaPrompt', {b, h}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('geomTriAreaExplain', {b, h, product:b*h, answer}),
+  };
+}
+function geomProblemTrianglePerimeter(){
+  const a = randInt(3,20), b = randInt(3,20), c = randInt(Math.abs(a-b)+1, a+b-1);
+  const answer = a+b+c;
+  return {
+    promptText: t('geomTriPerimeterPrompt', {a, b, c}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('geomTriPerimeterExplain', {a, b, c, answer}),
+  };
+}
+function geomProblemTriangleAngleSum(){
+  const a = randInt(20,100), b = randInt(20, 170-a);
+  const answer = 180-a-b;
+  return {
+    promptText: t('geomTriAngleSumPrompt', {a, b}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('geomTriAngleSumExplain', {a, b, sum:a+b, answer}),
+  };
+}
+function geomProblemQuadAngleSum(){
+  const a = randInt(50,120), b = randInt(50,120), c = randInt(50, 350-a-b-10);
+  const answer = 360-a-b-c;
+  return {
+    promptText: t('geomQuadAngleSumPrompt', {a, b, c}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('geomQuadAngleSumExplain', {a, b, c, sum:a+b+c, answer}),
+  };
+}
+function geomProblemCircleArea(){
+  const r = randInt(2,15);
+  const answer = r*r;
+  return {
+    promptText: t('geomCircleAreaPrompt', {r}),
+    inputs: [{key:'ans', placeholder:t('geomPiCoeffPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('geomCircleAreaExplain', {r, answer}),
+  };
+}
+function geomProblemCircleCircumference(){
+  const r = randInt(2,20);
+  const answer = 2*r;
+  return {
+    promptText: t('geomCircleCircPrompt', {r}),
+    inputs: [{key:'ans', placeholder:t('geomPiCoeffPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('geomCircleCircExplain', {r, answer}),
+  };
+}
+function geomProblemPythagorean(){
+  const [a0,b0,c] = LINALG_TRIPLES[randInt(0,LINALG_TRIPLES.length-1)];
+  const swap = Math.random()<0.5;
+  const legA = swap ? b0 : a0, legB = swap ? a0 : b0;
+  return {
+    promptText: t('geomPythagoreanPrompt', {a:legA, b:legB}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===c; },
+    explain: t('geomPythagoreanExplain', {a:legA, b:legB, aSq:legA*legA, bSq:legB*legB, sum:legA*legA+legB*legB, c}),
+  };
+}
+function geomProblemPrismVolume(){
+  const l = randInt(2,12), w = randInt(2,12), h = randInt(2,12);
+  const answer = l*w*h;
+  return {
+    promptText: t('geomPrismVolumePrompt', {l, w, h}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('geomPrismVolumeExplain', {l, w, h, answer}),
+  };
+}
+function geomProblemCylinderVolume(){
+  const r = randInt(2,10), h = randInt(2,15);
+  const answer = r*r*h;
+  return {
+    promptText: t('geomCylinderVolumePrompt', {r, h}),
+    inputs: [{key:'ans', placeholder:t('geomPiCoeffPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('geomCylinderVolumeExplain', {r, h, rSq:r*r, answer}),
+  };
+}
+function geomProblemCubeSurfaceArea(){
+  const s = randInt(2,15);
+  const answer = 6*s*s;
+  return {
+    promptText: t('geomCubeSurfacePrompt', {s}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('geomCubeSurfaceExplain', {s, sSq:s*s, answer}),
+  };
+}
+function geomProblemDistance(){
+  const [dx0,dy0,dist] = LINALG_TRIPLES[randInt(0,LINALG_TRIPLES.length-1)];
+  const swap = Math.random()<0.5;
+  const dx = (swap?dy0:dx0) * (Math.random()<0.5?-1:1);
+  const dy = (swap?dx0:dy0) * (Math.random()<0.5?-1:1);
+  const x1 = randInt(-10,10), y1 = randInt(-10,10);
+  const x2 = x1+dx, y2 = y1+dy;
+  return {
+    promptText: t('geomDistancePrompt', {x1, y1, x2, y2}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===dist; },
+    explain: t('geomDistanceExplain', {dx:Math.abs(dx), dy:Math.abs(dy), dxSq:dx*dx, dySq:dy*dy, sum:dx*dx+dy*dy, dist}),
+  };
+}
+
+const GEOM_TOPICS = [
+  {key:'rectangle_area', build:geomProblemRectangleArea},
+  {key:'rectangle_perimeter', build:geomProblemRectanglePerimeter},
+  {key:'triangle_area', build:geomProblemTriangleArea},
+  {key:'triangle_perimeter', build:geomProblemTrianglePerimeter},
+  {key:'triangle_angle_sum', build:geomProblemTriangleAngleSum},
+  {key:'quadrilateral_angle_sum', build:geomProblemQuadAngleSum},
+  {key:'circle_area', build:geomProblemCircleArea},
+  {key:'circle_circumference', build:geomProblemCircleCircumference},
+  {key:'pythagorean_theorem', build:geomProblemPythagorean},
+  {key:'prism_volume', build:geomProblemPrismVolume},
+  {key:'cylinder_volume', build:geomProblemCylinderVolume},
+  {key:'cube_surface_area', build:geomProblemCubeSurfaceArea},
+  {key:'distance_formula', build:geomProblemDistance},
+];
+function geomTopicByKey(key){ return GEOM_TOPICS.find(x=>x.key===key); }
+
+function renderGeomMenu(){
+  const cards = GEOM_TOPICS.map(topic=>{
+    const best = (state.game.geometry && state.game.geometry[topic.key]) ? state.game.geometry[topic.key].best : 0;
+    return `
+    <button class="track-card" onclick="openGeomTopic('${topic.key}')">
+      <div class="glyph">📐</div>
+      <div>
+        <div class="tc-title">${t('geomTopicTitle_'+topic.key)}</div>
+        <div class="tc-sub">${t('geomTopicDesc_'+topic.key)}</div>
+      </div>
+      <div class="tc-progress">${best ? t('mathBestLabel',{n:best}) : t('startArrow')}</div>
+    </button>`;
+  }).join('');
+
+  return `
+  ${topbar({back:'goHome()'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>${t('geometryTitle')}</h1>
+      <div class="sub">${t('geometrySub')}</div>
+    </div>
+    <div class="track-grid">${cards}</div>
+  </div>
+  `;
+}
+
+function openGeomTopic(topicKey){
+  state.geomSession = {topicKey};
+  state.screen = 'geom_learn';
+  render();
+}
+
+function renderGeomLearn(){
+  const topicKey = state.geomSession.topicKey;
+  return `
+  ${topbar({back:'state.screen="geom_menu"; render();'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero" style="padding-top:8px;">
+      <h1 style="font-size:26px;">${t('geomTopicTitle_'+topicKey)}</h1>
+    </div>
+    <div class="profile-card" style="text-align:left; line-height:1.6; font-size:14.5px; color:var(--snow-dim); white-space:pre-line;">${t('geomLearn_'+topicKey)}</div>
+    <button class="btn btn-primary btn-block" onclick="startGeomPractice('${topicKey}')">${t('startPracticeBtn')}</button>
+  </div>
+  `;
+}
+
+function startGeomPractice(topicKey){
+  const topic = geomTopicByKey(topicKey);
+  state.geomSession = {
+    topicKey,
+    current: topic.build(),
+    correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
+    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+  };
+  state.screen = 'geom_practice';
+  render();
+  focusGeomInput();
+}
+function focusGeomInput(){
+  setTimeout(()=>{ const el=document.querySelector('.geom-input'); if(el) el.focus(); }, 30);
+}
+
+function renderGeomPractice(){
+  const s = state.geomSession;
+  const q = s.current;
+  const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
+
+  const inputsHtml = q.inputs.map(inp=>`
+    <div style="flex:1;">
+      ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
+      <input class="geom-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
+        placeholder="${inp.placeholder||''}"
+        style="text-align:center; font-size:22px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
+        oninput="state.geomSession.inputs['${inp.key}']=this.value">
+    </div>`).join('');
+
+  const feedback = s.answered ? `
+    <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
+      <div class="fb-text">
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
+        <div class="fb-sub">${q.explain}</div>
+      </div>
+      <button class="btn btn-light" onclick="nextGeomQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
+    </div>` : '';
+
+  return `
+  ${topbar({back:'exitGeomPractice()'})}
+  <div class="lesson">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;">
+      <div class="hearts-row">${Array.from({length:MATH_MAX_MISTAKES}).map((_,i)=>`<span>${i<(MATH_MAX_MISTAKES-s.mistakes)?'❤️':'🩶'}</span>`).join('')}</div>
+      <div style="font-size:12px; color:var(--snow-dim); text-align:right;">${t('correctAnswersLabel')}: ${s.correct}${s.combo>=3?`<br><span style="color:var(--gold);">${comboBadge(s.combo)} ${t('comboLabel',{n:s.combo})}</span>`:''}</div>
+    </div>
+    <div class="q-wrap">
+      <div class="q-card">
+        <div class="q-eyebrow">${t('geomTopicTitle_'+s.topicKey)}</div>
+        <div class="q-prompt" style="font-size:20px;">${q.promptText}</div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:flex-end;">${inputsHtml}</div>
+      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitGeomAnswer()">${t('checkBtn')}</button>` : ''}
+    </div>
+  </div>
+  ${feedback}
+  `;
+}
+
+function submitGeomAnswer(){
+  const s = state.geomSession;
+  if(!s || s.answered) return;
+  const q = s.current;
+  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
+  const correct = q.check(s.inputs);
+  s.answered = true; s.lastCorrect = correct;
+  if(correct) registerCorrectAnswer(s, state.game);
+  else registerWrongAnswer(s);
+  render();
+}
+
+function nextGeomQuestion(){
+  const s = state.geomSession;
+  if(s.mistakes>=MATH_MAX_MISTAKES){ finishGeomPractice(); return; }
+  const topic = geomTopicByKey(s.topicKey);
+  s.answered=false; s.lastCorrect=null; s.inputs={};
+  s.current = topic.build();
+  render();
+  focusGeomInput();
+}
+
+function finishGeomPractice(){
+  const s = state.geomSession;
+  if(!state.game.geometry) state.game.geometry = {};
+  const rec = state.game.geometry[s.topicKey] || (state.game.geometry[s.topicKey] = {best:0});
+  s.isNewBest = s.correct > rec.best;
+  if(s.isNewBest) rec.best = s.correct;
+  touchStreak();
+  s.newAchievements = checkAchievements(state.game);
+  state.screen='geom_complete';
+  render();
+}
+
+function renderGeomComplete(){
+  const s = state.geomSession;
+  const best = state.game.geometry[s.topicKey].best;
+  const lvl = xpLevel(state.game.xp);
+  return `
+  ${topbar()}
+  <div class="complete ${appLangClass()}">
+    <div class="medal">${s.isNewBest ? '🏆' : '🎯'}</div>
+    <h2>${s.isNewBest ? t('newBestReached') : t('checkpointReached')}</h2>
+    <div class="stat-row">
+      <div class="stat-box"><div class="val">${s.correct}</div><div class="lab">${t('correctAnswersLabel')}</div></div>
+      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
+    </div>
+    <div style="color:var(--snow-dim); font-size:13px;">${t('mathBestLabel',{n:best})} · ${t('levelLabel',{n:lvl.level})}</div>
+    ${achievementBannerHtml(s.newAchievements)}
+    <button class="btn btn-primary btn-block" onclick="backToGeomMenu()">${t('backToGeomMenuBtn')}</button>
+  </div>`;
+}
+
+function backToGeomMenu(){ state.screen='geom_menu'; render(); }
+function exitGeomPractice(){ state.screen='geom_menu'; render(); }
+
+// ---- trigonometry learning: Month 8, continuing the extended progression.
+// Same architecture as the previous seven months. Angle-based topics are
+// restricted to a curated set of "standard" angles (multiples of 30°/45°)
+// so every sin/cos/tan value, radian conversion, and law-of-sines/cosines
+// result stays exact — never falling back to a decimal approximation of an
+// irrational value. Radian answers are typed as a "p/q" coefficient of π
+// (reusing algebra's parseFraction), matching how geometry's circle
+// formulas handle π.
+function piFracText(p,q){
+  if(q===1) return p===1 ? 'π' : `${p}π`;
+  return `${p}π/${q}`;
+}
+const TRIG_DEG_RAD_MAP = {30:[1,6],45:[1,4],60:[1,3],90:[1,2],120:[2,3],135:[3,4],150:[5,6],180:[1,1],210:[7,6],225:[5,4],240:[4,3],270:[3,2],300:[5,3],315:[7,4],330:[11,6]};
+const TRIG_UNIT_CIRCLE = {
+  0:{sin:['0'],cos:['1'],tan:['0']},
+  30:{sin:['1/2'],cos:['√3/2','sqrt(3)/2'],tan:['√3/3','sqrt(3)/3']},
+  45:{sin:['√2/2','sqrt(2)/2'],cos:['√2/2','sqrt(2)/2'],tan:['1']},
+  60:{sin:['√3/2','sqrt(3)/2'],cos:['1/2'],tan:['√3','sqrt(3)']},
+  90:{sin:['1'],cos:['0']},
+  120:{sin:['√3/2','sqrt(3)/2'],cos:['-1/2'],tan:['-√3','-sqrt(3)']},
+  135:{sin:['√2/2','sqrt(2)/2'],cos:['-√2/2','-sqrt(2)/2'],tan:['-1']},
+  150:{sin:['1/2'],cos:['-√3/2','-sqrt(3)/2'],tan:['-√3/3','-sqrt(3)/3']},
+  180:{sin:['0'],cos:['-1'],tan:['0']},
+  210:{sin:['-1/2'],cos:['-√3/2','-sqrt(3)/2'],tan:['√3/3','sqrt(3)/3']},
+  225:{sin:['-√2/2','-sqrt(2)/2'],cos:['-√2/2','-sqrt(2)/2'],tan:['1']},
+  240:{sin:['-√3/2','-sqrt(3)/2'],cos:['-1/2'],tan:['√3','sqrt(3)']},
+  270:{sin:['-1'],cos:['0']},
+  300:{sin:['-√3/2','-sqrt(3)/2'],cos:['1/2'],tan:['-√3','-sqrt(3)']},
+  315:{sin:['-√2/2','-sqrt(2)/2'],cos:['√2/2','sqrt(2)/2'],tan:['-1']},
+  330:{sin:['-1/2'],cos:['√3/2','sqrt(3)/2'],tan:['-√3/3','-sqrt(3)/3']},
+};
+const TRIG_PRIMITIVE_TRIPLES = [[3,4,5],[5,12,13],[8,15,17],[7,24,25],[20,21,29]];
+const TRIG_LAW_COS_60 = [[3,8,7],[5,8,7]];
+const TRIG_LAW_COS_120 = [[3,5,7],[7,8,13]];
+const TRIG_INVERSE_TABLE = {
+  arcsin: {'0':0, '1/2':30, '√2/2':45, '√3/2':60, '1':90},
+  arccos: {'1':0, '√3/2':30, '√2/2':45, '1/2':60, '0':90},
+  arctan: {'0':0, '√3/3':30, '1':45, '√3':60},
+};
+const TRIG_EQ_VALUES = { sin: {0:'0',30:'1',45:'√2',60:'√3',90:'2'}, cos: {0:'2',30:'√3',45:'√2',60:'1',90:'0'} };
+
+function trigProblemDegToRad(){
+  const degs = Object.keys(TRIG_DEG_RAD_MAP).map(Number);
+  const deg = degs[randInt(0,degs.length-1)];
+  const [p,q] = TRIG_DEG_RAD_MAP[deg];
+  return {
+    promptText: t('trigDegToRadPrompt', {deg}),
+    inputs: [{key:'ans', placeholder:t('trigRadianAnswerPlaceholder')}],
+    check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===p && f.q===q; },
+    explain: t('trigDegToRadExplain', {deg, p, q, radText:piFracText(p,q)}),
+  };
+}
+function trigProblemRadToDeg(){
+  const degs = Object.keys(TRIG_DEG_RAD_MAP).map(Number);
+  const deg = degs[randInt(0,degs.length-1)];
+  const [p,q] = TRIG_DEG_RAD_MAP[deg];
+  return {
+    promptText: t('trigRadToDegPrompt', {radText:piFracText(p,q)}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===deg; },
+    explain: t('trigRadToDegExplain', {radText:piFracText(p,q), deg}),
+  };
+}
+function trigProblemUnitCircle(){
+  const angles = Object.keys(TRIG_UNIT_CIRCLE).map(Number);
+  const angle = angles[randInt(0,angles.length-1)];
+  const fnsAvail = Object.keys(TRIG_UNIT_CIRCLE[angle]);
+  const fn = fnsAvail[randInt(0,fnsAvail.length-1)];
+  const accepted = TRIG_UNIT_CIRCLE[angle][fn].map(s=>s.toLowerCase().replace(/\s+/g,''));
+  return {
+    promptText: t('trigUnitCirclePrompt', {expr:`${fn}(${angle}°)`}),
+    inputs: [{key:'ans', placeholder:t('algTrigAnswerPlaceholder')}],
+    check(vals){ const norm=(vals.ans||'').toLowerCase().replace(/\s+/g,''); return accepted.includes(norm); },
+    explain: t('trigUnitCircleExplain', {expr:`${fn}(${angle}°)`, answer:TRIG_UNIT_CIRCLE[angle][fn][0]}),
+  };
+}
+function trigProblemPythagIdentity(){
+  const [a,b,c] = TRIG_PRIMITIVE_TRIPLES[randInt(0,TRIG_PRIMITIVE_TRIPLES.length-1)];
+  const giveSin = Math.random()<0.5;
+  const givenVal = giveSin ? a : b;
+  const answer = giveSin ? b : a;
+  return {
+    promptText: t(giveSin?'trigPythagIdentitySinPrompt':'trigPythagIdentityCosPrompt', {given:givenVal, c}),
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===answer && f.q===c; },
+    explain: t('trigPythagIdentityExplain', {given:givenVal, c, givenSq:givenVal*givenVal, cSq:c*c, diff:c*c-givenVal*givenVal, answer}),
+  };
+}
+function trigProblemReferenceAngle(){
+  const opts = [100,110,130,140,160,170,190,200,220,230,250,260,280,290,310,320,340,350];
+  const angle = opts[randInt(0,opts.length-1)];
+  let ref;
+  if(angle<=180) ref = 180-angle;
+  else if(angle<=270) ref = angle-180;
+  else ref = 360-angle;
+  return {
+    promptText: t('trigReferenceAnglePrompt', {angle}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===ref; },
+    explain: t('trigReferenceAngleExplain', {angle, ref}),
+  };
+}
+function trigProblemCoterminal(){
+  const base = randInt(1,359);
+  const k = [1,-1,2][randInt(0,2)];
+  const given = base + k*360;
+  return {
+    promptText: t('trigCoterminalPrompt', {given}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===base; },
+    explain: t('trigCoterminalExplain', {given, answer:base}),
+  };
+}
+function trigProblemArcLength(){
+  const degs = Object.keys(TRIG_DEG_RAD_MAP).map(Number);
+  const deg = degs[randInt(0,degs.length-1)];
+  const [p,q] = TRIG_DEG_RAD_MAP[deg];
+  const k = randInt(1,5);
+  const r = q*k;
+  const answer = k*p;
+  return {
+    promptText: t('trigArcLengthPrompt', {r, angleText:piFracText(p,q)}),
+    inputs: [{key:'ans', placeholder:t('geomPiCoeffPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('trigArcLengthExplain', {r, angleText:piFracText(p,q), answer}),
+  };
+}
+function trigProblemSectorArea(){
+  const degs = Object.keys(TRIG_DEG_RAD_MAP).map(Number);
+  const deg = degs[randInt(0,degs.length-1)];
+  const [p,q] = TRIG_DEG_RAD_MAP[deg];
+  const k = randInt(1,3);
+  const r = 2*q*k;
+  const answer = 2*q*k*k*p;
+  return {
+    promptText: t('trigSectorAreaPrompt', {r, angleText:piFracText(p,q)}),
+    inputs: [{key:'ans', placeholder:t('geomPiCoeffPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('trigSectorAreaExplain', {r, angleText:piFracText(p,q), answer}),
+  };
+}
+function trigProblemLawOfCosines(){
+  const use60 = Math.random()<0.5;
+  const list = use60?TRIG_LAW_COS_60:TRIG_LAW_COS_120;
+  const base = list[randInt(0,list.length-1)];
+  const k = randInt(1,4);
+  const [a,b,c] = base.map(x=>x*k);
+  const angle = use60?60:120;
+  return {
+    promptText: t('trigLawCosPrompt', {a, b, angle}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===c; },
+    explain: t(use60?'trigLawCosExplain60':'trigLawCosExplain120', {a, b, aSq:a*a, bSq:b*b, ab:a*b, cSq:c*c, c}),
+  };
+}
+function trigProblemLawOfSines(){
+  const aIs30 = Math.random()<0.5;
+  let a, answer;
+  if(aIs30){ a = randInt(1,15); answer = 2*a; }
+  else { a = randInt(1,15)*2; answer = a/2; }
+  const angleA = aIs30?30:90, angleB = aIs30?90:30;
+  return {
+    promptText: t('trigLawSinesPrompt', {angleA, a, angleB}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('trigLawSinesExplain', {angleA, angleB, a, answer}),
+  };
+}
+function trigProblemAmplitudePeriod(){
+  const A = randInt(1,10) * (Math.random()<0.5?-1:1);
+  const B = [1,2,3,4,5,6][randInt(0,5)];
+  const amplitude = Math.abs(A);
+  const g = gcd(2,B); const pc_p = 2/g, pc_q = B/g;
+  return {
+    promptText: t('trigAmplitudePeriodPrompt', {A, B}),
+    inputs: [
+      {key:'amp', label:t('trigAmplitudeLabel'), placeholder:t('algNumericAnswerPlaceholder')},
+      {key:'period', label:t('trigPeriodLabel'), placeholder:t('probFractionAnswerPlaceholder')},
+    ],
+    check(vals){ const f=parseFraction(vals.period); return Number(vals.amp)===amplitude && !!f && f.p===pc_p && f.q===pc_q; },
+    explain: t('trigAmplitudePeriodExplain', {amplitude, periodText:piFracText(pc_p,pc_q)}),
+  };
+}
+function trigProblemInverseTrig(){
+  const fns = Object.keys(TRIG_INVERSE_TABLE);
+  const fn = fns[randInt(0,fns.length-1)];
+  const valsList = Object.keys(TRIG_INVERSE_TABLE[fn]);
+  const val = valsList[randInt(0,valsList.length-1)];
+  const answer = TRIG_INVERSE_TABLE[fn][val];
+  return {
+    promptText: t('trigInverseTrigPrompt', {expr:`${fn}(${val})`}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals2){ return Number(vals2.ans)===answer; },
+    explain: t('trigInverseTrigExplain', {expr:`${fn}(${val})`, answer}),
+  };
+}
+function trigProblemEquation(){
+  const fn = ['sin','cos'][randInt(0,1)];
+  const angles = Object.keys(TRIG_EQ_VALUES[fn]).map(Number);
+  const angle = angles[randInt(0,angles.length-1)];
+  const rhs = TRIG_EQ_VALUES[fn][angle];
+  const lhs = `2${fn}(θ)`;
+  return {
+    promptText: t('trigEquationPrompt', {lhs, rhs}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===angle; },
+    explain: t('trigEquationExplain', {lhs, rhs, angle}),
+  };
+}
+
+const TRIG_TOPICS = [
+  {key:'degrees_to_radians', build:trigProblemDegToRad},
+  {key:'radians_to_degrees', build:trigProblemRadToDeg},
+  {key:'unit_circle_values', build:trigProblemUnitCircle},
+  {key:'pythagorean_identity', build:trigProblemPythagIdentity},
+  {key:'reference_angle', build:trigProblemReferenceAngle},
+  {key:'coterminal_angle', build:trigProblemCoterminal},
+  {key:'arc_length', build:trigProblemArcLength},
+  {key:'sector_area', build:trigProblemSectorArea},
+  {key:'law_of_cosines', build:trigProblemLawOfCosines},
+  {key:'law_of_sines', build:trigProblemLawOfSines},
+  {key:'amplitude_and_period', build:trigProblemAmplitudePeriod},
+  {key:'inverse_trig', build:trigProblemInverseTrig},
+  {key:'trig_equation', build:trigProblemEquation},
+];
+function trigTopicByKey(key){ return TRIG_TOPICS.find(x=>x.key===key); }
+
+function renderTrigMenu(){
+  const cards = TRIG_TOPICS.map(topic=>{
+    const best = (state.game.trig && state.game.trig[topic.key]) ? state.game.trig[topic.key].best : 0;
+    return `
+    <button class="track-card" onclick="openTrigTopic('${topic.key}')">
+      <div class="glyph">📏</div>
+      <div>
+        <div class="tc-title">${t('trigTopicTitle_'+topic.key)}</div>
+        <div class="tc-sub">${t('trigTopicDesc_'+topic.key)}</div>
+      </div>
+      <div class="tc-progress">${best ? t('mathBestLabel',{n:best}) : t('startArrow')}</div>
+    </button>`;
+  }).join('');
+
+  return `
+  ${topbar({back:'goHome()'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>${t('trigonometryTitle')}</h1>
+      <div class="sub">${t('trigonometrySub')}</div>
+    </div>
+    <div class="track-grid">${cards}</div>
+  </div>
+  `;
+}
+
+function openTrigTopic(topicKey){
+  state.trigSession = {topicKey};
+  state.screen = 'trig_learn';
+  render();
+}
+
+function renderTrigLearn(){
+  const topicKey = state.trigSession.topicKey;
+  return `
+  ${topbar({back:'state.screen="trig_menu"; render();'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero" style="padding-top:8px;">
+      <h1 style="font-size:26px;">${t('trigTopicTitle_'+topicKey)}</h1>
+    </div>
+    <div class="profile-card" style="text-align:left; line-height:1.6; font-size:14.5px; color:var(--snow-dim); white-space:pre-line;">${t('trigLearn_'+topicKey)}</div>
+    <button class="btn btn-primary btn-block" onclick="startTrigPractice('${topicKey}')">${t('startPracticeBtn')}</button>
+  </div>
+  `;
+}
+
+function startTrigPractice(topicKey){
+  const topic = trigTopicByKey(topicKey);
+  state.trigSession = {
+    topicKey,
+    current: topic.build(),
+    correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
+    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+  };
+  state.screen = 'trig_practice';
+  render();
+  focusTrigInput();
+}
+function focusTrigInput(){
+  setTimeout(()=>{ const el=document.querySelector('.trig-input'); if(el) el.focus(); }, 30);
+}
+
+function renderTrigPractice(){
+  const s = state.trigSession;
+  const q = s.current;
+  const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
+
+  const inputsHtml = q.inputs.map(inp=>`
+    <div style="flex:1;">
+      ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
+      <input class="trig-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
+        placeholder="${inp.placeholder||''}"
+        style="text-align:center; font-size:22px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
+        oninput="state.trigSession.inputs['${inp.key}']=this.value">
+    </div>`).join('');
+
+  const feedback = s.answered ? `
+    <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
+      <div class="fb-text">
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
+        <div class="fb-sub">${q.explain}</div>
+      </div>
+      <button class="btn btn-light" onclick="nextTrigQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
+    </div>` : '';
+
+  return `
+  ${topbar({back:'exitTrigPractice()'})}
+  <div class="lesson">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;">
+      <div class="hearts-row">${Array.from({length:MATH_MAX_MISTAKES}).map((_,i)=>`<span>${i<(MATH_MAX_MISTAKES-s.mistakes)?'❤️':'🩶'}</span>`).join('')}</div>
+      <div style="font-size:12px; color:var(--snow-dim); text-align:right;">${t('correctAnswersLabel')}: ${s.correct}${s.combo>=3?`<br><span style="color:var(--gold);">${comboBadge(s.combo)} ${t('comboLabel',{n:s.combo})}</span>`:''}</div>
+    </div>
+    <div class="q-wrap">
+      <div class="q-card">
+        <div class="q-eyebrow">${t('trigTopicTitle_'+s.topicKey)}</div>
+        <div class="q-prompt" style="font-size:20px;">${q.promptText}</div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:flex-end;">${inputsHtml}</div>
+      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitTrigAnswer()">${t('checkBtn')}</button>` : ''}
+    </div>
+  </div>
+  ${feedback}
+  `;
+}
+
+function submitTrigAnswer(){
+  const s = state.trigSession;
+  if(!s || s.answered) return;
+  const q = s.current;
+  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
+  const correct = q.check(s.inputs);
+  s.answered = true; s.lastCorrect = correct;
+  if(correct) registerCorrectAnswer(s, state.game);
+  else registerWrongAnswer(s);
+  render();
+}
+
+function nextTrigQuestion(){
+  const s = state.trigSession;
+  if(s.mistakes>=MATH_MAX_MISTAKES){ finishTrigPractice(); return; }
+  const topic = trigTopicByKey(s.topicKey);
+  s.answered=false; s.lastCorrect=null; s.inputs={};
+  s.current = topic.build();
+  render();
+  focusTrigInput();
+}
+
+function finishTrigPractice(){
+  const s = state.trigSession;
+  if(!state.game.trig) state.game.trig = {};
+  const rec = state.game.trig[s.topicKey] || (state.game.trig[s.topicKey] = {best:0});
+  s.isNewBest = s.correct > rec.best;
+  if(s.isNewBest) rec.best = s.correct;
+  touchStreak();
+  s.newAchievements = checkAchievements(state.game);
+  state.screen='trig_complete';
+  render();
+}
+
+function renderTrigComplete(){
+  const s = state.trigSession;
+  const best = state.game.trig[s.topicKey].best;
+  const lvl = xpLevel(state.game.xp);
+  return `
+  ${topbar()}
+  <div class="complete ${appLangClass()}">
+    <div class="medal">${s.isNewBest ? '🏆' : '🎯'}</div>
+    <h2>${s.isNewBest ? t('newBestReached') : t('checkpointReached')}</h2>
+    <div class="stat-row">
+      <div class="stat-box"><div class="val">${s.correct}</div><div class="lab">${t('correctAnswersLabel')}</div></div>
+      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
+    </div>
+    <div style="color:var(--snow-dim); font-size:13px;">${t('mathBestLabel',{n:best})} · ${t('levelLabel',{n:lvl.level})}</div>
+    ${achievementBannerHtml(s.newAchievements)}
+    <button class="btn btn-primary btn-block" onclick="backToTrigMenu()">${t('backToTrigMenuBtn')}</button>
+  </div>`;
+}
+
+function backToTrigMenu(){ state.screen='trig_menu'; render(); }
+function exitTrigPractice(){ state.screen='trig_menu'; render(); }
+
+// ---- complex numbers learning: Month 9, closing out the extended
+// progression (algebra -> calculus -> linear algebra -> discrete math ->
+// probability -> statistics -> geometry -> trigonometry -> complex numbers)
+// by tying several of those months together — moduli reuse the same
+// Pythagorean triples as linear algebra's vector magnitude and geometry's
+// distance formula, arguments and De Moivre's theorem reuse trigonometry's
+// standard angles, and the quadratic-roots topic reuses algebra's
+// signedCoeffTerm helper for displaying the equation. Division is
+// engineered backwards from a clean integer quotient (pick the quotient and
+// the divisor, then multiply them to get the dividend) the same way linear
+// algebra's inverse topic was, since dividing two arbitrary Gaussian
+// integers rarely lands on an integer result.
+function complexText(a,b){
+  const sign = b>=0 ? '+' : '-';
+  return `${a} ${sign} ${Math.abs(b)}i`;
+}
+function ordinal(n){
+  const rem100 = n%100;
+  if(rem100>=11 && rem100<=13) return `${n}th`;
+  const rem10 = n%10;
+  if(rem10===1) return `${n}st`;
+  if(rem10===2) return `${n}nd`;
+  if(rem10===3) return `${n}rd`;
+  return `${n}th`;
+}
+const CPLX_I_POWERS = [[1,0],[0,1],[-1,0],[0,-1]];
+const CPLX_ARG_POINTS = [[1,0,0],[1,1,45],[0,1,90],[-1,1,135],[-1,0,180],[-1,-1,225],[0,-1,270],[1,-1,315]];
+const CPLX_AXIS_ANGLES = [0,90,180,270];
+
+function cplxProblemAddition(){
+  const a=randInt(-9,9), b=randInt(-9,9), c=randInt(-9,9), d=randInt(-9,9);
+  const re=a+c, im=b+d;
+  return {
+    promptText: t('cplxAddPrompt', {z1:complexText(a,b), z2:complexText(c,d)}),
+    inputs: [{key:'re',label:'Re'},{key:'im',label:'Im'}],
+    check(vals){ return Number(vals.re)===re && Number(vals.im)===im; },
+    explain: t('cplxAddExplain', {a,b,c,d,re,im}),
+  };
+}
+function cplxProblemSubtraction(){
+  const a=randInt(-9,9), b=randInt(-9,9), c=randInt(-9,9), d=randInt(-9,9);
+  const re=a-c, im=b-d;
+  return {
+    promptText: t('cplxSubPrompt', {z1:complexText(a,b), z2:complexText(c,d)}),
+    inputs: [{key:'re',label:'Re'},{key:'im',label:'Im'}],
+    check(vals){ return Number(vals.re)===re && Number(vals.im)===im; },
+    explain: t('cplxSubExplain', {a,b,c,d,re,im}),
+  };
+}
+function cplxProblemMultiplication(){
+  const a=randInt(-6,6), b=randInt(-6,6), c=randInt(-6,6), d=randInt(-6,6);
+  const re=a*c-b*d, im=a*d+b*c;
+  return {
+    promptText: t('cplxMulPrompt', {z1:complexText(a,b), z2:complexText(c,d)}),
+    inputs: [{key:'re',label:'Re'},{key:'im',label:'Im'}],
+    check(vals){ return Number(vals.re)===re && Number(vals.im)===im; },
+    explain: t('cplxMulExplain', {a,b,c,d,ac:a*c,bd:b*d,ad:a*d,bc:b*c,re,im}),
+  };
+}
+function cplxProblemDivision(){
+  const p=randInt(-6,6), q=randInt(-6,6);
+  let c,d; do{ c=randInt(-5,5); d=randInt(-5,5); } while(c===0&&d===0);
+  const a = p*c-q*d, b = p*d+q*c;
+  return {
+    promptText: t('cplxDivPrompt', {z1:complexText(a,b), z2:complexText(c,d)}),
+    inputs: [{key:'re',label:'Re'},{key:'im',label:'Im'}],
+    check(vals){ return Number(vals.re)===p && Number(vals.im)===q; },
+    explain: t('cplxDivExplain', {a, b, c, d, conj:complexText(c,-d), denom:c*c+d*d, p, q}),
+  };
+}
+function cplxProblemConjugate(){
+  const a=randInt(-9,9), b=nonZeroRandInt(-9,9);
+  return {
+    promptText: t('cplxConjPrompt', {z:complexText(a,b)}),
+    inputs: [{key:'re',label:'Re'},{key:'im',label:'Im'}],
+    check(vals){ return Number(vals.re)===a && Number(vals.im)===-b; },
+    explain: t('cplxConjExplain', {a, b, answer:complexText(a,-b)}),
+  };
+}
+function cplxProblemModulus(){
+  const [a0,b0,c] = LINALG_TRIPLES[randInt(0,LINALG_TRIPLES.length-1)];
+  const swap = Math.random()<0.5;
+  const a = (swap?b0:a0)*(Math.random()<0.5?-1:1);
+  const b = (swap?a0:b0)*(Math.random()<0.5?-1:1);
+  return {
+    promptText: t('cplxModulusPrompt', {z:complexText(a,b)}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===c; },
+    explain: t('cplxModulusExplain', {aSq:a*a, bSq:b*b, sum:a*a+b*b, c}),
+  };
+}
+function cplxProblemPowersOfI(){
+  const n = randInt(1,20);
+  const [re,im] = CPLX_I_POWERS[n%4];
+  return {
+    promptText: t('cplxPowersIPrompt', {n}),
+    inputs: [{key:'re',label:'Re'},{key:'im',label:'Im'}],
+    check(vals){ return Number(vals.re)===re && Number(vals.im)===im; },
+    explain: t('cplxPowersIExplain', {n, rem:n%4, answer:complexText(re,im)}),
+  };
+}
+function cplxProblemArgument(){
+  const k = randInt(1,5);
+  const [x0,y0,angle] = CPLX_ARG_POINTS[randInt(0,CPLX_ARG_POINTS.length-1)];
+  const x=x0*k, y=y0*k;
+  return {
+    promptText: t('cplxArgumentPrompt', {z:complexText(x,y)}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===angle; },
+    explain: t('cplxArgumentExplain', {angle}),
+  };
+}
+function cplxProblemPolarToRect(){
+  const r = randInt(1,15);
+  const angle = CPLX_AXIS_ANGLES[randInt(0,3)];
+  let re,im;
+  if(angle===0){ re=r; im=0; } else if(angle===90){ re=0; im=r; } else if(angle===180){ re=-r; im=0; } else { re=0; im=-r; }
+  return {
+    promptText: t('cplxPolarToRectPrompt', {r, angle}),
+    inputs: [{key:'re',label:'Re'},{key:'im',label:'Im'}],
+    check(vals){ return Number(vals.re)===re && Number(vals.im)===im; },
+    explain: t('cplxPolarToRectExplain', {answer:complexText(re,im)}),
+  };
+}
+function cplxProblemDeMoivre(){
+  const angle = [30,45,60,90,120,135,150,180][randInt(0,7)];
+  const n = randInt(2,6);
+  let answer = (angle*n) % 360;
+  if(answer<0) answer += 360;
+  return {
+    promptText: t('cplxDeMoivrePrompt', {angle, n, nOrd:ordinal(n)}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('cplxDeMoivreExplain', {angle, n, product:angle*n, answer}),
+  };
+}
+function cplxProblemRootsOfUnity(){
+  const n = [2,3,4,5,6,8,9,10,12][randInt(0,8)];
+  const answer = 360/n;
+  return {
+    promptText: t('cplxRootsUnityPrompt', {n, nOrd:ordinal(n)}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('cplxRootsUnityExplain', {n, answer}),
+  };
+}
+function cplxProblemQuadraticRoots(){
+  const p = randInt(-6,6), q = randInt(1,6);
+  const b = -2*p, c = p*p+q*q;
+  const expr = `x²${signedCoeffTerm(b,'x')}${signedCoeffTerm(c,'')} = 0`;
+  return {
+    promptText: t('cplxQuadRootsPrompt', {expr}),
+    inputs: [{key:'re',label:'Re'},{key:'im',label:'Im (positive)'}],
+    check(vals){ return Number(vals.re)===p && Number(vals.im)===q; },
+    explain: t('cplxQuadRootsExplain', {b, c, p, q}),
+  };
+}
+function cplxProblemModulusProduct(){
+  const [a1,b1,m1] = LINALG_TRIPLES[randInt(0,LINALG_TRIPLES.length-1)];
+  const [a2,b2,m2] = LINALG_TRIPLES[randInt(0,LINALG_TRIPLES.length-1)];
+  const swap1 = Math.random()<0.5, swap2 = Math.random()<0.5;
+  const x1=(swap1?b1:a1)*(Math.random()<0.5?-1:1), y1=(swap1?a1:b1)*(Math.random()<0.5?-1:1);
+  const x2=(swap2?b2:a2)*(Math.random()<0.5?-1:1), y2=(swap2?a2:b2)*(Math.random()<0.5?-1:1);
+  const answer = m1*m2;
+  return {
+    promptText: t('cplxModulusProductPrompt', {z1:complexText(x1,y1), z2:complexText(x2,y2)}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('cplxModulusProductExplain', {m1, m2, answer}),
+  };
+}
+
+const CPLX_TOPICS = [
+  {key:'complex_addition', build:cplxProblemAddition},
+  {key:'complex_subtraction', build:cplxProblemSubtraction},
+  {key:'complex_multiplication', build:cplxProblemMultiplication},
+  {key:'complex_division', build:cplxProblemDivision},
+  {key:'complex_conjugate', build:cplxProblemConjugate},
+  {key:'complex_modulus', build:cplxProblemModulus},
+  {key:'powers_of_i', build:cplxProblemPowersOfI},
+  {key:'argument', build:cplxProblemArgument},
+  {key:'polar_to_rectangular', build:cplxProblemPolarToRect},
+  {key:'de_moivre', build:cplxProblemDeMoivre},
+  {key:'roots_of_unity', build:cplxProblemRootsOfUnity},
+  {key:'quadratic_roots', build:cplxProblemQuadraticRoots},
+  {key:'modulus_of_product', build:cplxProblemModulusProduct},
+];
+function cplxTopicByKey(key){ return CPLX_TOPICS.find(x=>x.key===key); }
+
+function renderCplxMenu(){
+  const cards = CPLX_TOPICS.map(topic=>{
+    const best = (state.game.complex && state.game.complex[topic.key]) ? state.game.complex[topic.key].best : 0;
+    return `
+    <button class="track-card" onclick="openCplxTopic('${topic.key}')">
+      <div class="glyph">🌀</div>
+      <div>
+        <div class="tc-title">${t('cplxTopicTitle_'+topic.key)}</div>
+        <div class="tc-sub">${t('cplxTopicDesc_'+topic.key)}</div>
+      </div>
+      <div class="tc-progress">${best ? t('mathBestLabel',{n:best}) : t('startArrow')}</div>
+    </button>`;
+  }).join('');
+
+  return `
+  ${topbar({back:'goHome()'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>${t('complexTitle')}</h1>
+      <div class="sub">${t('complexSub')}</div>
+    </div>
+    <div class="track-grid">${cards}</div>
+  </div>
+  `;
+}
+
+function openCplxTopic(topicKey){
+  state.cplxSession = {topicKey};
+  state.screen = 'cplx_learn';
+  render();
+}
+
+function renderCplxLearn(){
+  const topicKey = state.cplxSession.topicKey;
+  return `
+  ${topbar({back:'state.screen="cplx_menu"; render();'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero" style="padding-top:8px;">
+      <h1 style="font-size:26px;">${t('cplxTopicTitle_'+topicKey)}</h1>
+    </div>
+    <div class="profile-card" style="text-align:left; line-height:1.6; font-size:14.5px; color:var(--snow-dim); white-space:pre-line;">${t('cplxLearn_'+topicKey)}</div>
+    <button class="btn btn-primary btn-block" onclick="startCplxPractice('${topicKey}')">${t('startPracticeBtn')}</button>
+  </div>
+  `;
+}
+
+function startCplxPractice(topicKey){
+  const topic = cplxTopicByKey(topicKey);
+  state.cplxSession = {
+    topicKey,
+    current: topic.build(),
+    correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
+    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+  };
+  state.screen = 'cplx_practice';
+  render();
+  focusCplxInput();
+}
+function focusCplxInput(){
+  setTimeout(()=>{ const el=document.querySelector('.cplx-input'); if(el) el.focus(); }, 30);
+}
+
+function renderCplxPractice(){
+  const s = state.cplxSession;
+  const q = s.current;
+  const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
+
+  const inputsHtml = q.inputs.map(inp=>`
+    <div style="flex:1;">
+      ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
+      <input class="cplx-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
+        placeholder="${inp.placeholder||''}"
+        style="text-align:center; font-size:22px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
+        oninput="state.cplxSession.inputs['${inp.key}']=this.value">
+    </div>`).join('');
+
+  const feedback = s.answered ? `
+    <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
+      <div class="fb-text">
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
+        <div class="fb-sub">${q.explain}</div>
+      </div>
+      <button class="btn btn-light" onclick="nextCplxQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
+    </div>` : '';
+
+  return `
+  ${topbar({back:'exitCplxPractice()'})}
+  <div class="lesson">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;">
+      <div class="hearts-row">${Array.from({length:MATH_MAX_MISTAKES}).map((_,i)=>`<span>${i<(MATH_MAX_MISTAKES-s.mistakes)?'❤️':'🩶'}</span>`).join('')}</div>
+      <div style="font-size:12px; color:var(--snow-dim); text-align:right;">${t('correctAnswersLabel')}: ${s.correct}${s.combo>=3?`<br><span style="color:var(--gold);">${comboBadge(s.combo)} ${t('comboLabel',{n:s.combo})}</span>`:''}</div>
+    </div>
+    <div class="q-wrap">
+      <div class="q-card">
+        <div class="q-eyebrow">${t('cplxTopicTitle_'+s.topicKey)}</div>
+        <div class="q-prompt" style="font-size:20px;">${q.promptText}</div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:flex-end;">${inputsHtml}</div>
+      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitCplxAnswer()">${t('checkBtn')}</button>` : ''}
+    </div>
+  </div>
+  ${feedback}
+  `;
+}
+
+function submitCplxAnswer(){
+  const s = state.cplxSession;
+  if(!s || s.answered) return;
+  const q = s.current;
+  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
+  const correct = q.check(s.inputs);
+  s.answered = true; s.lastCorrect = correct;
+  if(correct) registerCorrectAnswer(s, state.game);
+  else registerWrongAnswer(s);
+  render();
+}
+
+function nextCplxQuestion(){
+  const s = state.cplxSession;
+  if(s.mistakes>=MATH_MAX_MISTAKES){ finishCplxPractice(); return; }
+  const topic = cplxTopicByKey(s.topicKey);
+  s.answered=false; s.lastCorrect=null; s.inputs={};
+  s.current = topic.build();
+  render();
+  focusCplxInput();
+}
+
+function finishCplxPractice(){
+  const s = state.cplxSession;
+  if(!state.game.complex) state.game.complex = {};
+  const rec = state.game.complex[s.topicKey] || (state.game.complex[s.topicKey] = {best:0});
+  s.isNewBest = s.correct > rec.best;
+  if(s.isNewBest) rec.best = s.correct;
+  touchStreak();
+  s.newAchievements = checkAchievements(state.game);
+  state.screen='cplx_complete';
+  render();
+}
+
+function renderCplxComplete(){
+  const s = state.cplxSession;
+  const best = state.game.complex[s.topicKey].best;
+  const lvl = xpLevel(state.game.xp);
+  return `
+  ${topbar()}
+  <div class="complete ${appLangClass()}">
+    <div class="medal">${s.isNewBest ? '🏆' : '🎯'}</div>
+    <h2>${s.isNewBest ? t('newBestReached') : t('checkpointReached')}</h2>
+    <div class="stat-row">
+      <div class="stat-box"><div class="val">${s.correct}</div><div class="lab">${t('correctAnswersLabel')}</div></div>
+      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
+    </div>
+    <div style="color:var(--snow-dim); font-size:13px;">${t('mathBestLabel',{n:best})} · ${t('levelLabel',{n:lvl.level})}</div>
+    ${achievementBannerHtml(s.newAchievements)}
+    <button class="btn btn-primary btn-block" onclick="backToCplxMenu()">${t('backToCplxMenuBtn')}</button>
+  </div>`;
+}
+
+function backToCplxMenu(){ state.screen='cplx_menu'; render(); }
+function exitCplxPractice(){ state.screen='cplx_menu'; render(); }
 
 // ---- business concepts: Finance, Economics and Tech Companies. Different
 // shape from algebra/calculus — these are qualitative concepts, not
