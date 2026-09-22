@@ -4397,6 +4397,7 @@ function defaultGame(){
     algebra:{}, // topic key -> {best: correct-answer count}
     calculus:{}, // topic key -> {best: correct-answer count}
     linalg:{}, // topic key -> {best: correct-answer count}
+    discrete:{}, // topic key -> {best: correct-answer count}
     business:{}, // category key -> {rounds: completed-rounds count}
     conceptExposure:{}, // concept key -> times tested (drives MCQ -> typed progression)
     conceptMastery:{}, // concept key (or "qb_<id>" for Quiz Bank questions) -> {correct, wrong, streak}
@@ -4841,6 +4842,78 @@ const I18N = {
     linalgLearn_inverse: "For a 2×2 matrix A = [[a,b],[c,d]] with determinant ad − bc ≠ 0, the inverse is:\nA⁻¹ = (1/det) × [[d, -b], [-c, a]].\n\nExample: A = [[2,1],[1,1]]. det = 2×1 − 1×1 = 1.\nA⁻¹ = (1/1) × [[1,-1],[-1,2]] = [[1,-1],[-1,2]].",
     linalgInversePrompt: "Find A⁻¹, where A = {A} (its determinant is ±1, so every entry of A⁻¹ is a whole number)",
     linalgInverseExplain: "det(A) = {det}. A⁻¹ = (1/{det}) × [[d,-b],[-c,a]] = {C}.",
+
+    discreteTitle: "Discrete Math",
+    discreteSub: "Month 4: counting, sets, number theory and logic — the math behind computer science. Pick a topic to learn the concept, then practice.",
+    backToDiscMenuBtn: "Back to Discrete Math",
+    discSetAnswerPlaceholder: "e.g. 1, 2, 3",
+    discBinaryAnswerPlaceholder: "e.g. 1011",
+    discBoolAnswerPlaceholder: "true or false",
+
+    discTopicTitle_factorial: "Factorial", discTopicDesc_factorial: "Evaluate n!",
+    discLearn_factorial: "The factorial of a positive integer n, written n!, is the product of every integer from n down to 1: n! = n × (n-1) × (n-2) × ... × 1.\n\nExample: evaluate 5!.\n5! = 5 × 4 × 3 × 2 × 1 = 120.",
+    discFactorialPrompt: "Evaluate: {n}!",
+    discFactorialExplain: "{n}! = {expr} = {answer}.",
+
+    discTopicTitle_permutations: "Permutations", discTopicDesc_permutations: "Count ordered arrangements: P(n, r)",
+    discLearn_permutations: "P(n, r) counts the number of ways to arrange r items chosen from n, where order matters. P(n, r) = n × (n-1) × ... × (n-r+1), which is n!/(n-r)!.\n\nExample: find P(5, 2).\nP(5, 2) = 5 × 4 = 20.",
+    discPermutationsPrompt: "Evaluate: P({n}, {r})",
+    discPermutationsExplain: "P(n, r) multiplies r counting terms down from n: {expr} = {answer}.",
+
+    discTopicTitle_combinations: "Combinations", discTopicDesc_combinations: "Count unordered selections: C(n, r)",
+    discLearn_combinations: "C(n, r) counts the number of ways to choose r items from n when order doesn't matter: C(n, r) = n! / (r! × (n-r)!).\n\nExample: find C(5, 2).\nC(5, 2) = 5! / (2! × 3!) = 120 / (2 × 6) = 10.",
+    discCombinationsPrompt: "Evaluate: C({n}, {r})",
+    discCombinationsExplain: "C(n, r) = n! / (r! × (n-r)!) = {n}! / ({r}! × {nr}!) = {answer}.",
+
+    discTopicTitle_set_union: "Set Union", discTopicDesc_set_union: "Combine all elements of two sets",
+    discLearn_set_union: "The union of two sets A and B, written A ∪ B, contains every element that is in A, in B, or in both — with no duplicates.\n\nExample: find A ∪ B, where A = {1, 2, 3} and B = {3, 4}.\nA ∪ B = {1, 2, 3, 4}. Type your answer as a comma-separated list, smallest to largest.",
+    discSetUnionPrompt: "Find A ∪ B, where A = {A}, B = {B}",
+    discSetUnionExplain: "A ∪ B contains every element from either set, listed once: {result}.",
+
+    discTopicTitle_set_intersection: "Set Intersection", discTopicDesc_set_intersection: "Find the elements two sets share",
+    discLearn_set_intersection: "The intersection of two sets A and B, written A ∩ B, contains only the elements that appear in both A and B.\n\nExample: find A ∩ B, where A = {1, 2, 3} and B = {2, 3, 4}.\nA ∩ B = {2, 3}.",
+    discSetIntersectionPrompt: "Find A ∩ B, where A = {A}, B = {B}",
+    discSetIntersectionExplain: "A ∩ B contains only the elements shared by both sets: {result}.",
+
+    discTopicTitle_set_difference: "Set Difference", discTopicDesc_set_difference: "Find what's in A but not in B",
+    discLearn_set_difference: "The difference A − B contains every element of A that is not also in B.\n\nExample: find A − B, where A = {1, 2, 3} and B = {2, 4}.\nA − B = {1, 3}.",
+    discSetDifferencePrompt: "Find A − B, where A = {A}, B = {B}",
+    discSetDifferenceExplain: "A − B keeps only A's elements that are not also in B: {result}.",
+
+    discTopicTitle_power_set_size: "Power Set Size", discTopicDesc_power_set_size: "Count the subsets of a set",
+    discLearn_power_set_size: "The power set of S, P(S), is the set of all possible subsets of S (including the empty set and S itself). If S has n elements, P(S) has 2ⁿ elements.\n\nExample: how many subsets does {a, b, c} have?\n|P(S)| = 2³ = 8.",
+    discPowerSetPrompt: "How many subsets does S = {S} have? (|S| = {n})",
+    discPowerSetExplain: "|P(S)| = 2ⁿ = 2^{n} = {answer}.",
+
+    discTopicTitle_binary_to_decimal: "Binary to Decimal", discTopicDesc_binary_to_decimal: "Convert a binary number to decimal",
+    discLearn_binary_to_decimal: "Each digit of a binary number represents a power of 2, counting from the right starting at 2⁰. Add up the powers of 2 where the digit is 1.\n\nExample: convert 1011₂ to decimal.\n1011₂ = 1×2³ + 0×2² + 1×2¹ + 1×2⁰ = 8 + 0 + 2 + 1 = 11.",
+    discBinToDecPrompt: "Convert to decimal: {bin}₂",
+    discBinToDecExplain: "Add the powers of 2 where the digit is 1: {bin}₂ = {answer} in decimal.",
+
+    discTopicTitle_decimal_to_binary: "Decimal to Binary", discTopicDesc_decimal_to_binary: "Convert a decimal number to binary",
+    discLearn_decimal_to_binary: "To convert a decimal number to binary, repeatedly divide by 2 and record the remainders. Reading the remainders from last to first gives the binary number.\n\nExample: convert 13 to binary.\n13÷2=6 r1, 6÷2=3 r0, 3÷2=1 r1, 1÷2=0 r1.\nReading remainders bottom to top: 1101.",
+    discDecToBinPrompt: "Convert to binary: {dec}",
+    discDecToBinExplain: "Repeatedly divide {dec} by 2 and read the remainders bottom to top: {answer}.",
+
+    discTopicTitle_modular_arithmetic: "Modular Arithmetic", discTopicDesc_modular_arithmetic: "Find the remainder: a mod n",
+    discLearn_modular_arithmetic: "a mod n is the remainder left over when a is divided by n.\n\nExample: find 17 mod 5.\n17 = 5 × 3 + 2, so 17 mod 5 = 2.",
+    discModularPrompt: "Evaluate: {a} mod {n}",
+    discModularExplain: "{a} = {n} × {q} + {answer} (since {n} × {q} = {product}), so {a} mod {n} = {answer}.",
+
+    discTopicTitle_gcd: "Greatest Common Divisor", discTopicDesc_gcd: "Find gcd(a, b)",
+    discLearn_gcd: "The greatest common divisor of two numbers is the largest number that divides both evenly. The Euclidean algorithm finds it quickly: repeatedly replace the larger number with the remainder of dividing it by the smaller, until the remainder is 0 — the last nonzero remainder is the gcd.\n\nExample: find gcd(48, 18).\n48 = 2×18 + 12. 18 = 1×12 + 6. 12 = 2×6 + 0.\nThe gcd is 6.",
+    discGcdPrompt: "Find gcd({a}, {b}).",
+    discGcdExplain: "Using the Euclidean algorithm on {a} and {b} gives gcd = {answer}.",
+
+    discTopicTitle_lcm: "Least Common Multiple", discTopicDesc_lcm: "Find lcm(a, b)",
+    discLearn_lcm: "The least common multiple of two numbers is the smallest number that both divide evenly. It can be found from the gcd: lcm(a, b) = (a × b) / gcd(a, b).\n\nExample: find lcm(4, 6).\ngcd(4, 6) = 2. lcm(4, 6) = (4×6)/2 = 24/2 = 12.",
+    discLcmPrompt: "Find lcm({a}, {b}).",
+    discLcmExplain: "gcd({a}, {b}) = {g}. lcm({a}, {b}) = ({a}×{b})/{g} = {product}/{g} = {answer}.",
+
+    discTopicTitle_logic_truth_table: "Propositional Logic", discTopicDesc_logic_truth_table: "Evaluate a logical expression",
+    discLearn_logic_truth_table: "Propositional logic combines true/false statements with logical connectives: ∧ (and — true only if both are true), ∨ (or — true if either is true), ¬ (not — flips the value), → (implies — false only when the first is true and the second is false), ⊕ (xor — true only when exactly one is true).\n\nExample: if P = True and Q = False, evaluate P → Q.\nP → Q is false only when P is true and Q is false — which is exactly this case, so P → Q = False.",
+    discLogicPrompt: "If P = {P} and Q = {Q}, evaluate: {expr}",
+    discLogicExplain: "{expr} evaluates to {answer}.",
 
     businessTitle: "Business Concepts",
     businessSub: "Finance, economics and the tech companies shaping them. Learn 3 concepts, then get quizzed on one — multiple choice the first time, typed from memory after that.",
@@ -5386,6 +5459,78 @@ const I18N = {
     linalgInversePrompt: "求 A⁻¹，其中 A = {A}（其行列式为 ±1，因此 A⁻¹ 的每个元素都是整数）",
     linalgInverseExplain: "det(A) = {det}。A⁻¹ = (1/{det}) × [[d,-b],[-c,a]] = {C}。",
 
+    discreteTitle: "离散数学",
+    discreteSub: "第四个月：计数、集合、数论与逻辑——计算机科学背后的数学。选择一个主题学习概念，然后练习。",
+    backToDiscMenuBtn: "返回离散数学",
+    discSetAnswerPlaceholder: "例如 1, 2, 3",
+    discBinaryAnswerPlaceholder: "例如 1011",
+    discBoolAnswerPlaceholder: "true 或 false",
+
+    discTopicTitle_factorial: "阶乘", discTopicDesc_factorial: "计算 n!",
+    discLearn_factorial: "正整数 n 的阶乘，写作 n!，是从 n 到 1 的所有整数的乘积：n! = n × (n-1) × (n-2) × ... × 1。\n\n例如：计算 5!。\n5! = 5 × 4 × 3 × 2 × 1 = 120。",
+    discFactorialPrompt: "计算：{n}!",
+    discFactorialExplain: "{n}! = {expr} = {answer}。",
+
+    discTopicTitle_permutations: "排列", discTopicDesc_permutations: "计算有顺序的排列数：P(n, r)",
+    discLearn_permutations: "P(n, r) 表示从 n 个元素中选出 r 个进行排列（考虑顺序）的方式数。P(n, r) = n × (n-1) × ... × (n-r+1)，也等于 n!/(n-r)!。\n\n例如：求 P(5, 2)。\nP(5, 2) = 5 × 4 = 20。",
+    discPermutationsPrompt: "计算：P({n}, {r})",
+    discPermutationsExplain: "P(n, r) 是从 n 开始往下数 r 个数相乘：{expr} = {answer}。",
+
+    discTopicTitle_combinations: "组合", discTopicDesc_combinations: "计算无顺序的选择数：C(n, r)",
+    discLearn_combinations: "C(n, r) 表示从 n 个元素中选出 r 个（不考虑顺序）的方式数：C(n, r) = n! / (r! × (n-r)!)。\n\n例如：求 C(5, 2)。\nC(5, 2) = 5! / (2! × 3!) = 120 / (2 × 6) = 10。",
+    discCombinationsPrompt: "计算：C({n}, {r})",
+    discCombinationsExplain: "C(n, r) = n! / (r! × (n-r)!) = {n}! / ({r}! × {nr}!) = {answer}。",
+
+    discTopicTitle_set_union: "并集", discTopicDesc_set_union: "合并两个集合的全部元素",
+    discLearn_set_union: "两个集合 A 与 B 的并集，记作 A ∪ B，包含所有属于 A、属于 B 或两者都属于的元素——不重复。\n\n例如：求 A ∪ B，其中 A = {1, 2, 3}，B = {3, 4}。\nA ∪ B = {1, 2, 3, 4}。请以逗号分隔的从小到大的列表形式作答。",
+    discSetUnionPrompt: "求 A ∪ B，其中 A = {A}，B = {B}",
+    discSetUnionExplain: "A ∪ B 包含两个集合中出现过的所有元素，且只列一次：{result}。",
+
+    discTopicTitle_set_intersection: "交集", discTopicDesc_set_intersection: "找出两个集合共有的元素",
+    discLearn_set_intersection: "两个集合 A 与 B 的交集，记作 A ∩ B，只包含同时属于 A 和 B 的元素。\n\n例如：求 A ∩ B，其中 A = {1, 2, 3}，B = {2, 3, 4}。\nA ∩ B = {2, 3}。",
+    discSetIntersectionPrompt: "求 A ∩ B，其中 A = {A}，B = {B}",
+    discSetIntersectionExplain: "A ∩ B 只包含两个集合共有的元素：{result}。",
+
+    discTopicTitle_set_difference: "差集", discTopicDesc_set_difference: "找出属于 A 但不属于 B 的元素",
+    discLearn_set_difference: "差集 A − B 包含所有属于 A 但不属于 B 的元素。\n\n例如：求 A − B，其中 A = {1, 2, 3}，B = {2, 4}。\nA − B = {1, 3}。",
+    discSetDifferencePrompt: "求 A − B，其中 A = {A}，B = {B}",
+    discSetDifferenceExplain: "A − B 只保留 A 中不属于 B 的元素：{result}。",
+
+    discTopicTitle_power_set_size: "幂集大小", discTopicDesc_power_set_size: "计算一个集合的子集个数",
+    discLearn_power_set_size: "集合 S 的幂集 P(S) 是 S 的所有可能子集组成的集合（包括空集和 S 本身）。若 S 有 n 个元素，则 P(S) 有 2ⁿ 个元素。\n\n例如：{a, b, c} 有多少个子集？\n|P(S)| = 2³ = 8。",
+    discPowerSetPrompt: "S = {S} 有多少个子集？（|S| = {n}）",
+    discPowerSetExplain: "|P(S)| = 2ⁿ = 2^{n} = {answer}。",
+
+    discTopicTitle_binary_to_decimal: "二进制转十进制", discTopicDesc_binary_to_decimal: "把二进制数转换成十进制",
+    discLearn_binary_to_decimal: "二进制数的每一位代表 2 的一个幂，从右边的 2⁰ 开始计数。把数字为 1 的那些位对应的 2 的幂相加即可。\n\n例如：把 1011₂ 转换成十进制。\n1011₂ = 1×2³ + 0×2² + 1×2¹ + 1×2⁰ = 8 + 0 + 2 + 1 = 11。",
+    discBinToDecPrompt: "转换成十进制：{bin}₂",
+    discBinToDecExplain: "把数字为 1 的位对应的 2 的幂相加：{bin}₂ 的十进制值是 {answer}。",
+
+    discTopicTitle_decimal_to_binary: "十进制转二进制", discTopicDesc_decimal_to_binary: "把十进制数转换成二进制",
+    discLearn_decimal_to_binary: "把十进制数转换成二进制时，反复除以 2 并记录余数。把余数从最后一个读到第一个，就得到二进制数。\n\n例如：把 13 转换成二进制。\n13÷2=6 余1，6÷2=3 余0，3÷2=1 余1，1÷2=0 余1。\n从下往上读余数：1101。",
+    discDecToBinPrompt: "转换成二进制：{dec}",
+    discDecToBinExplain: "反复把 {dec} 除以 2，从下往上读余数：{answer}。",
+
+    discTopicTitle_modular_arithmetic: "模运算", discTopicDesc_modular_arithmetic: "求余数：a mod n",
+    discLearn_modular_arithmetic: "a mod n 是 a 除以 n 后剩下的余数。\n\n例如：求 17 mod 5。\n17 = 5 × 3 + 2，所以 17 mod 5 = 2。",
+    discModularPrompt: "计算：{a} mod {n}",
+    discModularExplain: "{a} = {n} × {q} + {answer}（因为 {n} × {q} = {product}），所以 {a} mod {n} = {answer}。",
+
+    discTopicTitle_gcd: "最大公约数", discTopicDesc_gcd: "求 gcd(a, b)",
+    discLearn_gcd: "两个数的最大公约数是能同时整除这两个数的最大的数。辗转相除法可以快速求出：反复用较小数去除较大数并取余数，直到余数为 0，最后一个非零余数就是最大公约数。\n\n例如：求 gcd(48, 18)。\n48 = 2×18 + 12。18 = 1×12 + 6。12 = 2×6 + 0。\n最大公约数是 6。",
+    discGcdPrompt: "求 gcd({a}, {b})。",
+    discGcdExplain: "对 {a} 和 {b} 使用辗转相除法，得到 gcd = {answer}。",
+
+    discTopicTitle_lcm: "最小公倍数", discTopicDesc_lcm: "求 lcm(a, b)",
+    discLearn_lcm: "两个数的最小公倍数是能同时被这两个数整除的最小的数，可以用最大公约数求出：lcm(a, b) = (a × b) / gcd(a, b)。\n\n例如：求 lcm(4, 6)。\ngcd(4, 6) = 2。lcm(4, 6) = (4×6)/2 = 24/2 = 12。",
+    discLcmPrompt: "求 lcm({a}, {b})。",
+    discLcmExplain: "gcd({a}, {b}) = {g}。lcm({a}, {b}) = ({a}×{b})/{g} = {product}/{g} = {answer}。",
+
+    discTopicTitle_logic_truth_table: "命题逻辑", discTopicDesc_logic_truth_table: "计算一个逻辑表达式的真值",
+    discLearn_logic_truth_table: "命题逻辑用逻辑联结词连接真/假命题：∧（与——两者都为真时才为真）、∨（或——任一为真即为真）、¬（非——取反）、→（蕴含——只有前真后假时为假）、⊕（异或——恰好一个为真时才为真）。\n\n例如：若 P = True，Q = False，求 P → Q 的值。\nP → Q 只有在 P 为真、Q 为假时才为假——这正是本例的情况，所以 P → Q = False。",
+    discLogicPrompt: "若 P = {P}，Q = {Q}，求：{expr}",
+    discLogicExplain: "{expr} 的值是 {answer}。",
+
     businessTitle: "商业概念",
     businessSub: "金融、经济学，以及塑造它们的科技公司。先学习3个概念，再接受其中一个的测验——第一次是选择题，之后要凭记忆手动输入。",
     bizFinanceTitle: "金融", bizFinanceDesc: "金钱、投资，以及企业如何管理它们",
@@ -5823,6 +5968,78 @@ const I18N = {
     linalgInversePrompt: "A⁻¹ འཚོལ་ཤིག, A = {A} (དེའི་ངེས་གྲངས ±1 ཡིན་སྟབས A⁻¹ ཡི་གྲངས་རེ་རེ་གྲངས་ཧྲིལ་པོ་ཡིན)",
     linalgInverseExplain: "det(A) = {det}། A⁻¹ = (1/{det}) × [[d,-b],[-c,a]] = {C}།",
 
+    discreteTitle: "སོ་སོའི་རྩིས།",
+    discreteSub: "ཟླ་བ་བཞི་པ། བགྲང་རྩིས, ཚོགས་སྡེ, གྲངས་རིག་དང་གཏན་ཚིགས་རིག་པ — གློག་ཀླད་ཚན་རིག་གི་རྩིས་གཞི། བརྗོད་གཞི་ཞིག་འདེམས་ནས་གོ་དོན་སློབ་ཞིང་རྗེས་སུ་སྦྱོང་བརྡར་གྱིས།",
+    backToDiscMenuBtn: "སོ་སོའི་རྩིས་སུ་ལོག",
+    discSetAnswerPlaceholder: "དཔེར་ན་ 1, 2, 3",
+    discBinaryAnswerPlaceholder: "དཔེར་ན་ 1011",
+    discBoolAnswerPlaceholder: "true ཡང་ན false",
+
+    discTopicTitle_factorial: "འཕར་སྡོམ།", discTopicDesc_factorial: "n! རྩིས་ཤིག",
+    discLearn_factorial: "ཐོག་མའི་གྲངས་ཧྲིལ་པོ n ཡི་འཕར་སྡོམ, n! ཞེས་འབྲི་བ, ནི n ནས 1 བར་གྱི་གྲངས་ཧྲིལ་པོ་ཚང་མའི་འཕར་འབྲས་ཡིན: n! = n × (n-1) × (n-2) × ... × 1།\n\nདཔེར་བརྗོད། 5! རྩིས་ཤིག།\n5! = 5 × 4 × 3 × 2 × 1 = 120།",
+    discFactorialPrompt: "རྩིས་ཤིག: {n}!",
+    discFactorialExplain: "{n}! = {expr} = {answer}།",
+
+    discTopicTitle_permutations: "གོ་རིམ་བསྒྲེས་ཐབས།", discTopicDesc_permutations: "གོ་རིམ་ཡོད་པའི་བསྒྲེས་ཐབས་གྲངས: P(n, r)",
+    discLearn_permutations: "P(n, r) གིས n ནང་ནས r བདམས་ནས་གོ་རིམ་བཞིན་བསྒྲེས་ཐབས་ག་ཚོད་ཡོད་མིན་སྟོན། P(n, r) = n × (n-1) × ... × (n-r+1), འདི་ནི n!/(n-r)! དང་མཚུངས།\n\nདཔེར་བརྗོད། P(5, 2) འཚོལ་ཤིག།\nP(5, 2) = 5 × 4 = 20།",
+    discPermutationsPrompt: "རྩིས་ཤིག: P({n}, {r})",
+    discPermutationsExplain: "P(n, r) ནི n ནས་མར་བགྲངས་པའི་གྲངས r འཕར་བ: {expr} = {answer}།",
+
+    discTopicTitle_combinations: "འདེམས་ཐབས།", discTopicDesc_combinations: "གོ་རིམ་མེད་པའི་འདེམས་ཐབས་གྲངས: C(n, r)",
+    discLearn_combinations: "C(n, r) གིས n ནང་ནས r བདམས་ཐབས (གོ་རིམ་མི་བལྟ) ག་ཚོད་ཡོད་མིན་སྟོན: C(n, r) = n! / (r! × (n-r)!)།\n\nདཔེར་བརྗོད། C(5, 2) འཚོལ་ཤིག།\nC(5, 2) = 5! / (2! × 3!) = 120 / (2 × 6) = 10།",
+    discCombinationsPrompt: "རྩིས་ཤིག: C({n}, {r})",
+    discCombinationsExplain: "C(n, r) = n! / (r! × (n-r)!) = {n}! / ({r}! × {nr}!) = {answer}།",
+
+    discTopicTitle_set_union: "སྡོམ་ཚོགས།", discTopicDesc_set_union: "ཚོགས་སྡེ་གཉིས་ཀྱི་ཆ་ཤས་ཚང་མ་མཉམ་སྦྱོར།",
+    discLearn_set_union: "ཚོགས་སྡེ A དང B ཡི་སྡོམ་ཚོགས, A ∪ B ཞེས་འབྲི་བ, ནི A ནང་ཡོད་པའམ B ནང་ཡོད་པའམ་གཉིས་ཀར་ཡོད་པའི་ཆ་ཤས་ཚང་མ་ཡིན—ཡང་བསྐྱར་མི་འཁོད།\n\nདཔེར་བརྗོད། A ∪ B འཚོལ་ཤིག, A = {1, 2, 3}, B = {3, 4} ཡིན་ན།\nA ∪ B = {1, 2, 3, 4}། ལན་ནི་ཆུང་བ་ནས་ཆེ་བར་གོ་རིམ་བཞིན་ལས་རྟགས (,)ཡིས་ཕྱེས་ནས་འབྲི་རོགས།",
+    discSetUnionPrompt: "A ∪ B འཚོལ་ཤིག, A = {A}, B = {B}",
+    discSetUnionExplain: "A ∪ B ནི་ཚོགས་སྡེ་གང་རུང་ནང་ཡོད་པའི་ཆ་ཤས་ཚང་མ་ལན་གཅིག་ཏུ་བསྡུས་པ: {result}།",
+
+    discTopicTitle_set_intersection: "མཉམ་ཚོགས།", discTopicDesc_set_intersection: "ཚོགས་སྡེ་གཉིས་ཀྱིས་མཉམ་དུ་ཡོད་པའི་ཆ་ཤས་འཚོལ།",
+    discLearn_set_intersection: "ཚོགས་སྡེ A དང B ཡི་མཉམ་ཚོགས, A ∩ B ཞེས་འབྲི་བ, ནི A དང B གཉིས་ཀར་ཡོད་པའི་ཆ་ཤས་ཁོ་ན་ཡིན།\n\nདཔེར་བརྗོད། A ∩ B འཚོལ་ཤིག, A = {1, 2, 3}, B = {2, 3, 4} ཡིན་ན།\nA ∩ B = {2, 3}།",
+    discSetIntersectionPrompt: "A ∩ B འཚོལ་ཤིག, A = {A}, B = {B}",
+    discSetIntersectionExplain: "A ∩ B ནི་ཚོགས་སྡེ་གཉིས་ཀར་མཉམ་དུ་ཡོད་པའི་ཆ་ཤས་ཁོ་ན: {result}།",
+
+    discTopicTitle_set_difference: "ཁྱད་ཚོགས།", discTopicDesc_set_difference: "A ནང་ཡོད་ལ B ནང་མེད་པའི་ཆ་ཤས་འཚོལ།",
+    discLearn_set_difference: "ཁྱད་ཚོགས A − B ནི A ནང་ཡོད་ལ B ནང་མེད་པའི་ཆ་ཤས་ཚང་མ་ཡིན།\n\nདཔེར་བརྗོད། A − B འཚོལ་ཤིག, A = {1, 2, 3}, B = {2, 4} ཡིན་ན།\nA − B = {1, 3}།",
+    discSetDifferencePrompt: "A − B འཚོལ་ཤིག, A = {A}, B = {B}",
+    discSetDifferenceExplain: "A − B ནི A ཡི་ཆ་ཤས་ནང་ནས B ལ་མེད་པ་ཁོ་ན་བཞག་པ: {result}།",
+
+    discTopicTitle_power_set_size: "ནང་ཚོགས་གྲངས།", discTopicDesc_power_set_size: "ཚོགས་སྡེ་ཞིག་གི་ནང་ཚོགས་གྲངས་བགྲང་།",
+    discLearn_power_set_size: "S ཡི་ནང་ཚོགས་ཚང་མ (P(S)) ནི S ཡི་ནང་ཚོགས་ཐེབས་ཆོག་པ་ཚང་མ་ཡིན (སྟོང་ཚོགས་དང S རང་ཉིད་ཚུད)། S ལ་ཆ་ཤས n ཡོད་ན P(S) ལ་ཆ་ཤས 2ⁿ ཡོད།\n\nདཔེར་བརྗོད། {a, b, c} ལ་ནང་ཚོགས་ག་ཚོད་ཡོད་དམ།\n|P(S)| = 2³ = 8།",
+    discPowerSetPrompt: "S = {S} ལ་ནང་ཚོགས་ག་ཚོད་ཡོད་དམ? (|S| = {n})",
+    discPowerSetExplain: "|P(S)| = 2ⁿ = 2^{n} = {answer}།",
+
+    discTopicTitle_binary_to_decimal: "གཉིས་རྩིས་ནས་བཅུ་རྩིས།", discTopicDesc_binary_to_decimal: "གཉིས་རྩིས་གྲངས་བཅུ་རྩིས་སུ་བསྒྱུར།",
+    discLearn_binary_to_decimal: "གཉིས་རྩིས་གྲངས་ཤིག་གི་ཨང་ཀི་རེ་རེས 2 ཡི་འཕར་ཆ་ཞིག་མཚོན, གཡས་ནས 2⁰ནས་བགྲང་། ཨང་ཀི1 ཡོད་སའི 2 ཡི་འཕར་ཆ་རྣམས་སྣོན་ཤིག།\n\nདཔེར་བརྗོད། 1011₂ བཅུ་རྩིས་སུ་བསྒྱུར་ཤིག།\n1011₂ = 1×2³ + 0×2² + 1×2¹ + 1×2⁰ = 8 + 0 + 2 + 1 = 11།",
+    discBinToDecPrompt: "བཅུ་རྩིས་སུ་བསྒྱུར་ཤིག: {bin}₂",
+    discBinToDecExplain: "ཨང་ཀི1 ཡོད་སའི 2 ཡི་འཕར་ཆ་རྣམས་སྣོན: {bin}₂ ནི་བཅུ་རྩིས་ནང {answer} ཡིན།",
+
+    discTopicTitle_decimal_to_binary: "བཅུ་རྩིས་ནས་གཉིས་རྩིས།", discTopicDesc_decimal_to_binary: "བཅུ་རྩིས་གྲངས་གཉིས་རྩིས་སུ་བསྒྱུར།",
+    discLearn_decimal_to_binary: "བཅུ་རྩིས་གྲངས་གཉིས་རྩིས་སུ་བསྒྱུར་བར 2 ཡིས་ཡང་ཡང་བགོས་ནས་ལྷག་མ་ཐོ་འགོད་བྱོས། ལྷག་མ་རྣམས་མཇུག་ནས་འགོར་ཀློག་ན་གཉིས་རྩིས་གྲངས་ཐོན།\n\nདཔེར་བརྗོད། 13 གཉིས་རྩིས་སུ་བསྒྱུར་ཤིག།\n13÷2=6 ལྷག1, 6÷2=3 ལྷག0, 3÷2=1 ལྷག1, 1÷2=0 ལྷག1།\nལྷག་མ་རྣམས་འོག་ནས་སྟེང་དུ་ཀློག: 1101།",
+    discDecToBinPrompt: "གཉིས་རྩིས་སུ་བསྒྱུར་ཤིག: {dec}",
+    discDecToBinExplain: "{dec} ལ 2 ཡིས་ཡང་ཡང་བགོས་ནས་ལྷག་མ་རྣམས་འོག་ནས་སྟེང་དུ་ཀློག: {answer}།",
+
+    discTopicTitle_modular_arithmetic: "ལྷག་མ་རྩིས།", discTopicDesc_modular_arithmetic: "ལྷག་མ་འཚོལ: a mod n",
+    discLearn_modular_arithmetic: "a mod n ནི a ལ n ཡིས་བགོས་རྗེས་ལྷག་པའི་ལྷག་མ་ཡིན།\n\nདཔེར་བརྗོད། 17 mod 5 འཚོལ་ཤིག།\n17 = 5 × 3 + 2, དེས་ན 17 mod 5 = 2།",
+    discModularPrompt: "རྩིས་ཤིག: {a} mod {n}",
+    discModularExplain: "{a} = {n} × {q} + {answer} ({n} × {q} = {product} ཡིན་སྟབས), དེས་ན {a} mod {n} = {answer}།",
+
+    discTopicTitle_gcd: "ཆ་མཉམ་གྲངས་ཆེ་ཤོས།", discTopicDesc_gcd: "gcd(a, b) འཚོལ།",
+    discLearn_gcd: "གྲངས་གཉིས་ཀྱི་ཆ་མཉམ་གྲངས་ཆེ་ཤོས་ནི་གཉིས་ཀ་ཆ་མཉམ་དུ་བགོ་ཐུབ་པའི་གྲངས་ཆེ་ཤོས་ཡིན། ཡུ་ཀླིད་ཀྱི་འཁོར་རྩིས་ཐབས་ཀྱིས་མགྱོགས་པོར་འཚོལ་ཐུབ: གྲངས་ཆེ་བ་དེ་ཆུང་བས་བགོས་ནས་ལྷག་མ་བླངས, ལྷག་མ0ཐོན་བར་ཡང་ཡང་བྱོས—ལྷག་མ་མཐའ་མའི་ཀླད་ཀོར་མིན་པ་དེ་ཆ་མཉམ་གྲངས་ཆེ་ཤོས་ཡིན།\n\nདཔེར་བརྗོད། gcd(48, 18) འཚོལ་ཤིག།\n48 = 2×18 + 12། 18 = 1×12 + 6། 12 = 2×6 + 0།\nཆ་མཉམ་གྲངས་ཆེ་ཤོས་ནི6ཡིན།",
+    discGcdPrompt: "gcd({a}, {b}) འཚོལ་ཤིག།",
+    discGcdExplain: "{a} དང {b} ལ་ཡུ་ཀླིད་ཀྱི་འཁོར་རྩིས་ཐབས་སྤྱད་ན gcd = {answer}།",
+
+    discTopicTitle_lcm: "ཆ་མཉམ་འཕར་ཆུང་ཤོས།", discTopicDesc_lcm: "lcm(a, b) འཚོལ།",
+    discLearn_lcm: "གྲངས་གཉིས་ཀྱི་ཆ་མཉམ་འཕར་ཆུང་ཤོས་ནི་གཉིས་ཀ་ཡིས་ཆ་མཉམ་དུ་བགོ་ཐུབ་པའི་གྲངས་ཆུང་ཤོས་ཡིན། ཆ་མཉམ་གྲངས་ཆེ་ཤོས་ལས་འཚོལ་ཐུབ: lcm(a, b) = (a × b) / gcd(a, b)།\n\nདཔེར་བརྗོད། lcm(4, 6) འཚོལ་ཤིག།\ngcd(4, 6) = 2། lcm(4, 6) = (4×6)/2 = 24/2 = 12།",
+    discLcmPrompt: "lcm({a}, {b}) འཚོལ་ཤིག།",
+    discLcmExplain: "gcd({a}, {b}) = {g}། lcm({a}, {b}) = ({a}×{b})/{g} = {product}/{g} = {answer}།",
+
+    discTopicTitle_logic_truth_table: "གཏན་ཚིགས་རིག་པ།", discTopicDesc_logic_truth_table: "གཏན་ཚིགས་བརྗོད་པ་ཞིག་གི་བདེན་རྫུན་རྩིས།",
+    discLearn_logic_truth_table: "གཏན་ཚིགས་རིག་པས་བདེན་རྫུན་གྱི་བརྗོད་པ་རྣམས་སྦྲེལ་སྒྲ་ཡིས་མཉམ་སྦྱོར་བྱེད: ∧ (དང—གཉིས་ཀ་བདེན་ན་མ་གཏོགས་བདེན་མིན), ∨ (ཡང་ན—གང་རུང་བདེན་ན་བདེན), ¬ (མིན—ཐང་ལྡོག), → (འཕྲོད་ན—དང་པོ་བདེན་ལ་གཉིས་པ་རྫུན་ན་མ་གཏོགས་རྫུན་མིན), ⊕ (གང་རུང—གཅིག་པུ་བདེན་ན་མ་གཏོགས་བདེན་མིན)།\n\nདཔེར་བརྗོད། P = True, Q = False ཡིན་ན P → Q རྩིས་ཤིག།\nP → Q ནི P བདེན་ལ Q རྫུན་སྐབས་མ་གཏོགས་རྫུན་མིན—འདི་ཉིད་དེའི་གནས་སྟངས་ཡིན་སྟབས P → Q = False ཡིན།",
+    discLogicPrompt: "P = {P}, Q = {Q} ཡིན་ན, རྩིས་ཤིག: {expr}",
+    discLogicExplain: "{expr} གི་གྲངས་འབྲས་ནི {answer} ཡིན།",
+
     businessTitle: "ཚོང་ལས་དོན་ཚན།",
     businessSub: "དངུལ་རྩིས, དཔལ་འབྱོར་རིག་པ, དེ་དག་བཟོ་མཁན་གྱི་ལག་རྩལ་ཚོང་ལས། དོན་ཚན 3 སློབ་ནས་གཅིག་གི་ཐད་ཀར་བརྟག་ཞིབ་བྱེད། ཐོག་མར་གདམ་ཁ་བཞིའི་དྲི་བ, རྗེས་སུ་དྲན་པ་ལས་ཡིག་འབྲི་དགོས།",
     bizFinanceTitle: "དངུལ་རྩིས།", bizFinanceDesc: "དངུལ, རྩ་ཆེའི་བཙོང་ཉོ, ཚོང་ལས་ཀྱིས་དེ་དག་ཇི་ལྟར་སྐྱོང་མིན།",
@@ -5984,6 +6201,9 @@ document.addEventListener('keydown', function(e){
   } else if(state.screen === 'linalg_practice' && state.linalgSession){
     if(state.linalgSession.answered) nextLinAlgQuestion();
     else submitLinAlgAnswer();
+  } else if(state.screen === 'disc_practice' && state.discSession){
+    if(state.discSession.answered) nextDiscQuestion();
+    else submitDiscAnswer();
   }
 });
 
@@ -6029,6 +6249,10 @@ const screens = {
   linalg_learn: renderLinAlgLearn,
   linalg_practice: renderLinAlgPractice,
   linalg_complete: renderLinAlgComplete,
+  disc_menu: renderDiscMenu,
+  disc_learn: renderDiscLearn,
+  disc_practice: renderDiscPractice,
+  disc_complete: renderDiscComplete,
   business_menu: renderBusinessMenu,
   biz_week_menu: renderCategoryWeekMenu,
   business_learn: renderBusinessLearn,
@@ -6286,6 +6510,10 @@ function renderHome(){
       <button class="practice-tile" onclick="state.screen='linalg_menu'; render();">
         <div class="glyph">🧊</div>
         <div class="pt-title">${t('linalgTitle')}</div>
+      </button>
+      <button class="practice-tile" onclick="state.screen='disc_menu'; render();">
+        <div class="glyph">🧩</div>
+        <div class="pt-title">${t('discreteTitle')}</div>
       </button>
       <button class="practice-tile" onclick="state.screen='business_menu'; render();">
         <div class="glyph">💼</div>
@@ -7784,6 +8012,377 @@ function renderLinAlgComplete(){
 
 function backToLinAlgMenu(){ state.screen='linalg_menu'; render(); }
 function exitLinAlgPractice(){ state.screen='linalg_menu'; render(); }
+
+// ---- discrete math learning: Month 4 of the planned progression (algebra ->
+// calculus -> linear algebra -> discrete math -> probability). Same
+// architecture as the previous three months, but the answer shape varies
+// more per topic than any month so far: plain integers (factorial, gcd),
+// a binary string (decimal_to_binary — checked as a normalized string, not a
+// number), a comma-separated sorted list (the three set operations — parsed
+// and compared as arrays so element order in the typed answer doesn't
+// matter), and a literal "true"/"false" word (the propositional-logic
+// topic). Set problems are built from one shared helper that partitions a
+// shuffled number pool into "only in A", "only in B" and "in both", so
+// union/intersection/difference always have a well-defined, non-trivial
+// answer instead of risking an accidental empty set.
+function factorial(n){ let r=1; for(let i=2;i<=n;i++) r*=i; return r; }
+function setText(arr){ return `{${arr.join(', ')}}`; }
+function parseSetAnswer(str){
+  if(str==null) return null;
+  const cleaned = str.replace(/[{}]/g,'').trim();
+  if(cleaned==='') return [];
+  return cleaned.split(',').map(s=>Number(s.trim())).filter(n=>!Number.isNaN(n)).sort((a,b)=>a-b);
+}
+function arraysEqual(a,b){ return a.length===b.length && a.every((v,i)=>v===b[i]); }
+function discBuildSets(){
+  const pool = Array.from({length:12},(_,i)=>i+1);
+  for(let i=pool.length-1;i>0;i--){ const j=randInt(0,i); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+  const onlyACount = randInt(2,3), onlyBCount = randInt(2,3), sharedCount = randInt(1,2);
+  const onlyA = pool.slice(0, onlyACount).sort((a,b)=>a-b);
+  const onlyB = pool.slice(onlyACount, onlyACount+onlyBCount).sort((a,b)=>a-b);
+  const shared = pool.slice(onlyACount+onlyBCount, onlyACount+onlyBCount+sharedCount).sort((a,b)=>a-b);
+  const A = [...onlyA, ...shared].sort((a,b)=>a-b);
+  const B = [...onlyB, ...shared].sort((a,b)=>a-b);
+  return {A, B, onlyA, onlyB, shared};
+}
+function parseBool(str){
+  if(str==null) return null;
+  const s = str.trim().toLowerCase();
+  if(['true','t','1'].includes(s)) return true;
+  if(['false','f','0'].includes(s)) return false;
+  return null;
+}
+const DISC_LOGIC_TEMPLATES = [
+  {expr:'P ∧ Q', calc:(P,Q)=>P&&Q},
+  {expr:'P ∨ Q', calc:(P,Q)=>P||Q},
+  {expr:'¬P', calc:(P,Q)=>!P},
+  {expr:'¬Q', calc:(P,Q)=>!Q},
+  {expr:'P → Q', calc:(P,Q)=>(!P)||Q},
+  {expr:'P ⊕ Q', calc:(P,Q)=>P!==Q},
+  {expr:'¬P ∨ Q', calc:(P,Q)=>(!P)||Q},
+  {expr:'P ∧ ¬Q', calc:(P,Q)=>P&&!Q},
+  {expr:'¬(P ∧ Q)', calc:(P,Q)=>!(P&&Q)},
+];
+
+function discProblemFactorial(){
+  const n = randInt(3,8);
+  const terms = []; for(let i=n;i>=1;i--) terms.push(i);
+  const answer = factorial(n);
+  return {
+    promptText: t('discFactorialPrompt', {n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('discFactorialExplain', {expr:terms.join(' × '), answer}),
+  };
+}
+function discProblemPermutations(){
+  const n = randInt(4,9);
+  const r = randInt(2, n-1);
+  const terms = []; let answer = 1;
+  for(let i=0;i<r;i++){ terms.push(n-i); answer *= (n-i); }
+  return {
+    promptText: t('discPermutationsPrompt', {n, r}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('discPermutationsExplain', {expr:terms.join(' × '), answer}),
+  };
+}
+function discProblemCombinations(){
+  const n = randInt(4,10);
+  const r = randInt(1, n-1);
+  const answer = factorial(n)/(factorial(r)*factorial(n-r));
+  return {
+    promptText: t('discCombinationsPrompt', {n, r}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('discCombinationsExplain', {n, r, nr:n-r, answer}),
+  };
+}
+function discProblemSetUnion(){
+  const {A,B} = discBuildSets();
+  const union = [...new Set([...A,...B])].sort((a,b)=>a-b);
+  return {
+    promptText: t('discSetUnionPrompt', {A:setText(A), B:setText(B)}),
+    inputs: [{key:'ans', placeholder:t('discSetAnswerPlaceholder')}],
+    check(vals){ return arraysEqual(parseSetAnswer(vals.ans)||[], union); },
+    explain: t('discSetUnionExplain', {result:setText(union)}),
+  };
+}
+function discProblemSetIntersection(){
+  const {A,B,shared} = discBuildSets();
+  return {
+    promptText: t('discSetIntersectionPrompt', {A:setText(A), B:setText(B)}),
+    inputs: [{key:'ans', placeholder:t('discSetAnswerPlaceholder')}],
+    check(vals){ return arraysEqual(parseSetAnswer(vals.ans)||[], shared); },
+    explain: t('discSetIntersectionExplain', {result:setText(shared)}),
+  };
+}
+function discProblemSetDifference(){
+  const {A,B,onlyA} = discBuildSets();
+  return {
+    promptText: t('discSetDifferencePrompt', {A:setText(A), B:setText(B)}),
+    inputs: [{key:'ans', placeholder:t('discSetAnswerPlaceholder')}],
+    check(vals){ return arraysEqual(parseSetAnswer(vals.ans)||[], onlyA); },
+    explain: t('discSetDifferenceExplain', {result:setText(onlyA)}),
+  };
+}
+function discProblemPowerSetSize(){
+  const n = randInt(2,6);
+  const pool = Array.from({length:n},(_,i)=>i+1);
+  const answer = Math.pow(2,n);
+  return {
+    promptText: t('discPowerSetPrompt', {S:setText(pool), n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('discPowerSetExplain', {n, answer}),
+  };
+}
+function discProblemBinToDec(){
+  const bits = randInt(4,8);
+  let bin = '1';
+  for(let i=1;i<bits;i++) bin += (Math.random()<0.5?'0':'1');
+  const answer = parseInt(bin,2);
+  return {
+    promptText: t('discBinToDecPrompt', {bin}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('discBinToDecExplain', {bin, answer}),
+  };
+}
+function discProblemDecToBin(){
+  const dec = randInt(5,200);
+  const answer = dec.toString(2);
+  return {
+    promptText: t('discDecToBinPrompt', {dec}),
+    inputs: [{key:'ans', placeholder:t('discBinaryAnswerPlaceholder')}],
+    check(vals){ return (vals.ans||'').trim().replace(/^0+(?=\d)/,'')===answer; },
+    explain: t('discDecToBinExplain', {dec, answer}),
+  };
+}
+function discProblemModular(){
+  const n = randInt(3,12);
+  const a = randInt(10,99);
+  const answer = a % n;
+  const q = Math.floor(a/n);
+  return {
+    promptText: t('discModularPrompt', {a, n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('discModularExplain', {a, n, q, product:q*n, answer}),
+  };
+}
+function discProblemGcd(){
+  const a = randInt(12,96), b = randInt(12,96);
+  const answer = gcd(a,b);
+  return {
+    promptText: t('discGcdPrompt', {a, b}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('discGcdExplain', {a, b, answer}),
+  };
+}
+function discProblemLcm(){
+  const a = randInt(2,20), b = randInt(2,20);
+  const g = gcd(a,b);
+  const answer = (a*b)/g;
+  return {
+    promptText: t('discLcmPrompt', {a, b}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('discLcmExplain', {a, b, g, product:a*b, answer}),
+  };
+}
+function discProblemLogic(){
+  const tmpl = DISC_LOGIC_TEMPLATES[randInt(0,DISC_LOGIC_TEMPLATES.length-1)];
+  const P = Math.random()<0.5, Q = Math.random()<0.5;
+  const answer = tmpl.calc(P,Q);
+  return {
+    promptText: t('discLogicPrompt', {expr:tmpl.expr, P:P?'True':'False', Q:Q?'True':'False'}),
+    inputs: [{key:'ans', placeholder:t('discBoolAnswerPlaceholder')}],
+    check(vals){ return parseBool(vals.ans)===answer; },
+    explain: t('discLogicExplain', {expr:tmpl.expr, answer: answer?'True':'False'}),
+  };
+}
+
+const DISC_TOPICS = [
+  {key:'factorial', build:discProblemFactorial},
+  {key:'permutations', build:discProblemPermutations},
+  {key:'combinations', build:discProblemCombinations},
+  {key:'set_union', build:discProblemSetUnion},
+  {key:'set_intersection', build:discProblemSetIntersection},
+  {key:'set_difference', build:discProblemSetDifference},
+  {key:'power_set_size', build:discProblemPowerSetSize},
+  {key:'binary_to_decimal', build:discProblemBinToDec},
+  {key:'decimal_to_binary', build:discProblemDecToBin},
+  {key:'modular_arithmetic', build:discProblemModular},
+  {key:'gcd', build:discProblemGcd},
+  {key:'lcm', build:discProblemLcm},
+  {key:'logic_truth_table', build:discProblemLogic},
+];
+function discTopicByKey(key){ return DISC_TOPICS.find(x=>x.key===key); }
+
+function renderDiscMenu(){
+  const cards = DISC_TOPICS.map(topic=>{
+    const best = (state.game.discrete && state.game.discrete[topic.key]) ? state.game.discrete[topic.key].best : 0;
+    return `
+    <button class="track-card" onclick="openDiscTopic('${topic.key}')">
+      <div class="glyph">🧩</div>
+      <div>
+        <div class="tc-title">${t('discTopicTitle_'+topic.key)}</div>
+        <div class="tc-sub">${t('discTopicDesc_'+topic.key)}</div>
+      </div>
+      <div class="tc-progress">${best ? t('mathBestLabel',{n:best}) : t('startArrow')}</div>
+    </button>`;
+  }).join('');
+
+  return `
+  ${topbar({back:'goHome()'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>${t('discreteTitle')}</h1>
+      <div class="sub">${t('discreteSub')}</div>
+    </div>
+    <div class="track-grid">${cards}</div>
+  </div>
+  `;
+}
+
+function openDiscTopic(topicKey){
+  state.discSession = {topicKey};
+  state.screen = 'disc_learn';
+  render();
+}
+
+function renderDiscLearn(){
+  const topicKey = state.discSession.topicKey;
+  return `
+  ${topbar({back:'state.screen="disc_menu"; render();'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero" style="padding-top:8px;">
+      <h1 style="font-size:26px;">${t('discTopicTitle_'+topicKey)}</h1>
+    </div>
+    <div class="profile-card" style="text-align:left; line-height:1.6; font-size:14.5px; color:var(--snow-dim); white-space:pre-line;">${t('discLearn_'+topicKey)}</div>
+    <button class="btn btn-primary btn-block" onclick="startDiscPractice('${topicKey}')">${t('startPracticeBtn')}</button>
+  </div>
+  `;
+}
+
+function startDiscPractice(topicKey){
+  const topic = discTopicByKey(topicKey);
+  state.discSession = {
+    topicKey,
+    current: topic.build(),
+    correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
+    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+  };
+  state.screen = 'disc_practice';
+  render();
+  focusDiscInput();
+}
+function focusDiscInput(){
+  setTimeout(()=>{ const el=document.querySelector('.disc-input'); if(el) el.focus(); }, 30);
+}
+
+function renderDiscPractice(){
+  const s = state.discSession;
+  const q = s.current;
+  const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
+
+  const inputsHtml = q.inputs.map(inp=>`
+    <div style="flex:1;">
+      ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
+      <input class="disc-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
+        placeholder="${inp.placeholder||''}"
+        style="text-align:center; font-size:22px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
+        oninput="state.discSession.inputs['${inp.key}']=this.value">
+    </div>`).join('');
+
+  const feedback = s.answered ? `
+    <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
+      <div class="fb-text">
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
+        <div class="fb-sub">${q.explain}</div>
+      </div>
+      <button class="btn btn-light" onclick="nextDiscQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
+    </div>` : '';
+
+  return `
+  ${topbar({back:'exitDiscPractice()'})}
+  <div class="lesson">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;">
+      <div class="hearts-row">${Array.from({length:MATH_MAX_MISTAKES}).map((_,i)=>`<span>${i<(MATH_MAX_MISTAKES-s.mistakes)?'❤️':'🩶'}</span>`).join('')}</div>
+      <div style="font-size:12px; color:var(--snow-dim); text-align:right;">${t('correctAnswersLabel')}: ${s.correct}${s.combo>=3?`<br><span style="color:var(--gold);">${comboBadge(s.combo)} ${t('comboLabel',{n:s.combo})}</span>`:''}</div>
+    </div>
+    <div class="q-wrap">
+      <div class="q-card">
+        <div class="q-eyebrow">${t('discTopicTitle_'+s.topicKey)}</div>
+        <div class="q-prompt" style="font-size:22px;">${q.promptText}</div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:flex-end;">${inputsHtml}</div>
+      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitDiscAnswer()">${t('checkBtn')}</button>` : ''}
+    </div>
+  </div>
+  ${feedback}
+  `;
+}
+
+function submitDiscAnswer(){
+  const s = state.discSession;
+  if(!s || s.answered) return;
+  const q = s.current;
+  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
+  const correct = q.check(s.inputs);
+  s.answered = true; s.lastCorrect = correct;
+  if(correct) registerCorrectAnswer(s, state.game);
+  else registerWrongAnswer(s);
+  render();
+}
+
+function nextDiscQuestion(){
+  const s = state.discSession;
+  if(s.mistakes>=MATH_MAX_MISTAKES){ finishDiscPractice(); return; }
+  const topic = discTopicByKey(s.topicKey);
+  s.answered=false; s.lastCorrect=null; s.inputs={};
+  s.current = topic.build();
+  render();
+  focusDiscInput();
+}
+
+function finishDiscPractice(){
+  const s = state.discSession;
+  if(!state.game.discrete) state.game.discrete = {};
+  const rec = state.game.discrete[s.topicKey] || (state.game.discrete[s.topicKey] = {best:0});
+  s.isNewBest = s.correct > rec.best;
+  if(s.isNewBest) rec.best = s.correct;
+  touchStreak();
+  s.newAchievements = checkAchievements(state.game);
+  state.screen='disc_complete';
+  render();
+}
+
+function renderDiscComplete(){
+  const s = state.discSession;
+  const best = state.game.discrete[s.topicKey].best;
+  const lvl = xpLevel(state.game.xp);
+  return `
+  ${topbar()}
+  <div class="complete ${appLangClass()}">
+    <div class="medal">${s.isNewBest ? '🏆' : '🎯'}</div>
+    <h2>${s.isNewBest ? t('newBestReached') : t('checkpointReached')}</h2>
+    <div class="stat-row">
+      <div class="stat-box"><div class="val">${s.correct}</div><div class="lab">${t('correctAnswersLabel')}</div></div>
+      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
+    </div>
+    <div style="color:var(--snow-dim); font-size:13px;">${t('mathBestLabel',{n:best})} · ${t('levelLabel',{n:lvl.level})}</div>
+    ${achievementBannerHtml(s.newAchievements)}
+    <button class="btn btn-primary btn-block" onclick="backToDiscMenu()">${t('backToDiscMenuBtn')}</button>
+  </div>`;
+}
+
+function backToDiscMenu(){ state.screen='disc_menu'; render(); }
+function exitDiscPractice(){ state.screen='disc_menu'; render(); }
 
 // ---- business concepts: Finance, Economics and Tech Companies. Different
 // shape from algebra/calculus — these are qualitative concepts, not
