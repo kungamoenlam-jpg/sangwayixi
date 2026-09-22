@@ -4398,6 +4398,8 @@ function defaultGame(){
     calculus:{}, // topic key -> {best: correct-answer count}
     linalg:{}, // topic key -> {best: correct-answer count}
     discrete:{}, // topic key -> {best: correct-answer count}
+    probability:{}, // topic key -> {best: correct-answer count}
+    statistics:{}, // topic key -> {best: correct-answer count}
     business:{}, // category key -> {rounds: completed-rounds count}
     conceptExposure:{}, // concept key -> times tested (drives MCQ -> typed progression)
     conceptMastery:{}, // concept key (or "qb_<id>" for Quiz Bank questions) -> {correct, wrong, streak}
@@ -4914,6 +4916,151 @@ const I18N = {
     discLearn_logic_truth_table: "Propositional logic combines true/false statements with logical connectives: ∧ (and — true only if both are true), ∨ (or — true if either is true), ¬ (not — flips the value), → (implies — false only when the first is true and the second is false), ⊕ (xor — true only when exactly one is true).\n\nExample: if P = True and Q = False, evaluate P → Q.\nP → Q is false only when P is true and Q is false — which is exactly this case, so P → Q = False.",
     discLogicPrompt: "If P = {P} and Q = {Q}, evaluate: {expr}",
     discLogicExplain: "{expr} evaluates to {answer}.",
+
+    probabilityTitle: "Probability",
+    probabilitySub: "Month 5: the math of chance and uncertainty. Pick a topic to learn the concept, then practice.",
+    backToProbMenuBtn: "Back to Probability",
+    probFractionAnswerPlaceholder: "e.g. 3/4",
+    probFavorableLabel: "Favorable", probAgainstLabel: "Against",
+
+    probTopicTitle_simple_probability: "Basic Probability", probTopicDesc_simple_probability: "Favorable outcomes over total outcomes",
+    probLearn_simple_probability: "The probability of an event is the number of favorable outcomes divided by the total number of possible outcomes: P(event) = favorable / total.\n\nExample: a bag has 3 red marbles and 5 blue marbles. What is the probability of picking red?\nP(red) = 3/8.",
+    probSimplePrompt: "A bag has {favorable} red marbles and {other} blue marbles. What is the probability of picking a red marble?",
+    probSimpleExplain: "P(red) = favorable / total = {favorable}/{total}, reduced to {rp}/{rq}.",
+
+    probTopicTitle_complement: "Complement Rule", probTopicDesc_complement: "Find P(not A) from P(A)",
+    probLearn_complement: "The complement of an event A, written 'not A', is everything that happens when A doesn't. Since something always happens, P(A) + P(not A) = 1, so P(not A) = 1 - P(A).\n\nExample: if P(A) = 1/4, find P(not A).\nP(not A) = 1 - 1/4 = 3/4.",
+    probComplementPrompt: "If P(A) = {p}/{q}, find P(not A).",
+    probComplementExplain: "P(not A) = 1 - P(A) = 1 - {p}/{q} = {np}/{q}, reduced to {rp}/{rq}.",
+
+    probTopicTitle_independent_and: "Independent Events (AND)", probTopicDesc_independent_and: "Multiply probabilities for independent events",
+    probLearn_independent_and: "If two events A and B are independent — one doesn't affect the other — the probability that both happen is P(A and B) = P(A) × P(B).\n\nExample: P(A) = 1/2 and P(B) = 1/3. Find P(A and B).\nP(A and B) = 1/2 × 1/3 = 1/6.",
+    probIndependentAndPrompt: "A and B are independent events with P(A) = {p1}/{q1} and P(B) = {p2}/{q2}. Find P(A and B).",
+    probIndependentAndExplain: "For independent events, P(A and B) = P(A) × P(B) = ({p1}/{q1}) × ({p2}/{q2}) = {num}/{den}, reduced to {rp}/{rq}.",
+
+    probTopicTitle_mutually_exclusive_or: "Mutually Exclusive Events (OR)", probTopicDesc_mutually_exclusive_or: "Add probabilities for mutually exclusive events",
+    probLearn_mutually_exclusive_or: "Two events are mutually exclusive if they can't both happen at once. For mutually exclusive events, P(A or B) = P(A) + P(B).\n\nExample: P(A) = 1/4 and P(B) = 1/3. Find P(A or B).\nP(A or B) = 1/4 + 1/3 = 3/12 + 4/12 = 7/12.",
+    probMutuallyExclusiveOrPrompt: "A and B are mutually exclusive events with P(A) = {p1}/{q1} and P(B) = {p2}/{q2}. Find P(A or B).",
+    probMutuallyExclusiveOrExplain: "For mutually exclusive events, P(A or B) = P(A) + P(B) = ({p1}/{q1}) + ({p2}/{q2}) = {num}/{den}, reduced to {rp}/{rq}.",
+
+    probTopicTitle_conditional_probability: "Conditional Probability", probTopicDesc_conditional_probability: "Find P(A given B)",
+    probLearn_conditional_probability: "The conditional probability of A given B is how likely A is once you already know B happened: P(A | B) = P(A ∩ B) / P(B).\n\nExample: P(A ∩ B) = 1/6 and P(B) = 1/2. Find P(A | B).\nP(A | B) = (1/6) / (1/2) = 1/3.",
+    probConditionalPrompt: "P(A ∩ B) = {a}/{q} and P(B) = {b}/{q}. Find P(A | B).",
+    probConditionalExplain: "P(A | B) = P(A ∩ B) / P(B) = ({a}/{q}) / ({b}/{q}) = {a}/{b}, reduced to {rp}/{rq}.",
+
+    probTopicTitle_dice_sum: "Dice Sums", probTopicDesc_dice_sum: "Probability of a sum when rolling two dice",
+    probLearn_dice_sum: "When two fair six-sided dice are rolled, there are 36 equally likely outcomes. Count how many of those outcomes give the target sum, then divide by 36.\n\nExample: what is the probability that the sum is 4?\nThe pairs (1,3), (2,2), (3,1) give a sum of 4 — 3 outcomes. P = 3/36 = 1/12.",
+    probDiceSumPrompt: "Two fair six-sided dice are rolled. What is the probability that the sum is {target}?",
+    probDiceSumExplain: "There are {favorable} ways to roll a sum of {target} out of 36 total outcomes: {favorable}/36, reduced to {rp}/{rq}.",
+
+    probTopicTitle_card_probability: "Card Probability", probTopicDesc_card_probability: "Probability of drawing a card type from a standard deck",
+    probLearn_card_probability: "A standard deck has 52 cards: 4 suits of 13 cards each, including 4 Kings, 4 Aces, 12 face cards (Jack/Queen/King of each suit), and 26 red cards.\n\nExample: what is the probability of drawing a Heart?\nThere are 13 Hearts out of 52 cards. P = 13/52 = 1/4.",
+    probCardPrompt_king: "A card is drawn from a standard 52-card deck. What is the probability that it is a King?",
+    probCardPrompt_heart: "A card is drawn from a standard 52-card deck. What is the probability that it is a Heart?",
+    probCardPrompt_red: "A card is drawn from a standard 52-card deck. What is the probability that it is a red card?",
+    probCardPrompt_face: "A card is drawn from a standard 52-card deck. What is the probability that it is a face card (Jack, Queen or King)?",
+    probCardPrompt_ace: "A card is drawn from a standard 52-card deck. What is the probability that it is an Ace?",
+    probCardExplain: "There are {favorable} such cards out of 52: {favorable}/52, reduced to {rp}/{rq}.",
+
+    probTopicTitle_combinatorial_probability: "Combinatorial Probability", probTopicDesc_combinatorial_probability: "Use combinations to find a probability",
+    probLearn_combinatorial_probability: "When outcomes are chosen without order, probability can be found with combinations: P = (ways to get the favorable outcome) / (total ways to choose).\n\nExample: a group of 6 people includes 2 doctors. If 2 people are chosen at random, what is the probability both are doctors?\nFavorable: C(2,2) = 1. Total: C(6,2) = 15. P = 1/15.",
+    probCombinatorialPrompt: "A group of {n} people includes {k} doctors. If {r} people are chosen at random, what is the probability that all {r} are doctors?",
+    probCombinatorialExplain: "Favorable ways: C({k},{r}) = {favorable}. Total ways: C({n},{r}) = {total}. P = {favorable}/{total}, reduced to {rp}/{rq}.",
+
+    probTopicTitle_expected_value: "Expected Value", probTopicDesc_expected_value: "Find the average outcome of a random event",
+    probLearn_expected_value: "Expected value is the long-run average outcome of a random event: multiply each possible outcome by its probability, then add them up: E[X] = Σ x × P(x).\n\nExample: an event scores 10 points with probability 1/2, and 20 points with probability 1/2. Find E[X].\nE[X] = (1/2)×10 + (1/2)×20 = 5 + 10 = 15.",
+    probExpectedValuePrompt: "An event scores {V1} points with probability {k}/{d}, and {V2} points with probability {dk}/{d}. Find the expected value.",
+    probExpectedValueExplain: "E[X] = ({k}/{d})×{V1} + ({dk}/{d})×{V2} = {term1}/{d} + {term2}/{d} = {answer}.",
+
+    probTopicTitle_binomial_probability: "Binomial Probability (Coin Flips)", probTopicDesc_binomial_probability: "Probability of exactly k heads in n flips",
+    probLearn_binomial_probability: "For a fair coin flipped n times, the probability of exactly k heads is P = C(n,k) / 2ⁿ, since each of the 2ⁿ equally likely sequences is counted, and C(n,k) of them have exactly k heads.\n\nExample: a fair coin is flipped 3 times. What is the probability of exactly 2 heads?\nC(3,2) = 3. Total = 2³ = 8. P = 3/8.",
+    probBinomialPrompt: "A fair coin is flipped {n} times. What is the probability of getting exactly {k} heads?",
+    probBinomialExplain: "P = C({n},{k}) / 2^{n} = {favorable}/{total}, reduced to {rp}/{rq}.",
+
+    probTopicTitle_odds_to_probability: "Odds to Probability", probTopicDesc_odds_to_probability: "Convert odds in favor to a probability",
+    probLearn_odds_to_probability: "Odds in favor of an event, written a:b, mean a favorable outcomes for every b unfavorable ones. The corresponding probability is P = a / (a+b).\n\nExample: the odds in favor of an event are 3:5. Find the probability.\nP = 3/(3+5) = 3/8.",
+    probOddsToProbPrompt: "The odds in favor of an event are {a}:{b}. Find the probability of the event.",
+    probOddsToProbExplain: "Probability = favorable / (favorable + against) = {a}/({a}+{b}) = {a}/{total}, reduced to {rp}/{rq}.",
+
+    probTopicTitle_probability_to_odds: "Probability to Odds", probTopicDesc_probability_to_odds: "Convert a probability to odds in favor",
+    probLearn_probability_to_odds: "To convert a probability p/q into odds in favor, the favorable part is p and the against part is q - p (since q is the total and p is favorable). Odds are written favorable : against, in lowest terms.\n\nExample: P = 2/5. Find the odds in favor.\nAgainst = 5 - 2 = 3. Odds = 2:3.",
+    probProbToOddsPrompt: "The probability of an event is {p}/{q}. Find the odds in favor, as favorable : against, fully reduced.",
+    probProbToOddsExplain: "Against = {q} - {p} = {against}. Odds = {p}:{against}, reduced to {rp}:{ra}.",
+
+    probTopicTitle_at_least_one: "At Least One Success", probTopicDesc_at_least_one: "Probability of at least one success across repeated trials",
+    probLearn_at_least_one: "For independent trials, it's often easier to find the probability of 'none' first, then subtract from 1: P(at least one) = 1 - P(none) = 1 - (1 - p)ⁿ.\n\nExample: an event has probability 1/2 on each trial. Over 3 trials, what is the probability of at least one success?\nP(none) = (1/2)³ = 1/8. P(at least one) = 1 - 1/8 = 7/8.",
+    probAtLeastOnePrompt: "An event has probability 1/{d} of happening on each independent trial. Over {n} trials, what is the probability of at least one success?",
+    probAtLeastOneExplain: "P(none) = (({d}-1)/{d})^{n} = {d1n}/{dn}. P(at least one) = 1 - {d1n}/{dn} = {num}/{dn}, reduced to {rp}/{rq}.",
+
+    statisticsTitle: "Statistics",
+    statisticsSub: "Month 6: describing and summarizing data. Pick a topic to learn the concept, then practice.",
+    backToStatMenuBtn: "Back to Statistics",
+    statPercentAnswerPlaceholder: "e.g. 25",
+
+    statTopicTitle_mean: "Mean", statTopicDesc_mean: "Find the arithmetic average",
+    statLearn_mean: "The mean (average) of a dataset is the sum of all values divided by how many values there are: mean = sum / n.\n\nExample: find the mean of 4, 8, 6, 10, 2.\nSum = 4+8+6+10+2 = 30. n = 5. Mean = 30/5 = 6.",
+    statMeanPrompt: "Find the mean of this dataset: {vals}",
+    statMeanExplain: "Sum = {sum}, n = {n}. Mean = {sum}/{n} = {answer}.",
+
+    statTopicTitle_median: "Median", statTopicDesc_median: "Find the middle value",
+    statLearn_median: "The median is the middle value when a dataset is sorted from smallest to largest. With an odd number of values, it's the single middle one.\n\nExample: find the median of 7, 2, 9, 4, 5.\nSorted: 2, 4, 5, 7, 9. The middle value is 5.",
+    statMedianPrompt: "Find the median of this dataset: {vals}",
+    statMedianExplain: "Sorted: {sorted}. The middle value is {answer}.",
+
+    statTopicTitle_mode: "Mode", statTopicDesc_mode: "Find the most frequent value",
+    statLearn_mode: "The mode is the value that appears most often in a dataset.\n\nExample: find the mode of 3, 7, 3, 9, 3, 2.\n3 appears three times, more than any other value. The mode is 3.",
+    statModePrompt: "Find the mode of this dataset: {vals}",
+    statModeExplain: "The value that appears most often is {repeated}.",
+
+    statTopicTitle_range: "Range", statTopicDesc_range: "Find the spread: max minus min",
+    statLearn_range: "The range of a dataset is the difference between its largest and smallest values: range = max - min.\n\nExample: find the range of 5, 12, 3, 9, 7.\nMax = 12, min = 3. Range = 12 - 3 = 9.",
+    statRangePrompt: "Find the range of this dataset: {vals}",
+    statRangeExplain: "Max = {max}, min = {min}. Range = {max} - {min} = {answer}.",
+
+    statTopicTitle_variance: "Variance", statTopicDesc_variance: "Find the average squared deviation from the mean",
+    statLearn_variance: "Population variance measures how spread out the data is: subtract the mean from each value, square each result, then average the squares: variance = (sum of squared deviations) / n.\n\nExample: find the variance of 2, 4, 6, 8 (mean = 5).\nDeviations: -3, -1, 1, 3. Squared: 9, 1, 1, 9. Sum = 20. Variance = 20/4 = 5.",
+    statVariancePrompt: "Find the population variance of this dataset: {vals}",
+    statVarianceExplain: "The mean is {mean}. Sum of squared deviations = {sumSq}, divided by n = {n}, giving variance = {answer}.",
+
+    statTopicTitle_std_dev: "Standard Deviation", statTopicDesc_std_dev: "Find the square root of the variance",
+    statLearn_std_dev: "Standard deviation is the square root of the variance, bringing the spread back into the same units as the original data: SD = √variance.\n\nExample: a dataset has variance 16. Find its standard deviation.\nSD = √16 = 4.",
+    statStdDevPrompt: "Find the population standard deviation of this dataset: {vals}",
+    statStdDevExplain: "The mean is {mean} and the variance is {variance}. Standard deviation = √{variance} = {answer}.",
+
+    statTopicTitle_z_score: "Z-Score", statTopicDesc_z_score: "Find how many standard deviations from the mean",
+    statLearn_z_score: "A z-score tells you how many standard deviations a value is from the mean: z = (x - mean) / SD.\n\nExample: mean = 50, SD = 5. Find the z-score of x = 60.\nz = (60 - 50) / 5 = 10/5 = 2.",
+    statZScorePrompt: "A dataset has mean {mean} and standard deviation {sd}. Find the z-score of x = {x}.",
+    statZScoreExplain: "z = (x - mean) / SD = ({x} - {mean}) / {sd} = {diff}/{sd} = {answer}.",
+
+    statTopicTitle_percentage_of_total: "Percentage of Total", statTopicDesc_percentage_of_total: "Express a part as a percentage of the whole",
+    statLearn_percentage_of_total: "To find what percentage a part is of a whole, divide the part by the whole and multiply by 100: percentage = (part/whole) × 100.\n\nExample: 15 out of 20 students passed. What percentage passed?\n(15/20) × 100 = 75%.",
+    statPercentagePrompt: "{part} out of {whole} students passed the exam. What percentage passed?",
+    statPercentageExplain: "Percentage = (part/whole) × 100 = ({part}/{whole}) × 100 = {answer}%.",
+
+    statTopicTitle_weighted_average: "Weighted Average", statTopicDesc_weighted_average: "Average values that don't count equally",
+    statLearn_weighted_average: "A weighted average multiplies each value by its weight, adds them up, then divides by the total weight — so values with a bigger weight count for more: weighted average = Σ(value × weight) / Σ(weight).\n\nExample: scores 80 and 90 weighted 1 and 3. Find the weighted average.\n(80×1 + 90×3) / (1+3) = (80+270)/4 = 350/4 = 87.5.",
+    statWeightedAvgPrompt: "Three assignments score {s1}, {s2} and {s3}, weighted {w1}, {w2} and {w3} respectively. Find the weighted average.",
+    statWeightedAvgExplain: "Weighted average = ({s1}×{w1} + {s2}×{w2} + {s3}×{w3}) / ({w1}+{w2}+{w3}) = {sum}/{totalW} = {answer}.",
+
+    statTopicTitle_interquartile_range: "Interquartile Range", statTopicDesc_interquartile_range: "Find the spread of the middle 50% of data",
+    statLearn_interquartile_range: "The interquartile range (IQR) measures the spread of the middle half of the data: IQR = Q3 - Q1, where Q1 is the median of the lower half and Q3 is the median of the upper half.\n\nExample: sorted data 1, 3, 3, 5, 6, 8, 8, 12. Lower half: 1, 3, 3, 5 → Q1 = 3. Upper half: 6, 8, 8, 12 → Q3 = 8. IQR = 8 - 3 = 5.",
+    statIQRPrompt: "Find the interquartile range (IQR) of this dataset: {vals}",
+    statIQRExplain: "Sorted: {sorted}. Q1 (median of the lower half) = {Q1}. Q3 (median of the upper half) = {Q3}. IQR = {Q3} - {Q1} = {answer}.",
+
+    statTopicTitle_midrange: "Midrange", statTopicDesc_midrange: "Find the midpoint between the max and min",
+    statLearn_midrange: "The midrange is the average of the largest and smallest values in a dataset: midrange = (max + min) / 2.\n\nExample: find the midrange of 4, 8, 15, 3, 11.\nMax = 15, min = 3. Midrange = (15+3)/2 = 9.",
+    statMidrangePrompt: "Find the midrange of this dataset: {vals}",
+    statMidrangeExplain: "Midrange = (max + min) / 2 = ({max} + {min}) / 2 = {answer}.",
+
+    statTopicTitle_frequency_count: "Frequency Count", statTopicDesc_frequency_count: "Count how many times a value appears",
+    statLearn_frequency_count: "The frequency of a value is how many times it appears in a dataset.\n\nExample: how many times does 5 appear in 5, 2, 5, 8, 5, 1?\n5 appears 3 times.",
+    statFrequencyPrompt: "How many times does {target} appear in this dataset: {vals}?",
+    statFrequencyExplain: "{target} appears {freq} times.",
+
+    statTopicTitle_cumulative_count: "Cumulative Count", statTopicDesc_cumulative_count: "Count values at or below a threshold",
+    statLearn_cumulative_count: "A cumulative count tells you how many values in a dataset fall at or below a certain threshold.\n\nExample: how many values in 3, 8, 12, 5, 20, 15 are ≤ 10?\n3, 8 and 5 are ≤ 10 — that's 3 values.",
+    statCumulativePrompt: "How many values in this dataset are less than or equal to {threshold}: {vals}?",
+    statCumulativeExplain: "Counting the values ≤ {threshold} gives {answer}.",
 
     businessTitle: "Business Concepts",
     businessSub: "Finance, economics and the tech companies shaping them. Learn 3 concepts, then get quizzed on one — multiple choice the first time, typed from memory after that.",
@@ -5531,6 +5678,151 @@ const I18N = {
     discLogicPrompt: "若 P = {P}，Q = {Q}，求：{expr}",
     discLogicExplain: "{expr} 的值是 {answer}。",
 
+    probabilityTitle: "概率",
+    probabilitySub: "第五个月：机会与不确定性的数学。选择一个主题学习概念，然后练习。",
+    backToProbMenuBtn: "返回概率",
+    probFractionAnswerPlaceholder: "例如 3/4",
+    probFavorableLabel: "有利", probAgainstLabel: "不利",
+
+    probTopicTitle_simple_probability: "基本概率", probTopicDesc_simple_probability: "有利结果数除以总结果数",
+    probLearn_simple_probability: "一个事件的概率是有利结果数除以所有可能结果的总数：P(事件) = 有利结果数 / 总结果数。\n\n例如：一个袋子里有 3 个红色弹珠和 5 个蓝色弹珠。取到红色弹珠的概率是多少？\nP(红色) = 3/8。",
+    probSimplePrompt: "一个袋子里有 {favorable} 个红色弹珠和 {other} 个蓝色弹珠。取到红色弹珠的概率是多少？",
+    probSimpleExplain: "P(红色) = 有利结果数 / 总结果数 = {favorable}/{total}，约分后为 {rp}/{rq}。",
+
+    probTopicTitle_complement: "对立事件规则", probTopicDesc_complement: "由 P(A) 求 P(非A)",
+    probLearn_complement: "事件 A 的对立事件（记作“非A”）是 A 不发生时发生的一切。因为总会发生点什么，所以 P(A) + P(非A) = 1，即 P(非A) = 1 - P(A)。\n\n例如：若 P(A) = 1/4，求 P(非A)。\nP(非A) = 1 - 1/4 = 3/4。",
+    probComplementPrompt: "若 P(A) = {p}/{q}，求 P(非A)。",
+    probComplementExplain: "P(非A) = 1 - P(A) = 1 - {p}/{q} = {np}/{q}，约分后为 {rp}/{rq}。",
+
+    probTopicTitle_independent_and: "独立事件（且）", probTopicDesc_independent_and: "独立事件的概率相乘",
+    probLearn_independent_and: "如果两个事件 A 与 B 相互独立——一个不影响另一个——那么两者都发生的概率是 P(A 且 B) = P(A) × P(B)。\n\n例如：P(A) = 1/2，P(B) = 1/3，求 P(A 且 B)。\nP(A 且 B) = 1/2 × 1/3 = 1/6。",
+    probIndependentAndPrompt: "A 与 B 是独立事件，P(A) = {p1}/{q1}，P(B) = {p2}/{q2}。求 P(A 且 B)。",
+    probIndependentAndExplain: "对于独立事件，P(A 且 B) = P(A) × P(B) = ({p1}/{q1}) × ({p2}/{q2}) = {num}/{den}，约分后为 {rp}/{rq}。",
+
+    probTopicTitle_mutually_exclusive_or: "互斥事件（或）", probTopicDesc_mutually_exclusive_or: "互斥事件的概率相加",
+    probLearn_mutually_exclusive_or: "如果两个事件不能同时发生，则称为互斥事件。对于互斥事件，P(A 或 B) = P(A) + P(B)。\n\n例如：P(A) = 1/4，P(B) = 1/3，求 P(A 或 B)。\nP(A 或 B) = 1/4 + 1/3 = 3/12 + 4/12 = 7/12。",
+    probMutuallyExclusiveOrPrompt: "A 与 B 是互斥事件，P(A) = {p1}/{q1}，P(B) = {p2}/{q2}。求 P(A 或 B)。",
+    probMutuallyExclusiveOrExplain: "对于互斥事件，P(A 或 B) = P(A) + P(B) = ({p1}/{q1}) + ({p2}/{q2}) = {num}/{den}，约分后为 {rp}/{rq}。",
+
+    probTopicTitle_conditional_probability: "条件概率", probTopicDesc_conditional_probability: "求在已知 B 的条件下 A 的概率",
+    probLearn_conditional_probability: "在已知 B 已经发生的条件下 A 发生的概率，称为条件概率：P(A | B) = P(A ∩ B) / P(B)。\n\n例如：P(A ∩ B) = 1/6，P(B) = 1/2，求 P(A | B)。\nP(A | B) = (1/6) / (1/2) = 1/3。",
+    probConditionalPrompt: "P(A ∩ B) = {a}/{q}，P(B) = {b}/{q}。求 P(A | B)。",
+    probConditionalExplain: "P(A | B) = P(A ∩ B) / P(B) = ({a}/{q}) / ({b}/{q}) = {a}/{b}，约分后为 {rp}/{rq}。",
+
+    probTopicTitle_dice_sum: "骰子点数和", probTopicDesc_dice_sum: "掷两个骰子求某个点数和的概率",
+    probLearn_dice_sum: "掷两个均匀的六面骰子时，共有 36 种等可能的结果。数出其中和为目标值的结果数，再除以 36。\n\n例如：点数和为 4 的概率是多少？\n(1,3)、(2,2)、(3,1) 这三种组合的和为 4——共3种结果。P = 3/36 = 1/12。",
+    probDiceSumPrompt: "掷两个均匀的六面骰子。点数和为 {target} 的概率是多少？",
+    probDiceSumExplain: "点数和为 {target} 的方式共有 {favorable} 种，共 36 种可能结果：{favorable}/36，约分后为 {rp}/{rq}。",
+
+    probTopicTitle_card_probability: "扑克牌概率", probTopicDesc_card_probability: "从标准一副牌中抽到某类牌的概率",
+    probLearn_card_probability: "一副标准扑克牌共 52 张：4 种花色各 13 张，其中包括 4 张 K、4 张 A、12 张人头牌（每种花色的 J、Q、K）以及 26 张红色牌。\n\n例如：抽到红桃的概率是多少？\n52 张牌中有 13 张红桃。P = 13/52 = 1/4。",
+    probCardPrompt_king: "从一副标准的52张扑克牌中抽一张。抽到 K 的概率是多少？",
+    probCardPrompt_heart: "从一副标准的52张扑克牌中抽一张。抽到红桃的概率是多少？",
+    probCardPrompt_red: "从一副标准的52张扑克牌中抽一张。抽到红色牌的概率是多少？",
+    probCardPrompt_face: "从一副标准的52张扑克牌中抽一张。抽到人头牌（J、Q 或 K）的概率是多少？",
+    probCardPrompt_ace: "从一副标准的52张扑克牌中抽一张。抽到 A 的概率是多少？",
+    probCardExplain: "52 张牌中有 {favorable} 张这样的牌：{favorable}/52，约分后为 {rp}/{rq}。",
+
+    probTopicTitle_combinatorial_probability: "组合概率", probTopicDesc_combinatorial_probability: "用组合数求概率",
+    probLearn_combinatorial_probability: "当结果的选取不考虑顺序时，可以用组合数求概率：P = （得到有利结果的方式数）/（总的选取方式数）。\n\n例如：一组6人中有2名医生。若随机选出2人，两人都是医生的概率是多少？\n有利方式：C(2,2) = 1。总方式：C(6,2) = 15。P = 1/15。",
+    probCombinatorialPrompt: "一组 {n} 人中有 {k} 名医生。若随机选出 {r} 人，这 {r} 人都是医生的概率是多少？",
+    probCombinatorialExplain: "有利方式：C({k},{r}) = {favorable}。总方式：C({n},{r}) = {total}。P = {favorable}/{total}，约分后为 {rp}/{rq}。",
+
+    probTopicTitle_expected_value: "期望值", probTopicDesc_expected_value: "求随机事件的平均结果",
+    probLearn_expected_value: "期望值是随机事件长期来看的平均结果：把每个可能结果乘以其概率，再相加：E[X] = Σ x × P(x)。\n\n例如：某事件以概率 1/2 得 10 分，以概率 1/2 得 20 分，求 E[X]。\nE[X] = (1/2)×10 + (1/2)×20 = 5 + 10 = 15。",
+    probExpectedValuePrompt: "某事件以概率 {k}/{d} 得 {V1} 分，以概率 {dk}/{d} 得 {V2} 分。求期望值。",
+    probExpectedValueExplain: "E[X] = ({k}/{d})×{V1} + ({dk}/{d})×{V2} = {term1}/{d} + {term2}/{d} = {answer}。",
+
+    probTopicTitle_binomial_probability: "二项概率（抛硬币）", probTopicDesc_binomial_probability: "n 次抛掷中恰好出现 k 次正面的概率",
+    probLearn_binomial_probability: "一枚均匀硬币抛 n 次，恰好出现 k 次正面的概率是 P = C(n,k) / 2ⁿ，因为共有 2ⁿ 种等可能的序列，其中恰有 k 次正面的有 C(n,k) 种。\n\n例如：一枚均匀硬币抛3次，恰好出现2次正面的概率是多少？\nC(3,2) = 3。总数 = 2³ = 8。P = 3/8。",
+    probBinomialPrompt: "一枚均匀硬币抛 {n} 次。恰好出现 {k} 次正面的概率是多少？",
+    probBinomialExplain: "P = C({n},{k}) / 2^{n} = {favorable}/{total}，约分后为 {rp}/{rq}。",
+
+    probTopicTitle_odds_to_probability: "赔率转概率", probTopicDesc_odds_to_probability: "把有利赔率转换成概率",
+    probLearn_odds_to_probability: "事件的有利赔率写作 a:b，表示每 b 次不利结果对应 a 次有利结果。对应的概率是 P = a / (a+b)。\n\n例如：某事件的有利赔率是 3:5，求其概率。\nP = 3/(3+5) = 3/8。",
+    probOddsToProbPrompt: "某事件的有利赔率是 {a}:{b}。求该事件的概率。",
+    probOddsToProbExplain: "概率 = 有利 / (有利 + 不利) = {a}/({a}+{b}) = {a}/{total}，约分后为 {rp}/{rq}。",
+
+    probTopicTitle_probability_to_odds: "概率转赔率", probTopicDesc_probability_to_odds: "把概率转换成有利赔率",
+    probLearn_probability_to_odds: "把概率 p/q 转换成有利赔率时，有利部分是 p，不利部分是 q - p（因为 q 是总数，p 是有利数）。赔率写作 有利 : 不利，并化为最简。\n\n例如：P = 2/5，求有利赔率。\n不利 = 5 - 2 = 3。赔率 = 2:3。",
+    probProbToOddsPrompt: "某事件的概率是 {p}/{q}。求有利赔率，以 有利 : 不利 的最简形式作答。",
+    probProbToOddsExplain: "不利 = {q} - {p} = {against}。赔率 = {p}:{against}，约分后为 {rp}:{ra}。",
+
+    probTopicTitle_at_least_one: "至少一次成功", probTopicDesc_at_least_one: "多次独立试验中至少成功一次的概率",
+    probLearn_at_least_one: "对于独立试验，通常先求“一次都不成功”的概率，再用1减去它更简便：P(至少一次) = 1 - P(一次都没有) = 1 - (1 - p)ⁿ。\n\n例如：某事件每次试验的概率是 1/2。进行3次试验，至少成功一次的概率是多少？\nP(一次都没有) = (1/2)³ = 1/8。P(至少一次) = 1 - 1/8 = 7/8。",
+    probAtLeastOnePrompt: "某事件在每次独立试验中发生的概率是 1/{d}。进行 {n} 次试验，至少成功一次的概率是多少？",
+    probAtLeastOneExplain: "P(一次都没有) = (({d}-1)/{d})^{n} = {d1n}/{dn}。P(至少一次) = 1 - {d1n}/{dn} = {num}/{dn}，约分后为 {rp}/{rq}。",
+
+    statisticsTitle: "统计学",
+    statisticsSub: "第六个月：描述和总结数据。选择一个主题学习概念，然后练习。",
+    backToStatMenuBtn: "返回统计学",
+    statPercentAnswerPlaceholder: "例如 25",
+
+    statTopicTitle_mean: "平均数", statTopicDesc_mean: "求算术平均值",
+    statLearn_mean: "数据集的平均数（均值）是所有数值之和除以数值个数：平均数 = 总和 / n。\n\n例如：求 4, 8, 6, 10, 2 的平均数。\n总和 = 4+8+6+10+2 = 30。n = 5。平均数 = 30/5 = 6。",
+    statMeanPrompt: "求这组数据的平均数：{vals}",
+    statMeanExplain: "总和 = {sum}，n = {n}。平均数 = {sum}/{n} = {answer}。",
+
+    statTopicTitle_median: "中位数", statTopicDesc_median: "求中间值",
+    statLearn_median: "把数据从小到大排序后位于正中间的值就是中位数。数据个数为奇数时，中位数就是唯一的正中间值。\n\n例如：求 7, 2, 9, 4, 5 的中位数。\n排序：2, 4, 5, 7, 9。中间值是 5。",
+    statMedianPrompt: "求这组数据的中位数：{vals}",
+    statMedianExplain: "排序：{sorted}。中间值是 {answer}。",
+
+    statTopicTitle_mode: "众数", statTopicDesc_mode: "求出现次数最多的值",
+    statLearn_mode: "众数是数据集中出现次数最多的值。\n\n例如：求 3, 7, 3, 9, 3, 2 的众数。\n3 出现了三次，比其他值都多。众数是 3。",
+    statModePrompt: "求这组数据的众数：{vals}",
+    statModeExplain: "出现次数最多的值是 {repeated}。",
+
+    statTopicTitle_range: "极差", statTopicDesc_range: "求最大值减最小值",
+    statLearn_range: "数据集的极差是最大值与最小值之差：极差 = 最大值 - 最小值。\n\n例如：求 5, 12, 3, 9, 7 的极差。\n最大值 = 12，最小值 = 3。极差 = 12 - 3 = 9。",
+    statRangePrompt: "求这组数据的极差：{vals}",
+    statRangeExplain: "最大值 = {max}，最小值 = {min}。极差 = {max} - {min} = {answer}。",
+
+    statTopicTitle_variance: "方差", statTopicDesc_variance: "求与平均数的偏差平方的平均值",
+    statLearn_variance: "总体方差衡量数据的离散程度：用每个数值减去平均数，将结果平方，再求这些平方值的平均：方差 = （偏差平方和）/ n。\n\n例如：求 2, 4, 6, 8（平均数=5）的方差。\n偏差：-3, -1, 1, 3。平方：9, 1, 1, 9。总和 = 20。方差 = 20/4 = 5。",
+    statVariancePrompt: "求这组数据的总体方差：{vals}",
+    statVarianceExplain: "平均数是 {mean}。偏差平方和 = {sumSq}，除以 n = {n}，得方差 = {answer}。",
+
+    statTopicTitle_std_dev: "标准差", statTopicDesc_std_dev: "求方差的平方根",
+    statLearn_std_dev: "标准差是方差的平方根，把离散程度换算回与原数据相同的单位：标准差 = √方差。\n\n例如：某数据集的方差是16，求标准差。\n标准差 = √16 = 4。",
+    statStdDevPrompt: "求这组数据的总体标准差：{vals}",
+    statStdDevExplain: "平均数是 {mean}，方差是 {variance}。标准差 = √{variance} = {answer}。",
+
+    statTopicTitle_z_score: "Z 分数", statTopicDesc_z_score: "求某值偏离平均数几个标准差",
+    statLearn_z_score: "Z 分数表示某个值偏离平均数多少个标准差：z = (x - 平均数) / 标准差。\n\n例如：平均数=50，标准差=5，求 x=60 的 z 分数。\nz = (60 - 50) / 5 = 10/5 = 2。",
+    statZScorePrompt: "某数据集平均数为 {mean}，标准差为 {sd}。求 x = {x} 的 z 分数。",
+    statZScoreExplain: "z = (x - 平均数) / 标准差 = ({x} - {mean}) / {sd} = {diff}/{sd} = {answer}。",
+
+    statTopicTitle_percentage_of_total: "占总数的百分比", statTopicDesc_percentage_of_total: "把部分表示为整体的百分比",
+    statLearn_percentage_of_total: "求部分占整体的百分比时，用部分除以整体再乘以100：百分比 = (部分/整体) × 100。\n\n例如：20名学生中有15人通过考试，通过率是多少？\n(15/20) × 100 = 75%。",
+    statPercentagePrompt: "{whole} 名学生中有 {part} 人通过了考试。通过率是多少？",
+    statPercentageExplain: "百分比 = (部分/整体) × 100 = ({part}/{whole}) × 100 = {answer}%。",
+
+    statTopicTitle_weighted_average: "加权平均数", statTopicDesc_weighted_average: "对权重不同的数值求平均",
+    statLearn_weighted_average: "加权平均数把每个数值乘以其权重，相加后再除以权重总和——这样权重大的数值影响更大：加权平均数 = Σ(数值 × 权重) / Σ(权重)。\n\n例如：成绩80和90，权重分别为1和3，求加权平均数。\n(80×1 + 90×3) / (1+3) = (80+270)/4 = 350/4 = 87.5。",
+    statWeightedAvgPrompt: "三次作业成绩分别为 {s1}、{s2}、{s3}，权重分别为 {w1}、{w2}、{w3}。求加权平均数。",
+    statWeightedAvgExplain: "加权平均数 = ({s1}×{w1} + {s2}×{w2} + {s3}×{w3}) / ({w1}+{w2}+{w3}) = {sum}/{totalW} = {answer}。",
+
+    statTopicTitle_interquartile_range: "四分位距", statTopicDesc_interquartile_range: "求数据中间50%的离散程度",
+    statLearn_interquartile_range: "四分位距（IQR）衡量数据中间一半的离散程度：IQR = Q3 - Q1，其中 Q1 是下半部分的中位数，Q3 是上半部分的中位数。\n\n例如：排序后的数据 1, 3, 3, 5, 6, 8, 8, 12。下半部分：1, 3, 3, 5 → Q1 = 3。上半部分：6, 8, 8, 12 → Q3 = 8。IQR = 8 - 3 = 5。",
+    statIQRPrompt: "求这组数据的四分位距（IQR）：{vals}",
+    statIQRExplain: "排序：{sorted}。Q1（下半部分的中位数）= {Q1}。Q3（上半部分的中位数）= {Q3}。IQR = {Q3} - {Q1} = {answer}。",
+
+    statTopicTitle_midrange: "中程数", statTopicDesc_midrange: "求最大值与最小值的中点",
+    statLearn_midrange: "中程数是数据集中最大值与最小值的平均：中程数 = (最大值 + 最小值) / 2。\n\n例如：求 4, 8, 15, 3, 11 的中程数。\n最大值 = 15，最小值 = 3。中程数 = (15+3)/2 = 9。",
+    statMidrangePrompt: "求这组数据的中程数：{vals}",
+    statMidrangeExplain: "中程数 = (最大值 + 最小值) / 2 = ({max} + {min}) / 2 = {answer}。",
+
+    statTopicTitle_frequency_count: "频数", statTopicDesc_frequency_count: "计算某个值出现的次数",
+    statLearn_frequency_count: "某个值的频数是它在数据集中出现的次数。\n\n例如：5, 2, 5, 8, 5, 1 中 5 出现了几次？\n5 出现了3次。",
+    statFrequencyPrompt: "{target} 在这组数据中出现了几次：{vals}？",
+    statFrequencyExplain: "{target} 出现了 {freq} 次。",
+
+    statTopicTitle_cumulative_count: "累积计数", statTopicDesc_cumulative_count: "计算小于等于某阈值的数值个数",
+    statLearn_cumulative_count: "累积计数告诉你数据集中有多少个值小于等于某个阈值。\n\n例如：3, 8, 12, 5, 20, 15 中有多少个值 ≤ 10？\n3、8、5 都 ≤ 10——共3个。",
+    statCumulativePrompt: "这组数据中有多少个值小于等于 {threshold}：{vals}？",
+    statCumulativeExplain: "统计 ≤ {threshold} 的值，共有 {answer} 个。",
+
     businessTitle: "商业概念",
     businessSub: "金融、经济学，以及塑造它们的科技公司。先学习3个概念，再接受其中一个的测验——第一次是选择题，之后要凭记忆手动输入。",
     bizFinanceTitle: "金融", bizFinanceDesc: "金钱、投资，以及企业如何管理它们",
@@ -6040,6 +6332,151 @@ const I18N = {
     discLogicPrompt: "P = {P}, Q = {Q} ཡིན་ན, རྩིས་ཤིག: {expr}",
     discLogicExplain: "{expr} གི་གྲངས་འབྲས་ནི {answer} ཡིན།",
 
+    probabilityTitle: "སྲིད་ཆའི་རྩིས།",
+    probabilitySub: "ཟླ་བ་ལྔ་པ། གོ་སྐབས་དང་ངེས་མེད་ཀྱི་རྩིས་གཞི། བརྗོད་གཞི་ཞིག་འདེམས་ནས་གོ་དོན་སློབ་ཞིང་རྗེས་སུ་སྦྱོང་བརྡར་གྱིས།",
+    backToProbMenuBtn: "སྲིད་ཆའི་རྩིས་སུ་ལོག",
+    probFractionAnswerPlaceholder: "དཔེར་ན་ 3/4",
+    probFavorableLabel: "མཐུན་འབྲས།", probAgainstLabel: "མི་མཐུན།",
+
+    probTopicTitle_simple_probability: "སྲིད་ཆའི་གཞི་རྩ།", probTopicDesc_simple_probability: "མཐུན་འབྲས་ཐོན་སྲིད་གྲངས་ལས་ཐོན་སྲིད་ཡོངས་ཀྱིས་བགོས།",
+    probLearn_simple_probability: "གནས་ཚུལ་ཞིག་གི་སྲིད་ཆ་ནི་མཐུན་འབྲས་ཐོན་སྲིད་པའི་གྲངས་ལས་ཐོན་སྲིད་པའི་གྲངས་ཡོངས་ཀྱིས་བགོས་པ་ཡིན: P(གནས་ཚུལ) = མཐུན་འབྲས / ཐོན་སྲིད་ཡོངས།\n\nདཔེར་བརྗོད། ཁུག་མའི་ནང་དམར་པོའི་རྡོག་བུ3དང སྔོན་པོའི་རྡོག་བུ5ཡོད་ན, དམར་པོ་བླངས་པའི་སྲིད་ཆ་གང་ཡིན?\nP(དམར་པོ) = 3/8།",
+    probSimplePrompt: "ཁུག་མའི་ནང་དམར་པོའི་རྡོག་བུ {favorable} དང སྔོན་པོའི་རྡོག་བུ {other} ཡོད། དམར་པོའི་རྡོག་བུ་བླངས་པའི་སྲིད་ཆ་གང་ཡིན?",
+    probSimpleExplain: "P(དམར་པོ) = མཐུན་འབྲས / ཐོན་སྲིད་ཡོངས = {favorable}/{total}, ཆུང་དུ་བསྡུས་ན {rp}/{rq}།",
+
+    probTopicTitle_complement: "འགལ་བའི་སྒྲིག་གཞི།", probTopicDesc_complement: "P(A) ལས P(མིན) འཚོལ།",
+    probLearn_complement: "གནས་ཚུལ A ཡི་འགལ་བ, 'A མིན' ཞེས་འབྲི་བ, ནི A མི་འབྱུང་སྐབས་འབྱུང་བ་ཚང་མ་ཡིན། གང་ཞིག་ནམ་ཡང་འབྱུང་བ་ཡིན་སྟབས, P(A) + P(A མིན) = 1, དེས་ན P(A མིན) = 1 - P(A)།\n\nདཔེར་བརྗོད། P(A) = 1/4 ཡིན་ན, P(A མིན) འཚོལ་ཤིག།\nP(A མིན) = 1 - 1/4 = 3/4།",
+    probComplementPrompt: "P(A) = {p}/{q} ཡིན་ན, P(A མིན) འཚོལ་ཤིག།",
+    probComplementExplain: "P(A མིན) = 1 - P(A) = 1 - {p}/{q} = {np}/{q}, ཆུང་དུ་བསྡུས་ན {rp}/{rq}།",
+
+    probTopicTitle_independent_and: "རང་དབང་གནས་ཚུལ (དང)།", probTopicDesc_independent_and: "རང་དབང་གནས་ཚུལ་གྱི་སྲིད་ཆ་འཕར།",
+    probLearn_independent_and: "གནས་ཚུལ A དང B གཉིས་རང་དབང་ཡིན་ན—གཅིག་གིས་གཞན་ལ་ཤུགས་རྐྱེན་མེད—གཉིས་ཀ་འབྱུང་བའི་སྲིད་ཆ་ནི P(A དང B) = P(A) × P(B)།\n\nདཔེར་བརྗོད། P(A) = 1/2, P(B) = 1/3 ཡིན་ན P(A དང B) འཚོལ་ཤིག།\nP(A དང B) = 1/2 × 1/3 = 1/6།",
+    probIndependentAndPrompt: "A དང B ནི་རང་དབང་གནས་ཚུལ་ཡིན, P(A) = {p1}/{q1}, P(B) = {p2}/{q2}། P(A དང B) འཚོལ་ཤིག།",
+    probIndependentAndExplain: "རང་དབང་གནས་ཚུལ་ལ P(A དང B) = P(A) × P(B) = ({p1}/{q1}) × ({p2}/{q2}) = {num}/{den}, ཆུང་དུ་བསྡུས་ན {rp}/{rq}།",
+
+    probTopicTitle_mutually_exclusive_or: "འགལ་ཟླའི་གནས་ཚུལ (ཡང་ན)།", probTopicDesc_mutually_exclusive_or: "འགལ་ཟླའི་གནས་ཚུལ་གྱི་སྲིད་ཆ་སྣོན།",
+    probLearn_mutually_exclusive_or: "གནས་ཚུལ་གཉིས་གཅིག་ཅར་མི་འབྱུང་ཐུབ་ན་འགལ་ཟླ་ཡིན། འགལ་ཟླའི་གནས་ཚུལ་ལ P(A ཡང་ན B) = P(A) + P(B)།\n\nདཔེར་བརྗོད། P(A) = 1/4, P(B) = 1/3 ཡིན་ན P(A ཡང་ན B) འཚོལ་ཤིག།\nP(A ཡང་ན B) = 1/4 + 1/3 = 3/12 + 4/12 = 7/12།",
+    probMutuallyExclusiveOrPrompt: "A དང B ནི་འགལ་ཟླའི་གནས་ཚུལ་ཡིན, P(A) = {p1}/{q1}, P(B) = {p2}/{q2}། P(A ཡང་ན B) འཚོལ་ཤིག།",
+    probMutuallyExclusiveOrExplain: "འགལ་ཟླའི་གནས་ཚུལ་ལ P(A ཡང་ན B) = P(A) + P(B) = ({p1}/{q1}) + ({p2}/{q2}) = {num}/{den}, ཆུང་དུ་བསྡུས་ན {rp}/{rq}།",
+
+    probTopicTitle_conditional_probability: "རྐྱེན་ཅན་སྲིད་ཆ།", probTopicDesc_conditional_probability: "B ཤེས་རྗེས A ཡི་སྲིད་ཆ་འཚོལ།",
+    probLearn_conditional_probability: "B འབྱུང་བ་ཤེས་རྗེས A འབྱུང་བའི་སྲིད་ཆ་ནི་རྐྱེན་ཅན་སྲིད་ཆ་ཡིན: P(A | B) = P(A ∩ B) / P(B)།\n\nདཔེར་བརྗོད། P(A ∩ B) = 1/6, P(B) = 1/2 ཡིན་ན P(A | B) འཚོལ་ཤིག།\nP(A | B) = (1/6) / (1/2) = 1/3།",
+    probConditionalPrompt: "P(A ∩ B) = {a}/{q}, P(B) = {b}/{q}། P(A | B) འཚོལ་ཤིག།",
+    probConditionalExplain: "P(A | B) = P(A ∩ B) / P(B) = ({a}/{q}) / ({b}/{q}) = {a}/{b}, ཆུང་དུ་བསྡུས་ན {rp}/{rq}།",
+
+    probTopicTitle_dice_sum: "ཤོ་གྲངས་བསྡོམས།", probTopicDesc_dice_sum: "ཤོ་གཉིས་བརྒྱབ་པའི་གྲངས་བསྡོམས་ཀྱི་སྲིད་ཆ།",
+    probLearn_dice_sum: "ངོས6ཡོད་པའི་ཆ་སྙོམས་ཤོ་གཉིས་བརྒྱབ་ན, ཆ་སྙོམས་ཐོན་སྲིད་པ36ཡོད། དམིགས་གྲངས་དེར་འགྲིག་པའི་ཐོན་སྲིད་པ་བགྲང་ནས36ཡིས་བགོས།\n\nདཔེར་བརྗོད། བསྡོམས4ཐོན་པའི་སྲིད་ཆ་གང་ཡིན?\n(1,3), (2,2), (3,1) གསུམ་གྱིས་བསྡོམས4སྟོན—ཐོན་སྲིད་པ3། P = 3/36 = 1/12།",
+    probDiceSumPrompt: "ངོས6ཡོད་པའི་ཆ་སྙོམས་ཤོ་གཉིས་བརྒྱབ། བསྡོམས {target} ཐོན་པའི་སྲིད་ཆ་གང་ཡིན?",
+    probDiceSumExplain: "བསྡོམས {target} ཐོན་པའི་ཐབས {favorable} ཡོད, ཐོན་སྲིད་པ36ནང: {favorable}/36, ཆུང་དུ་བསྡུས་ན {rp}/{rq}།",
+
+    probTopicTitle_card_probability: "ཤོག་བུའི་སྲིད་ཆ།", probTopicDesc_card_probability: "ཤོག་བུ་ཚོགས་ཚང་ལས་རིགས་ཤིག་འདོན་པའི་སྲིད་ཆ།",
+    probLearn_card_probability: "ཤོག་བུ་ཚོགས་ཚང་ཞིག་ལ ཤོག་བུ52ཡོད: རིགས4རེར13རེ, དེའི་ནང K4, A4, མི་གཟུགས་ཤོག་བུ (J/Q/K རིགས་རེ་རེའི) 12, དམར་པོའི་ཤོག་བུ26ཡང་ཚུད།\n\nདཔེར་བརྗོད། Heart འདོན་པའི་སྲིད་ཆ་གང་ཡིན?\nཤོག་བུ52ནང Heart13ཡོད། P = 13/52 = 1/4།",
+    probCardPrompt_king: "ཤོག་བུ་ཚོགས་ཚང52ནས་ཤོག་བུ་གཅིག་འདོན། K་ཞིག་ཐོན་པའི་སྲིད་ཆ་གང་ཡིན?",
+    probCardPrompt_heart: "ཤོག་བུ་ཚོགས་ཚང52ནས་ཤོག་བུ་གཅིག་འདོན། Heart་ཞིག་ཐོན་པའི་སྲིད་ཆ་གང་ཡིན?",
+    probCardPrompt_red: "ཤོག་བུ་ཚོགས་ཚང52ནས་ཤོག་བུ་གཅིག་འདོན། དམར་པོའི་ཤོག་བུ་ཞིག་ཐོན་པའི་སྲིད་ཆ་གང་ཡིན?",
+    probCardPrompt_face: "ཤོག་བུ་ཚོགས་ཚང52ནས་ཤོག་བུ་གཅིག་འདོན། མི་གཟུགས་ཤོག་བུ (J, Q ཡང་ན K) ཞིག་ཐོན་པའི་སྲིད་ཆ་གང་ཡིན?",
+    probCardPrompt_ace: "ཤོག་བུ་ཚོགས་ཚང52ནས་ཤོག་བུ་གཅིག་འདོན། A་ཞིག་ཐོན་པའི་སྲིད་ཆ་གང་ཡིན?",
+    probCardExplain: "ཤོག་བུ52ནང་དེ་འདྲའི་ཤོག་བུ {favorable} ཡོད: {favorable}/52, ཆུང་དུ་བསྡུས་ན {rp}/{rq}།",
+
+    probTopicTitle_combinatorial_probability: "འདེམས་ཐབས་སྲིད་ཆ།", probTopicDesc_combinatorial_probability: "འདེམས་ཐབས་བེད་སྤྱོད་ཀྱིས་སྲིད་ཆ་འཚོལ།",
+    probLearn_combinatorial_probability: "ཐོན་སྲིད་པ་གོ་རིམ་མེད་པར་འདེམས་སྐབས, འདེམས་ཐབས་ཀྱིས་སྲིད་ཆ་འཚོལ་ཐུབ: P = (མཐུན་འབྲས་ཐོབ་ཐབས) / (འདེམས་ཐབས་ཡོངས)།\n\nདཔེར་བརྗོད། མི6ཡི་ཚོགས་ཤིག་ལ་སྨན་པ2ཡོད། མི2རང་དབང་གིས་འདེམས་ན, གཉིས་ཀ་སྨན་པ་ཡིན་པའི་སྲིད་ཆ་གང་ཡིན?\nམཐུན་འབྲས: C(2,2) = 1། ཡོངས: C(6,2) = 15། P = 1/15།",
+    probCombinatorialPrompt: "མི {n} ཡི་ཚོགས་ཤིག་ལ་སྨན་པ {k} ཡོད། མི {r} རང་དབང་གིས་འདེམས་ན, {r} ཚང་མ་སྨན་པ་ཡིན་པའི་སྲིད་ཆ་གང་ཡིན?",
+    probCombinatorialExplain: "མཐུན་འབྲས་ཐབས: C({k},{r}) = {favorable}། ཡོངས་ཐབས: C({n},{r}) = {total}། P = {favorable}/{total}, ཆུང་དུ་བསྡུས་ན {rp}/{rq}།",
+
+    probTopicTitle_expected_value: "རེ་བའི་ཐང་།", probTopicDesc_expected_value: "གནས་སྐབས་རང་དབང་གནས་ཚུལ་གྱི་ཨང་གྲངས་ཐང་ཕལ་བ་འཚོལ།",
+    probLearn_expected_value: "རེ་བའི་ཐང་ནི་གནས་ཚུལ་རང་དབང་ཞིག་གི་རིང་པོའི་ཨང་གྲངས་ཐང་ཕལ་བ་ཡིན: ཐོན་སྲིད་པ་རེ་རེ་དེའི་སྲིད་ཆས་འཕར་ནས་བསྡོམས: E[X] = Σ x × P(x)།\n\nདཔེར་བརྗོད། གནས་ཚུལ་ཞིག་སྲིད་ཆ1/2ཡིས་ཐང10ཐོབ, སྲིད་ཆ1/2ཡིས་ཐང20ཐོབ་ན, E[X] འཚོལ་ཤིག།\nE[X] = (1/2)×10 + (1/2)×20 = 5 + 10 = 15།",
+    probExpectedValuePrompt: "གནས་ཚུལ་ཞིག་སྲིད་ཆ {k}/{d} ཡིས་ཐང {V1} ཐོབ, སྲིད་ཆ {dk}/{d} ཡིས་ཐང {V2} ཐོབ། རེ་བའི་ཐང་འཚོལ་ཤིག།",
+    probExpectedValueExplain: "E[X] = ({k}/{d})×{V1} + ({dk}/{d})×{V2} = {term1}/{d} + {term2}/{d} = {answer}།",
+
+    probTopicTitle_binomial_probability: "གཉིས་འཕར་སྲིད་ཆ (སྒོར་མོ་འཕང་བ)།", probTopicDesc_binomial_probability: "ལན n བརྒྱབ་པའི་ནང་ལན k ངོས་གཅིག་ཐོན་པའི་སྲིད་ཆ།",
+    probLearn_binomial_probability: "སྒོར་མོ་ཆ་སྙོམས་ཤིག n ལན་འཕངས་ན, ལན k ངོས་གཅིག (heads) ཐོན་པའི་སྲིད་ཆ་ནི P = C(n,k) / 2ⁿ, ག་རང་ཡིན་ཟེར་ན ཆ་སྙོམས་གོ་རིམ2ⁿཡོད་པའི་ནང་ནས, ལན k ངོས་གཅིག་ཡོད་པ C(n,k) ཡིན།\n\nདཔེར་བརྗོད། སྒོར་མོ་ཆ་སྙོམས་ཤིག3ལན་འཕངས་ན, ལན2ངོས་གཅིག་ཐོན་པའི་སྲིད་ཆ་གང་ཡིན?\nC(3,2) = 3། ཡོངས = 2³ = 8། P = 3/8།",
+    probBinomialPrompt: "སྒོར་མོ་ཆ་སྙོམས་ཤིག {n} ལན་འཕངས། ལན {k} ངོས་གཅིག་ཐོན་པའི་སྲིད་ཆ་གང་ཡིན?",
+    probBinomialExplain: "P = C({n},{k}) / 2^{n} = {favorable}/{total}, ཆུང་དུ་བསྡུས་ན {rp}/{rq}།",
+
+    probTopicTitle_odds_to_probability: "འགྲན་ཐང་ནས་སྲིད་ཆར།", probTopicDesc_odds_to_probability: "མཐུན་འགྲན་ཐང་སྲིད་ཆར་བསྒྱུར།",
+    probLearn_odds_to_probability: "གནས་ཚུལ་ཞིག་གི་མཐུན་འགྲན་ཐང, a:b ཞེས་འབྲི་བ, ནི་མི་མཐུན་ཐེངས b རེར་མཐུན་ཐེངས a རེ་ཡོད་པའི་དོན། དེ་དང་མཚུངས་པའི་སྲིད་ཆ་ནི P = a / (a+b)།\n\nདཔེར་བརྗོད། གནས་ཚུལ་ཞིག་གི་མཐུན་འགྲན་ཐང3:5ཡིན་ན, སྲིད་ཆ་འཚོལ་ཤིག།\nP = 3/(3+5) = 3/8།",
+    probOddsToProbPrompt: "གནས་ཚུལ་ཞིག་གི་མཐུན་འགྲན་ཐང {a}:{b} ཡིན། དེའི་སྲིད་ཆ་འཚོལ་ཤིག།",
+    probOddsToProbExplain: "སྲིད་ཆ = མཐུན་འབྲས / (མཐུན་འབྲས + མི་མཐུན) = {a}/({a}+{b}) = {a}/{total}, ཆུང་དུ་བསྡུས་ན {rp}/{rq}།",
+
+    probTopicTitle_probability_to_odds: "སྲིད་ཆ་ནས་འགྲན་ཐང་།", probTopicDesc_probability_to_odds: "སྲིད་ཆ་མཐུན་འགྲན་ཐང་དུ་བསྒྱུར།",
+    probLearn_probability_to_odds: "སྲིད་ཆ p/q མཐུན་འགྲན་ཐང་དུ་བསྒྱུར་སྐབས, མཐུན་ཆ་ནི p ཡིན་ལ མི་མཐུན་ཆ་ནི q - p ཡིན (q ནི་ཡོངས, p ནི་མཐུན་འབྲས་ཡིན་སྟབས)། འགྲན་ཐང་ནི་མཐུན : མི་མཐུན་ཞེས་ཆུང་དུ་བསྡུས་ནས་འབྲི།\n\nདཔེར་བརྗོད། P = 2/5 ཡིན་ན, མཐུན་འགྲན་ཐང་འཚོལ་ཤིག།\nམི་མཐུན = 5 - 2 = 3། འགྲན་ཐང = 2:3།",
+    probProbToOddsPrompt: "གནས་ཚུལ་ཞིག་གི་སྲིད་ཆ {p}/{q} ཡིན། མཐུན་འགྲན་ཐང, མཐུན : མི་མཐུན་ཞེས, ཆུང་དུ་བསྡུས་ནས་འབྲི་ཤིག།",
+    probProbToOddsExplain: "མི་མཐུན = {q} - {p} = {against}། འགྲན་ཐང = {p}:{against}, ཆུང་དུ་བསྡུས་ན {rp}:{ra}།",
+
+    probTopicTitle_at_least_one: "ཡང་མིན་གྲངས་ཐེངས་གཅིག་མཐུན་འབྲས།", probTopicDesc_at_least_one: "ལན་མང་པོའི་རང་དབང་ཚོད་ལྟའི་ནང་ཡང་མིན་གྲངས་ཐེངས་གཅིག་མཐུན་འབྲས་ཐོན་པའི་སྲིད་ཆ།",
+    probLearn_at_least_one: "རང་དབང་ཚོད་ལྟའི་ཆེད, ཐོག་མར 'ཐེངས་གང་ཡང་མཐུན་འབྲས་མེད' པའི་སྲིད་ཆ་འཚོལ་ནས1ལས་ཕུད་ན་སླ: P(ཡང་མིན་གྲངས་ཐེངས་གཅིག) = 1 - P(གང་ཡང་མེད) = 1 - (1 - p)ⁿ།\n\nདཔེར་བརྗོད། གནས་ཚུལ་ཞིག་ཐེངས་རེར་སྲིད་ཆ1/2ཡིན། ཐེངས3བྱས་ན, ཡང་མིན་གྲངས་ཐེངས་གཅིག་མཐུན་འབྲས་ཐོན་པའི་སྲིད་ཆ་གང་ཡིན?\nP(གང་ཡང་མེད) = (1/2)³ = 1/8། P(ཡང་མིན་གྲངས་ཐེངས་གཅིག) = 1 - 1/8 = 7/8།",
+    probAtLeastOnePrompt: "གནས་ཚུལ་ཞིག་རང་དབང་ཚོད་ལྟ་རེ་རེར་སྲིད་ཆ 1/{d} ཡོད། ཚོད་ལྟ {n} བྱས་ན, ཡང་མིན་གྲངས་ཐེངས་གཅིག་མཐུན་འབྲས་ཐོན་པའི་སྲིད་ཆ་གང་ཡིན?",
+    probAtLeastOneExplain: "P(གང་ཡང་མེད) = (({d}-1)/{d})^{n} = {d1n}/{dn}། P(ཡང་མིན་གྲངས་ཐེངས་གཅིག) = 1 - {d1n}/{dn} = {num}/{dn}, ཆུང་དུ་བསྡུས་ན {rp}/{rq}།",
+
+    statisticsTitle: "གནས་ཚུལ་རྩིས།",
+    statisticsSub: "ཟླ་བ་དྲུག་པ། གནས་ཚུལ་འགྲེལ་བཤད་དང་སྙིང་བསྡུས་བྱེད་ཐབས། བརྗོད་གཞི་ཞིག་འདེམས་ནས་གོ་དོན་སློབ་ཞིང་རྗེས་སུ་སྦྱོང་བརྡར་གྱིས།",
+    backToStatMenuBtn: "གནས་ཚུལ་རྩིས་སུ་ལོག",
+    statPercentAnswerPlaceholder: "དཔེར་ན་ 25",
+
+    statTopicTitle_mean: "ཕལ་མཐུན་ཐང་།", statTopicDesc_mean: "རྩིས་རིག་གི་ཕལ་མཐུན་ཐང་འཚོལ།",
+    statLearn_mean: "གནས་ཚུལ་ཚོགས་ཤིག་གི་ཕལ་མཐུན་ཐང (ཕལ་མཐུན) ནི་ཐང་ཚང་མའི་བསྡོམས་ལ་ཐང་གི་གྲངས་ཀྱིས་བགོས་པ་ཡིན: ཕལ་མཐུན = བསྡོམས / n།\n\nདཔེར་བརྗོད། 4, 8, 6, 10, 2 ཡི་ཕལ་མཐུན་འཚོལ་ཤིག།\nབསྡོམས = 4+8+6+10+2 = 30། n = 5། ཕལ་མཐུན = 30/5 = 6།",
+    statMeanPrompt: "གནས་ཚུལ་ཚོགས་འདིའི་ཕལ་མཐུན་འཚོལ་ཤིག: {vals}",
+    statMeanExplain: "བསྡོམས = {sum}, n = {n}། ཕལ་མཐུན = {sum}/{n} = {answer}།",
+
+    statTopicTitle_median: "དབུས་ཐང་།", statTopicDesc_median: "དབུས་སུ་ཡོད་པའི་ཐང་འཚོལ།",
+    statLearn_median: "གནས་ཚུལ་ཚོགས་ཤིག་ཆུང་བ་ནས་ཆེ་བར་གོ་རིམ་བཞིན་བཞག་རྗེས་དབུས་སུ་ཡོད་པའི་ཐང་ནི་དབུས་ཐང་ཡིན། ཐང་གི་གྲངས་ཁ་གྲངས་ཡིན་ན, དབུས་སུ་ཡོད་པའི་ཐང་གཅིག་པུ་དེ་ཡིན།\n\nདཔེར་བརྗོད། 7, 2, 9, 4, 5 ཡི་དབུས་ཐང་འཚོལ་ཤིག།\nགོ་རིམ: 2, 4, 5, 7, 9། དབུས་ཐང་ནི5ཡིན།",
+    statMedianPrompt: "གནས་ཚུལ་ཚོགས་འདིའི་དབུས་ཐང་འཚོལ་ཤིག: {vals}",
+    statMedianExplain: "གོ་རིམ: {sorted}། དབུས་ཐང་ནི {answer} ཡིན།",
+
+    statTopicTitle_mode: "མང་ཤོས་ཐང་།", statTopicDesc_mode: "མང་ཤོས་སུ་འབྱུང་བའི་ཐང་འཚོལ།",
+    statLearn_mode: "མང་ཤོས་ཐང་ནི་གནས་ཚུལ་ཚོགས་ཤིག་ནང་མང་ཤོས་སུ་འབྱུང་བའི་ཐང་ཡིན།\n\nདཔེར་བརྗོད། 3, 7, 3, 9, 3, 2 ཡི་མང་ཤོས་ཐང་འཚོལ་ཤིག།\n3 ལན་གསུམ་འབྱུང, ཐང་གཞན་ཚང་མ་ལས་མང་། མང་ཤོས་ཐང་ནི3ཡིན།",
+    statModePrompt: "གནས་ཚུལ་ཚོགས་འདིའི་མང་ཤོས་ཐང་འཚོལ་ཤིག: {vals}",
+    statModeExplain: "མང་ཤོས་སུ་འབྱུང་བའི་ཐང་ནི {repeated} ཡིན།",
+
+    statTopicTitle_range: "ཁྱད་ཚད།", statTopicDesc_range: "མཐོ་ཤོས་ལས་དམའ་ཤོས་ཕུད་པ་འཚོལ།",
+    statLearn_range: "གནས་ཚུལ་ཚོགས་ཤིག་གི་ཁྱད་ཚད་ནི་ཐང་མཐོ་ཤོས་དང་དམའ་ཤོས་ཀྱི་ཁྱད་པར་ཡིན: ཁྱད་ཚད = མཐོ་ཤོས - དམའ་ཤོས།\n\nདཔེར་བརྗོད། 5, 12, 3, 9, 7 ཡི་ཁྱད་ཚད་འཚོལ་ཤིག།\nམཐོ་ཤོས = 12, དམའ་ཤོས = 3། ཁྱད་ཚད = 12 - 3 = 9།",
+    statRangePrompt: "གནས་ཚུལ་ཚོགས་འདིའི་ཁྱད་ཚད་འཚོལ་ཤིག: {vals}",
+    statRangeExplain: "མཐོ་ཤོས = {max}, དམའ་ཤོས = {min}། ཁྱད་ཚད = {max} - {min} = {answer}།",
+
+    statTopicTitle_variance: "འགྱུར་ཚད།", statTopicDesc_variance: "ཕལ་མཐུན་ལས་ཀྱི་སྤང་ཤོར་སྒྲིལ་མའི་ཕལ་མཐུན་འཚོལ།",
+    statLearn_variance: "སྤྱི་ཚོགས་འགྱུར་ཚད་ཀྱིས་གནས་ཚུལ་ཇི་ཙམ་གཏོར་ཡོད་མིན་སྟོན: ཐང་རེ་རེ་ནས་ཕལ་མཐུན་ཕུད, འབྲས་བུ་སྒྲིལ, དེ་ནས་སྒྲིལ་མ་རྣམས་ཀྱི་ཕལ་མཐུན་བྱོས: འགྱུར་ཚད = (སྤང་ཤོར་སྒྲིལ་མའི་བསྡོམས) / n།\n\nདཔེར་བརྗོད། 2, 4, 6, 8 (ཕལ་མཐུན=5) ཡི་འགྱུར་ཚད་འཚོལ་ཤིག།\nསྤང་ཤོར: -3, -1, 1, 3། སྒྲིལ: 9, 1, 1, 9། བསྡོམས = 20། འགྱུར་ཚད = 20/4 = 5།",
+    statVariancePrompt: "གནས་ཚུལ་ཚོགས་འདིའི་སྤྱི་ཚོགས་འགྱུར་ཚད་འཚོལ་ཤིག: {vals}",
+    statVarianceExplain: "ཕལ་མཐུན་ནི {mean} ཡིན། སྤང་ཤོར་སྒྲིལ་མའི་བསྡོམས = {sumSq}, n = {n} ཡིས་བགོས་ན, འགྱུར་ཚད = {answer}།",
+
+    statTopicTitle_std_dev: "འགྱུར་ཚད་ཀྱི་ཟླུམ་རྩ།", statTopicDesc_std_dev: "འགྱུར་ཚད་ཀྱི་ཟླུམ་རྩ་འཚོལ།",
+    statLearn_std_dev: "ཟླུམ་རྩའི་འགྱུར་ཚད་ནི་འགྱུར་ཚད་ཀྱི་ཟླུམ་རྩ་ཡིན, འདིས་གཏོར་ཚད་དེ་གནས་ཚུལ་གཞི་མའི་ཚད་གཞི་དང་མཚུངས་པར་སླར་བསྒྱུར: ཟླུམ་རྩའི་འགྱུར་ཚད = √འགྱུར་ཚད།\n\nདཔེར་བརྗོད། གནས་ཚུལ་ཚོགས་ཤིག་གི་འགྱུར་ཚད16ཡིན་ན, ཟླུམ་རྩའི་འགྱུར་ཚད་འཚོལ་ཤིག།\nཟླུམ་རྩའི་འགྱུར་ཚད = √16 = 4།",
+    statStdDevPrompt: "གནས་ཚུལ་ཚོགས་འདིའི་སྤྱི་ཚོགས་ཟླུམ་རྩའི་འགྱུར་ཚད་འཚོལ་ཤིག: {vals}",
+    statStdDevExplain: "ཕལ་མཐུན་ནི {mean}, འགྱུར་ཚད་ནི {variance} ཡིན། ཟླུམ་རྩའི་འགྱུར་ཚད = √{variance} = {answer}།",
+
+    statTopicTitle_z_score: "z-ཐང་།", statTopicDesc_z_score: "ཐང་ཞིག་ཕལ་མཐུན་ལས་ཟླུམ་རྩའི་འགྱུར་ཚད་ག་ཚོད་ཐག་རིང་མིན་འཚོལ།",
+    statLearn_z_score: "z-ཐང་གིས་ཐང་ཞིག་ཕལ་མཐུན་ལས་ཟླུམ་རྩའི་འགྱུར་ཚད་ག་ཚོད་ཐག་རིང་མིན་སྟོན: z = (x - ཕལ་མཐུན) / ཟླུམ་རྩའི་འགྱུར་ཚད།\n\nདཔེར་བརྗོད། ཕལ་མཐུན=50, ཟླུམ་རྩའི་འགྱུར་ཚད=5། x=60 ཡི་z-ཐང་འཚོལ་ཤིག།\nz = (60 - 50) / 5 = 10/5 = 2།",
+    statZScorePrompt: "གནས་ཚུལ་ཚོགས་ཤིག་གི་ཕལ་མཐུན {mean}, ཟླུམ་རྩའི་འགྱུར་ཚད {sd} ཡིན། x = {x} ཡི་z-ཐང་འཚོལ་ཤིག།",
+    statZScoreExplain: "z = (x - ཕལ་མཐུན) / ཟླུམ་རྩའི་འགྱུར་ཚད = ({x} - {mean}) / {sd} = {diff}/{sd} = {answer}།",
+
+    statTopicTitle_percentage_of_total: "བརྒྱ་ཆའི་ཐང་།", statTopicDesc_percentage_of_total: "ཆ་ཤས་ཞིག་ཡོངས་ཀྱི་བརྒྱ་ཆར་སྟོན།",
+    statLearn_percentage_of_total: "ཆ་ཤས་ཞིག་ཡོངས་ཀྱི་བརྒྱ་ཆ་ག་ཚོད་ཡིན་མིན་འཚོལ་བར, ཆ་ཤས་ལ་ཡོངས་ཀྱིས་བགོས་ནས100ཡིས་འཕར: བརྒྱ་ཆ = (ཆ་ཤས/ཡོངས) × 100།\n\nདཔེར་བརྗོད། སློབ་མ20ནང15ཐེངས་ཐོན, བརྒྱ་ཆ་ག་ཚོད་ཐེངས་ཐོན?\n(15/20) × 100 = 75%།",
+    statPercentagePrompt: "སློབ་མ {whole} ནང {part} རྒྱུགས་ཐེངས་ཐོན། བརྒྱ་ཆ་ག་ཚོད་ཐེངས་ཐོན?",
+    statPercentageExplain: "བརྒྱ་ཆ = (ཆ་ཤས/ཡོངས) × 100 = ({part}/{whole}) × 100 = {answer}%།",
+
+    statTopicTitle_weighted_average: "ལྗིད་ཚད་ཅན་གྱི་ཕལ་མཐུན།", statTopicDesc_weighted_average: "མཉམ་མིན་པའི་ལྗིད་ཚད་ཡོད་པའི་ཐང་ཕལ་མཐུན་བྱེད།",
+    statLearn_weighted_average: "ལྗིད་ཚད་ཅན་གྱི་ཕལ་མཐུན་གྱིས་ཐང་རེ་རེ་དེའི་ལྗིད་ཚད་ཀྱིས་འཕར, བསྡོམས, དེ་ནས་ལྗིད་ཚད་ཡོངས་ཀྱིས་བགོས—དེས་ལྗིད་ཚད་ཆེ་བའི་ཐང་ལ་ཤུགས་རྐྱེན་ཆེ་བ་སྟོན: ལྗིད་ཚད་ཅན་གྱི་ཕལ་མཐུན = Σ(ཐང × ལྗིད་ཚད) / Σ(ལྗིད་ཚད)།\n\nདཔེར་བརྗོད། རྩིས་འབྲས80དང90, ལྗིད་ཚད1དང3། ལྗིད་ཚད་ཅན་གྱི་ཕལ་མཐུན་འཚོལ་ཤིག།\n(80×1 + 90×3) / (1+3) = (80+270)/4 = 350/4 = 87.5།",
+    statWeightedAvgPrompt: "རྩིས་འགྲེལ3ཀྱི་རྩིས་འབྲས {s1}, {s2}, {s3} ཡིན, ལྗིད་ཚད་སོ་སོར {w1}, {w2}, {w3} ཡིན། ལྗིད་ཚད་ཅན་གྱི་ཕལ་མཐུན་འཚོལ་ཤིག།",
+    statWeightedAvgExplain: "ལྗིད་ཚད་ཅན་གྱི་ཕལ་མཐུན = ({s1}×{w1} + {s2}×{w2} + {s3}×{w3}) / ({w1}+{w2}+{w3}) = {sum}/{totalW} = {answer}།",
+
+    statTopicTitle_interquartile_range: "བཞི་ཆའི་ཁྱད་ཚད།", statTopicDesc_interquartile_range: "གནས་ཚུལ་དབུས་ཀྱི་བརྒྱ་ཆ50ཡི་ཁྱད་ཚད་འཚོལ།",
+    statLearn_interquartile_range: "བཞི་ཆའི་ཁྱད་ཚད (IQR) ཀྱིས་གནས་ཚུལ་དབུས་ཕྱེད་ཀའི་ཁྱད་ཚད་སྟོན: IQR = Q3 - Q1, Q1 ནི་འོག་ཕྱེད་ཀའི་དབུས་ཐང, Q3 ནི་སྟེང་ཕྱེད་ཀའི་དབུས་ཐང་ཡིན།\n\nདཔེར་བརྗོད། གོ་རིམ་བཞིན་བཞག་པའི་གནས་ཚུལ 1, 3, 3, 5, 6, 8, 8, 12། འོག་ཕྱེད: 1, 3, 3, 5 → Q1 = 3། སྟེང་ཕྱེད: 6, 8, 8, 12 → Q3 = 8། IQR = 8 - 3 = 5།",
+    statIQRPrompt: "གནས་ཚུལ་ཚོགས་འདིའི་བཞི་ཆའི་ཁྱད་ཚད (IQR) འཚོལ་ཤིག: {vals}",
+    statIQRExplain: "གོ་རིམ: {sorted}། Q1 (འོག་ཕྱེད་ཀའི་དབུས་ཐང) = {Q1}། Q3 (སྟེང་ཕྱེད་ཀའི་དབུས་ཐང) = {Q3}། IQR = {Q3} - {Q1} = {answer}།",
+
+    statTopicTitle_midrange: "ཁྱད་ཚད་དབུས་ཐང་།", statTopicDesc_midrange: "མཐོ་ཤོས་དང་དམའ་ཤོས་ཀྱི་དབུས་གནས་འཚོལ།",
+    statLearn_midrange: "ཁྱད་ཚད་དབུས་ཐང་ནི་གནས་ཚུལ་ཚོགས་ཤིག་གི་མཐོ་ཤོས་དང་དམའ་ཤོས་ཀྱི་ཕལ་མཐུན་ཡིན: ཁྱད་ཚད་དབུས་ཐང = (མཐོ་ཤོས + དམའ་ཤོས) / 2།\n\nདཔེར་བརྗོད། 4, 8, 15, 3, 11 ཡི་ཁྱད་ཚད་དབུས་ཐང་འཚོལ་ཤིག།\nམཐོ་ཤོས = 15, དམའ་ཤོས = 3། ཁྱད་ཚད་དབུས་ཐང = (15+3)/2 = 9།",
+    statMidrangePrompt: "གནས་ཚུལ་ཚོགས་འདིའི་ཁྱད་ཚད་དབུས་ཐང་འཚོལ་ཤིག: {vals}",
+    statMidrangeExplain: "ཁྱད་ཚད་དབུས་ཐང = (མཐོ་ཤོས + དམའ་ཤོས) / 2 = ({max} + {min}) / 2 = {answer}།",
+
+    statTopicTitle_frequency_count: "འབྱུང་ཐེངས་གྲངས།", statTopicDesc_frequency_count: "ཐང་ཞིག་ག་ཚོད་ལན་འབྱུང་མིན་བགྲང་།",
+    statLearn_frequency_count: "ཐང་ཞིག་གི་འབྱུང་ཐེངས་གྲངས་ནི་གནས་ཚུལ་ཚོགས་ནང་ལན་ག་ཚོད་འབྱུང་མིན་ཡིན།\n\nདཔེར་བརྗོད། 5, 2, 5, 8, 5, 1 ནང5ལན་ག་ཚོད་འབྱུང?\n5 ལན་གསུམ་འབྱུང།",
+    statFrequencyPrompt: "{target} གནས་ཚུལ་ཚོགས་འདིའི་ནང་ལན་ག་ཚོད་འབྱུང: {vals}?",
+    statFrequencyExplain: "{target} ལན {freq} འབྱུང།",
+
+    statTopicTitle_cumulative_count: "སྡོམ་གྲངས་བགྲང་།", statTopicDesc_cumulative_count: "ཚད་གཞི་ཞིག་ལས་ཉུང་བའམ་མཉམ་པའི་ཐང་གྲངས་བགྲང་།",
+    statLearn_cumulative_count: "སྡོམ་གྲངས་བགྲང་བས་གནས་ཚུལ་ཚོགས་ནང་ཐང་ག་ཚོད་ཚད་གཞི་ཞིག་ལས་ཉུང་བའམ་མཉམ་པ་ཡིན་མིན་སྟོན།\n\nདཔེར་བརྗོད། 3, 8, 12, 5, 20, 15 ནང10ལས་ཉུང་བའམ་མཉམ་པ་ག་ཚོད་ཡོད?\n3, 8, 5 གསུམ10ལས་ཉུང་བའམ་མཉམ—གྲངས3ཡོད།",
+    statCumulativePrompt: "གནས་ཚུལ་ཚོགས་འདིའི་ནང {threshold} ལས་ཉུང་བའམ་མཉམ་པའི་ཐང་ག་ཚོད་ཡོད: {vals}?",
+    statCumulativeExplain: "{threshold} ལས་ཉུང་བའམ་མཉམ་པའི་ཐང་བགྲངས་ན {answer} ཡོད།",
+
     businessTitle: "ཚོང་ལས་དོན་ཚན།",
     businessSub: "དངུལ་རྩིས, དཔལ་འབྱོར་རིག་པ, དེ་དག་བཟོ་མཁན་གྱི་ལག་རྩལ་ཚོང་ལས། དོན་ཚན 3 སློབ་ནས་གཅིག་གི་ཐད་ཀར་བརྟག་ཞིབ་བྱེད། ཐོག་མར་གདམ་ཁ་བཞིའི་དྲི་བ, རྗེས་སུ་དྲན་པ་ལས་ཡིག་འབྲི་དགོས།",
     bizFinanceTitle: "དངུལ་རྩིས།", bizFinanceDesc: "དངུལ, རྩ་ཆེའི་བཙོང་ཉོ, ཚོང་ལས་ཀྱིས་དེ་དག་ཇི་ལྟར་སྐྱོང་མིན།",
@@ -6204,6 +6641,12 @@ document.addEventListener('keydown', function(e){
   } else if(state.screen === 'disc_practice' && state.discSession){
     if(state.discSession.answered) nextDiscQuestion();
     else submitDiscAnswer();
+  } else if(state.screen === 'prob_practice' && state.probSession){
+    if(state.probSession.answered) nextProbQuestion();
+    else submitProbAnswer();
+  } else if(state.screen === 'stat_practice' && state.statSession){
+    if(state.statSession.answered) nextStatQuestion();
+    else submitStatAnswer();
   }
 });
 
@@ -6253,6 +6696,14 @@ const screens = {
   disc_learn: renderDiscLearn,
   disc_practice: renderDiscPractice,
   disc_complete: renderDiscComplete,
+  prob_menu: renderProbMenu,
+  prob_learn: renderProbLearn,
+  prob_practice: renderProbPractice,
+  prob_complete: renderProbComplete,
+  stat_menu: renderStatMenu,
+  stat_learn: renderStatLearn,
+  stat_practice: renderStatPractice,
+  stat_complete: renderStatComplete,
   business_menu: renderBusinessMenu,
   biz_week_menu: renderCategoryWeekMenu,
   business_learn: renderBusinessLearn,
@@ -6514,6 +6965,14 @@ function renderHome(){
       <button class="practice-tile" onclick="state.screen='disc_menu'; render();">
         <div class="glyph">🧩</div>
         <div class="pt-title">${t('discreteTitle')}</div>
+      </button>
+      <button class="practice-tile" onclick="state.screen='prob_menu'; render();">
+        <div class="glyph">🎲</div>
+        <div class="pt-title">${t('probabilityTitle')}</div>
+      </button>
+      <button class="practice-tile" onclick="state.screen='stat_menu'; render();">
+        <div class="glyph">📊</div>
+        <div class="pt-title">${t('statisticsTitle')}</div>
       </button>
       <button class="practice-tile" onclick="state.screen='business_menu'; render();">
         <div class="glyph">💼</div>
@@ -8383,6 +8842,749 @@ function renderDiscComplete(){
 
 function backToDiscMenu(){ state.screen='disc_menu'; render(); }
 function exitDiscPractice(){ state.screen='disc_menu'; render(); }
+
+// ---- probability learning: Month 5 of the planned progression (algebra ->
+// calculus -> linear algebra -> discrete math -> probability). Same
+// architecture as the previous four months. Almost every answer here is a
+// probability, so almost every topic reuses the SAME reduced-fraction
+// input/check as algebra's "fractions" topic (typed as "p/q", parsed and
+// auto-reduced by the existing parseFraction/gcd helpers from that section)
+// rather than inventing a new answer format — the one exception is
+// probability_to_odds, which asks for two integers (favorable, against)
+// since odds aren't conventionally written as a single fraction.
+function fracText(p,q){ return `${p}/${q}`; }
+function combinations(n,r){ return factorial(n)/(factorial(r)*factorial(n-r)); }
+const PROB_CARD_EVENTS = ['king','heart','red','face','ace'];
+const PROB_CARD_FAVORABLE = {king:4, heart:13, red:26, face:12, ace:4};
+const DICE_SUM_COUNTS = {2:1,3:2,4:3,5:4,6:5,7:6,8:5,9:4,10:3,11:2,12:1};
+
+function probProblemSimple(){
+  const favorable = randInt(2,9);
+  const other = randInt(2,9);
+  const total = favorable+other;
+  const g = gcd(favorable,total); const rp=favorable/g, rq=total/g;
+  return {
+    promptText: t('probSimplePrompt', {favorable, other}),
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
+    explain: t('probSimpleExplain', {favorable, total, rp, rq}),
+  };
+}
+function probProblemComplement(){
+  const q = randInt(3,12);
+  let p; do{ p = randInt(1,q-1); } while(gcd(p,q)!==1);
+  const np = q-p; const g=gcd(np,q); const rp=np/g, rq=q/g;
+  return {
+    promptText: t('probComplementPrompt', {p, q}),
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
+    explain: t('probComplementExplain', {p, q, np, rp, rq}),
+  };
+}
+function probProblemIndependentAnd(){
+  let p1,q1; do{ q1=randInt(2,8); p1=randInt(1,q1-1); } while(gcd(p1,q1)!==1);
+  let p2,q2; do{ q2=randInt(2,8); p2=randInt(1,q2-1); } while(gcd(p2,q2)!==1);
+  const num = p1*p2, den = q1*q2;
+  const g = gcd(num,den); const rp=num/g, rq=den/g;
+  return {
+    promptText: t('probIndependentAndPrompt', {p1,q1,p2,q2}),
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
+    explain: t('probIndependentAndExplain', {p1,q1,p2,q2,num,den,rp,rq}),
+  };
+}
+function probProblemMutuallyExclusiveOr(){
+  let p1,q1,p2,q2,num,den;
+  do{
+    q1=randInt(2,8); p1=randInt(1,q1-1);
+    q2=randInt(2,8); p2=randInt(1,q2-1);
+    num = p1*q2+p2*q1; den = q1*q2;
+  } while(gcd(p1,q1)!==1 || gcd(p2,q2)!==1 || num>den);
+  const g = gcd(num,den); const rp=num/g, rq=den/g;
+  return {
+    promptText: t('probMutuallyExclusiveOrPrompt', {p1,q1,p2,q2}),
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
+    explain: t('probMutuallyExclusiveOrExplain', {p1,q1,p2,q2,num,den,rp,rq}),
+  };
+}
+function probProblemConditional(){
+  const q = randInt(4,12);
+  const b = randInt(2,q-1);
+  const a = randInt(1,b);
+  const g = gcd(a,b); const rp=a/g, rq=b/g;
+  return {
+    promptText: t('probConditionalPrompt', {a, q, b}),
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
+    explain: t('probConditionalExplain', {a, q, b, rp, rq}),
+  };
+}
+function probProblemDiceSum(){
+  const sums = Object.keys(DICE_SUM_COUNTS).map(Number);
+  const target = sums[randInt(0,sums.length-1)];
+  const favorable = DICE_SUM_COUNTS[target];
+  const g = gcd(favorable,36); const rp=favorable/g, rq=36/g;
+  return {
+    promptText: t('probDiceSumPrompt', {target}),
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
+    explain: t('probDiceSumExplain', {favorable, target, rp, rq}),
+  };
+}
+function probProblemCard(){
+  const key = PROB_CARD_EVENTS[randInt(0,PROB_CARD_EVENTS.length-1)];
+  const favorable = PROB_CARD_FAVORABLE[key];
+  const g = gcd(favorable,52); const rp=favorable/g, rq=52/g;
+  return {
+    promptText: t('probCardPrompt_'+key),
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
+    explain: t('probCardExplain', {favorable, rp, rq}),
+  };
+}
+function probProblemCombinatorial(){
+  const n = randInt(6,12);
+  const k = randInt(2,4);
+  const r = randInt(2, Math.min(k, n-1));
+  const favorable = combinations(k,r), total = combinations(n,r);
+  const g = gcd(favorable,total); const rp=favorable/g, rq=total/g;
+  return {
+    promptText: t('probCombinatorialPrompt', {n, k, r}),
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
+    explain: t('probCombinatorialExplain', {k, r, n, favorable, total, rp, rq}),
+  };
+}
+function probProblemExpectedValue(){
+  const d = [2,3,4,5,6][randInt(0,4)];
+  const k = randInt(1,d-1);
+  const dk = d-k;
+  const V1 = randInt(1,10)*d, V2 = randInt(1,10)*d;
+  const term1 = k*V1, term2 = dk*V2;
+  const answer = (term1+term2)/d;
+  return {
+    promptText: t('probExpectedValuePrompt', {k, d, V1, dk, V2}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('probExpectedValueExplain', {k, d, V1, dk, V2, term1, term2, d2:d, answer}),
+  };
+}
+function probProblemBinomial(){
+  const n = randInt(3,6);
+  const k = randInt(0,n);
+  const favorable = combinations(n,k), total = Math.pow(2,n);
+  const g = gcd(favorable,total); const rp=favorable/g, rq=total/g;
+  return {
+    promptText: t('probBinomialPrompt', {n, k}),
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
+    explain: t('probBinomialExplain', {n, k, favorable, total, rp, rq}),
+  };
+}
+function probProblemOddsToProb(){
+  let a,b; do{ a=randInt(1,9); b=randInt(1,9); } while(gcd(a,b)!==1);
+  const total = a+b;
+  const g = gcd(a,total); const rp=a/g, rq=total/g;
+  return {
+    promptText: t('probOddsToProbPrompt', {a, b}),
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
+    explain: t('probOddsToProbExplain', {a, b, total, rp, rq}),
+  };
+}
+function probProblemProbToOdds(){
+  const q = randInt(3,12);
+  let p; do{ p = randInt(1,q-1); } while(gcd(p,q)!==1);
+  const against = q-p;
+  const g = gcd(p,against); const rp=p/g, ra=against/g;
+  return {
+    promptText: t('probProbToOddsPrompt', {p, q}),
+    inputs: [{key:'fav', label:t('probFavorableLabel')}, {key:'against', label:t('probAgainstLabel')}],
+    check(vals){ return Number(vals.fav)===rp && Number(vals.against)===ra; },
+    explain: t('probProbToOddsExplain', {p, q, against, rp, ra}),
+  };
+}
+function probProblemAtLeastOne(){
+  const d = randInt(2,6);
+  const n = randInt(2,4);
+  const dn = Math.pow(d,n), d1n = Math.pow(d-1,n);
+  const num = dn-d1n, den = dn;
+  const g = gcd(num,den); const rp=num/g, rq=den/g;
+  return {
+    promptText: t('probAtLeastOnePrompt', {d, n}),
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
+    explain: t('probAtLeastOneExplain', {d, n, dm1:d-1, d1n, dn, num, rp, rq}),
+  };
+}
+
+const PROB_TOPICS = [
+  {key:'simple_probability', build:probProblemSimple},
+  {key:'complement', build:probProblemComplement},
+  {key:'independent_and', build:probProblemIndependentAnd},
+  {key:'mutually_exclusive_or', build:probProblemMutuallyExclusiveOr},
+  {key:'conditional_probability', build:probProblemConditional},
+  {key:'dice_sum', build:probProblemDiceSum},
+  {key:'card_probability', build:probProblemCard},
+  {key:'combinatorial_probability', build:probProblemCombinatorial},
+  {key:'expected_value', build:probProblemExpectedValue},
+  {key:'binomial_probability', build:probProblemBinomial},
+  {key:'odds_to_probability', build:probProblemOddsToProb},
+  {key:'probability_to_odds', build:probProblemProbToOdds},
+  {key:'at_least_one', build:probProblemAtLeastOne},
+];
+function probTopicByKey(key){ return PROB_TOPICS.find(x=>x.key===key); }
+
+function renderProbMenu(){
+  const cards = PROB_TOPICS.map(topic=>{
+    const best = (state.game.probability && state.game.probability[topic.key]) ? state.game.probability[topic.key].best : 0;
+    return `
+    <button class="track-card" onclick="openProbTopic('${topic.key}')">
+      <div class="glyph">🎲</div>
+      <div>
+        <div class="tc-title">${t('probTopicTitle_'+topic.key)}</div>
+        <div class="tc-sub">${t('probTopicDesc_'+topic.key)}</div>
+      </div>
+      <div class="tc-progress">${best ? t('mathBestLabel',{n:best}) : t('startArrow')}</div>
+    </button>`;
+  }).join('');
+
+  return `
+  ${topbar({back:'goHome()'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>${t('probabilityTitle')}</h1>
+      <div class="sub">${t('probabilitySub')}</div>
+    </div>
+    <div class="track-grid">${cards}</div>
+  </div>
+  `;
+}
+
+function openProbTopic(topicKey){
+  state.probSession = {topicKey};
+  state.screen = 'prob_learn';
+  render();
+}
+
+function renderProbLearn(){
+  const topicKey = state.probSession.topicKey;
+  return `
+  ${topbar({back:'state.screen="prob_menu"; render();'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero" style="padding-top:8px;">
+      <h1 style="font-size:26px;">${t('probTopicTitle_'+topicKey)}</h1>
+    </div>
+    <div class="profile-card" style="text-align:left; line-height:1.6; font-size:14.5px; color:var(--snow-dim); white-space:pre-line;">${t('probLearn_'+topicKey)}</div>
+    <button class="btn btn-primary btn-block" onclick="startProbPractice('${topicKey}')">${t('startPracticeBtn')}</button>
+  </div>
+  `;
+}
+
+function startProbPractice(topicKey){
+  const topic = probTopicByKey(topicKey);
+  state.probSession = {
+    topicKey,
+    current: topic.build(),
+    correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
+    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+  };
+  state.screen = 'prob_practice';
+  render();
+  focusProbInput();
+}
+function focusProbInput(){
+  setTimeout(()=>{ const el=document.querySelector('.prob-input'); if(el) el.focus(); }, 30);
+}
+
+function renderProbPractice(){
+  const s = state.probSession;
+  const q = s.current;
+  const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
+
+  const inputsHtml = q.inputs.map(inp=>`
+    <div style="flex:1;">
+      ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
+      <input class="prob-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
+        placeholder="${inp.placeholder||''}"
+        style="text-align:center; font-size:22px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
+        oninput="state.probSession.inputs['${inp.key}']=this.value">
+    </div>`).join('');
+
+  const feedback = s.answered ? `
+    <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
+      <div class="fb-text">
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
+        <div class="fb-sub">${q.explain}</div>
+      </div>
+      <button class="btn btn-light" onclick="nextProbQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
+    </div>` : '';
+
+  return `
+  ${topbar({back:'exitProbPractice()'})}
+  <div class="lesson">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;">
+      <div class="hearts-row">${Array.from({length:MATH_MAX_MISTAKES}).map((_,i)=>`<span>${i<(MATH_MAX_MISTAKES-s.mistakes)?'❤️':'🩶'}</span>`).join('')}</div>
+      <div style="font-size:12px; color:var(--snow-dim); text-align:right;">${t('correctAnswersLabel')}: ${s.correct}${s.combo>=3?`<br><span style="color:var(--gold);">${comboBadge(s.combo)} ${t('comboLabel',{n:s.combo})}</span>`:''}</div>
+    </div>
+    <div class="q-wrap">
+      <div class="q-card">
+        <div class="q-eyebrow">${t('probTopicTitle_'+s.topicKey)}</div>
+        <div class="q-prompt" style="font-size:22px;">${q.promptText}</div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:flex-end;">${inputsHtml}</div>
+      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitProbAnswer()">${t('checkBtn')}</button>` : ''}
+    </div>
+  </div>
+  ${feedback}
+  `;
+}
+
+function submitProbAnswer(){
+  const s = state.probSession;
+  if(!s || s.answered) return;
+  const q = s.current;
+  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
+  const correct = q.check(s.inputs);
+  s.answered = true; s.lastCorrect = correct;
+  if(correct) registerCorrectAnswer(s, state.game);
+  else registerWrongAnswer(s);
+  render();
+}
+
+function nextProbQuestion(){
+  const s = state.probSession;
+  if(s.mistakes>=MATH_MAX_MISTAKES){ finishProbPractice(); return; }
+  const topic = probTopicByKey(s.topicKey);
+  s.answered=false; s.lastCorrect=null; s.inputs={};
+  s.current = topic.build();
+  render();
+  focusProbInput();
+}
+
+function finishProbPractice(){
+  const s = state.probSession;
+  if(!state.game.probability) state.game.probability = {};
+  const rec = state.game.probability[s.topicKey] || (state.game.probability[s.topicKey] = {best:0});
+  s.isNewBest = s.correct > rec.best;
+  if(s.isNewBest) rec.best = s.correct;
+  touchStreak();
+  s.newAchievements = checkAchievements(state.game);
+  state.screen='prob_complete';
+  render();
+}
+
+function renderProbComplete(){
+  const s = state.probSession;
+  const best = state.game.probability[s.topicKey].best;
+  const lvl = xpLevel(state.game.xp);
+  return `
+  ${topbar()}
+  <div class="complete ${appLangClass()}">
+    <div class="medal">${s.isNewBest ? '🏆' : '🎯'}</div>
+    <h2>${s.isNewBest ? t('newBestReached') : t('checkpointReached')}</h2>
+    <div class="stat-row">
+      <div class="stat-box"><div class="val">${s.correct}</div><div class="lab">${t('correctAnswersLabel')}</div></div>
+      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
+    </div>
+    <div style="color:var(--snow-dim); font-size:13px;">${t('mathBestLabel',{n:best})} · ${t('levelLabel',{n:lvl.level})}</div>
+    ${achievementBannerHtml(s.newAchievements)}
+    <button class="btn btn-primary btn-block" onclick="backToProbMenu()">${t('backToProbMenuBtn')}</button>
+  </div>`;
+}
+
+function backToProbMenu(){ state.screen='prob_menu'; render(); }
+function exitProbPractice(){ state.screen='prob_menu'; render(); }
+
+// ---- statistics learning: Month 6 of the planned progression (algebra ->
+// calculus -> linear algebra -> discrete math -> probability -> statistics).
+// Same architecture as the previous five months. Every dataset is
+// constructed backwards from a clean answer (deviations that sum to zero for
+// variance, ± the same magnitude for standard deviation so the variance is
+// always a perfect square, sums that divide evenly for mean/weighted
+// average, quartile positions pre-set to repeated values so Q1/Q3 never
+// require averaging into a fraction) rather than generating random numbers
+// and hoping the statistic comes out clean.
+function statProblemMean(){
+  const n = randInt(4,7);
+  let vals, sum;
+  do{
+    vals = Array.from({length:n},()=>randInt(1,30));
+    sum = vals.reduce((a,b)=>a+b,0);
+  } while(sum % n !== 0);
+  const answer = sum/n;
+  return {
+    promptText: t('statMeanPrompt', {vals:vals.join(', ')}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals2){ return Number(vals2.ans)===answer; },
+    explain: t('statMeanExplain', {sum, n, answer}),
+  };
+}
+function statProblemMedian(){
+  const n = [5,7,9][randInt(0,2)];
+  const vals = Array.from({length:n},()=>randInt(1,50)).sort((a,b)=>a-b);
+  const answer = vals[(n-1)/2];
+  const shuffled = [...vals];
+  for(let i=shuffled.length-1;i>0;i--){ const j=randInt(0,i); [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]]; }
+  return {
+    promptText: t('statMedianPrompt', {vals:shuffled.join(', ')}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals2){ return Number(vals2.ans)===answer; },
+    explain: t('statMedianExplain', {sorted:vals.join(', '), answer}),
+  };
+}
+function statProblemMode(){
+  const repeated = randInt(1,20);
+  const pool = [repeated, repeated, repeated];
+  while(pool.length<7){
+    const v = randInt(1,20);
+    if(v!==repeated && pool.filter(x=>x===v).length<2) pool.push(v);
+  }
+  for(let i=pool.length-1;i>0;i--){ const j=randInt(0,i); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+  return {
+    promptText: t('statModePrompt', {vals:pool.join(', ')}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals2){ return Number(vals2.ans)===repeated; },
+    explain: t('statModeExplain', {repeated}),
+  };
+}
+function statProblemRange(){
+  const n = randInt(5,8);
+  const vals = Array.from({length:n},()=>randInt(1,50));
+  const max = Math.max(...vals), min = Math.min(...vals);
+  const answer = max-min;
+  return {
+    promptText: t('statRangePrompt', {vals:vals.join(', ')}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals2){ return Number(vals2.ans)===answer; },
+    explain: t('statRangeExplain', {max, min, answer}),
+  };
+}
+const STAT_DEVIATION_SETS = [
+  [-3,-1,1,3], [-2,-2,2,2], [-1,-1,1,1],
+  [-4,-2,0,2,4], [-2,-1,0,1,2],
+  [-4,-4,-2,2,4,4],
+];
+function statProblemVariance(){
+  const dev = STAT_DEVIATION_SETS[randInt(0,STAT_DEVIATION_SETS.length-1)];
+  const n = dev.length;
+  const k = randInt(1,3);
+  const mean = randInt(10,40);
+  const vals = dev.map(d=>mean + d*k);
+  const sumSq = dev.reduce((s,d)=>s+(d*k)*(d*k),0);
+  const answer = sumSq/n;
+  return {
+    promptText: t('statVariancePrompt', {vals:vals.join(', ')}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals2){ return Number(vals2.ans)===answer; },
+    explain: t('statVarianceExplain', {mean, sumSq, n, answer}),
+  };
+}
+function statProblemStdDev(){
+  const n = [4,6,8][randInt(0,2)];
+  const a = randInt(2,9);
+  const mean = randInt(10,40);
+  const half = n/2;
+  const dev = [...Array(half).fill(-a), ...Array(half).fill(a)];
+  for(let i=dev.length-1;i>0;i--){ const j=randInt(0,i); [dev[i],dev[j]]=[dev[j],dev[i]]; }
+  const vals = dev.map(d=>mean+d);
+  const variance = a*a;
+  const answer = a;
+  return {
+    promptText: t('statStdDevPrompt', {vals:vals.join(', ')}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals2){ return Number(vals2.ans)===answer; },
+    explain: t('statStdDevExplain', {mean, variance, answer}),
+  };
+}
+function statProblemZScore(){
+  const mean = randInt(20,80);
+  const sd = randInt(2,10);
+  const k = nonZeroRandInt(-3,3);
+  const x = mean + k*sd;
+  const answer = k;
+  return {
+    promptText: t('statZScorePrompt', {x, mean, sd}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('statZScoreExplain', {x, mean, diff:x-mean, sd, answer}),
+  };
+}
+function statProblemPercentage(){
+  const whole = [20,25,40,50,80,100,200][randInt(0,6)];
+  let part;
+  do{ part = randInt(1,whole-1); } while((part*100)%whole!==0);
+  const answer = (part*100)/whole;
+  return {
+    promptText: t('statPercentagePrompt', {part, whole}),
+    inputs: [{key:'ans', placeholder:t('statPercentAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('statPercentageExplain', {part, whole, answer}),
+  };
+}
+function statProblemWeightedAverage(){
+  const w1=randInt(1,4), w2=randInt(1,4), w3=randInt(1,4);
+  const totalW = w1+w2+w3;
+  let s1,s2,s3, sum;
+  do{
+    s1=randInt(50,100); s2=randInt(50,100); s3=randInt(50,100);
+    sum = s1*w1+s2*w2+s3*w3;
+  } while(sum % totalW !== 0);
+  const answer = sum/totalW;
+  return {
+    promptText: t('statWeightedAvgPrompt', {s1,w1,s2,w2,s3,w3}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('statWeightedAvgExplain', {s1,w1,s2,w2,s3,w3,sum,totalW,answer}),
+  };
+}
+function statProblemIQR(){
+  const Q1 = randInt(10,30);
+  const Q3 = Q1 + randInt(10,30);
+  const item0 = Q1 - randInt(1,5);
+  const item3 = Q1 + randInt(1, Math.max(1, Math.floor((Q3-Q1)/2)));
+  const item4 = item3 + randInt(0, Math.max(0, Q3-item3-1));
+  const item7 = Q3 + randInt(1,5);
+  const sorted = [item0, Q1, Q1, item3, item4, Q3, Q3, item7];
+  const answer = Q3 - Q1;
+  const shuffled = [...sorted];
+  for(let i=shuffled.length-1;i>0;i--){ const j=randInt(0,i); [shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]]; }
+  return {
+    promptText: t('statIQRPrompt', {vals:shuffled.join(', ')}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals2){ return Number(vals2.ans)===answer; },
+    explain: t('statIQRExplain', {sorted:sorted.join(', '), Q1, Q3, answer}),
+  };
+}
+function statProblemMidrange(){
+  const n = randInt(5,8);
+  const half = randInt(5,40);
+  const min = randInt(1,30);
+  const max = min + half*2;
+  const middle = Array.from({length:n-2},()=>randInt(min+1,max-1));
+  const vals = [min, max, ...middle];
+  for(let i=vals.length-1;i>0;i--){ const j=randInt(0,i); [vals[i],vals[j]]=[vals[j],vals[i]]; }
+  const answer = (min+max)/2;
+  return {
+    promptText: t('statMidrangePrompt', {vals:vals.join(', ')}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals2){ return Number(vals2.ans)===answer; },
+    explain: t('statMidrangeExplain', {min, max, answer}),
+  };
+}
+function statProblemFrequency(){
+  const target = randInt(1,15);
+  const freq = randInt(2,4);
+  const vals = [];
+  for(let i=0;i<freq;i++) vals.push(target);
+  const extra = randInt(4,7);
+  for(let i=0;i<extra;i++){
+    let v; do{ v = randInt(1,15); } while(v===target);
+    vals.push(v);
+  }
+  for(let i=vals.length-1;i>0;i--){ const j=randInt(0,i); [vals[i],vals[j]]=[vals[j],vals[i]]; }
+  return {
+    promptText: t('statFrequencyPrompt', {vals:vals.join(', '), target}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals2){ return Number(vals2.ans)===freq; },
+    explain: t('statFrequencyExplain', {target, freq}),
+  };
+}
+function statProblemCumulative(){
+  const n = randInt(8,12);
+  const vals = Array.from({length:n},()=>randInt(1,50));
+  const threshold = randInt(10,45);
+  const answer = vals.filter(v=>v<=threshold).length;
+  return {
+    promptText: t('statCumulativePrompt', {vals:vals.join(', '), threshold}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals2){ return Number(vals2.ans)===answer; },
+    explain: t('statCumulativeExplain', {threshold, answer}),
+  };
+}
+
+const STAT_TOPICS = [
+  {key:'mean', build:statProblemMean},
+  {key:'median', build:statProblemMedian},
+  {key:'mode', build:statProblemMode},
+  {key:'range', build:statProblemRange},
+  {key:'variance', build:statProblemVariance},
+  {key:'std_dev', build:statProblemStdDev},
+  {key:'z_score', build:statProblemZScore},
+  {key:'percentage_of_total', build:statProblemPercentage},
+  {key:'weighted_average', build:statProblemWeightedAverage},
+  {key:'interquartile_range', build:statProblemIQR},
+  {key:'midrange', build:statProblemMidrange},
+  {key:'frequency_count', build:statProblemFrequency},
+  {key:'cumulative_count', build:statProblemCumulative},
+];
+function statTopicByKey(key){ return STAT_TOPICS.find(x=>x.key===key); }
+
+function renderStatMenu(){
+  const cards = STAT_TOPICS.map(topic=>{
+    const best = (state.game.statistics && state.game.statistics[topic.key]) ? state.game.statistics[topic.key].best : 0;
+    return `
+    <button class="track-card" onclick="openStatTopic('${topic.key}')">
+      <div class="glyph">📊</div>
+      <div>
+        <div class="tc-title">${t('statTopicTitle_'+topic.key)}</div>
+        <div class="tc-sub">${t('statTopicDesc_'+topic.key)}</div>
+      </div>
+      <div class="tc-progress">${best ? t('mathBestLabel',{n:best}) : t('startArrow')}</div>
+    </button>`;
+  }).join('');
+
+  return `
+  ${topbar({back:'goHome()'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>${t('statisticsTitle')}</h1>
+      <div class="sub">${t('statisticsSub')}</div>
+    </div>
+    <div class="track-grid">${cards}</div>
+  </div>
+  `;
+}
+
+function openStatTopic(topicKey){
+  state.statSession = {topicKey};
+  state.screen = 'stat_learn';
+  render();
+}
+
+function renderStatLearn(){
+  const topicKey = state.statSession.topicKey;
+  return `
+  ${topbar({back:'state.screen="stat_menu"; render();'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero" style="padding-top:8px;">
+      <h1 style="font-size:26px;">${t('statTopicTitle_'+topicKey)}</h1>
+    </div>
+    <div class="profile-card" style="text-align:left; line-height:1.6; font-size:14.5px; color:var(--snow-dim); white-space:pre-line;">${t('statLearn_'+topicKey)}</div>
+    <button class="btn btn-primary btn-block" onclick="startStatPractice('${topicKey}')">${t('startPracticeBtn')}</button>
+  </div>
+  `;
+}
+
+function startStatPractice(topicKey){
+  const topic = statTopicByKey(topicKey);
+  state.statSession = {
+    topicKey,
+    current: topic.build(),
+    correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
+    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+  };
+  state.screen = 'stat_practice';
+  render();
+  focusStatInput();
+}
+function focusStatInput(){
+  setTimeout(()=>{ const el=document.querySelector('.stat-input'); if(el) el.focus(); }, 30);
+}
+
+function renderStatPractice(){
+  const s = state.statSession;
+  const q = s.current;
+  const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
+
+  const inputsHtml = q.inputs.map(inp=>`
+    <div style="flex:1;">
+      ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
+      <input class="stat-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
+        placeholder="${inp.placeholder||''}"
+        style="text-align:center; font-size:22px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
+        oninput="state.statSession.inputs['${inp.key}']=this.value">
+    </div>`).join('');
+
+  const feedback = s.answered ? `
+    <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
+      <div class="fb-text">
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
+        <div class="fb-sub">${q.explain}</div>
+      </div>
+      <button class="btn btn-light" onclick="nextStatQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
+    </div>` : '';
+
+  return `
+  ${topbar({back:'exitStatPractice()'})}
+  <div class="lesson">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;">
+      <div class="hearts-row">${Array.from({length:MATH_MAX_MISTAKES}).map((_,i)=>`<span>${i<(MATH_MAX_MISTAKES-s.mistakes)?'❤️':'🩶'}</span>`).join('')}</div>
+      <div style="font-size:12px; color:var(--snow-dim); text-align:right;">${t('correctAnswersLabel')}: ${s.correct}${s.combo>=3?`<br><span style="color:var(--gold);">${comboBadge(s.combo)} ${t('comboLabel',{n:s.combo})}</span>`:''}</div>
+    </div>
+    <div class="q-wrap">
+      <div class="q-card">
+        <div class="q-eyebrow">${t('statTopicTitle_'+s.topicKey)}</div>
+        <div class="q-prompt" style="font-size:20px;">${q.promptText}</div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:flex-end;">${inputsHtml}</div>
+      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitStatAnswer()">${t('checkBtn')}</button>` : ''}
+    </div>
+  </div>
+  ${feedback}
+  `;
+}
+
+function submitStatAnswer(){
+  const s = state.statSession;
+  if(!s || s.answered) return;
+  const q = s.current;
+  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
+  const correct = q.check(s.inputs);
+  s.answered = true; s.lastCorrect = correct;
+  if(correct) registerCorrectAnswer(s, state.game);
+  else registerWrongAnswer(s);
+  render();
+}
+
+function nextStatQuestion(){
+  const s = state.statSession;
+  if(s.mistakes>=MATH_MAX_MISTAKES){ finishStatPractice(); return; }
+  const topic = statTopicByKey(s.topicKey);
+  s.answered=false; s.lastCorrect=null; s.inputs={};
+  s.current = topic.build();
+  render();
+  focusStatInput();
+}
+
+function finishStatPractice(){
+  const s = state.statSession;
+  if(!state.game.statistics) state.game.statistics = {};
+  const rec = state.game.statistics[s.topicKey] || (state.game.statistics[s.topicKey] = {best:0});
+  s.isNewBest = s.correct > rec.best;
+  if(s.isNewBest) rec.best = s.correct;
+  touchStreak();
+  s.newAchievements = checkAchievements(state.game);
+  state.screen='stat_complete';
+  render();
+}
+
+function renderStatComplete(){
+  const s = state.statSession;
+  const best = state.game.statistics[s.topicKey].best;
+  const lvl = xpLevel(state.game.xp);
+  return `
+  ${topbar()}
+  <div class="complete ${appLangClass()}">
+    <div class="medal">${s.isNewBest ? '🏆' : '🎯'}</div>
+    <h2>${s.isNewBest ? t('newBestReached') : t('checkpointReached')}</h2>
+    <div class="stat-row">
+      <div class="stat-box"><div class="val">${s.correct}</div><div class="lab">${t('correctAnswersLabel')}</div></div>
+      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
+    </div>
+    <div style="color:var(--snow-dim); font-size:13px;">${t('mathBestLabel',{n:best})} · ${t('levelLabel',{n:lvl.level})}</div>
+    ${achievementBannerHtml(s.newAchievements)}
+    <button class="btn btn-primary btn-block" onclick="backToStatMenu()">${t('backToStatMenuBtn')}</button>
+  </div>`;
+}
+
+function backToStatMenu(){ state.screen='stat_menu'; render(); }
+function exitStatPractice(){ state.screen='stat_menu'; render(); }
 
 // ---- business concepts: Finance, Economics and Tech Companies. Different
 // shape from algebra/calculus — these are qualitative concepts, not
