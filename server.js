@@ -302,11 +302,25 @@ function createApp(overrides = {}) {
   const ensureAvatarBucket = () => ensureBucket(AVATAR_BUCKET);
 
   // High-quality neural voices: British English + Beijing-standard Mandarin, one
-  // male and one female each. See https://learn.microsoft.com/azure/ai-services/speech-service/language-support
+  // male and one female each. Mandarin uses Azure's newer "Multilingual" neural
+  // voices (same Xiaoxiao/Yunxi personas, a more natural-sounding successor
+  // model) — see AZURE_VOICE_FALLBACK below for what happens if a region
+  // doesn't yet serve them. See https://learn.microsoft.com/azure/ai-services/speech-service/language-support
   const AZURE_VOICES = {
     en: { female: 'en-GB-SoniaNeural', male: 'en-GB-RyanNeural' },
-    zh: { female: 'zh-CN-XiaoxiaoNeural', male: 'zh-CN-YunxiNeural' },
+    zh: { female: 'zh-CN-XiaoxiaoMultilingualNeural', male: 'zh-CN-YunxiMultilingualNeural' },
   };
+  // Multilingual voices aren't guaranteed available in every Azure Speech
+  // region yet. If the primary voice request fails, retry once with the
+  // classic standard-neural voice it's paired with so TTS never breaks.
+  const AZURE_VOICE_FALLBACK = {
+    'zh-CN-XiaoxiaoMultilingualNeural': 'zh-CN-XiaoxiaoNeural',
+    'zh-CN-YunxiMultilingualNeural': 'zh-CN-YunxiNeural',
+  };
+  // 24kHz/160kbps instead of the previous 16kHz/64kbps — the old format's low
+  // sample rate and heavy compression were the main source of the "unclear,
+  // robotic" sound users reported, independent of which voice model is used.
+  const AZURE_TTS_FORMAT = 'audio-24khz-160kbitrate-mono-mp3';
 
   let dbClient = null;
   let databaseReady = false;
@@ -909,28 +923,19 @@ function createApp(overrides = {}) {
     const voice = String(req.query.voice || 'female');
     const text = String(req.query.text || '').slice(0, 500);
 
-    const voiceName = AZURE_VOICES[lang] && AZURE_VOICES[lang][voice];
-    if (!voiceName || !text.trim()) {
+    const primaryVoiceName = AZURE_VOICES[lang] && AZURE_VOICES[lang][voice];
+    if (!primaryVoiceName || !text.trim()) {
       return res.status(400).json({ error: 'Unsupported lang/voice or empty text.' });
     }
     if (!AZURE_SPEECH_KEY || !AZURE_SPEECH_REGION) {
       return res.status(503).json({ error: 'Azure Speech is not configured on this server yet.' });
     }
 
-    const cacheKey = crypto.createHash('sha256').update(voiceName + '|' + text).digest('hex');
-    const cacheFile = path.join(TTS_CACHE_DIR, cacheKey + '.mp3');
+    const langTag = lang === 'zh' ? 'zh-CN' : 'en-GB';
+    const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-    try {
-      if (fs.existsSync(cacheFile)) {
-        res.setHeader('Content-Type', 'audio/mpeg');
-        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-        return fs.createReadStream(cacheFile).pipe(res);
-      }
-
-      const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      const langTag = lang === 'zh' ? 'zh-CN' : 'en-GB';
+    async function synthesize(voiceName) {
       const ssml = `<speak version="1.0" xml:lang="${langTag}"><voice name="${voiceName}">${escaped}</voice></speak>`;
-
       const azureRes = await fetch(
         `https://${AZURE_SPEECH_REGION}.tts.speech.microsoft.com/cognitiveservices/v1`,
         {
@@ -938,19 +943,52 @@ function createApp(overrides = {}) {
           headers: {
             'Ocp-Apim-Subscription-Key': AZURE_SPEECH_KEY,
             'Content-Type': 'application/ssml+xml',
-            'X-Microsoft-OutputFormat': 'audio-16khz-64kbitrate-mono-mp3',
+            'X-Microsoft-OutputFormat': AZURE_TTS_FORMAT,
             'User-Agent': 'yeshe-app',
           },
           body: ssml,
         }
       );
-
       if (!azureRes.ok) {
         const details = await azureRes.text().catch(() => '');
-        return res.status(502).json({ error: 'Azure Speech request failed.', details: details.slice(0, 300) });
+        const err = new Error('Azure Speech request failed.');
+        err.details = details.slice(0, 300);
+        throw err;
+      }
+      return Buffer.from(await azureRes.arrayBuffer());
+    }
+
+    try {
+      // Try the primary (e.g. multilingual) voice first; a region that
+      // doesn't yet serve it falls back to the paired standard voice so
+      // playback never breaks even if a newer voice isn't available yet.
+      let voiceName = primaryVoiceName;
+      let cacheKey = crypto.createHash('sha256').update(voiceName + '|' + AZURE_TTS_FORMAT + '|' + text).digest('hex');
+      let cacheFile = path.join(TTS_CACHE_DIR, cacheKey + '.mp3');
+
+      if (fs.existsSync(cacheFile)) {
+        res.setHeader('Content-Type', 'audio/mpeg');
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        return fs.createReadStream(cacheFile).pipe(res);
       }
 
-      const audioBuffer = Buffer.from(await azureRes.arrayBuffer());
+      let audioBuffer;
+      try {
+        audioBuffer = await synthesize(voiceName);
+      } catch (primaryError) {
+        const fallbackVoice = AZURE_VOICE_FALLBACK[voiceName];
+        if (!fallbackVoice) throw primaryError;
+        voiceName = fallbackVoice;
+        cacheKey = crypto.createHash('sha256').update(voiceName + '|' + AZURE_TTS_FORMAT + '|' + text).digest('hex');
+        cacheFile = path.join(TTS_CACHE_DIR, cacheKey + '.mp3');
+        if (fs.existsSync(cacheFile)) {
+          res.setHeader('Content-Type', 'audio/mpeg');
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+          return fs.createReadStream(cacheFile).pipe(res);
+        }
+        audioBuffer = await synthesize(voiceName);
+      }
+
       fs.mkdirSync(TTS_CACHE_DIR, { recursive: true });
       fs.writeFileSync(cacheFile, audioBuffer);
 
@@ -958,7 +996,7 @@ function createApp(overrides = {}) {
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
       return res.send(audioBuffer);
     } catch (error) {
-      return res.status(500).json({ error: 'TTS synthesis failed.', details: error.message });
+      return res.status(502).json({ error: 'Azure Speech request failed.', details: error.details || error.message });
     }
   });
 
