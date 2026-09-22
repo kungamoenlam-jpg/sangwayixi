@@ -4272,6 +4272,7 @@ const I18N = {
     bizTitle_k_fold_cross_validation: "K-Fold Cross-Validation", bizExplain_k_fold_cross_validation: "Randomly divides the data into K equally sized folds. Each fold is held out once as a validation set while the model is trained on the remaining K minus one folds, producing K estimates of test error that are averaged together. Common choices are K equals 5 or K equals 10, which balance bias and variance better than the simple validation-set approach.", bizQuestion_k_fold_cross_validation: "Which cross-validation method randomly splits the data into K equally sized groups, then trains on K-1 of them and validates on the one held out, repeating K times?",
     bizTitle_information_criteria: "Information Criteria (Cp, AIC, BIC)", bizExplain_information_criteria: "A family of methods that adjust the training error by adding a penalty for the number of predictors in the model, allowing models of different sizes to be compared directly on the training data without a validation set. Mallow's Cp and AIC penalize each added predictor by roughly the same amount, while BIC applies a heavier penalty and tends to favor smaller models.", bizQuestion_information_criteria: "What family of methods adjusts training error with a penalty for the number of predictors, so models of different sizes can be compared without cross-validation?",
     bizTitle_adjusted_r_squared: "Adjusted R-Squared", bizExplain_adjusted_r_squared: "A variation of R-squared that adds a penalty for the number of predictors in the model, so it does not automatically increase every time a new predictor is added the way ordinary R-squared does. A higher adjusted R-squared indicates a better balance between model fit and model size, making it useful for comparing models with different numbers of predictors.", bizQuestion_adjusted_r_squared: "Which version of R-squared adds a penalty for the number of predictors so it does not always increase when a new predictor is added?",
+    bizTitle_linear_regression_vs_equation: "Linear Regression vs. Linear Equation", bizExplain_linear_regression_vs_equation: "A linear equation such as y = mx + b is a deterministic rule that gives one exact y for every x, with no room for error. A linear regression model adds a random error term, Y = β0 + β1X + ε, to reflect that real data scatters around the line; its coefficients are estimated from data rather than known exactly, so its predictions carry uncertainty that a plain equation does not.", bizQuestion_linear_regression_vs_equation: "What does a linear regression model add to a plain linear equation (y = mx + b) to account for real data not falling exactly on the line?",
     bizTitle_capm: "CAPM", bizExplain_capm: "The Capital Asset Pricing Model estimates an asset's expected return as the risk-free rate plus a risk premium: E(Ri) = rf + βi[E(Rm) − rf]. It tells an investor whether an asset's expected return compensates them fairly for the market risk they are taking on.", bizQuestion_capm: "What model estimates an asset's expected return as the risk-free rate plus beta times the market risk premium?",
     bizTitle_cost_of_equity: "Cost of Equity", bizExplain_cost_of_equity: "The required return that equity investors expect from investing in a firm's shares, and the return the firm must earn on equity-financed projects to satisfy them. It is typically estimated using CAPM: Re = rf + βe[E(Rm) − rf].", bizQuestion_cost_of_equity: "What is the required return that shareholders expect to earn, usually estimated with CAPM?",
     bizTitle_cost_of_debt: "Cost of Debt", bizExplain_cost_of_debt: "The expected return required by a firm's creditors, such as lenders and bondholders. If a bond has little to no default risk, its yield to maturity is a reasonable estimate of the cost of debt, but significant default risk requires adjusting that yield downward.", bizQuestion_cost_of_debt: "What is the expected return required by a firm's lenders and bondholders, usually estimated from bond yields?",
@@ -6772,6 +6773,29 @@ function diagramForwardStepwise(){
     <text x="192" y="128" style="fill:var(--gold); font-size:9px;">CV Error (min)</text>
   </svg>`;
 }
+function diagramLinearRegressionVsEquation(){
+  return `<svg viewBox="0 0 280 160" style="width:100%; height:auto;">
+    <line x1="20" y1="135" x2="125" y2="135" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <line x1="20" y1="135" x2="20" y2="20" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <path d="M25 125 L120 30" style="stroke:var(--ice); fill:none;" stroke-width="2"/>
+    <circle cx="45" cy="105" r="3" style="fill:var(--ice);"/>
+    <circle cx="70" cy="80" r="3" style="fill:var(--ice);"/>
+    <circle cx="95" cy="55" r="3" style="fill:var(--ice);"/>
+    <text x="20" y="13" style="fill:var(--ice); font-size:9px;">y = mx + b</text>
+    <text x="20" y="150" style="fill:rgba(255,255,255,.5); font-size:8px;">Exact, no error</text>
+    <line x1="155" y1="135" x2="260" y2="135" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <line x1="155" y1="135" x2="155" y2="20" style="stroke:rgba(255,255,255,.3);" stroke-width="1.5"/>
+    <path d="M160 125 L255 30" style="stroke:var(--gold); fill:none;" stroke-width="2"/>
+    <line x1="180" y1="98" x2="180" y2="105" style="stroke:var(--bad); stroke-dasharray:2,2;" stroke-width="1"/>
+    <circle cx="180" cy="98" r="3" style="fill:var(--bad);"/>
+    <line x1="205" y1="70" x2="205" y2="80" style="stroke:var(--bad); stroke-dasharray:2,2;" stroke-width="1"/>
+    <circle cx="205" cy="70" r="3" style="fill:var(--bad);"/>
+    <line x1="230" y1="55" x2="230" y2="60" style="stroke:var(--bad); stroke-dasharray:2,2;" stroke-width="1"/>
+    <circle cx="230" cy="60" r="3" style="fill:var(--bad);"/>
+    <text x="157" y="13" style="fill:var(--gold); font-size:8.5px;">Y = β₀+β₁X+ε</text>
+    <text x="157" y="150" style="fill:rgba(255,255,255,.5); font-size:8px;">Scatter = error (ε)</text>
+  </svg>`;
+}
 
 // ---- financial statement "figures": a plain HTML table (label left, value
 // right), reused both as a read-only worked example on the Learn screen and
@@ -7237,6 +7261,8 @@ const BUSINESS_CONCEPTS = {
       acceptedAnswers:{en:['information criteria','cp, aic, bic','aic/bic/cp']}},
     {key:'adjusted_r_squared', icon:'📐', diagram:null, week:3, titleKey:'bizTitle_adjusted_r_squared', explainKey:'bizExplain_adjusted_r_squared', questionKey:'bizQuestion_adjusted_r_squared',
       acceptedAnswers:{en:['adjusted r-squared','adjusted r squared']}},
+    {key:'linear_regression_vs_equation', icon:'🆚', diagram:diagramLinearRegressionVsEquation, week:2, titleKey:'bizTitle_linear_regression_vs_equation', explainKey:'bizExplain_linear_regression_vs_equation', questionKey:'bizQuestion_linear_regression_vs_equation',
+      acceptedAnswers:{en:['an error term','error term','the error term','a random error term']}},
   ],
   corpfin: [
     {key:'capm', icon:'📊', diagram:null, week:1, titleKey:'bizTitle_capm', explainKey:'bizExplain_capm', questionKey:'bizQuestion_capm',
