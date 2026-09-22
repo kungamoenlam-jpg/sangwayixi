@@ -4396,6 +4396,7 @@ function defaultGame(){
     math:{easy:{best:0}, medium:{best:0}, hard:{best:0}}, // difficulty -> best correct-answer count
     algebra:{}, // topic key -> {best: correct-answer count}
     calculus:{}, // topic key -> {best: correct-answer count}
+    linalg:{}, // topic key -> {best: correct-answer count}
     business:{}, // category key -> {rounds: completed-rounds count}
     conceptExposure:{}, // concept key -> times tested (drives MCQ -> typed progression)
     conceptMastery:{}, // concept key (or "qb_<id>" for Quiz Bank questions) -> {correct, wrong, streak}
@@ -4771,6 +4772,75 @@ const I18N = {
     calcLearn_definite_integrals: "A definite integral ∫ from a to b of f(x) dx gives the net signed area under f(x) between x=a and x=b. The Fundamental Theorem of Calculus says you can compute it as F(b) - F(a), where F is any antiderivative of f.\n\nExample: evaluate ∫ from 1 to 3 of 2x dx.\nAn antiderivative is F(x) = x². F(3) - F(1) = 9 - 1 = 8.",
     calcDefIntegralPrompt: "Evaluate: ∫ from {a} to {b} of ({expr}) dx",
     calcDefIntegralExplain: "The antiderivative is F(x) = {FExpr}. By the Fundamental Theorem of Calculus: ∫ = F({b}) - F({a}) = {Fb} - ({Fa}) = {answer}.",
+
+    linalgTitle: "Linear Algebra",
+    linalgSub: "Month 3: vectors, matrices and the operations that hold them together. Pick a topic to learn the concept, then practice.",
+    backToLinAlgMenuBtn: "Back to Linear Algebra",
+
+    linalgTopicTitle_vector_addition: "Vector Addition", linalgTopicDesc_vector_addition: "Add two vectors component-wise",
+    linalgLearn_vector_addition: "To add two vectors, add their corresponding components. If u = (a, b) and v = (c, d), then u + v = (a+c, b+d).\n\nExample: add u = (2, 5) and v = (3, -1).\nu + v = (2+3, 5+(-1)) = (5, 4).",
+    linalgVectorAddPrompt: "Add the vectors: u = {u}, v = {v}",
+    linalgVectorAddExplain: "Add component-wise: ({a1} + {a2}, {b1} + {b2}) = ({x}, {y}).",
+
+    linalgTopicTitle_vector_scalar: "Scalar Multiplication", linalgTopicDesc_vector_scalar: "Multiply a vector by a scalar",
+    linalgLearn_vector_scalar: "Multiplying a vector by a scalar k multiplies every component by k. If v = (a, b), then kv = (ka, kb).\n\nExample: compute 3 × (2, -4).\n3 × (2, -4) = (6, -12).",
+    linalgVectorScalarPrompt: "Compute {k} × v, where v = {v}",
+    linalgVectorScalarExplain: "Multiply each component by {k}: ({k}×{a}, {k}×{b}) = ({x}, {y}).",
+
+    linalgTopicTitle_vector_magnitude: "Vector Magnitude", linalgTopicDesc_vector_magnitude: "Find the length of a vector",
+    linalgLearn_vector_magnitude: "The magnitude (length) of a vector v = (a, b) is |v| = √(a² + b²), found using the Pythagorean theorem.\n\nExample: find the magnitude of (3, 4).\n|v| = √(3² + 4²) = √(9+16) = √25 = 5.",
+    linalgMagnitudePrompt: "Find the magnitude of v = {v}",
+    linalgMagnitudeExplain: "|v| = √({aSq} + {bSq}) = √{sum} = {c}.",
+
+    linalgTopicTitle_dot_product: "Dot Product", linalgTopicDesc_dot_product: "Multiply corresponding components and sum",
+    linalgLearn_dot_product: "The dot product of u = (a, b, c) and v = (d, e, f) is u·v = ad + be + cf — a single number, not a vector.\n\nExample: find (1, 2, 3)·(4, -5, 6).\n= 1×4 + 2×(-5) + 3×6 = 4 - 10 + 18 = 12.",
+    linalgDotProductPrompt: "Find the dot product: u = {u}, v = {v}",
+    linalgDotProductExplain: "u·v = {t1} + {t2} + {t3} = {answer}.",
+
+    linalgTopicTitle_cross_product: "Cross Product", linalgTopicDesc_cross_product: "Find the vector perpendicular to two 3D vectors",
+    linalgLearn_cross_product: "The cross product of u = (a₁,b₁,c₁) and v = (a₂,b₂,c₂) is a new vector perpendicular to both:\nu × v = (b₁c₂ − c₁b₂, c₁a₂ − a₁c₂, a₁b₂ − b₁a₂).\n\nExample: find (1,0,0) × (0,1,0).\n= (0×0 − 0×1, 0×0 − 1×0, 1×1 − 0×0) = (0, 0, 1).",
+    linalgCrossProductPrompt: "Find u × v, where u = {u}, v = {v}",
+    linalgCrossProductExplain: "x: {xExpr}\ny: {yExpr}\nz: {zExpr}",
+
+    linalgTopicTitle_matrix_addition: "Matrix Addition", linalgTopicDesc_matrix_addition: "Add two matrices entry by entry",
+    linalgLearn_matrix_addition: "To add two matrices of the same size, add the entries in matching positions.\n\nExample: add [[1,2],[3,4]] and [[5,6],[7,8]].\nResult: [[1+5, 2+6], [3+7, 4+8]] = [[6, 8], [10, 12]].",
+    linalgMatrixAddPrompt: "Find A + B, where A = {A}, B = {B}",
+    linalgMatrixAddExplain: "Add matching entries: {C}.",
+
+    linalgTopicTitle_matrix_scalar: "Matrix Scalar Multiplication", linalgTopicDesc_matrix_scalar: "Multiply every entry of a matrix by a number",
+    linalgLearn_matrix_scalar: "Multiplying a matrix by a scalar k multiplies every entry by k.\n\nExample: compute 2 × [[1,2],[3,4]].\n= [[2,4],[6,8]].",
+    linalgMatrixScalarPrompt: "Compute {k} × A, where A = {A}",
+    linalgMatrixScalarExplain: "Multiply every entry by {k}: {C}.",
+
+    linalgTopicTitle_matrix_vector: "Matrix × Vector", linalgTopicDesc_matrix_vector: "Multiply a matrix by a vector",
+    linalgLearn_matrix_vector: "To multiply a matrix A by a vector v, take the dot product of each row of A with v. If A = [[a,b],[c,d]] and v = (x,y), then Av = (ax+by, cx+dy).\n\nExample: [[2,0],[1,3]] × (5, 2).\nRow 1: 2×5 + 0×2 = 10. Row 2: 1×5 + 3×2 = 11. Result: (10, 11).",
+    linalgMatVecPrompt: "Compute Av, where A = {A}, v = {v}",
+    linalgMatVecExplain: "Row 1: {rowExpr1}\nRow 2: {rowExpr2}",
+
+    linalgTopicTitle_matrix_multiplication: "Matrix Multiplication", linalgTopicDesc_matrix_multiplication: "Multiply two 2×2 matrices",
+    linalgLearn_matrix_multiplication: "To multiply two matrices, each entry of the result is the dot product of a row of A with a column of B. If A = [[a,b],[c,d]] and B = [[e,f],[g,h]], then AB = [[ae+bg, af+bh], [ce+dg, cf+dh]].\n\nExample: [[1,2],[3,4]] × [[5,6],[7,8]].\nTop-left: 1×5+2×7=19. Top-right: 1×6+2×8=22. Bottom-left: 3×5+4×7=43. Bottom-right: 3×6+4×8=50.\nResult: [[19,22],[43,50]].",
+    linalgMatrixMultPrompt: "Compute AB, where A = {A}, B = {B}",
+    linalgMatrixMultExplain: "Each entry is a row-of-A dot column-of-B: {C}.",
+
+    linalgTopicTitle_determinant_2x2: "2×2 Determinant", linalgTopicDesc_determinant_2x2: "Find the determinant of a 2×2 matrix",
+    linalgLearn_determinant_2x2: "For a 2×2 matrix [[a,b],[c,d]], the determinant is ad − bc.\n\nExample: find the determinant of [[3,2],[1,4]].\n= 3×4 − 2×1 = 12 − 2 = 10.",
+    linalgDet2Prompt: "Find the determinant of A = {A}",
+    linalgDet2Explain: "det(A) = {ad} − {bc} = {answer}.",
+
+    linalgTopicTitle_determinant_3x3: "3×3 Determinant", linalgTopicDesc_determinant_3x3: "Find a 3×3 determinant by cofactor expansion",
+    linalgLearn_determinant_3x3: "For a 3×3 matrix, expand along the top row. If A = [[a,b,c],[d,e,f],[g,h,i]], then:\ndet(A) = a(ei − fh) − b(di − fg) + c(dh − eg).\n\nExample: [[1,2,0],[3,1,2],[2,0,1]].\ndet = 1(1×1 − 2×0) − 2(3×1 − 2×2) + 0(3×0 − 1×2) = 1(1) − 2(−1) + 0 = 1 + 2 = 3.",
+    linalgDet3Prompt: "Find the determinant of A = {A}",
+    linalgDet3Explain: "det(A) = {sumExpr} = {answer}.",
+
+    linalgTopicTitle_transpose: "Transpose", linalgTopicDesc_transpose: "Find an entry of a matrix's transpose",
+    linalgLearn_transpose: "The transpose of a matrix, Aᵀ, flips it over its diagonal — row i of A becomes column i of Aᵀ. So the entry at row i, column j of Aᵀ equals the entry at row j, column i of A.\n\nExample: if A = [[1,2,3],[4,5,6]], then A's entry at row 2, column 1 (which is 4) becomes Aᵀ's entry at row 1, column 2.",
+    linalgTransposePrompt: "If A = {A}, find the entry of Aᵀ at row {i}, column {j}.",
+    linalgTransposeExplain: "Aᵀ's entry at row {i}, column {j} equals A's entry at row {origI}, column {origJ}, which is {answer}.",
+
+    linalgTopicTitle_inverse: "2×2 Inverse", linalgTopicDesc_inverse: "Find the inverse of a 2×2 matrix",
+    linalgLearn_inverse: "For a 2×2 matrix A = [[a,b],[c,d]] with determinant ad − bc ≠ 0, the inverse is:\nA⁻¹ = (1/det) × [[d, -b], [-c, a]].\n\nExample: A = [[2,1],[1,1]]. det = 2×1 − 1×1 = 1.\nA⁻¹ = (1/1) × [[1,-1],[-1,2]] = [[1,-1],[-1,2]].",
+    linalgInversePrompt: "Find A⁻¹, where A = {A} (its determinant is ±1, so every entry of A⁻¹ is a whole number)",
+    linalgInverseExplain: "det(A) = {det}. A⁻¹ = (1/{det}) × [[d,-b],[-c,a]] = {C}.",
 
     businessTitle: "Business Concepts",
     businessSub: "Finance, economics and the tech companies shaping them. Learn 3 concepts, then get quizzed on one — multiple choice the first time, typed from memory after that.",
@@ -5247,6 +5317,75 @@ const I18N = {
     calcDefIntegralPrompt: "计算：∫ 从 {a} 到 {b} 的 ({expr}) dx",
     calcDefIntegralExplain: "原函数是 F(x) = {FExpr}。根据微积分基本定理：∫ = F({b}) - F({a}) = {Fb} - ({Fa}) = {answer}。",
 
+    linalgTitle: "线性代数",
+    linalgSub: "第三个月：向量、矩阵以及连接它们的运算。选择一个主题学习概念，然后练习。",
+    backToLinAlgMenuBtn: "返回线性代数",
+
+    linalgTopicTitle_vector_addition: "向量加法", linalgTopicDesc_vector_addition: "按分量相加两个向量",
+    linalgLearn_vector_addition: "将两个向量相加时，把对应的分量相加。如果 u = (a, b)，v = (c, d)，那么 u + v = (a+c, b+d)。\n\n例如：计算 u = (2, 5) 和 v = (3, -1) 的和。\nu + v = (2+3, 5+(-1)) = (5, 4)。",
+    linalgVectorAddPrompt: "将向量相加：u = {u}，v = {v}",
+    linalgVectorAddExplain: "按分量相加：({a1} + {a2}, {b1} + {b2}) = ({x}, {y})。",
+
+    linalgTopicTitle_vector_scalar: "标量乘法", linalgTopicDesc_vector_scalar: "用一个数乘以向量",
+    linalgLearn_vector_scalar: "用标量 k 乘以一个向量时，把每个分量都乘以 k。如果 v = (a, b)，那么 kv = (ka, kb)。\n\n例如：计算 3 × (2, -4)。\n3 × (2, -4) = (6, -12)。",
+    linalgVectorScalarPrompt: "计算 {k} × v，其中 v = {v}",
+    linalgVectorScalarExplain: "将每个分量乘以 {k}：({k}×{a}, {k}×{b}) = ({x}, {y})。",
+
+    linalgTopicTitle_vector_magnitude: "向量的模", linalgTopicDesc_vector_magnitude: "求向量的长度",
+    linalgLearn_vector_magnitude: "向量 v = (a, b) 的模（长度）是 |v| = √(a² + b²)，由勾股定理求得。\n\n例如：求 (3, 4) 的模。\n|v| = √(3² + 4²) = √(9+16) = √25 = 5。",
+    linalgMagnitudePrompt: "求 v = {v} 的模",
+    linalgMagnitudeExplain: "|v| = √({aSq} + {bSq}) = √{sum} = {c}。",
+
+    linalgTopicTitle_dot_product: "点积", linalgTopicDesc_dot_product: "对应分量相乘后求和",
+    linalgLearn_dot_product: "u = (a, b, c) 和 v = (d, e, f) 的点积是 u·v = ad + be + cf——结果是一个数，而不是向量。\n\n例如：求 (1, 2, 3)·(4, -5, 6)。\n= 1×4 + 2×(-5) + 3×6 = 4 - 10 + 18 = 12。",
+    linalgDotProductPrompt: "求点积：u = {u}，v = {v}",
+    linalgDotProductExplain: "u·v = {t1} + {t2} + {t3} = {answer}。",
+
+    linalgTopicTitle_cross_product: "叉积", linalgTopicDesc_cross_product: "求与两个三维向量都垂直的向量",
+    linalgLearn_cross_product: "u = (a₁,b₁,c₁) 和 v = (a₂,b₂,c₂) 的叉积是一个与两者都垂直的新向量：\nu × v = (b₁c₂ − c₁b₂, c₁a₂ − a₁c₂, a₁b₂ − b₁a₂)。\n\n例如：求 (1,0,0) × (0,1,0)。\n= (0×0 − 0×1, 0×0 − 1×0, 1×1 − 0×0) = (0, 0, 1)。",
+    linalgCrossProductPrompt: "求 u × v，其中 u = {u}，v = {v}",
+    linalgCrossProductExplain: "x：{xExpr}\ny：{yExpr}\nz：{zExpr}",
+
+    linalgTopicTitle_matrix_addition: "矩阵加法", linalgTopicDesc_matrix_addition: "逐项相加两个矩阵",
+    linalgLearn_matrix_addition: "将两个大小相同的矩阵相加时，把对应位置的元素相加。\n\n例如：将 [[1,2],[3,4]] 与 [[5,6],[7,8]] 相加。\n结果：[[1+5, 2+6], [3+7, 4+8]] = [[6, 8], [10, 12]]。",
+    linalgMatrixAddPrompt: "求 A + B，其中 A = {A}，B = {B}",
+    linalgMatrixAddExplain: "将对应元素相加：{C}。",
+
+    linalgTopicTitle_matrix_scalar: "矩阵标量乘法", linalgTopicDesc_matrix_scalar: "将矩阵的每个元素乘以一个数",
+    linalgLearn_matrix_scalar: "用标量 k 乘以矩阵时，把每个元素都乘以 k。\n\n例如：计算 2 × [[1,2],[3,4]]。\n= [[2,4],[6,8]]。",
+    linalgMatrixScalarPrompt: "计算 {k} × A，其中 A = {A}",
+    linalgMatrixScalarExplain: "将每个元素乘以 {k}：{C}。",
+
+    linalgTopicTitle_matrix_vector: "矩阵乘向量", linalgTopicDesc_matrix_vector: "用矩阵乘以一个向量",
+    linalgLearn_matrix_vector: "用矩阵 A 乘以向量 v 时，将 A 的每一行与 v 做点积。如果 A = [[a,b],[c,d]]，v = (x,y)，那么 Av = (ax+by, cx+dy)。\n\n例如：[[2,0],[1,3]] × (5, 2)。\n第一行：2×5 + 0×2 = 10。第二行：1×5 + 3×2 = 11。结果：(10, 11)。",
+    linalgMatVecPrompt: "计算 Av，其中 A = {A}，v = {v}",
+    linalgMatVecExplain: "第一行：{rowExpr1}\n第二行：{rowExpr2}",
+
+    linalgTopicTitle_matrix_multiplication: "矩阵乘法", linalgTopicDesc_matrix_multiplication: "将两个 2×2 矩阵相乘",
+    linalgLearn_matrix_multiplication: "将两个矩阵相乘时，结果的每个元素是 A 的一行与 B 的一列的点积。如果 A = [[a,b],[c,d]]，B = [[e,f],[g,h]]，那么 AB = [[ae+bg, af+bh], [ce+dg, cf+dh]]。\n\n例如：[[1,2],[3,4]] × [[5,6],[7,8]]。\n左上：1×5+2×7=19。右上：1×6+2×8=22。左下：3×5+4×7=43。右下：3×6+4×8=50。\n结果：[[19,22],[43,50]]。",
+    linalgMatrixMultPrompt: "计算 AB，其中 A = {A}，B = {B}",
+    linalgMatrixMultExplain: "每个元素都是 A 的一行与 B 的一列的点积：{C}。",
+
+    linalgTopicTitle_determinant_2x2: "2×2 行列式", linalgTopicDesc_determinant_2x2: "求 2×2 矩阵的行列式",
+    linalgLearn_determinant_2x2: "对于 2×2 矩阵 [[a,b],[c,d]]，行列式是 ad − bc。\n\n例如：求 [[3,2],[1,4]] 的行列式。\n= 3×4 − 2×1 = 12 − 2 = 10。",
+    linalgDet2Prompt: "求 A = {A} 的行列式",
+    linalgDet2Explain: "det(A) = {ad} − {bc} = {answer}。",
+
+    linalgTopicTitle_determinant_3x3: "3×3 行列式", linalgTopicDesc_determinant_3x3: "通过代数余子式展开求 3×3 行列式",
+    linalgLearn_determinant_3x3: "对于 3×3 矩阵，沿第一行展开。如果 A = [[a,b,c],[d,e,f],[g,h,i]]，那么：\ndet(A) = a(ei − fh) − b(di − fg) + c(dh − eg)。\n\n例如：[[1,2,0],[3,1,2],[2,0,1]]。\ndet = 1(1×1 − 2×0) − 2(3×1 − 2×2) + 0(3×0 − 1×2) = 1(1) − 2(−1) + 0 = 1 + 2 = 3。",
+    linalgDet3Prompt: "求 A = {A} 的行列式",
+    linalgDet3Explain: "det(A) = {sumExpr} = {answer}。",
+
+    linalgTopicTitle_transpose: "转置", linalgTopicDesc_transpose: "求矩阵转置中的某个元素",
+    linalgLearn_transpose: "矩阵的转置 Aᵀ 是沿对角线翻转后的矩阵——A 的第 i 行变成 Aᵀ 的第 i 列。因此 Aᵀ 第 i 行第 j 列的元素等于 A 第 j 行第 i 列的元素。\n\n例如：如果 A = [[1,2,3],[4,5,6]]，那么 A 第 2 行第 1 列的元素（4）就变成 Aᵀ 第 1 行第 2 列的元素。",
+    linalgTransposePrompt: "若 A = {A}，求 Aᵀ 第 {i} 行第 {j} 列的元素。",
+    linalgTransposeExplain: "Aᵀ 第 {i} 行第 {j} 列的元素等于 A 第 {origI} 行第 {origJ} 列的元素，即 {answer}。",
+
+    linalgTopicTitle_inverse: "2×2 逆矩阵", linalgTopicDesc_inverse: "求 2×2 矩阵的逆矩阵",
+    linalgLearn_inverse: "对于行列式 ad − bc ≠ 0 的 2×2 矩阵 A = [[a,b],[c,d]]，其逆矩阵是：\nA⁻¹ = (1/det) × [[d, -b], [-c, a]]。\n\n例如：A = [[2,1],[1,1]]。det = 2×1 − 1×1 = 1。\nA⁻¹ = (1/1) × [[1,-1],[-1,2]] = [[1,-1],[-1,2]]。",
+    linalgInversePrompt: "求 A⁻¹，其中 A = {A}（其行列式为 ±1，因此 A⁻¹ 的每个元素都是整数）",
+    linalgInverseExplain: "det(A) = {det}。A⁻¹ = (1/{det}) × [[d,-b],[-c,a]] = {C}。",
+
     businessTitle: "商业概念",
     businessSub: "金融、经济学，以及塑造它们的科技公司。先学习3个概念，再接受其中一个的测验——第一次是选择题，之后要凭记忆手动输入。",
     bizFinanceTitle: "金融", bizFinanceDesc: "金钱、投资，以及企业如何管理它们",
@@ -5615,6 +5754,75 @@ const I18N = {
     calcDefIntegralPrompt: "རྩིས་ཤིག: ∫ {a} ནས {b} བར ({expr}) dx",
     calcDefIntegralExplain: "ཕྱིར་འཕྲོས་རྩིས་ནི F(x) = {FExpr}། འཕེལ་འགྲིབ་རྩིས་ཀྱི་གཞི་རྩའི་གྲུབ་དོན་ལྟར: ∫ = F({b}) - F({a}) = {Fb} - ({Fa}) = {answer}།",
 
+    linalgTitle: "ཐིག་ཁྲམ་རྩིས།",
+    linalgSub: "ཟླ་བ་གསུམ་པ། ཕྱོགས་ཚད, ཐིག་ཁྲམ་དང་དེ་དག་མཉམ་སྦྲེལ་བྱེད་པའི་བྱ་བ། བརྗོད་གཞི་ཞིག་འདེམས་ནས་གོ་དོན་སློབ་ཞིང་རྗེས་སུ་སྦྱོང་བརྡར་གྱིས།",
+    backToLinAlgMenuBtn: "ཐིག་ཁྲམ་རྩིས་སུ་ལོག",
+
+    linalgTopicTitle_vector_addition: "ཕྱོགས་ཚད་སྣོན་འཐེན།", linalgTopicDesc_vector_addition: "ཕྱོགས་ཚད་གཉིས་ཆ་ཤས་བཞིན་སྣོན་ཤིག",
+    linalgLearn_vector_addition: "ཕྱོགས་ཚད་གཉིས་སྣོན་སྐབས་ཆ་ཤས་མཚུངས་པ་རྣམས་སོ་སོར་སྣོན་ཤིག། u = (a, b), v = (c, d) ཡིན་ན u + v = (a+c, b+d)།\n\nདཔེར་བརྗོད། u = (2, 5) དང v = (3, -1) སྣོན་ཤིག།\nu + v = (2+3, 5+(-1)) = (5, 4)།",
+    linalgVectorAddPrompt: "ཕྱོགས་ཚད་སྣོན་ཤིག: u = {u}, v = {v}",
+    linalgVectorAddExplain: "ཆ་ཤས་བཞིན་སྣོན: ({a1} + {a2}, {b1} + {b2}) = ({x}, {y})།",
+
+    linalgTopicTitle_vector_scalar: "གྲངས་ཐང་འཕར་བ།", linalgTopicDesc_vector_scalar: "ཕྱོགས་ཚད་ཞིག་ལ་གྲངས་ཐང་ཞིག་འཕར་ཤིག",
+    linalgLearn_vector_scalar: "ཕྱོགས་ཚད་ཞིག་ལ་གྲངས་ཐང k འཕར་སྐབས་ཆ་ཤས་རེ་རེར k འཕར་ཤིག། v = (a, b)ཡིན་ན kv = (ka, kb)།\n\nདཔེར་བརྗོད། 3 × (2, -4) རྩིས་ཤིག།\n3 × (2, -4) = (6, -12)།",
+    linalgVectorScalarPrompt: "{k} × v རྩིས་ཤིག, v = {v}",
+    linalgVectorScalarExplain: "ཆ་ཤས་རེ་རེར {k} འཕར: ({k}×{a}, {k}×{b}) = ({x}, {y})།",
+
+    linalgTopicTitle_vector_magnitude: "ཕྱོགས་ཚད་ཀྱི་རིང་ཚད།", linalgTopicDesc_vector_magnitude: "ཕྱོགས་ཚད་ཞིག་གི་རིང་ཚད་འཚོལ་ཤིག",
+    linalgLearn_vector_magnitude: "ཕྱོགས་ཚད v = (a, b) ཀྱི་རིང་ཚད་ནི |v| = √(a² + b²) ཡིན་ཞིང་། གྲུ་གསུམ་ཟུར་དྲང་གི་གྲུབ་དོན་ལས་ཐོན།\n\nདཔེར་བརྗོད། (3, 4)གི་རིང་ཚད་འཚོལ་ཤིག།\n|v| = √(3² + 4²) = √(9+16) = √25 = 5།",
+    linalgMagnitudePrompt: "v = {v} ཀྱི་རིང་ཚད་འཚོལ་ཤིག",
+    linalgMagnitudeExplain: "|v| = √({aSq} + {bSq}) = √{sum} = {c}།",
+
+    linalgTopicTitle_dot_product: "ཟུང་འཕར།", linalgTopicDesc_dot_product: "ཆ་ཤས་མཚུངས་པ་རྣམས་འཕར་ནས་བསྡོམས་ཤིག",
+    linalgLearn_dot_product: "u = (a, b, c) དང v = (d, e, f) གི་ཟུང་འཕར་ནི u·v = ad + be + cf ཡིན་ལ། འབྲས་བུ་ནི་གྲངས་གཅིག་ཡིན་གྱི་ཕྱོགས་ཚད་མིན།\n\nདཔེར་བརྗོད། (1, 2, 3)·(4, -5, 6) འཚོལ་ཤིག།\n= 1×4 + 2×(-5) + 3×6 = 4 - 10 + 18 = 12།",
+    linalgDotProductPrompt: "ཟུང་འཕར་འཚོལ་ཤིག: u = {u}, v = {v}",
+    linalgDotProductExplain: "u·v = {t1} + {t2} + {t3} = {answer}།",
+
+    linalgTopicTitle_cross_product: "ཟུར་འཕར།", linalgTopicDesc_cross_product: "ཕྱོགས་ཚད་གསུམ་ཚད་གཉིས་ལ་ཟུར་དྲངས་པའི་ཕྱོགས་ཚད་འཚོལ་ཤིག",
+    linalgLearn_cross_product: "u = (a₁,b₁,c₁) དང v = (a₂,b₂,c₂) གི་ཟུར་འཕར་ནི་གཉིས་ཀ་ལ་ཟུར་དྲངས་པའི་ཕྱོགས་ཚད་གསར་པ་ཞིག་ཡིན:\nu × v = (b₁c₂ − c₁b₂, c₁a₂ − a₁c₂, a₁b₂ − b₁a₂)།\n\nདཔེར་བརྗོད། (1,0,0) × (0,1,0) འཚོལ་ཤིག།\n= (0×0 − 0×1, 0×0 − 1×0, 1×1 − 0×0) = (0, 0, 1)།",
+    linalgCrossProductPrompt: "u × v འཚོལ་ཤིག, u = {u}, v = {v}",
+    linalgCrossProductExplain: "x: {xExpr}\ny: {yExpr}\nz: {zExpr}",
+
+    linalgTopicTitle_matrix_addition: "ཐིག་ཁྲམ་སྣོན་འཐེན།", linalgTopicDesc_matrix_addition: "ཐིག་ཁྲམ་གཉིས་ས་ཁོངས་མཚུངས་པ་བཞིན་སྣོན་ཤིག",
+    linalgLearn_matrix_addition: "ཆེ་ཆུང་མཚུངས་པའི་ཐིག་ཁྲམ་གཉིས་སྣོན་སྐབས་ས་ཁོངས་མཚུངས་པའི་གྲངས་རྣམས་སོ་སོར་སྣོན་ཤིག།\n\nདཔེར་བརྗོད། [[1,2],[3,4]] དང [[5,6],[7,8]] སྣོན་ཤིག།\nའབྲས་བུ: [[1+5, 2+6], [3+7, 4+8]] = [[6, 8], [10, 12]]།",
+    linalgMatrixAddPrompt: "A + B འཚོལ་ཤིག, A = {A}, B = {B}",
+    linalgMatrixAddExplain: "ས་ཁོངས་མཚུངས་པའི་གྲངས་སྣོན: {C}།",
+
+    linalgTopicTitle_matrix_scalar: "ཐིག་ཁྲམ་གྲངས་ཐང་འཕར་བ།", linalgTopicDesc_matrix_scalar: "ཐིག་ཁྲམ་གྱི་གྲངས་རེ་རེར་གྲངས་ཐང་ཞིག་འཕར་ཤིག",
+    linalgLearn_matrix_scalar: "ཐིག་ཁྲམ་ལ་གྲངས་ཐང k འཕར་སྐབས་གྲངས་རེ་རེར k འཕར་ཤིག།\n\nདཔེར་བརྗོད། 2 × [[1,2],[3,4]] རྩིས་ཤིག།\n= [[2,4],[6,8]]།",
+    linalgMatrixScalarPrompt: "{k} × A རྩིས་ཤིག, A = {A}",
+    linalgMatrixScalarExplain: "གྲངས་རེ་རེར {k} འཕར: {C}།",
+
+    linalgTopicTitle_matrix_vector: "ཐིག་ཁྲམ་དང་ཕྱོགས་ཚད་འཕར་བ།", linalgTopicDesc_matrix_vector: "ཐིག་ཁྲམ་ཞིག་ལ་ཕྱོགས་ཚད་ཞིག་འཕར་ཤིག",
+    linalgLearn_matrix_vector: "ཐིག་ཁྲམ A ལ་ཕྱོགས་ཚད v འཕར་སྐབས A ཡི་གྲལ་རེ་རེ་དང v ཟུང་འཕར་བྱོས། A = [[a,b],[c,d]], v = (x,y)ཡིན་ན Av = (ax+by, cx+dy)།\n\nདཔེར་བརྗོད། [[2,0],[1,3]] × (5, 2)།\nགྲལ1: 2×5 + 0×2 = 10། གྲལ2: 1×5 + 3×2 = 11། འབྲས་བུ: (10, 11)།",
+    linalgMatVecPrompt: "Av རྩིས་ཤིག, A = {A}, v = {v}",
+    linalgMatVecExplain: "གྲལ1: {rowExpr1}\nགྲལ2: {rowExpr2}",
+
+    linalgTopicTitle_matrix_multiplication: "ཐིག་ཁྲམ་འཕར་བ།", linalgTopicDesc_matrix_multiplication: "2×2 ཐིག་ཁྲམ་གཉིས་འཕར་ཤིག",
+    linalgLearn_matrix_multiplication: "ཐིག་ཁྲམ་གཉིས་འཕར་སྐབས་འབྲས་བུའི་གྲངས་རེ་རེ་ནི A ཡི་གྲལ་ཞིག་དང B ཡི་ཀེར་ཐིག་ཞིག་གི་ཟུང་འཕར་ཡིན། A = [[a,b],[c,d]], B = [[e,f],[g,h]]ཡིན་ན AB = [[ae+bg, af+bh], [ce+dg, cf+dh]]།\n\nདཔེར་བརྗོད། [[1,2],[3,4]] × [[5,6],[7,8]]།\nགཡོན་གོང: 1×5+2×7=19། གཡས་གོང: 1×6+2×8=22། གཡོན་འོག: 3×5+4×7=43། གཡས་འོག: 3×6+4×8=50།\nའབྲས་བུ: [[19,22],[43,50]]།",
+    linalgMatrixMultPrompt: "AB རྩིས་ཤིག, A = {A}, B = {B}",
+    linalgMatrixMultExplain: "གྲངས་རེ་རེ་ནི A ཡི་གྲལ་དང B ཡི་ཀེར་ཐིག་གི་ཟུང་འཕར: {C}།",
+
+    linalgTopicTitle_determinant_2x2: "2×2 ངེས་གྲངས།", linalgTopicDesc_determinant_2x2: "2×2 ཐིག་ཁྲམ་གྱི་ངེས་གྲངས་འཚོལ་ཤིག",
+    linalgLearn_determinant_2x2: "2×2 ཐིག་ཁྲམ [[a,b],[c,d]] གི་ངེས་གྲངས་ནི ad − bc ཡིན།\n\nདཔེར་བརྗོད། [[3,2],[1,4]] གི་ངེས་གྲངས་འཚོལ་ཤིག།\n= 3×4 − 2×1 = 12 − 2 = 10།",
+    linalgDet2Prompt: "A = {A} གི་ངེས་གྲངས་འཚོལ་ཤིག",
+    linalgDet2Explain: "det(A) = {ad} − {bc} = {answer}།",
+
+    linalgTopicTitle_determinant_3x3: "3×3 ངེས་གྲངས།", linalgTopicDesc_determinant_3x3: "རྒྱུ་མཚན་ཆུང་ངུའི་བརྐྱང་ཐབས་ཀྱིས 3×3 ངེས་གྲངས་འཚོལ་ཤིག",
+    linalgLearn_determinant_3x3: "3×3 ཐིག་ཁྲམ་ལ་གྲལ་དང་པོའི་ཐོག་ནས་བརྐྱང་ཤིག། A = [[a,b,c],[d,e,f],[g,h,i]]ཡིན་ན:\ndet(A) = a(ei − fh) − b(di − fg) + c(dh − eg)།\n\nདཔེར་བརྗོད། [[1,2,0],[3,1,2],[2,0,1]]།\ndet = 1(1×1 − 2×0) − 2(3×1 − 2×2) + 0(3×0 − 1×2) = 1(1) − 2(−1) + 0 = 1 + 2 = 3།",
+    linalgDet3Prompt: "A = {A} གི་ངེས་གྲངས་འཚོལ་ཤིག",
+    linalgDet3Explain: "det(A) = {sumExpr} = {answer}།",
+
+    linalgTopicTitle_transpose: "ཐིག་ཁྲམ་བརྗེ་བ།", linalgTopicDesc_transpose: "ཐིག་ཁྲམ་བརྗེས་པའི་གྲངས་ཤིག་འཚོལ་ཤིག",
+    linalgLearn_transpose: "ཐིག་ཁྲམ་ཞིག་བརྗེས་པ (Aᵀ) ནི་ཟུར་ཐིག་ནས་ལྡོག་བཏང་བ་ཡིན—A ཡི་གྲལ i ནི Aᵀ ཡི་ཀེར་ཐིག i ལ་འགྱུར། དེས་ན Aᵀ ཡི་གྲལ i ཀེར་ཐིག j ཡི་གྲངས་ནི A ཡི་གྲལ j ཀེར་ཐིག i ཡི་གྲངས་དང་མཚུངས།\n\nདཔེར་བརྗོད། A = [[1,2,3],[4,5,6]]ཡིན་ན A ཡི་གྲལ2 ཀེར་ཐིག1 ཡི་གྲངས (4) དེ Aᵀ ཡི་གྲལ1 ཀེར་ཐིག2 ལ་འགྱུར།",
+    linalgTransposePrompt: "A = {A} ཡིན་ན, Aᵀ ཡི་གྲལ {i} ཀེར་ཐིག {j} ཡི་གྲངས་འཚོལ་ཤིག།",
+    linalgTransposeExplain: "Aᵀ ཡི་གྲལ {i} ཀེར་ཐིག {j} ཡི་གྲངས་ནི A ཡི་གྲལ {origI} ཀེར་ཐིག {origJ} ཡི་གྲངས་དང་མཚུངས་ཏེ {answer} ཡིན།",
+
+    linalgTopicTitle_inverse: "2×2 ཐིག་ཁྲམ་ལྡོག་མ།", linalgTopicDesc_inverse: "2×2 ཐིག་ཁྲམ་གྱི་ལྡོག་མ་འཚོལ་ཤིག",
+    linalgLearn_inverse: "ངེས་གྲངས ad − bc ≠ 0 ཡིན་པའི 2×2 ཐིག་ཁྲམ A = [[a,b],[c,d]] གི་ལྡོག་མ་ནི:\nA⁻¹ = (1/det) × [[d, -b], [-c, a]]།\n\nདཔེར་བརྗོད། A = [[2,1],[1,1]]། det = 2×1 − 1×1 = 1།\nA⁻¹ = (1/1) × [[1,-1],[-1,2]] = [[1,-1],[-1,2]]།",
+    linalgInversePrompt: "A⁻¹ འཚོལ་ཤིག, A = {A} (དེའི་ངེས་གྲངས ±1 ཡིན་སྟབས A⁻¹ ཡི་གྲངས་རེ་རེ་གྲངས་ཧྲིལ་པོ་ཡིན)",
+    linalgInverseExplain: "det(A) = {det}། A⁻¹ = (1/{det}) × [[d,-b],[-c,a]] = {C}།",
+
     businessTitle: "ཚོང་ལས་དོན་ཚན།",
     businessSub: "དངུལ་རྩིས, དཔལ་འབྱོར་རིག་པ, དེ་དག་བཟོ་མཁན་གྱི་ལག་རྩལ་ཚོང་ལས། དོན་ཚན 3 སློབ་ནས་གཅིག་གི་ཐད་ཀར་བརྟག་ཞིབ་བྱེད། ཐོག་མར་གདམ་ཁ་བཞིའི་དྲི་བ, རྗེས་སུ་དྲན་པ་ལས་ཡིག་འབྲི་དགོས།",
     bizFinanceTitle: "དངུལ་རྩིས།", bizFinanceDesc: "དངུལ, རྩ་ཆེའི་བཙོང་ཉོ, ཚོང་ལས་ཀྱིས་དེ་དག་ཇི་ལྟར་སྐྱོང་མིན།",
@@ -5773,6 +5981,9 @@ document.addEventListener('keydown', function(e){
   } else if(state.screen === 'calc_practice' && state.calcSession){
     if(state.calcSession.answered) nextCalcQuestion();
     else submitCalcAnswer();
+  } else if(state.screen === 'linalg_practice' && state.linalgSession){
+    if(state.linalgSession.answered) nextLinAlgQuestion();
+    else submitLinAlgAnswer();
   }
 });
 
@@ -5814,6 +6025,10 @@ const screens = {
   calc_learn: renderCalcLearn,
   calc_practice: renderCalcPractice,
   calc_complete: renderCalcComplete,
+  linalg_menu: renderLinAlgMenu,
+  linalg_learn: renderLinAlgLearn,
+  linalg_practice: renderLinAlgPractice,
+  linalg_complete: renderLinAlgComplete,
   business_menu: renderBusinessMenu,
   biz_week_menu: renderCategoryWeekMenu,
   business_learn: renderBusinessLearn,
@@ -6067,6 +6282,10 @@ function renderHome(){
       <button class="practice-tile" onclick="state.screen='calc_menu'; render();">
         <div class="glyph">📈</div>
         <div class="pt-title">${t('calculusTitle')}</div>
+      </button>
+      <button class="practice-tile" onclick="state.screen='linalg_menu'; render();">
+        <div class="glyph">🧊</div>
+        <div class="pt-title">${t('linalgTitle')}</div>
       </button>
       <button class="practice-tile" onclick="state.screen='business_menu'; render();">
         <div class="glyph">💼</div>
@@ -7206,6 +7425,365 @@ function renderCalcComplete(){
 
 function backToCalcMenu(){ state.screen='calc_menu'; render(); }
 function exitCalcPractice(){ state.screen='calc_menu'; render(); }
+
+// ---- linear algebra learning: Month 3 of the planned progression (algebra ->
+// calculus -> linear algebra -> discrete math -> probability). Same
+// architecture as algebra/calculus, but several problems need more than the
+// usual 1-2 typed inputs (a 2x2 matrix result, a 3D cross product) — those
+// carry an optional `matrixShape:[rows,cols]` on the problem so the practice
+// screen can lay the inputs out in a grid that matches the matrix shape
+// instead of a single row. Scoped to vector/matrix arithmetic that reduces to
+// exact integers: vector ops, matrix ops, determinants, transpose, and a 2x2
+// inverse (engineered to determinant ±1 so the inverse entries stay integers,
+// since fraction-typing wasn't part of this pass).
+function vectorText(comps){ return `(${comps.join(', ')})`; }
+function matrixText(rows){ return `[${rows.map(r=>`[${r.join(', ')}]`).join(', ')}]`; }
+
+function linalgProblemVectorAddition(){
+  const a1=randInt(-9,9), b1=randInt(-9,9), a2=randInt(-9,9), b2=randInt(-9,9);
+  const x=a1+a2, y=b1+b2;
+  return {
+    promptText: t('linalgVectorAddPrompt', {u:vectorText([a1,b1]), v:vectorText([a2,b2])}),
+    inputs: [{key:'x', label:'x'}, {key:'y', label:'y'}],
+    check(vals){ return Number(vals.x)===x && Number(vals.y)===y; },
+    explain: t('linalgVectorAddExplain', {a1, a2, b1, b2, x, y}),
+  };
+}
+function linalgProblemVectorScalar(){
+  const a=randInt(-9,9), b=randInt(-9,9), k=nonZeroRandInt(-6,6);
+  const x=k*a, y=k*b;
+  return {
+    promptText: t('linalgVectorScalarPrompt', {k, v:vectorText([a,b])}),
+    inputs: [{key:'x', label:'x'}, {key:'y', label:'y'}],
+    check(vals){ return Number(vals.x)===x && Number(vals.y)===y; },
+    explain: t('linalgVectorScalarExplain', {k, a, b, x, y}),
+  };
+}
+const LINALG_TRIPLES = [[3,4,5],[6,8,10],[5,12,13],[9,12,15],[8,15,17],[7,24,25],[20,21,29],[12,16,20]];
+function linalgProblemMagnitude(){
+  const [a0,b0,c] = LINALG_TRIPLES[randInt(0,LINALG_TRIPLES.length-1)];
+  const swap = Math.random()<0.5;
+  const a = (swap ? b0 : a0) * (Math.random()<0.5?-1:1);
+  const b = (swap ? a0 : b0) * (Math.random()<0.5?-1:1);
+  return {
+    promptText: t('linalgMagnitudePrompt', {v:vectorText([a,b])}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===c; },
+    explain: t('linalgMagnitudeExplain', {aSq:a*a, bSq:b*b, sum:a*a+b*b, c}),
+  };
+}
+function linalgProblemDotProduct(){
+  const a1=randInt(-6,6), b1=randInt(-6,6), c1=randInt(-6,6);
+  const a2=randInt(-6,6), b2=randInt(-6,6), c2=randInt(-6,6);
+  const t1=a1*a2, t2=b1*b2, t3=c1*c2;
+  const answer = t1+t2+t3;
+  return {
+    promptText: t('linalgDotProductPrompt', {u:vectorText([a1,b1,c1]), v:vectorText([a2,b2,c2])}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('linalgDotProductExplain', {t1, t2, t3, answer}),
+  };
+}
+function linalgProblemCrossProduct(){
+  const a1=randInt(-5,5), b1=randInt(-5,5), c1=randInt(-5,5);
+  const a2=randInt(-5,5), b2=randInt(-5,5), c2=randInt(-5,5);
+  const x=b1*c2-c1*b2, y=c1*a2-a1*c2, z=a1*b2-b1*a2;
+  const xExpr = `(${b1})(${c2}) − (${c1})(${b2}) = ${x}`;
+  const yExpr = `(${c1})(${a2}) − (${a1})(${c2}) = ${y}`;
+  const zExpr = `(${a1})(${b2}) − (${b1})(${a2}) = ${z}`;
+  return {
+    promptText: t('linalgCrossProductPrompt', {u:vectorText([a1,b1,c1]), v:vectorText([a2,b2,c2])}),
+    inputs: [{key:'x', label:'x'}, {key:'y', label:'y'}, {key:'z', label:'z'}],
+    check(vals){ return Number(vals.x)===x && Number(vals.y)===y && Number(vals.z)===z; },
+    explain: t('linalgCrossProductExplain', {xExpr, yExpr, zExpr}),
+  };
+}
+function linalgProblemMatrixAddition(){
+  const a11=randInt(-9,9), a12=randInt(-9,9), a21=randInt(-9,9), a22=randInt(-9,9);
+  const b11=randInt(-9,9), b12=randInt(-9,9), b21=randInt(-9,9), b22=randInt(-9,9);
+  const c11=a11+b11, c12=a12+b12, c21=a21+b21, c22=a22+b22;
+  return {
+    promptText: t('linalgMatrixAddPrompt', {A:matrixText([[a11,a12],[a21,a22]]), B:matrixText([[b11,b12],[b21,b22]])}),
+    inputs: [{key:'c11'},{key:'c12'},{key:'c21'},{key:'c22'}],
+    matrixShape: [2,2],
+    check(vals){ return Number(vals.c11)===c11 && Number(vals.c12)===c12 && Number(vals.c21)===c21 && Number(vals.c22)===c22; },
+    explain: t('linalgMatrixAddExplain', {C:matrixText([[c11,c12],[c21,c22]])}),
+  };
+}
+function linalgProblemMatrixScalar(){
+  const a11=randInt(-9,9), a12=randInt(-9,9), a21=randInt(-9,9), a22=randInt(-9,9);
+  const k=nonZeroRandInt(-5,5);
+  const c11=k*a11, c12=k*a12, c21=k*a21, c22=k*a22;
+  return {
+    promptText: t('linalgMatrixScalarPrompt', {k, A:matrixText([[a11,a12],[a21,a22]])}),
+    inputs: [{key:'c11'},{key:'c12'},{key:'c21'},{key:'c22'}],
+    matrixShape: [2,2],
+    check(vals){ return Number(vals.c11)===c11 && Number(vals.c12)===c12 && Number(vals.c21)===c21 && Number(vals.c22)===c22; },
+    explain: t('linalgMatrixScalarExplain', {k, C:matrixText([[c11,c12],[c21,c22]])}),
+  };
+}
+function linalgProblemMatrixVector(){
+  const a11=randInt(-6,6), a12=randInt(-6,6), a21=randInt(-6,6), a22=randInt(-6,6);
+  const x0=randInt(-6,6), y0=randInt(-6,6);
+  const rx=a11*x0+a12*y0, ry=a21*x0+a22*y0;
+  return {
+    promptText: t('linalgMatVecPrompt', {A:matrixText([[a11,a12],[a21,a22]]), v:vectorText([x0,y0])}),
+    inputs: [{key:'x', label:'x'}, {key:'y', label:'y'}],
+    check(vals){ return Number(vals.x)===rx && Number(vals.y)===ry; },
+    explain: t('linalgMatVecExplain', {
+      rowExpr1: `(${a11})(${x0}) + (${a12})(${y0}) = ${rx}`,
+      rowExpr2: `(${a21})(${x0}) + (${a22})(${y0}) = ${ry}`,
+    }),
+  };
+}
+function linalgProblemMatrixMultiplication(){
+  const a11=randInt(-5,5), a12=randInt(-5,5), a21=randInt(-5,5), a22=randInt(-5,5);
+  const b11=randInt(-5,5), b12=randInt(-5,5), b21=randInt(-5,5), b22=randInt(-5,5);
+  const c11=a11*b11+a12*b21, c12=a11*b12+a12*b22;
+  const c21=a21*b11+a22*b21, c22=a21*b12+a22*b22;
+  return {
+    promptText: t('linalgMatrixMultPrompt', {A:matrixText([[a11,a12],[a21,a22]]), B:matrixText([[b11,b12],[b21,b22]])}),
+    inputs: [{key:'c11'},{key:'c12'},{key:'c21'},{key:'c22'}],
+    matrixShape: [2,2],
+    check(vals){ return Number(vals.c11)===c11 && Number(vals.c12)===c12 && Number(vals.c21)===c21 && Number(vals.c22)===c22; },
+    explain: t('linalgMatrixMultExplain', {C:matrixText([[c11,c12],[c21,c22]])}),
+  };
+}
+function linalgProblemDet2(){
+  const a=randInt(-9,9), b=randInt(-9,9), c=randInt(-9,9), d=randInt(-9,9);
+  const answer=a*d-b*c;
+  return {
+    promptText: t('linalgDet2Prompt', {A:matrixText([[a,b],[c,d]])}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('linalgDet2Explain', {ad:a*d, bc:b*c, answer}),
+  };
+}
+function linalgProblemDet3(){
+  const m = Array.from({length:3},()=>Array.from({length:3},()=>randInt(-4,4)));
+  const [[a,b,c],[d,e,f],[g,h,i]] = m;
+  const t1=a*(e*i-f*h), t2=b*(d*i-f*g), t3=c*(d*h-e*g);
+  const answer = t1 - t2 + t3;
+  return {
+    promptText: t('linalgDet3Prompt', {A:matrixText(m)}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('linalgDet3Explain', {
+      sumExpr: `${a}(${e*i-f*h}) − ${b}(${d*i-f*g}) + ${c}(${d*h-e*g})`,
+      answer,
+    }),
+  };
+}
+function linalgProblemTranspose(){
+  const m = Array.from({length:2},()=>Array.from({length:3},()=>randInt(-9,9)));
+  const row = randInt(0,2), col = randInt(0,1);
+  const answer = m[col][row];
+  return {
+    promptText: t('linalgTransposePrompt', {A:matrixText(m), i:row+1, j:col+1}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('linalgTransposeExplain', {i:row+1, j:col+1, origI:col+1, origJ:row+1, answer}),
+  };
+}
+function linalgProblemInverse(){
+  let a,b,c,d,det;
+  do{
+    a=randInt(-4,4); d=randInt(-4,4); b=randInt(-4,4); c=randInt(-4,4);
+    det = a*d-b*c;
+  } while(Math.abs(det)!==1);
+  const i11=d/det, i12=-b/det, i21=-c/det, i22=a/det;
+  return {
+    promptText: t('linalgInversePrompt', {A:matrixText([[a,b],[c,d]])}),
+    inputs: [{key:'c11'},{key:'c12'},{key:'c21'},{key:'c22'}],
+    matrixShape: [2,2],
+    check(vals){ return Number(vals.c11)===i11 && Number(vals.c12)===i12 && Number(vals.c21)===i21 && Number(vals.c22)===i22; },
+    explain: t('linalgInverseExplain', {det, C:matrixText([[i11,i12],[i21,i22]])}),
+  };
+}
+
+const LINALG_TOPICS = [
+  {key:'vector_addition', build:linalgProblemVectorAddition},
+  {key:'vector_scalar', build:linalgProblemVectorScalar},
+  {key:'vector_magnitude', build:linalgProblemMagnitude},
+  {key:'dot_product', build:linalgProblemDotProduct},
+  {key:'cross_product', build:linalgProblemCrossProduct},
+  {key:'matrix_addition', build:linalgProblemMatrixAddition},
+  {key:'matrix_scalar', build:linalgProblemMatrixScalar},
+  {key:'matrix_vector', build:linalgProblemMatrixVector},
+  {key:'matrix_multiplication', build:linalgProblemMatrixMultiplication},
+  {key:'determinant_2x2', build:linalgProblemDet2},
+  {key:'determinant_3x3', build:linalgProblemDet3},
+  {key:'transpose', build:linalgProblemTranspose},
+  {key:'inverse', build:linalgProblemInverse},
+];
+function linalgTopicByKey(key){ return LINALG_TOPICS.find(x=>x.key===key); }
+
+function renderLinAlgMenu(){
+  const cards = LINALG_TOPICS.map(topic=>{
+    const best = (state.game.linalg && state.game.linalg[topic.key]) ? state.game.linalg[topic.key].best : 0;
+    return `
+    <button class="track-card" onclick="openLinAlgTopic('${topic.key}')">
+      <div class="glyph">🧊</div>
+      <div>
+        <div class="tc-title">${t('linalgTopicTitle_'+topic.key)}</div>
+        <div class="tc-sub">${t('linalgTopicDesc_'+topic.key)}</div>
+      </div>
+      <div class="tc-progress">${best ? t('mathBestLabel',{n:best}) : t('startArrow')}</div>
+    </button>`;
+  }).join('');
+
+  return `
+  ${topbar({back:'goHome()'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>${t('linalgTitle')}</h1>
+      <div class="sub">${t('linalgSub')}</div>
+    </div>
+    <div class="track-grid">${cards}</div>
+  </div>
+  `;
+}
+
+function openLinAlgTopic(topicKey){
+  state.linalgSession = {topicKey};
+  state.screen = 'linalg_learn';
+  render();
+}
+
+function renderLinAlgLearn(){
+  const topicKey = state.linalgSession.topicKey;
+  return `
+  ${topbar({back:'state.screen="linalg_menu"; render();'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero" style="padding-top:8px;">
+      <h1 style="font-size:26px;">${t('linalgTopicTitle_'+topicKey)}</h1>
+    </div>
+    <div class="profile-card" style="text-align:left; line-height:1.6; font-size:14.5px; color:var(--snow-dim); white-space:pre-line;">${t('linalgLearn_'+topicKey)}</div>
+    <button class="btn btn-primary btn-block" onclick="startLinAlgPractice('${topicKey}')">${t('startPracticeBtn')}</button>
+  </div>
+  `;
+}
+
+function startLinAlgPractice(topicKey){
+  const topic = linalgTopicByKey(topicKey);
+  state.linalgSession = {
+    topicKey,
+    current: topic.build(),
+    correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
+    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+  };
+  state.screen = 'linalg_practice';
+  render();
+  focusLinAlgInput();
+}
+function focusLinAlgInput(){
+  setTimeout(()=>{ const el=document.querySelector('.linalg-input'); if(el) el.focus(); }, 30);
+}
+
+function renderLinAlgPractice(){
+  const s = state.linalgSession;
+  const q = s.current;
+  const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
+
+  const inputBox = (inp) => `
+    <div style="flex:1;">
+      ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
+      <input class="linalg-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
+        placeholder="${inp.placeholder||''}"
+        style="text-align:center; font-size:20px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
+        oninput="state.linalgSession.inputs['${inp.key}']=this.value">
+    </div>`;
+
+  const inputsHtml = q.matrixShape
+    ? `<div style="display:grid; grid-template-columns:repeat(${q.matrixShape[1]}, 1fr); gap:10px; max-width:240px; margin:0 auto;">${q.inputs.map(inputBox).join('')}</div>`
+    : `<div style="display:flex; gap:12px; align-items:flex-end;">${q.inputs.map(inputBox).join('')}</div>`;
+
+  const feedback = s.answered ? `
+    <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
+      <div class="fb-text">
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
+        <div class="fb-sub">${q.explain}</div>
+      </div>
+      <button class="btn btn-light" onclick="nextLinAlgQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
+    </div>` : '';
+
+  return `
+  ${topbar({back:'exitLinAlgPractice()'})}
+  <div class="lesson">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;">
+      <div class="hearts-row">${Array.from({length:MATH_MAX_MISTAKES}).map((_,i)=>`<span>${i<(MATH_MAX_MISTAKES-s.mistakes)?'❤️':'🩶'}</span>`).join('')}</div>
+      <div style="font-size:12px; color:var(--snow-dim); text-align:right;">${t('correctAnswersLabel')}: ${s.correct}${s.combo>=3?`<br><span style="color:var(--gold);">${comboBadge(s.combo)} ${t('comboLabel',{n:s.combo})}</span>`:''}</div>
+    </div>
+    <div class="q-wrap">
+      <div class="q-card">
+        <div class="q-eyebrow">${t('linalgTopicTitle_'+s.topicKey)}</div>
+        <div class="q-prompt" style="font-size:20px;">${q.promptText}</div>
+      </div>
+      ${inputsHtml}
+      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitLinAlgAnswer()">${t('checkBtn')}</button>` : ''}
+    </div>
+  </div>
+  ${feedback}
+  `;
+}
+
+function submitLinAlgAnswer(){
+  const s = state.linalgSession;
+  if(!s || s.answered) return;
+  const q = s.current;
+  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
+  const correct = q.check(s.inputs);
+  s.answered = true; s.lastCorrect = correct;
+  if(correct) registerCorrectAnswer(s, state.game);
+  else registerWrongAnswer(s);
+  render();
+}
+
+function nextLinAlgQuestion(){
+  const s = state.linalgSession;
+  if(s.mistakes>=MATH_MAX_MISTAKES){ finishLinAlgPractice(); return; }
+  const topic = linalgTopicByKey(s.topicKey);
+  s.answered=false; s.lastCorrect=null; s.inputs={};
+  s.current = topic.build();
+  render();
+  focusLinAlgInput();
+}
+
+function finishLinAlgPractice(){
+  const s = state.linalgSession;
+  if(!state.game.linalg) state.game.linalg = {};
+  const rec = state.game.linalg[s.topicKey] || (state.game.linalg[s.topicKey] = {best:0});
+  s.isNewBest = s.correct > rec.best;
+  if(s.isNewBest) rec.best = s.correct;
+  touchStreak();
+  s.newAchievements = checkAchievements(state.game);
+  state.screen='linalg_complete';
+  render();
+}
+
+function renderLinAlgComplete(){
+  const s = state.linalgSession;
+  const best = state.game.linalg[s.topicKey].best;
+  const lvl = xpLevel(state.game.xp);
+  return `
+  ${topbar()}
+  <div class="complete ${appLangClass()}">
+    <div class="medal">${s.isNewBest ? '🏆' : '🎯'}</div>
+    <h2>${s.isNewBest ? t('newBestReached') : t('checkpointReached')}</h2>
+    <div class="stat-row">
+      <div class="stat-box"><div class="val">${s.correct}</div><div class="lab">${t('correctAnswersLabel')}</div></div>
+      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
+    </div>
+    <div style="color:var(--snow-dim); font-size:13px;">${t('mathBestLabel',{n:best})} · ${t('levelLabel',{n:lvl.level})}</div>
+    ${achievementBannerHtml(s.newAchievements)}
+    <button class="btn btn-primary btn-block" onclick="backToLinAlgMenu()">${t('backToLinAlgMenuBtn')}</button>
+  </div>`;
+}
+
+function backToLinAlgMenu(){ state.screen='linalg_menu'; render(); }
+function exitLinAlgPractice(){ state.screen='linalg_menu'; render(); }
 
 // ---- business concepts: Finance, Economics and Tech Companies. Different
 // shape from algebra/calculus — these are qualitative concepts, not
