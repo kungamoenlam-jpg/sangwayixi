@@ -324,6 +324,14 @@ function createApp(overrides = {}) {
 
   let dbClient = null;
   let databaseReady = false;
+  // Guards against retrying a dead connection on every request: once a
+  // connect() attempt has failed, dbClient stays null but we stop trying
+  // again, since re-attempting a hung DNS lookup (e.g. Supabase briefly
+  // unreachable) on every single request would otherwise make each of
+  // those requests hang for as long as that lookup takes, one at a time,
+  // instead of failing fast into the file-storage fallback like intended.
+  let dbConnectAttempted = false;
+  let dbConnectError = null;
 
   function usesSupabase() {
     return Boolean(DATABASE_URL && DATABASE_URL.includes('supabase'));
@@ -331,12 +339,18 @@ function createApp(overrides = {}) {
 
   async function getDbClient() {
     if (!DATABASE_URL) return null;
-    if (!dbClient) {
-      dbClient = new Client({
+    if (dbConnectAttempted) return dbClient;
+    dbConnectAttempted = true;
+    try {
+      const client = new Client({
         connectionString: DATABASE_URL,
         ssl: usesSupabase() ? { rejectUnauthorized: false } : undefined,
       });
-      await dbClient.connect();
+      await client.connect();
+      dbClient = client;
+    } catch (error) {
+      dbClient = null;
+      dbConnectError = error;
     }
     return dbClient;
   }
@@ -345,6 +359,7 @@ function createApp(overrides = {}) {
     const client = await getDbClient();
     if (!client) {
       databaseReady = false;
+      if (dbConnectError) console.error('Database init failed:', dbConnectError.message);
       return { connected: false, mode: 'file' };
     }
 
@@ -1004,10 +1019,10 @@ function createApp(overrides = {}) {
   // Stored in Supabase Storage at <bucket>/<lang>/<wordId>.webm — NOT on local
   // disk, which Render wipes on every restart (including automatic spin-down
   // after ~15 min idle on the free plan, not just on redeploy). Tibetan has no
-  // usable TTS voice on any provider, so bo always relies on this; English
-  // uses it only when you've recorded that word yourself, falling back to
-  // Azure otherwise.
-  const RECORDABLE_LANGS = ['bo', 'en'];
+  // usable TTS voice on any provider, so bo always relies on this; English and
+  // Mandarin use it only when you've recorded that item yourself, falling
+  // back to Azure otherwise.
+  const RECORDABLE_LANGS = ['bo', 'en', 'zh'];
   function isSafeWordId(id) {
     return /^[a-zA-Z0-9_]{1,64}$/.test(id);
   }
@@ -1054,13 +1069,23 @@ function createApp(overrides = {}) {
       return res.status(400).json({ error: 'Unsupported language.' });
     }
 
+    // The word bank is now large enough (3,000+ entries) that a single list()
+    // call can't be trusted to return everything in one page, so page through
+    // with offset until a short page confirms there's nothing left.
     let recorded = [];
     try {
-      const { data, error } = await supabaseAdmin.storage.from(AUDIO_BUCKET).list(lang, { limit: 1000 });
-      if (error) throw error;
-      recorded = (data || [])
-        .filter((f) => f.name.endsWith('.webm'))
-        .map((f) => f.name.slice(0, -'.webm'.length));
+      const pageSize = 1000;
+      let offset = 0;
+      for (;;) {
+        const { data, error } = await supabaseAdmin.storage
+          .from(AUDIO_BUCKET)
+          .list(lang, { limit: pageSize, offset });
+        if (error) throw error;
+        const page = data || [];
+        recorded.push(...page.filter((f) => f.name.endsWith('.webm')).map((f) => f.name.slice(0, -'.webm'.length)));
+        if (page.length < pageSize) break;
+        offset += pageSize;
+      }
     } catch (error) {
       recorded = [];
     }
