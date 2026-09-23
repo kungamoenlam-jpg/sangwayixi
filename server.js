@@ -345,6 +345,12 @@ function createApp(overrides = {}) {
       const client = new Client({
         connectionString: DATABASE_URL,
         ssl: usesSupabase() ? { rejectUnauthorized: false } : undefined,
+        // Without this, a stalled DNS lookup or unreachable host can leave
+        // the very first connect() attempt hanging far longer than a normal
+        // failure (minutes, not seconds) — which, since this same attempt
+        // gates server startup, would leave the whole app unreachable for
+        // that whole time instead of falling back to file storage quickly.
+        connectionTimeoutMillis: 8000,
       });
       await client.connect();
       dbClient = client;
