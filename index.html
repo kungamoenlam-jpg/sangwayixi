@@ -980,6 +980,7 @@ function defaultAppState(){
     businessSession:null,
     businessEndlessMode:false,
     quizBankSession:null,
+    quizBankLearnMode:false,
     subscription: {active:false, status:null, plan:null, periodEnd:null},
     paywallFrom: null,
     paywallRegion: 'us',
@@ -2167,6 +2168,7 @@ const I18N = {
     bizTitle_cost_plus_pricing: "Cost-Plus Pricing", bizExplain_cost_plus_pricing: "Under cost-plus pricing, the job cost (direct materials plus direct labour plus applied overhead) is multiplied by (1 + markup %) to set the selling price.", bizQuestion_cost_plus_pricing: "Complete the cost-plus pricing schedule below.",
     quizBankCardTitle: "ACCT1102 Quiz Bank", quizBankCardDesc: "400 real exam-style questions across all 4 management accounting topics",
     quizBankMenuTitle: "ACCT1102 Quiz Bank", quizBankMenuSub: "Pick a topic, or take on all 400 questions at once.",
+    quizBankLearnModeTitle: "Learn Before Testing", quizBankLearnModeDesc: "Study 3 questions and their worked answers first, then get quizzed on one of them — turn this on if you haven't learned the material yet.",
     quizBankQuestionCount: "{n} questions", quizBankBestLabel: "Best: {n}/{total}",
     quizBankAllTitle: "All 400 Questions",
     quizBankQuestionCounter: "Question {n} of {total}",
@@ -3430,6 +3432,7 @@ const I18N = {
     bizEndlessRestartBtn: "再玩一次",
     quizBankCardTitle: "ACCT1102 题库", quizBankCardDesc: "涵盖管理会计四个主题的400道真实考试风格题目",
     quizBankMenuTitle: "ACCT1102 题库", quizBankMenuSub: "选择一个主题，或一次挑战全部400题。",
+    quizBankLearnModeTitle: "先学后测", quizBankLearnModeDesc: "先学习3道题目及其详解，再从中抽1道测验——如果你还没学过这些内容，可以开启此模式。",
     quizBankQuestionCount: "{n} 道题", quizBankBestLabel: "最佳成绩：{n}/{total}",
     quizBankAllTitle: "全部400题",
     quizBankQuestionCounter: "第 {n} / {total} 题",
@@ -4594,6 +4597,7 @@ const I18N = {
     bizEndlessRestartBtn: "བསྐྱར་དུ་རྩེད།",
     quizBankCardTitle: "ACCT1102 དྲི་བའི་མཛོད།", quizBankCardDesc: "འཛིན་སྐྱོང་རྩིས་ཁྲའི་བརྗོད་གཞི་4པོའི་ཐོག་གི་ཚད་ལྡན་རྒྱུགས་སྤྲོད་དྲི་བ་400",
     quizBankMenuTitle: "ACCT1102 དྲི་བའི་མཛོད།", quizBankMenuSub: "བརྗོད་གཞི་གཅིག་འདེམས་པའམ, དྲི་བ་400ཆར་ལ་འགྲན་སྡུར་བྱོས།",
+    quizBankLearnModeTitle: "སྔོན་ལ་སློབ་སྦྱོང་བྱོས།", quizBankLearnModeDesc: "དང་པོ་དྲི་བ3དང་དེའི་ལན་འགྲེལ་སློབ་སྦྱོང་བྱོས, དེ་ནས་དེའི་ནང་ནས་གཅིག་ལ་བརྟག་ཞིབ་བྱོས—ཁྱེད་ཀྱིས་ནང་དོན་འདི་དག་སློབ་སྦྱོང་མ་བྱས་ན་ཐབས་ལམ་འདི་སྒུལ་ཆོག།",
     quizBankQuestionCount: "དྲི་བ་{n}", quizBankBestLabel: "མཐོ་ཤོས་: {n}/{total}",
     quizBankAllTitle: "དྲི་བ་400ཆ་ཚང་།",
     quizBankQuestionCounter: "དྲི་བ་{n} / {total}",
@@ -4821,7 +4825,9 @@ const screens = {
   business_endless: renderBusinessEndless,
   business_endless_result: renderBusinessEndlessResult,
   quiz_bank_menu: renderQuizBankMenu,
+  quiz_bank_teach: renderQuizBankTeach,
   quiz_bank_session: renderQuizBankSession,
+  quiz_bank_learn_result: renderQuizBankLearnResult,
   quiz_bank_result: renderQuizBankResult,
   profile: renderProfile,
   avatar_editor: renderAvatarEditor,
@@ -12546,28 +12552,37 @@ function openQuizBankMenu(){
 }
 function renderQuizBankMenu(){
   const bestScores = (state.game.quizBank && state.game.quizBank.best) || {};
+  const learnRounds = (state.game.quizBank && state.game.quizBank.learnRounds) || {};
+  const learnOn = !!state.quizBankLearnMode;
+  const startAction = (partId) => learnOn ? `startQuizBankLearnRound(${partId})` : `startQuizBankSession(${partId})`;
+  const progressLabel = (partKey, count) => {
+    if(learnOn){
+      const rounds = learnRounds[partKey];
+      return rounds ? t('bizRoundsLabel',{n:rounds}) : t('startArrow');
+    }
+    const best = bestScores[partKey];
+    return best!=null ? t('quizBankBestLabel',{n:best,total:count}) : t('startArrow');
+  };
   const parts = QUIZ_BANK_PARTS.map(p=>{
     const count = QUIZ_BANK.filter(q=>q.part===p.id).length;
-    const best = bestScores[p.id];
     return `
-    <button class="track-card" onclick="startQuizBankSession(${p.id})">
+    <button class="track-card" onclick="${startAction(p.id)}">
       <div class="glyph">${p.id}</div>
       <div>
         <div class="tc-title">${p.title}</div>
         <div class="tc-sub">${t('quizBankQuestionCount',{n:count})}</div>
       </div>
-      <div class="tc-progress">${best!=null ? t('quizBankBestLabel',{n:best,total:count}) : t('startArrow')}</div>
+      <div class="tc-progress">${progressLabel(p.id, count)}</div>
     </button>`;
   }).join('');
-  const bestAll = bestScores.all;
   const allCard = `
-    <button class="track-card" onclick="startQuizBankSession('all')">
+    <button class="track-card" onclick="${startAction("'all'")}">
       <div class="glyph">🏆</div>
       <div>
         <div class="tc-title">${t('quizBankAllTitle')}</div>
         <div class="tc-sub">${t('quizBankQuestionCount',{n:QUIZ_BANK.length})}</div>
       </div>
-      <div class="tc-progress">${bestAll!=null ? t('quizBankBestLabel',{n:bestAll,total:QUIZ_BANK.length}) : t('startArrow')}</div>
+      <div class="tc-progress">${progressLabel('all', QUIZ_BANK.length)}</div>
     </button>`;
   return `
   ${topbar({back:'backToBusinessMenu()'})}
@@ -12575,6 +12590,13 @@ function renderQuizBankMenu(){
     <div class="hero">
       <h1>${t('quizBankMenuTitle')}</h1>
       <div class="sub">${t('quizBankMenuSub')}</div>
+    </div>
+    <div class="profile-card" style="display:flex; align-items:center; justify-content:space-between; gap:12px; text-align:left;">
+      <div>
+        <div class="tc-title" style="font-size:15px;">${t('quizBankLearnModeTitle')}</div>
+        <div class="tc-sub">${t('quizBankLearnModeDesc')}</div>
+      </div>
+      <button class="biz-switch ${learnOn?'on':''}" onclick="toggleQuizBankLearnMode()" aria-pressed="${learnOn}"><span class="biz-switch-knob"></span></button>
     </div>
     <div class="track-grid">${parts}${allCard}</div>
   </div>
@@ -12585,7 +12607,7 @@ function startQuizBankSession(partFilter){
   partFilter = partFilter==='all' ? 'all' : Number(partFilter);
   const pool = partFilter==='all' ? QUIZ_BANK : QUIZ_BANK.filter(q=>q.part===partFilter);
   state.quizBankSession = {
-    partFilter, queue: shuffled(pool), index:0, correct:0, mistakes:0, combo:0, maxCombo:0,
+    partFilter, mode:'quiz', queue: shuffled(pool), index:0, correct:0, mistakes:0, combo:0, maxCombo:0,
     xpEarned:0, lastXpGain:0, answered:false, revealed:false, selected:null, tfSelected:null, lastCorrect:null,
     typedAnswer:'', newAchievements:[], isNewBest:false,
   };
@@ -12593,6 +12615,118 @@ function startQuizBankSession(partFilter){
   render();
 }
 function exitQuizBank(){ state.screen='business_menu'; render(); }
+
+function toggleQuizBankLearnMode(){
+  state.quizBankLearnMode = !state.quizBankLearnMode;
+  render();
+}
+
+// ---- "learn 3, then get tested on 1" mode for the quiz bank, mirroring the
+// Business Concepts teach-then-quiz loop: study 3 random questions (prompt +
+// worked answer, with the correct option highlighted for mcq/tf) up front,
+// then the actual test is a single question drawn from those same 3, reusing
+// the existing quiz-bank test-taking screen/functions unchanged.
+function startQuizBankLearnRound(partFilter){
+  partFilter = partFilter==='all' ? 'all' : Number(partFilter);
+  const pool = partFilter==='all' ? QUIZ_BANK : QUIZ_BANK.filter(q=>q.part===partFilter);
+  state.quizBankSession = {
+    partFilter, mode:'learn', learnQuestions: shuffled(pool).slice(0,3), learnIndex:0,
+    queue:null, index:0, correct:0, mistakes:0, combo:0, maxCombo:0,
+    xpEarned:0, lastXpGain:0, answered:false, revealed:false, selected:null, tfSelected:null, lastCorrect:null,
+    typedAnswer:'', newAchievements:[], isNewBest:false,
+  };
+  state.screen = 'quiz_bank_teach';
+  render();
+}
+
+function renderQuizBankTeach(){
+  const s = state.quizBankSession;
+  const q = s.learnQuestions[s.learnIndex];
+  const isLast = s.learnIndex >= s.learnQuestions.length - 1;
+  let revealHtml = '';
+  if(q.type==='mcq'){
+    revealHtml = `<div class="options">${q.opts.map((opt,idx)=>
+      `<button class="opt ${idx===q.ans?'correct reveal':'disabled reveal'}" disabled><span>${opt}</span></button>`
+    ).join('')}</div>`;
+  } else if(q.type==='tf'){
+    revealHtml = `<div class="options">
+      <button class="opt ${q.ans===true?'correct reveal':'disabled reveal'}" disabled><span>${t('quizBankTrueBtn')}</span></button>
+      <button class="opt ${q.ans===false?'correct reveal':'disabled reveal'}" disabled><span>${t('quizBankFalseBtn')}</span></button>
+    </div>`;
+  }
+  return `
+  ${topbar({back:'exitQuizBank()'})}
+  <div class="lesson">
+    <div class="q-wrap">
+      ${(q.type==='mcq'||q.type==='tf') ? `
+      <div class="q-card">
+        <div class="q-eyebrow">${t('bizLearnEyebrow',{n:s.learnIndex+1, total:s.learnQuestions.length})}</div>
+        <div class="q-prompt" style="font-size:19px;">${q.q}</div>
+      </div>` : `
+      <div class="q-eyebrow" style="text-align:center;">${t('bizLearnEyebrow',{n:s.learnIndex+1, total:s.learnQuestions.length})}</div>
+      <div class="profile-card" style="text-align:left;">
+        <div class="qb-prompt-card">${formatReadableText(q.q)}</div>
+      </div>`}
+      ${revealHtml}
+      <div class="profile-card" style="text-align:left;">
+        <div style="font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--gold); margin-bottom:6px;">${t('quizBankAnswerLabel')}</div>
+        <div style="font-size:14.5px; color:var(--snow-dim);">${formatReadableText(q.exp)}</div>
+      </div>
+      <button class="btn btn-primary btn-block" onclick="nextQuizBankTeach()">${isLast ? t('bizStartQuizBtn') : t('bizNextConceptBtn')}</button>
+    </div>
+  </div>
+  `;
+}
+
+function nextQuizBankTeach(){
+  const s = state.quizBankSession;
+  s.learnIndex += 1;
+  if(s.learnIndex >= s.learnQuestions.length){ startQuizBankLearnTest(); return; }
+  render();
+}
+
+function startQuizBankLearnTest(){
+  const s = state.quizBankSession;
+  const picked = s.learnQuestions[randInt(0, s.learnQuestions.length-1)];
+  s.queue = [picked];
+  s.index = 0;
+  s.answered = false; s.revealed = false; s.selected = null; s.tfSelected = null; s.lastCorrect = null; s.typedAnswer = '';
+  state.screen = 'quiz_bank_session';
+  render();
+}
+
+function finishQuizBankLearnRound(){
+  const s = state.quizBankSession;
+  if(!state.game.quizBank) state.game.quizBank = {best:{}};
+  if(!state.game.quizBank.learnRounds) state.game.quizBank.learnRounds = {};
+  const key = s.partFilter;
+  state.game.quizBank.learnRounds[key] = (state.game.quizBank.learnRounds[key]||0) + 1;
+  touchStreak();
+  s.newAchievements = checkAchievements(state.game);
+  state.screen = 'quiz_bank_learn_result';
+  render();
+}
+
+function renderQuizBankLearnResult(){
+  const s = state.quizBankSession;
+  const rounds = state.game.quizBank.learnRounds[s.partFilter];
+  const lvl = xpLevel(state.game.xp);
+  return `
+  ${topbar()}
+  <div class="complete ${appLangClass()}">
+    <div class="medal">${s.lastCorrect ? '🎯' : '📘'}</div>
+    <h2>${s.lastCorrect ? t('correctFeedback',{n:s.lastXpGain}) : t('bizRoundDoneTitle')}</h2>
+    <div class="stat-row">
+      <div class="stat-box"><div class="val">${rounds}</div><div class="lab">${t('bizRoundsCompletedLabel')}</div></div>
+      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
+    </div>
+    <div style="color:var(--snow-dim); font-size:13px;">${t('levelLabel',{n:lvl.level})}</div>
+    ${achievementBannerHtml(s.newAchievements)}
+    <button class="btn btn-primary btn-block" onclick="startQuizBankLearnRound('${s.partFilter}')">${t('bizNextRoundBtn')}</button>
+    <button class="btn btn-ghost btn-block" onclick="backToBusinessMenu()">${t('backToBusinessMenuBtn')}</button>
+  </div>`;
+}
 
 function quizBankOptionsHtml(s, q){
   if(q.type==='mcq'){
@@ -12758,7 +12892,11 @@ function finalizeQuizBankAnswer(s){
 }
 function nextQuizBankQuestion(){
   const s = state.quizBankSession;
-  if(s.index >= s.queue.length-1){ finishQuizBankSession(); return; }
+  if(s.index >= s.queue.length-1){
+    if(s.mode==='learn') finishQuizBankLearnRound();
+    else finishQuizBankSession();
+    return;
+  }
   s.index += 1;
   s.answered = false; s.revealed = false; s.selected = null; s.tfSelected = null; s.lastCorrect = null; s.typedAnswer = '';
   render();
