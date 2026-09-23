@@ -4403,6 +4403,8 @@ function defaultGame(){
     geometry:{}, // topic key -> {best: correct-answer count}
     trig:{}, // topic key -> {best: correct-answer count}
     complex:{}, // topic key -> {best: correct-answer count}
+    sequences:{}, // topic key -> {best: correct-answer count}
+    matrices:{}, // topic key -> {best: correct-answer count}
     business:{}, // category key -> {rounds: completed-rounds count}
     conceptExposure:{}, // concept key -> times tested (drives MCQ -> typed progression)
     conceptMastery:{}, // concept key (or "qb_<id>" for Quiz Bank questions) -> {correct, wrong, streak}
@@ -5276,6 +5278,146 @@ const I18N = {
     cplxLearn_modulus_of_product: "The modulus of a product equals the product of the moduli: |z₁z₂| = |z₁| × |z₂| — no need to actually multiply the complex numbers out.\n\nExample: |3+4i| = 5 and |5+12i| = 13. Find |(3+4i)(5+12i)|.\n5 × 13 = 65.",
     cplxModulusProductPrompt: "Find |z₁z₂|, where z₁ = {z1} and z₂ = {z2}.",
     cplxModulusProductExplain: "|z₁| = {m1} and |z₂| = {m2}. |z₁z₂| = |z₁| × |z₂| = {m1} × {m2} = {answer}.",
+
+    sequencesTitle: "Sequences & Series",
+    sequencesSub: "Month 10: patterns of numbers and the sums they add up to. Pick a topic to learn the concept, then practice.",
+    backToSeqMenuBtn: "Back to Sequences & Series",
+    seqConverges: "converges", seqDiverges: "diverges",
+
+    seqTopicTitle_arithmetic_nth_term: "Arithmetic Sequences", seqTopicDesc_arithmetic_nth_term: "Find the nth term of an arithmetic sequence",
+    seqLearn_arithmetic_nth_term: "An arithmetic sequence adds the same amount (the common difference, d) each step: aₙ = a₁ + (n-1)d.\n\nExample: a sequence starts at 4 with common difference 3. Find the 6th term.\na₆ = 4 + (6-1)×3 = 4 + 15 = 19.",
+    seqArithNthPrompt: "An arithmetic sequence starts at {a1} with common difference {d}. Find the {n}th term.",
+    seqArithNthExplain: "aₙ = a₁ + (n-1)d = {a1} + ({n}-1)×{d} = {answer}.",
+
+    seqTopicTitle_geometric_nth_term: "Geometric Sequences", seqTopicDesc_geometric_nth_term: "Find the nth term of a geometric sequence",
+    seqLearn_geometric_nth_term: "A geometric sequence multiplies by the same amount (the common ratio, r) each step: aₙ = a₁ × r^(n-1).\n\nExample: a sequence starts at 2 with common ratio 3. Find the 4th term.\na₄ = 2 × 3^(4-1) = 2 × 27 = 54.",
+    seqGeomNthPrompt: "A geometric sequence starts at {a1} with common ratio {r}. Find the {n}th term.",
+    seqGeomNthExplain: "aₙ = a₁ × r^(n-1) = {a1} × {r}^({n}-1) = {answer}.",
+
+    seqTopicTitle_arithmetic_series_sum: "Arithmetic Series", seqTopicDesc_arithmetic_series_sum: "Find the sum of the first n terms of an arithmetic sequence",
+    seqLearn_arithmetic_series_sum: "The sum of the first n terms of an arithmetic sequence is Sₙ = n(a₁+aₙ)/2, the number of terms times the average of the first and last.\n\nExample: sum the first 5 terms of an arithmetic sequence starting at 3 with common difference 2.\na₅ = 3+(5-1)×2 = 11. S₅ = 5(3+11)/2 = 5×14/2 = 35.",
+    seqArithSeriesSumPrompt: "Find the sum of the first {n} terms of an arithmetic sequence starting at {a1} with common difference {d}.",
+    seqArithSeriesSumExplain: "aₙ = {a1}+({n}-1)×{d} = {an}. Sₙ = n(a₁+aₙ)/2 = {n}({a1}+{an})/2 = {answer}.",
+
+    seqTopicTitle_geometric_series_sum: "Geometric Series", seqTopicDesc_geometric_series_sum: "Find the sum of the first n terms of a geometric sequence",
+    seqLearn_geometric_series_sum: "The sum of the first n terms of a geometric sequence is Sₙ = a₁(rⁿ-1)/(r-1).\n\nExample: sum the first 4 terms of a geometric sequence starting at 2 with common ratio 3.\nTerms: 2, 6, 18, 54. Sum = 80.",
+    seqGeomSeriesSumPrompt: "Find the sum of the first {n} terms of a geometric sequence starting at {a1} with common ratio {r}.",
+    seqGeomSeriesSumExplain: "Adding the first {n} terms (each the previous times {r}, starting at {a1}) gives {sum}.",
+
+    seqTopicTitle_geometric_series_infinite: "Infinite Geometric Series", seqTopicDesc_geometric_series_infinite: "Find the sum of an infinite geometric series",
+    seqLearn_geometric_series_infinite: "When |r| < 1, an infinite geometric series converges to a finite sum: S = a₁/(1-r).\n\nExample: find the sum of an infinite geometric series with first term 4 and common ratio 1/2.\nS = 4/(1-1/2) = 4/(1/2) = 8.",
+    seqGeomSeriesInfinitePrompt: "Find the sum of an infinite geometric series with first term {a1} and common ratio 1/{k}.",
+    seqGeomSeriesInfiniteExplain: "S = a₁/(1-r) = {a1}/(1-1/{k}) = {answer}.",
+
+    seqTopicTitle_sigma_linear: "Sigma Notation", seqTopicDesc_sigma_linear: "Evaluate a sum written in sigma notation",
+    seqLearn_sigma_linear: "Σ (sigma) notation compactly writes a sum: Σ from i=1 to n of f(i) means add up f(1), f(2), ..., f(n). For a linear expression, this is the same as an arithmetic series.\n\nExample: evaluate Σ from i=1 to 4 of (2i+1).\nTerms: 3, 5, 7, 9. Sum = 24.",
+    seqSigmaLinearPrompt: "Evaluate: Σ from i=1 to {n} of ({expr})",
+    seqSigmaLinearExplain: "This splits into Σci + Σd = {term1} + {term2} = {answer}.",
+
+    seqTopicTitle_sum_first_n: "Sum of the First n Integers", seqTopicDesc_sum_first_n: "Find 1 + 2 + 3 + ... + n",
+    seqLearn_sum_first_n: "The sum of the first n positive integers has a shortcut formula: 1+2+...+n = n(n+1)/2.\n\nExample: find the sum of the first 10 positive integers.\n10×11/2 = 55.",
+    seqSumFirstNPrompt: "Find the sum: 1 + 2 + 3 + ... + {n}.",
+    seqSumFirstNExplain: "n(n+1)/2 = ({n})({n}+1)/2 = {product}/2 = {answer}.",
+
+    seqTopicTitle_sum_of_squares: "Sum of Squares", seqTopicDesc_sum_of_squares: "Find 1² + 2² + 3² + ... + n²",
+    seqLearn_sum_of_squares: "The sum of the first n squares has a shortcut formula: 1²+2²+...+n² = n(n+1)(2n+1)/6.\n\nExample: find the sum of the first 4 squares.\n1+4+9+16 = 4×5×9/6 = 180/6 = 30.",
+    seqSumOfSquaresPrompt: "Find the sum: 1² + 2² + 3² + ... + {n}².",
+    seqSumOfSquaresExplain: "n(n+1)(2n+1)/6 = {n}×({n}+1)×{twonp1}/6 = {answer}.",
+
+    seqTopicTitle_fibonacci: "Fibonacci-Style Sequences", seqTopicDesc_fibonacci: "Find a term in a sequence where each term is the sum of the two before it",
+    seqLearn_fibonacci: "A Fibonacci-style sequence starts with two values, then each next term is the sum of the previous two: aₙ = a_(n-1) + a_(n-2).\n\nExample: a sequence starts 1, 1, then follows this rule. Find the 6th term.\n1, 1, 2, 3, 5, 8 — the 6th term is 8.",
+    seqFibonacciPrompt: "A sequence starts {a1}, {a2}, and each next term is the sum of the two before it. Find the {n}th term.",
+    seqFibonacciExplain: "Building the sequence term by term from {a1}, {a2} gives term {n} = {answer}.",
+
+    seqTopicTitle_recursive_sequence: "Recursive Sequences", seqTopicDesc_recursive_sequence: "Find a term defined by a recurrence relation",
+    seqLearn_recursive_sequence: "A recursive sequence defines each term using the one before it: aₙ = k×a_(n-1) + c.\n\nExample: a₁ = 2, and aₙ = 3×a_(n-1) + 1. Find a₃.\na₂ = 3×2+1 = 7. a₃ = 3×7+1 = 22.",
+    seqRecursivePrompt: "a₁ = {a1}, and aₙ = {k}×a_(n-1) + ({c}). Find a_{n}.",
+    seqRecursiveExplain: "Applying the rule aₙ = {k}×a_(n-1) + ({c}) repeatedly from a₁ = {a1} gives a_{n} = {answer}.",
+
+    seqTopicTitle_common_difference: "Finding the Common Difference", seqTopicDesc_common_difference: "Find d from two terms of an arithmetic sequence",
+    seqLearn_common_difference: "If you know two terms of an arithmetic sequence, you can find the common difference: d = (aₘ - aₙ)/(m - n).\n\nExample: the 3rd term of an arithmetic sequence is 7, and the 7th term is 19. Find d.\nd = (19-7)/(7-3) = 12/4 = 3.",
+    seqCommonDiffPrompt: "The {m}th term of an arithmetic sequence is {am}, and the {n}th term is {an}. Find the common difference.",
+    seqCommonDiffExplain: "d = (a_{m} - a_{n})/({m} - {n}) = ({am} - {an})/{mn} = {d}.",
+
+    seqTopicTitle_common_ratio: "Finding the Common Ratio", seqTopicDesc_common_ratio: "Find r from two terms of a geometric sequence",
+    seqLearn_common_ratio: "If you know two terms of a geometric sequence, you can find the common ratio by dividing: aₘ/aₙ = r^(m-n).\n\nExample: the 2nd term of a geometric sequence is 6, and the 5th term is 162. Find r.\nr³ = 162/6 = 27, so r = 3.",
+    seqCommonRatioPrompt: "The {n}th term of a geometric sequence is {an}, and the {m}th term is {am}. Find the common ratio.",
+    seqCommonRatioExplain: "a_{m}/a_{n} = r^({m}-{n}), so r^{ratioPow} = {am}/{an}, giving r = {r}.",
+
+    seqTopicTitle_series_convergence: "Series Convergence", seqTopicDesc_series_convergence: "Determine whether an infinite geometric series converges",
+    seqLearn_series_convergence: "An infinite geometric series with common ratio r converges (adds up to a finite value) only when |r| < 1. Otherwise it diverges.\n\nExample: does a geometric series with r = 3/4 converge?\n|3/4| = 0.75 < 1, so yes, it converges.",
+    seqConvergencePrompt: "An infinite geometric series has common ratio {p}/{q}. Does it converge?",
+    seqConvergenceExplain: "|r| = {absP}/{q}. Since {compareText}, the series {resultWord}.",
+
+    matricesTitle: "Matrices & Linear Systems",
+    matricesSub: "Month 11: back to matrices for deeper ground — Cramer's rule, rank, trace, and eigenvalues. Pick a topic to learn the concept, then practice.",
+    backToMatMenuBtn: "Back to Matrices",
+
+    matTopicTitle_cramers_rule: "Cramer's Rule", matTopicDesc_cramers_rule: "Solve a 2×2 system of equations using determinants",
+    matLearn_cramers_rule: "Cramer's rule solves a system using determinants. For ax+by=e and cx+dy=f, let D be the determinant of the coefficient matrix, Dx be D with the x-column replaced by (e,f), and Dy be D with the y-column replaced by (e,f). Then x = Dx/D and y = Dy/D.\n\nExample: solve 2x+y=5 and x-y=1.\nD = (2)(-1)-(1)(1) = -3. Dx = (5)(-1)-(1)(1) = -6, so x = -6/-3 = 2. Dy = (2)(1)-(5)(1) = -3, so y = -3/-3 = 1.",
+    matCramersPrompt: "Solve using Cramer's rule: {eq1}, and {eq2}",
+    matCramersExplain: "D = {D}, Dx = {Dx}, Dy = {Dy}. x = Dx/D = {x0}, y = Dy/D = {y0}.",
+
+    matTopicTitle_matrix_power: "Matrix Powers", matTopicDesc_matrix_power: "Compute A² for a 2×2 matrix",
+    matLearn_matrix_power: "Squaring a matrix means multiplying it by itself: A² = A × A, using the normal rules of matrix multiplication.\n\nExample: square A = [[1,2],[3,4]].\nA² = [[1×1+2×3, 1×2+2×4], [3×1+4×3, 3×2+4×4]] = [[7,10],[15,22]].",
+    matPowerPrompt: "Find A², where A = {A}",
+    matPowerExplain: "A² = A × A = {C}.",
+
+    matTopicTitle_matrix_rank: "Matrix Rank", matTopicDesc_matrix_rank: "Find the rank of a 2×2 matrix",
+    matLearn_matrix_rank: "The rank of a matrix is the number of linearly independent rows (or columns). For a 2×2 matrix: rank 0 means every entry is 0, rank 2 means the determinant is nonzero, and rank 1 means the determinant is 0 but the matrix isn't all zeros.\n\nExample: find the rank of [[2,4],[1,2]].\nThe determinant is (2)(2)-(4)(1) = 0, and the matrix isn't all zeros (row 2 is exactly half of row 1). Rank = 1.",
+    matRankPrompt: "Find the rank of A = {A}",
+    matRankExplain: "The rank is {rank}.",
+
+    matTopicTitle_matrix_trace: "Matrix Trace", matTopicDesc_matrix_trace: "Find the sum of a matrix's diagonal entries",
+    matLearn_matrix_trace: "The trace of a square matrix is the sum of its diagonal entries (top-left to bottom-right).\n\nExample: find the trace of [[3,7],[1,5]].\ntrace = 3 + 5 = 8.",
+    matTracePrompt: "Find the trace of A = {A}",
+    matTrace2Explain: "trace = {a} + {d} = {answer}.",
+    matTrace3Explain: "trace = {d1} + {d2} + {d3} = {answer}.",
+
+    matTopicTitle_eigenvalues: "Eigenvalues", matTopicDesc_eigenvalues: "Find the eigenvalues of a 2×2 matrix",
+    matLearn_eigenvalues: "The eigenvalues of a 2×2 matrix solve the characteristic equation λ² - (trace)λ + det = 0, where trace is the sum of the diagonal and det is the determinant.\n\nExample: find the eigenvalues of [[4,3],[3,-4]].\ntrace = 0, det = (4)(-4)-(3)(3) = -25. λ² - 25 = 0, so λ² = 25, λ = ±5.",
+    matEigenvaluesPrompt: "Find the eigenvalues of A = {A}",
+    matEigenvaluesExplain: "trace(A) = {trace}, det(A) = {det}. Solving λ² - {trace}λ + ({det}) = 0 gives λ = {lambda1} and λ = {lambda2}.",
+
+    matTopicTitle_det_scalar_property: "Determinant of a Scalar Multiple", matTopicDesc_det_scalar_property: "Find det(kA) from det(A) for a 2×2 matrix",
+    matLearn_det_scalar_property: "Scaling a 2×2 matrix by k multiplies its determinant by k²: det(kA) = k²·det(A).\n\nExample: det(A) = 5. Find det(3A).\ndet(3A) = 3²×5 = 9×5 = 45.",
+    matDetScalarPropPrompt: "det(A) = {detA} for a 2×2 matrix A. Find det({k}A).",
+    matDetScalarPropExplain: "det(kA) = k²·det(A) = {k}²×{detA} = {kSq}×{detA} = {answer}.",
+
+    matTopicTitle_det_product_property: "Determinant of a Product", matTopicDesc_det_product_property: "Find det(AB) from det(A) and det(B)",
+    matLearn_det_product_property: "The determinant of a product equals the product of the determinants: det(AB) = det(A)·det(B) — no need to actually multiply the matrices.\n\nExample: det(A) = 4, det(B) = -3. Find det(AB).\ndet(AB) = 4×(-3) = -12.",
+    matDetProductPropPrompt: "det(A) = {detA} and det(B) = {detB}. Find det(AB).",
+    matDetProductPropExplain: "det(AB) = det(A) × det(B) = {detA} × {detB} = {answer}.",
+
+    matTopicTitle_homogeneous_system: "Homogeneous Systems", matTopicDesc_homogeneous_system: "Determine whether Ax=0 has only the trivial solution",
+    matLearn_homogeneous_system: "A homogeneous system Ax=0 always has the trivial solution x=0. It has ONLY that solution when det(A)≠0. If det(A)=0, there are infinitely many solutions.\n\nExample: does [[2,4],[1,2]] have only the trivial solution?\ndet = (2)(2)-(4)(1) = 0, so no — there are infinitely many solutions.",
+    matHomogeneousPrompt: "Does the system Ax = 0 have only the trivial solution x = 0, where A = {A}?",
+    matHomogeneousExplain: "det(A) = {det}. The system has only the trivial solution if and only if det(A) ≠ 0, so the answer is {answer}.",
+
+    matTopicTitle_find_scalar: "Finding a Scalar Multiplier", matTopicDesc_find_scalar: "Find k such that kA = B",
+    matLearn_find_scalar: "If B = kA for some scalar k, you can find k by dividing any nonzero corresponding entries: k = B's entry / A's entry.\n\nExample: A = [[2,3],[1,4]], B = [[6,9],[3,12]]. Find k.\nk = 6/2 = 3 (check: 3×[[2,3],[1,4]] = [[6,9],[3,12]], correct).",
+    matFindScalarPrompt: "Find k such that kA = B, where A = {A} and B = {B}.",
+    matFindScalarExplain: "Comparing corresponding entries gives k = {k}.",
+
+    matTopicTitle_linear_combo: "Linear Combinations of Matrices", matTopicDesc_linear_combo: "Compute k₁A + k₂B for two matrices",
+    matLearn_linear_combo: "A linear combination of matrices scales each one, then adds them entry by entry: k₁A + k₂B.\n\nExample: find 2A + 3B, where A = [[1,0],[0,1]] and B = [[2,1],[1,2]].\n2A = [[2,0],[0,2]]. 3B = [[6,3],[3,6]]. Sum = [[8,3],[3,8]].",
+    matLinearComboPrompt: "Find {k1}A + {k2}B, where A = {A} and B = {B}.",
+    matLinearComboExplain: "{k1}A + {k2}B = {C}.",
+
+    matTopicTitle_solve_for_x: "Solving for an Unknown Entry", matTopicDesc_solve_for_x: "Find x given the determinant of a matrix containing x",
+    matLearn_solve_for_x: "If a matrix contains an unknown entry x and you know the determinant, you can solve for x using the determinant formula.\n\nExample: [[x,2],[3,5]] has determinant 4. Find x.\n5x - 6 = 4, so 5x = 10, x = 2.",
+    matSolveXPrompt: "A = {A} has determinant {D}. Find x.",
+    matSolveXExplain: "The determinant is xd - bc = x({d}) - ({b})({c}) = {D}, so x×{d} = {D} + {bc} = {sum}, giving x = {x0}.",
+
+    matTopicTitle_symmetric_check: "Symmetric Matrices", matTopicDesc_symmetric_check: "Determine whether a matrix is symmetric",
+    matLearn_symmetric_check: "A matrix is symmetric if it equals its own transpose — for a 2×2 matrix [[a,b],[c,d]], that just means b = c.\n\nExample: is [[3,5],[5,7]] symmetric?\nb=5 and c=5, so yes.",
+    matSymmetricPrompt: "Is A = {A} symmetric?",
+    matSymmetricExplain: "A is symmetric only if its off-diagonal entries match: b = {b} and c = {c}. So the answer is {answer}.",
+
+    matTopicTitle_equality_check: "Matrix Equality", matTopicDesc_equality_check: "Determine whether two matrices are equal",
+    matLearn_equality_check: "Two matrices are equal only if every corresponding entry matches exactly.\n\nExample: are [[1,2],[3,4]] and [[1,2],[3,5]] equal?\nThe bottom-right entries differ (4 vs 5), so no.",
+    matEqualityPrompt: "Are A = {A} and B = {B} equal?",
+    matEqualityExplain: "Comparing every entry of A and B shows the answer is {answer}.",
 
     businessTitle: "Business Concepts",
     businessSub: "Finance, economics and the tech companies shaping them. Learn 3 concepts, then get quizzed on one — multiple choice the first time, typed from memory after that.",
@@ -6250,6 +6392,146 @@ const I18N = {
     cplxModulusProductPrompt: "求 |z₁z₂|，其中 z₁ = {z1}，z₂ = {z2}。",
     cplxModulusProductExplain: "|z₁| = {m1}，|z₂| = {m2}。|z₁z₂| = |z₁| × |z₂| = {m1} × {m2} = {answer}。",
 
+    sequencesTitle: "数列与级数",
+    sequencesSub: "第十个月：数字的规律以及它们相加得到的总和。选择一个主题学习概念，然后练习。",
+    backToSeqMenuBtn: "返回数列与级数",
+    seqConverges: "收敛", seqDiverges: "发散",
+
+    seqTopicTitle_arithmetic_nth_term: "等差数列", seqTopicDesc_arithmetic_nth_term: "求等差数列的第n项",
+    seqLearn_arithmetic_nth_term: "等差数列每一步都加上相同的量（公差 d）：aₙ = a₁ + (n-1)d。\n\n例如：某数列从4开始，公差为3，求第6项。\na₆ = 4 + (6-1)×3 = 4 + 15 = 19。",
+    seqArithNthPrompt: "某等差数列从 {a1} 开始，公差为 {d}。求第 {n} 项。",
+    seqArithNthExplain: "aₙ = a₁ + (n-1)d = {a1} + ({n}-1)×{d} = {answer}。",
+
+    seqTopicTitle_geometric_nth_term: "等比数列", seqTopicDesc_geometric_nth_term: "求等比数列的第n项",
+    seqLearn_geometric_nth_term: "等比数列每一步都乘以相同的量（公比 r）：aₙ = a₁ × r^(n-1)。\n\n例如：某数列从2开始，公比为3，求第4项。\na₄ = 2 × 3^(4-1) = 2 × 27 = 54。",
+    seqGeomNthPrompt: "某等比数列从 {a1} 开始，公比为 {r}。求第 {n} 项。",
+    seqGeomNthExplain: "aₙ = a₁ × r^(n-1) = {a1} × {r}^({n}-1) = {answer}。",
+
+    seqTopicTitle_arithmetic_series_sum: "等差数列求和", seqTopicDesc_arithmetic_series_sum: "求等差数列前n项的和",
+    seqLearn_arithmetic_series_sum: "等差数列前n项的和是 Sₙ = n(a₁+aₙ)/2，即项数乘以首末项的平均值。\n\n例如：求从3开始、公差为2的等差数列前5项的和。\na₅ = 3+(5-1)×2 = 11。S₅ = 5(3+11)/2 = 5×14/2 = 35。",
+    seqArithSeriesSumPrompt: "求从 {a1} 开始、公差为 {d} 的等差数列前 {n} 项的和。",
+    seqArithSeriesSumExplain: "aₙ = {a1}+({n}-1)×{d} = {an}。Sₙ = n(a₁+aₙ)/2 = {n}({a1}+{an})/2 = {answer}。",
+
+    seqTopicTitle_geometric_series_sum: "等比数列求和", seqTopicDesc_geometric_series_sum: "求等比数列前n项的和",
+    seqLearn_geometric_series_sum: "等比数列前n项的和是 Sₙ = a₁(rⁿ-1)/(r-1)。\n\n例如：求从2开始、公比为3的等比数列前4项的和。\n各项：2, 6, 18, 54。总和 = 80。",
+    seqGeomSeriesSumPrompt: "求从 {a1} 开始、公比为 {r} 的等比数列前 {n} 项的和。",
+    seqGeomSeriesSumExplain: "把前 {n} 项相加（每项是前一项乘以 {r}，从 {a1} 开始），得到 {sum}。",
+
+    seqTopicTitle_geometric_series_infinite: "无穷等比级数", seqTopicDesc_geometric_series_infinite: "求无穷等比级数的和",
+    seqLearn_geometric_series_infinite: "当 |r| < 1 时，无穷等比级数收敛于一个有限的和：S = a₁/(1-r)。\n\n例如：求首项为4、公比为1/2的无穷等比级数的和。\nS = 4/(1-1/2) = 4/(1/2) = 8。",
+    seqGeomSeriesInfinitePrompt: "求首项为 {a1}、公比为 1/{k} 的无穷等比级数的和。",
+    seqGeomSeriesInfiniteExplain: "S = a₁/(1-r) = {a1}/(1-1/{k}) = {answer}。",
+
+    seqTopicTitle_sigma_linear: "西格玛记号", seqTopicDesc_sigma_linear: "计算用西格玛记号表示的和",
+    seqLearn_sigma_linear: "Σ（西格玛）记号是求和的简写：Σ从i=1到n的f(i)表示把f(1), f(2), ..., f(n)加起来。对于线性表达式，这和等差数列求和是一样的。\n\n例如：求 Σ从i=1到4的(2i+1)。\n各项：3, 5, 7, 9。总和 = 24。",
+    seqSigmaLinearPrompt: "求值：Σ 从 i=1 到 {n} 的 ({expr})",
+    seqSigmaLinearExplain: "拆分为 Σci + Σd = {term1} + {term2} = {answer}。",
+
+    seqTopicTitle_sum_first_n: "前n个整数之和", seqTopicDesc_sum_first_n: "求 1 + 2 + 3 + ... + n",
+    seqLearn_sum_first_n: "前n个正整数之和有一个简便公式：1+2+...+n = n(n+1)/2。\n\n例如：求前10个正整数之和。\n10×11/2 = 55。",
+    seqSumFirstNPrompt: "求和：1 + 2 + 3 + ... + {n}。",
+    seqSumFirstNExplain: "n(n+1)/2 = ({n})({n}+1)/2 = {product}/2 = {answer}。",
+
+    seqTopicTitle_sum_of_squares: "平方数之和", seqTopicDesc_sum_of_squares: "求 1² + 2² + 3² + ... + n²",
+    seqLearn_sum_of_squares: "前n个平方数之和有一个简便公式：1²+2²+...+n² = n(n+1)(2n+1)/6。\n\n例如：求前4个平方数之和。\n1+4+9+16 = 4×5×9/6 = 180/6 = 30。",
+    seqSumOfSquaresPrompt: "求和：1² + 2² + 3² + ... + {n}²。",
+    seqSumOfSquaresExplain: "n(n+1)(2n+1)/6 = {n}×({n}+1)×{twonp1}/6 = {answer}。",
+
+    seqTopicTitle_fibonacci: "斐波那契式数列", seqTopicDesc_fibonacci: "求每一项都是前两项之和的数列中的某一项",
+    seqLearn_fibonacci: "斐波那契式数列从两个初始值开始，此后每一项都是前两项之和：aₙ = a_(n-1) + a_(n-2)。\n\n例如：某数列从1, 1开始，按此规则继续。求第6项。\n1, 1, 2, 3, 5, 8——第6项是8。",
+    seqFibonacciPrompt: "某数列从 {a1}, {a2} 开始，此后每一项都是前两项之和。求第 {n} 项。",
+    seqFibonacciExplain: "从 {a1}, {a2} 开始逐项构建数列，得到第 {n} 项为 {answer}。",
+
+    seqTopicTitle_recursive_sequence: "递推数列", seqTopicDesc_recursive_sequence: "求由递推关系定义的某一项",
+    seqLearn_recursive_sequence: "递推数列用前一项定义每一项：aₙ = k×a_(n-1) + c。\n\n例如：a₁ = 2，aₙ = 3×a_(n-1) + 1，求 a₃。\na₂ = 3×2+1 = 7。a₃ = 3×7+1 = 22。",
+    seqRecursivePrompt: "a₁ = {a1}，aₙ = {k}×a_(n-1) + ({c})。求 a_{n}。",
+    seqRecursiveExplain: "从 a₁ = {a1} 开始反复应用 aₙ = {k}×a_(n-1) + ({c})，得到 a_{n} = {answer}。",
+
+    seqTopicTitle_common_difference: "求公差", seqTopicDesc_common_difference: "由等差数列的两项求公差",
+    seqLearn_common_difference: "若已知等差数列的两项，就能求出公差：d = (aₘ - aₙ)/(m - n)。\n\n例如：等差数列的第3项是7，第7项是19，求d。\nd = (19-7)/(7-3) = 12/4 = 3。",
+    seqCommonDiffPrompt: "等差数列的第 {m} 项是 {am}，第 {n} 项是 {an}。求公差。",
+    seqCommonDiffExplain: "d = (a_{m} - a_{n})/({m} - {n}) = ({am} - {an})/{mn} = {d}。",
+
+    seqTopicTitle_common_ratio: "求公比", seqTopicDesc_common_ratio: "由等比数列的两项求公比",
+    seqLearn_common_ratio: "若已知等比数列的两项，可通过相除求出公比：aₘ/aₙ = r^(m-n)。\n\n例如：等比数列的第2项是6，第5项是162，求r。\nr³ = 162/6 = 27，所以 r = 3。",
+    seqCommonRatioPrompt: "等比数列的第 {n} 项是 {an}，第 {m} 项是 {am}。求公比。",
+    seqCommonRatioExplain: "a_{m}/a_{n} = r^({m}-{n})，所以 r^{ratioPow} = {am}/{an}，得 r = {r}。",
+
+    seqTopicTitle_series_convergence: "级数的收敛性", seqTopicDesc_series_convergence: "判断无穷等比级数是否收敛",
+    seqLearn_series_convergence: "公比为r的无穷等比级数只有在 |r| < 1 时才收敛（加出一个有限值），否则发散。\n\n例如：公比 r = 3/4 的等比级数收敛吗？\n|3/4| = 0.75 < 1，所以是的，它收敛。",
+    seqConvergencePrompt: "某无穷等比级数的公比是 {p}/{q}。它收敛吗？",
+    seqConvergenceExplain: "|r| = {absP}/{q}。由于 {compareText}，该级数{resultWord}。",
+
+    matricesTitle: "矩阵与线性方程组",
+    matricesSub: "第十一个月：回到矩阵，探索更深的内容——克莱姆法则、秩、迹与特征值。选择一个主题学习概念，然后练习。",
+    backToMatMenuBtn: "返回矩阵",
+
+    matTopicTitle_cramers_rule: "克莱姆法则", matTopicDesc_cramers_rule: "用行列式求解2×2方程组",
+    matLearn_cramers_rule: "克莱姆法则用行列式求解方程组。对于 ax+by=e 和 cx+dy=f，设 D 为系数矩阵的行列式，Dx 为把x列替换成(e,f)后的行列式，Dy 为把y列替换成(e,f)后的行列式。则 x = Dx/D，y = Dy/D。\n\n例如：解 2x+y=5 和 x-y=1。\nD = (2)(-1)-(1)(1) = -3。Dx = (5)(-1)-(1)(1) = -6，所以 x = -6/-3 = 2。Dy = (2)(1)-(5)(1) = -3，所以 y = -3/-3 = 1。",
+    matCramersPrompt: "用克莱姆法则解：{eq1}，以及 {eq2}",
+    matCramersExplain: "D = {D}，Dx = {Dx}，Dy = {Dy}。x = Dx/D = {x0}，y = Dy/D = {y0}。",
+
+    matTopicTitle_matrix_power: "矩阵的幂", matTopicDesc_matrix_power: "计算2×2矩阵的A²",
+    matLearn_matrix_power: "矩阵的平方就是它自己乘以自己：A² = A × A，按照矩阵乘法的常规规则。\n\n例如：求 A = [[1,2],[3,4]] 的平方。\nA² = [[1×1+2×3, 1×2+2×4], [3×1+4×3, 3×2+4×4]] = [[7,10],[15,22]]。",
+    matPowerPrompt: "求 A²，其中 A = {A}",
+    matPowerExplain: "A² = A × A = {C}。",
+
+    matTopicTitle_matrix_rank: "矩阵的秩", matTopicDesc_matrix_rank: "求2×2矩阵的秩",
+    matLearn_matrix_rank: "矩阵的秩是线性无关的行（或列）的个数。对于2×2矩阵：秩为0表示每个元素都是0，秩为2表示行列式不为0，秩为1表示行列式为0但矩阵不全为0。\n\n例如：求 [[2,4],[1,2]] 的秩。\n行列式是 (2)(2)-(4)(1) = 0，且矩阵不全为0（第二行正好是第一行的一半）。秩 = 1。",
+    matRankPrompt: "求 A = {A} 的秩",
+    matRankExplain: "秩是 {rank}。",
+
+    matTopicTitle_matrix_trace: "矩阵的迹", matTopicDesc_matrix_trace: "求矩阵对角线元素之和",
+    matLearn_matrix_trace: "方阵的迹是其对角线元素（从左上到右下）之和。\n\n例如：求 [[3,7],[1,5]] 的迹。\n迹 = 3 + 5 = 8。",
+    matTracePrompt: "求 A = {A} 的迹",
+    matTrace2Explain: "迹 = {a} + {d} = {answer}。",
+    matTrace3Explain: "迹 = {d1} + {d2} + {d3} = {answer}。",
+
+    matTopicTitle_eigenvalues: "特征值", matTopicDesc_eigenvalues: "求2×2矩阵的特征值",
+    matLearn_eigenvalues: "2×2矩阵的特征值是特征方程 λ² - (迹)λ + 行列式 = 0 的解，其中迹是对角线之和，行列式是矩阵的行列式。\n\n例如：求 [[4,3],[3,-4]] 的特征值。\n迹 = 0，行列式 = (4)(-4)-(3)(3) = -25。λ² - 25 = 0，所以 λ² = 25，λ = ±5。",
+    matEigenvaluesPrompt: "求 A = {A} 的特征值",
+    matEigenvaluesExplain: "trace(A) = {trace}，det(A) = {det}。解 λ² - {trace}λ + ({det}) = 0，得 λ = {lambda1} 和 λ = {lambda2}。",
+
+    matTopicTitle_det_scalar_property: "数乘矩阵的行列式", matTopicDesc_det_scalar_property: "由 det(A) 求2×2矩阵的 det(kA)",
+    matLearn_det_scalar_property: "将2×2矩阵乘以标量k，其行列式会乘以k²：det(kA) = k²·det(A)。\n\n例如：det(A) = 5，求 det(3A)。\ndet(3A) = 3²×5 = 9×5 = 45。",
+    matDetScalarPropPrompt: "对于2×2矩阵A，det(A) = {detA}。求 det({k}A)。",
+    matDetScalarPropExplain: "det(kA) = k²·det(A) = {k}²×{detA} = {kSq}×{detA} = {answer}。",
+
+    matTopicTitle_det_product_property: "乘积的行列式", matTopicDesc_det_product_property: "由 det(A) 和 det(B) 求 det(AB)",
+    matLearn_det_product_property: "乘积的行列式等于各自行列式的乘积：det(AB) = det(A)·det(B)——不需要真的把矩阵相乘。\n\n例如：det(A) = 4，det(B) = -3，求 det(AB)。\ndet(AB) = 4×(-3) = -12。",
+    matDetProductPropPrompt: "det(A) = {detA}，det(B) = {detB}。求 det(AB)。",
+    matDetProductPropExplain: "det(AB) = det(A) × det(B) = {detA} × {detB} = {answer}。",
+
+    matTopicTitle_homogeneous_system: "齐次方程组", matTopicDesc_homogeneous_system: "判断 Ax=0 是否只有平凡解",
+    matLearn_homogeneous_system: "齐次方程组 Ax=0 总是有平凡解 x=0。当且仅当 det(A)≠0 时，它才只有这一个解。若 det(A)=0，则有无穷多个解。\n\n例如：[[2,4],[1,2]] 是否只有平凡解？\ndet = (2)(2)-(4)(1) = 0，所以不是——有无穷多个解。",
+    matHomogeneousPrompt: "方程组 Ax = 0 是否只有平凡解 x = 0，其中 A = {A}？",
+    matHomogeneousExplain: "det(A) = {det}。当且仅当 det(A) ≠ 0 时方程组只有平凡解，所以答案是 {answer}。",
+
+    matTopicTitle_find_scalar: "求数乘系数", matTopicDesc_find_scalar: "求使 kA = B 成立的 k",
+    matLearn_find_scalar: "若 B = kA（k为某个标量），可以用任意一对不为0的对应元素相除求出k：k = B的元素 / A的元素。\n\n例如：A = [[2,3],[1,4]]，B = [[6,9],[3,12]]，求k。\nk = 6/2 = 3（验证：3×[[2,3],[1,4]] = [[6,9],[3,12]]，正确）。",
+    matFindScalarPrompt: "求使 kA = B 成立的 k，其中 A = {A}，B = {B}。",
+    matFindScalarExplain: "比较对应的元素，得 k = {k}。",
+
+    matTopicTitle_linear_combo: "矩阵的线性组合", matTopicDesc_linear_combo: "计算两个矩阵的 k₁A + k₂B",
+    matLearn_linear_combo: "矩阵的线性组合是把每个矩阵分别数乘，再逐项相加：k₁A + k₂B。\n\n例如：求 2A + 3B，其中 A = [[1,0],[0,1]]，B = [[2,1],[1,2]]。\n2A = [[2,0],[0,2]]。3B = [[6,3],[3,6]]。和 = [[8,3],[3,8]]。",
+    matLinearComboPrompt: "求 {k1}A + {k2}B，其中 A = {A}，B = {B}。",
+    matLinearComboExplain: "{k1}A + {k2}B = {C}。",
+
+    matTopicTitle_solve_for_x: "求未知元素", matTopicDesc_solve_for_x: "已知含x的矩阵的行列式，求x",
+    matLearn_solve_for_x: "若矩阵含有未知元素x，且已知其行列式，可用行列式公式求出x。\n\n例如：[[x,2],[3,5]] 的行列式是4，求x。\n5x - 6 = 4，所以 5x = 10，x = 2。",
+    matSolveXPrompt: "A = {A} 的行列式是 {D}。求x。",
+    matSolveXExplain: "行列式是 xd - bc = x({d}) - ({b})({c}) = {D}，所以 x×{d} = {D} + {bc} = {sum}，得 x = {x0}。",
+
+    matTopicTitle_symmetric_check: "对称矩阵", matTopicDesc_symmetric_check: "判断一个矩阵是否对称",
+    matLearn_symmetric_check: "如果一个矩阵等于它自己的转置，就称为对称矩阵——对于2×2矩阵 [[a,b],[c,d]]，这就是说 b = c。\n\n例如：[[3,5],[5,7]] 是对称的吗？\nb=5，c=5，所以是的。",
+    matSymmetricPrompt: "A = {A} 是对称矩阵吗？",
+    matSymmetricExplain: "A 是对称矩阵当且仅当其非对角元素相等：b = {b}，c = {c}。所以答案是 {answer}。",
+
+    matTopicTitle_equality_check: "矩阵相等", matTopicDesc_equality_check: "判断两个矩阵是否相等",
+    matLearn_equality_check: "两个矩阵相等，当且仅当它们对应的每个元素都完全相同。\n\n例如：[[1,2],[3,4]] 和 [[1,2],[3,5]] 相等吗？\n右下角的元素不同（4 与 5），所以不相等。",
+    matEqualityPrompt: "A = {A} 与 B = {B} 相等吗？",
+    matEqualityExplain: "比较 A 与 B 的每个元素，可知答案是 {answer}。",
+
     businessTitle: "商业概念",
     businessSub: "金融、经济学，以及塑造它们的科技公司。先学习3个概念，再接受其中一个的测验——第一次是选择题，之后要凭记忆手动输入。",
     bizFinanceTitle: "金融", bizFinanceDesc: "金钱、投资，以及企业如何管理它们",
@@ -7116,6 +7398,146 @@ const I18N = {
     cplxModulusProductPrompt: "|z₁z₂| འཚོལ་ཤིག, z₁ = {z1}, z₂ = {z2}།",
     cplxModulusProductExplain: "|z₁| = {m1}, |z₂| = {m2}། |z₁z₂| = |z₁| × |z₂| = {m1} × {m2} = {answer}།",
 
+    sequencesTitle: "གོ་རིམ་དང་སྡོམ་རྩིས།",
+    sequencesSub: "ཟླ་བ་བཅུ་པ། གྲངས་ཀྱི་རྒྱུན་རིམ་དང་དེ་དག་བསྡོམས་པའི་འབྲས་བུ། བརྗོད་གཞི་ཞིག་འདེམས་ནས་གོ་དོན་སློབ་ཞིང་རྗེས་སུ་སྦྱོང་བརྡར་གྱིས།",
+    backToSeqMenuBtn: "གོ་རིམ་དང་སྡོམ་རྩིས་སུ་ལོག",
+    seqConverges: "འདུས་འགྲོ།", seqDiverges: "འགྱེས་འགྲོ།",
+
+    seqTopicTitle_arithmetic_nth_term: "རིམ་འགྲིག་གོ་རིམ།", seqTopicDesc_arithmetic_nth_term: "རིམ་འགྲིག་གོ་རིམ་གྱི་ཚན་པ་ n པ་འཚོལ།",
+    seqLearn_arithmetic_nth_term: "རིམ་འགྲིག་གོ་རིམ་ནང་གོམ་པ་རེར་གྲངས་མཉམ་པ (ཆ་མཉམ་ཁྱད d) སྣོན: aₙ = a₁ + (n-1)d།\n\nདཔེར་བརྗོད། གོ་རིམ་ཞིག4ནས་འགོ་ཚུགས་ནས་ཆ་མཉམ་ཁྱད3ཡིན་ན, ཚན་པ6པ་འཚོལ་ཤིག།\na₆ = 4 + (6-1)×3 = 4 + 15 = 19།",
+    seqArithNthPrompt: "རིམ་འགྲིག་གོ་རིམ་ཞིག {a1} ནས་འགོ་ཚུགས་ནས་ཆ་མཉམ་ཁྱད {d} ཡིན། ཚན་པ {n} པ་འཚོལ་ཤིག།",
+    seqArithNthExplain: "aₙ = a₁ + (n-1)d = {a1} + ({n}-1)×{d} = {answer}།",
+
+    seqTopicTitle_geometric_nth_term: "འཕར་འགྲིག་གོ་རིམ།", seqTopicDesc_geometric_nth_term: "འཕར་འགྲིག་གོ་རིམ་གྱི་ཚན་པ་ n པ་འཚོལ།",
+    seqLearn_geometric_nth_term: "འཕར་འགྲིག་གོ་རིམ་ནང་གོམ་པ་རེར་གྲངས་མཉམ་པ (ཆ་མཉམ་ཚད r) འཕར: aₙ = a₁ × r^(n-1)།\n\nདཔེར་བརྗོད། གོ་རིམ་ཞིག2ནས་འགོ་ཚུགས་ནས་ཆ་མཉམ་ཚད3ཡིན་ན, ཚན་པ4པ་འཚོལ་ཤིག།\na₄ = 2 × 3^(4-1) = 2 × 27 = 54།",
+    seqGeomNthPrompt: "འཕར་འགྲིག་གོ་རིམ་ཞིག {a1} ནས་འགོ་ཚུགས་ནས་ཆ་མཉམ་ཚད {r} ཡིན། ཚན་པ {n} པ་འཚོལ་ཤིག།",
+    seqGeomNthExplain: "aₙ = a₁ × r^(n-1) = {a1} × {r}^({n}-1) = {answer}།",
+
+    seqTopicTitle_arithmetic_series_sum: "རིམ་འགྲིག་སྡོམ་རྩིས།", seqTopicDesc_arithmetic_series_sum: "རིམ་འགྲིག་གོ་རིམ་གྱི་ཚན་པ་དང་པོ n བསྡོམས།",
+    seqLearn_arithmetic_series_sum: "རིམ་འགྲིག་གོ་རིམ་གྱི་ཚན་པ་དང་པོ n ཡི་བསྡོམས་ནི Sₙ = n(a₁+aₙ)/2, ཚན་གྲངས་ལ་དང་པོ་མཐའ་མའི་ཕལ་མཐུན་བརྒྱབ་པ་ཡིན།\n\nདཔེར་བརྗོད། 3ནས་འགོ་ཚུགས་ནས་ཆ་མཉམ་ཁྱད2ཡིན་པའི་རིམ་འགྲིག་གོ་རིམ་གྱི་ཚན་པ་དང་པོ5བསྡོམས་ཤིག།\na₅ = 3+(5-1)×2 = 11། S₅ = 5(3+11)/2 = 5×14/2 = 35།",
+    seqArithSeriesSumPrompt: "{a1} ནས་འགོ་ཚུགས་ནས་ཆ་མཉམ་ཁྱད {d} ཡིན་པའི་རིམ་འགྲིག་གོ་རིམ་གྱི་ཚན་པ་དང་པོ {n} བསྡོམས་ཤིག།",
+    seqArithSeriesSumExplain: "aₙ = {a1}+({n}-1)×{d} = {an}། Sₙ = n(a₁+aₙ)/2 = {n}({a1}+{an})/2 = {answer}།",
+
+    seqTopicTitle_geometric_series_sum: "འཕར་འགྲིག་སྡོམ་རྩིས།", seqTopicDesc_geometric_series_sum: "འཕར་འགྲིག་གོ་རིམ་གྱི་ཚན་པ་དང་པོ n བསྡོམས།",
+    seqLearn_geometric_series_sum: "འཕར་འགྲིག་གོ་རིམ་གྱི་ཚན་པ་དང་པོ n ཡི་བསྡོམས་ནི Sₙ = a₁(rⁿ-1)/(r-1)།\n\nདཔེར་བརྗོད། 2ནས་འགོ་ཚུགས་ནས་ཆ་མཉམ་ཚད3ཡིན་པའི་འཕར་འགྲིག་གོ་རིམ་གྱི་ཚན་པ་དང་པོ4བསྡོམས་ཤིག།\nཚན་པ: 2, 6, 18, 54། བསྡོམས = 80།",
+    seqGeomSeriesSumPrompt: "{a1} ནས་འགོ་ཚུགས་ནས་ཆ་མཉམ་ཚད {r} ཡིན་པའི་འཕར་འགྲིག་གོ་རིམ་གྱི་ཚན་པ་དང་པོ {n} བསྡོམས་ཤིག།",
+    seqGeomSeriesSumExplain: "ཚན་པ་དང་པོ {n} ({r} ཡིས་ལན་རེ་རེ་འཕར, {a1} ནས་འགོ་འཛུགས) བསྡོམས་ན {sum} ཐོན།",
+
+    seqTopicTitle_geometric_series_infinite: "མཐའ་མེད་འཕར་འགྲིག་སྡོམ་རྩིས།", seqTopicDesc_geometric_series_infinite: "མཐའ་མེད་འཕར་འགྲིག་སྡོམ་རྩིས་ཀྱི་བསྡོམས་འཚོལ།",
+    seqLearn_geometric_series_infinite: "|r| < 1 ཡིན་ན, མཐའ་མེད་འཕར་འགྲིག་སྡོམ་རྩིས་ཚད་ཡོད་པའི་བསྡོམས་ཤིག་ལ་འདུས་འགྲོ: S = a₁/(1-r)།\n\nདཔེར་བརྗོད། ཐོག་མའི་ཚན་པ4, ཆ་མཉམ་ཚད1/2ཡིན་པའི་མཐའ་མེད་འཕར་འགྲིག་སྡོམ་རྩིས་ཀྱི་བསྡོམས་འཚོལ་ཤིག།\nS = 4/(1-1/2) = 4/(1/2) = 8།",
+    seqGeomSeriesInfinitePrompt: "ཐོག་མའི་ཚན་པ {a1}, ཆ་མཉམ་ཚད 1/{k} ཡིན་པའི་མཐའ་མེད་འཕར་འགྲིག་སྡོམ་རྩིས་ཀྱི་བསྡོམས་འཚོལ་ཤིག།",
+    seqGeomSeriesInfiniteExplain: "S = a₁/(1-r) = {a1}/(1-1/{k}) = {answer}།",
+
+    seqTopicTitle_sigma_linear: "Σ (སིག་མ) རྟགས།", seqTopicDesc_sigma_linear: "Σ རྟགས་ཀྱིས་བརྗོད་པའི་བསྡོམས་རྩིས།",
+    seqLearn_sigma_linear: "Σ (སིག་མ) རྟགས་ཀྱིས་བསྡོམས་བསྡུས་སུ་འབྲི: Σ i=1 ནས n བར f(i) ཞེས་པའི་དོན་ནི f(1), f(2), ..., f(n) བསྡོམས་པ་ཡིན། མིང་ཚིག་རིམ་འགྲིག་ཅན་ལ, འདི་རིམ་འགྲིག་སྡོམ་རྩིས་དང་མཚུངས།\n\nདཔེར་བརྗོད། Σ i=1 ནས4བར (2i+1) རྩིས་ཤིག།\nཚན་པ: 3, 5, 7, 9། བསྡོམས = 24།",
+    seqSigmaLinearPrompt: "རྩིས་ཤིག: Σ i=1 ནས {n} བར ({expr})",
+    seqSigmaLinearExplain: "འདི Σci + Σd = {term1} + {term2} = {answer} ལ་འགྱེས།",
+
+    seqTopicTitle_sum_first_n: "ཐོག་མའི་གྲངས n ཡི་བསྡོམས།", seqTopicDesc_sum_first_n: "1 + 2 + 3 + ... + n འཚོལ།",
+    seqLearn_sum_first_n: "ཐོག་མའི་ཡང་དག་གྲངས n ཡི་བསྡོམས་ལ་མགྱོགས་ཐབས་ཀྱི་གྲུབ་ཆ་ཡོད: 1+2+...+n = n(n+1)/2།\n\nདཔེར་བརྗོད། ཐོག་མའི་ཡང་དག་གྲངས10ཡི་བསྡོམས་འཚོལ་ཤིག།\n10×11/2 = 55།",
+    seqSumFirstNPrompt: "བསྡོམས་འཚོལ་ཤིག: 1 + 2 + 3 + ... + {n}།",
+    seqSumFirstNExplain: "n(n+1)/2 = ({n})({n}+1)/2 = {product}/2 = {answer}།",
+
+    seqTopicTitle_sum_of_squares: "སྒྲིལ་མའི་བསྡོམས།", seqTopicDesc_sum_of_squares: "1² + 2² + 3² + ... + n² འཚོལ།",
+    seqLearn_sum_of_squares: "ཐོག་མའི་སྒྲིལ་མ n ཡི་བསྡོམས་ལ་མགྱོགས་ཐབས་ཀྱི་གྲུབ་ཆ་ཡོད: 1²+2²+...+n² = n(n+1)(2n+1)/6།\n\nདཔེར་བརྗོད། ཐོག་མའི་སྒྲིལ་མ4ཡི་བསྡོམས་འཚོལ་ཤིག།\n1+4+9+16 = 4×5×9/6 = 180/6 = 30།",
+    seqSumOfSquaresPrompt: "བསྡོམས་འཚོལ་ཤིག: 1² + 2² + 3² + ... + {n}²།",
+    seqSumOfSquaresExplain: "n(n+1)(2n+1)/6 = {n}×({n}+1)×{twonp1}/6 = {answer}།",
+
+    seqTopicTitle_fibonacci: "སྔ་མ་གཉིས་བསྡོམས་གོ་རིམ།", seqTopicDesc_fibonacci: "ཚན་པ་རེ་རེ་སྔ་མ་གཉིས་ཀྱི་བསྡོམས་ཡིན་པའི་གོ་རིམ་ནང་ཚན་པ་ཞིག་འཚོལ།",
+    seqLearn_fibonacci: "སྔ་མ་གཉིས་བསྡོམས་གོ་རིམ་ཞིག་ཐོག་མའི་ཐང་གཉིས་ནས་འགོ་ཚུགས, དེ་རྗེས་ཚན་པ་རེ་རེ་སྔ་མའི་ཚན་པ་གཉིས་ཀྱི་བསྡོམས: aₙ = a_(n-1) + a_(n-2)།\n\nདཔེར་བརྗོད། གོ་རིམ་ཞིག1, 1ནས་འགོ་ཚུགས་ནས་སྒྲིག་གཞི་འདི་ལྟར་མུ་མཐུད་ན, ཚན་པ6པ་འཚོལ་ཤིག།\n1, 1, 2, 3, 5, 8—ཚན་པ6པ་ནི8ཡིན།",
+    seqFibonacciPrompt: "གོ་རིམ་ཞིག {a1}, {a2} ནས་འགོ་ཚུགས, དེ་རྗེས་ཚན་པ་རེ་རེ་སྔ་མའི་ཚན་པ་གཉིས་ཀྱི་བསྡོམས་ཡིན། ཚན་པ {n} པ་འཚོལ་ཤིག།",
+    seqFibonacciExplain: "{a1}, {a2} ནས་འགོ་ཚུགས་ནས་ཚན་པ་རེ་རེ་བཟོས་ན, ཚན་པ {n} པ = {answer} ཐོན།",
+
+    seqTopicTitle_recursive_sequence: "ཕྱིར་ལྡོག་གོ་རིམ།", seqTopicDesc_recursive_sequence: "ཕྱིར་ལྡོག་འབྲེལ་བས་ངེས་པའི་ཚན་པ་ཞིག་འཚོལ།",
+    seqLearn_recursive_sequence: "ཕྱིར་ལྡོག་གོ་རིམ་ཞིག་གིས་ཚན་པ་རེ་རེ་སྔ་མའི་ཚན་པས་ངེས: aₙ = k×a_(n-1) + c།\n\nདཔེར་བརྗོད། a₁ = 2, aₙ = 3×a_(n-1) + 1 ཡིན་ན a₃ འཚོལ་ཤིག།\na₂ = 3×2+1 = 7། a₃ = 3×7+1 = 22།",
+    seqRecursivePrompt: "a₁ = {a1}, aₙ = {k}×a_(n-1) + ({c})། a_{n} འཚོལ་ཤིག།",
+    seqRecursiveExplain: "a₁ = {a1} ནས་འགོ་ཚུགས་ནས aₙ = {k}×a_(n-1) + ({c}) ཡང་ཡང་སྤྱད་ན, a_{n} = {answer} ཐོན།",
+
+    seqTopicTitle_common_difference: "ཆ་མཉམ་ཁྱད་འཚོལ།", seqTopicDesc_common_difference: "རིམ་འགྲིག་གོ་རིམ་གྱི་ཚན་པ་གཉིས་ལས་ཆ་མཉམ་ཁྱད་འཚོལ།",
+    seqLearn_common_difference: "རིམ་འགྲིག་གོ་རིམ་གྱི་ཚན་པ་གཉིས་ཤེས་ན, ཆ་མཉམ་ཁྱད་འཚོལ་ཐུབ: d = (aₘ - aₙ)/(m - n)།\n\nདཔེར་བརྗོད། རིམ་འགྲིག་གོ་རིམ་ཞིག་གི་ཚན་པ3པ7ཡིན, ཚན་པ7པ19ཡིན་ན, d འཚོལ་ཤིག།\nd = (19-7)/(7-3) = 12/4 = 3།",
+    seqCommonDiffPrompt: "རིམ་འགྲིག་གོ་རིམ་ཞིག་གི་ཚན་པ {m} པ {am} ཡིན, ཚན་པ {n} པ {an} ཡིན། ཆ་མཉམ་ཁྱད་འཚོལ་ཤིག།",
+    seqCommonDiffExplain: "d = (a_{m} - a_{n})/({m} - {n}) = ({am} - {an})/{mn} = {d}།",
+
+    seqTopicTitle_common_ratio: "ཆ་མཉམ་ཚད་འཚོལ།", seqTopicDesc_common_ratio: "འཕར་འགྲིག་གོ་རིམ་གྱི་ཚན་པ་གཉིས་ལས་ཆ་མཉམ་ཚད་འཚོལ།",
+    seqLearn_common_ratio: "འཕར་འགྲིག་གོ་རིམ་གྱི་ཚན་པ་གཉིས་ཤེས་ན, འགོ་བའི་ཐོག་ནས་ཆ་མཉམ་ཚད་འཚོལ་ཐུབ: aₘ/aₙ = r^(m-n)།\n\nདཔེར་བརྗོད། འཕར་འགྲིག་གོ་རིམ་ཞིག་གི་ཚན་པ2པ6ཡིན, ཚན་པ5པ162ཡིན་ན, r འཚོལ་ཤིག།\nr³ = 162/6 = 27, དེས་ན r = 3།",
+    seqCommonRatioPrompt: "འཕར་འགྲིག་གོ་རིམ་ཞིག་གི་ཚན་པ {n} པ {an} ཡིན, ཚན་པ {m} པ {am} ཡིན། ཆ་མཉམ་ཚད་འཚོལ་ཤིག།",
+    seqCommonRatioExplain: "a_{m}/a_{n} = r^({m}-{n}), དེས་ན r^{ratioPow} = {am}/{an}, r = {r} ཐོན།",
+
+    seqTopicTitle_series_convergence: "སྡོམ་རྩིས་ཀྱི་འདུས་འགྲོ།", seqTopicDesc_series_convergence: "མཐའ་མེད་འཕར་འགྲིག་སྡོམ་རྩིས་འདུས་འགྲོ་མིན་བརྟག",
+    seqLearn_series_convergence: "ཆ་མཉམ་ཚད r ཡོད་པའི་མཐའ་མེད་འཕར་འགྲིག་སྡོམ་རྩིས་ནི |r| < 1 ཡིན་སྐབས་མ་གཏོགས་འདུས་འགྲོ་མི་ཐུབ (ཚད་ཡོད་པའི་ཐང་ཞིག་ལ་བསྡོམས)། དེ་མིན་ན་འགྱེས་འགྲོ།\n\nདཔེར་བརྗོད། ཆ་མཉམ་ཚད r = 3/4 ཡིན་པའི་སྡོམ་རྩིས་འདུས་འགྲོ་ཐུབ་བམ?\n|3/4| = 0.75 < 1, དེས་ན་རེད, འདུས་འགྲོ་ཐུབ།",
+    seqConvergencePrompt: "མཐའ་མེད་འཕར་འགྲིག་སྡོམ་རྩིས་ཤིག་གི་ཆ་མཉམ་ཚད {p}/{q} ཡིན། འདུས་འགྲོ་ཐུབ་བམ?",
+    seqConvergenceExplain: "|r| = {absP}/{q}། {compareText} ཡིན་སྟབས, སྡོམ་རྩིས་འདི {resultWord}།",
+
+    matricesTitle: "ཐིག་ཁྲམ་དང་མཉམ་སྒྲིག",
+    matricesSub: "ཟླ་བ་བཅུ་གཅིག་པ། ཐིག་ཁྲམ་ལ་ཡང་བསྐྱར་ལོག་ནས་ཟབ་མོར་སློབ—ངེས་གྲངས་བརྒྱུད་མཉམ་སྒྲིག་སེལ་ཐབས, ཐིག་ཁྲམ་གྲངས་མཐོ, རྗེས་འཇུག, དང་རང་ཐང་། བརྗོད་གཞི་ཞིག་འདེམས་ནས་གོ་དོན་སློབ་ཞིང་རྗེས་སུ་སྦྱོང་བརྡར་གྱིས།",
+    backToMatMenuBtn: "ཐིག་ཁྲམ་རྩིས་སུ་ལོག",
+
+    matTopicTitle_cramers_rule: "ངེས་གྲངས་བརྒྱུད་མཉམ་སྒྲིག་སེལ་བ།", matTopicDesc_cramers_rule: "ངེས་གྲངས་བེད་སྤྱོད་ཀྱིས 2×2 མཉམ་སྒྲིག་སེལ།",
+    matLearn_cramers_rule: "ངེས་གྲངས་བརྒྱུད་མཉམ་སྒྲིག་སེལ་ཐབས་ལྟར, ax+by=e དང cx+dy=f ལ, D ནི་ཆ་མཉམ་གྲངས་ཐིག་ཁྲམའི་ངེས་གྲངས, Dx ནི x-ཀེར་ཐིག (e,f) ཡིས་བརྗེས་པའི D, Dy ནི y-ཀེར་ཐིག (e,f) ཡིས་བརྗེས་པའི D ཡིན། དེ་ནས x = Dx/D, y = Dy/D།\n\nདཔེར་བརྗོད། 2x+y=5 དང x-y=1 སེལ་ཤིག།\nD = (2)(-1)-(1)(1) = -3། Dx = (5)(-1)-(1)(1) = -6, དེས་ན x = -6/-3 = 2། Dy = (2)(1)-(5)(1) = -3, དེས་ན y = -3/-3 = 1།",
+    matCramersPrompt: "ངེས་གྲངས་བརྒྱུད་སེལ་ཤིག: {eq1}, དེ་དང {eq2}",
+    matCramersExplain: "D = {D}, Dx = {Dx}, Dy = {Dy}། x = Dx/D = {x0}, y = Dy/D = {y0}།",
+
+    matTopicTitle_matrix_power: "ཐིག་ཁྲམ་འཕར་ཆ།", matTopicDesc_matrix_power: "2×2 ཐིག་ཁྲམ་གྱི A² རྩིས།",
+    matLearn_matrix_power: "ཐིག་ཁྲམ་སྒྲིལ་བ་ཞེས་པ་ནི་དེ་རང་ཉིད་དང་འཕར་བ: A² = A × A, ཐིག་ཁྲམ་འཕར་བའི་སྒྲིག་གཞི་སྤྱིར་བཏང་ལྟར།\n\nདཔེར་བརྗོད། A = [[1,2],[3,4]] སྒྲིལ་ཤིག།\nA² = [[1×1+2×3, 1×2+2×4], [3×1+4×3, 3×2+4×4]] = [[7,10],[15,22]]།",
+    matPowerPrompt: "A² འཚོལ་ཤིག, A = {A}",
+    matPowerExplain: "A² = A × A = {C}།",
+
+    matTopicTitle_matrix_rank: "ཐིག་ཁྲམ་གྲངས་མཐོ།", matTopicDesc_matrix_rank: "2×2 ཐིག་ཁྲམ་གྱི་གྲངས་མཐོ་འཚོལ།",
+    matLearn_matrix_rank: "ཐིག་ཁྲམ་ཞིག་གི་གྲངས་མཐོ་ནི་རང་དབང་གྲལ (ཡང་ན་ཀེར་ཐིག) གྲངས་ཡིན། 2×2 ཐིག་ཁྲམ་ལ: གྲངས་མཐོ0 ནི་གྲངས་ཚང་མ0, གྲངས་མཐོ2 ནི་ངེས་གྲངས་ཀླད་ཀོར་མིན, གྲངས་མཐོ1 ནི་ངེས་གྲངས་ཀླད་ཀོར་ཡིན་ལ་ཐིག་ཁྲམ་ཚང་མ0མིན།\n\nདཔེར་བརྗོད། [[2,4],[1,2]] ཡི་གྲངས་མཐོ་འཚོལ་ཤིག།\nངེས་གྲངས་ནི (2)(2)-(4)(1) = 0, ཐིག་ཁྲམ་ཚང་མ0ཡང་མིན (གྲལ2པ་ནི་གྲལ1པའི་ཕྱེད་ཙམ)། གྲངས་མཐོ = 1།",
+    matRankPrompt: "A = {A} ཡི་གྲངས་མཐོ་འཚོལ་ཤིག།",
+    matRankExplain: "གྲངས་མཐོ་ནི {rank} ཡིན།",
+
+    matTopicTitle_matrix_trace: "ཐིག་ཁྲམ་རྗེས་འཇུག", matTopicDesc_matrix_trace: "ཐིག་ཁྲམ་གྱི་དབུས་ཐིག་གྲངས་བསྡོམས་འཚོལ།",
+    matLearn_matrix_trace: "གྲུ་བཞིའི་ཐིག་ཁྲམ་ཞིག་གི་རྗེས་འཇུག་ནི་དབུས་ཐིག (གཡོན་སྟོད་ནས་གཡས་སྨད་བར)གི་གྲངས་བསྡོམས་ཡིན།\n\nདཔེར་བརྗོད། [[3,7],[1,5]] ཡི་རྗེས་འཇུག་འཚོལ་ཤིག།\nརྗེས་འཇུག = 3 + 5 = 8།",
+    matTracePrompt: "A = {A} ཡི་རྗེས་འཇུག་འཚོལ་ཤིག།",
+    matTrace2Explain: "རྗེས་འཇུག = {a} + {d} = {answer}།",
+    matTrace3Explain: "རྗེས་འཇུག = {d1} + {d2} + {d3} = {answer}།",
+
+    matTopicTitle_eigenvalues: "རང་ཐང་།", matTopicDesc_eigenvalues: "2×2 ཐིག་ཁྲམ་གྱི་རང་ཐང་འཚོལ།",
+    matLearn_eigenvalues: "2×2 ཐིག་ཁྲམ་ཞིག་གི་རང་ཐང་ནི་རང་མཚན་མཉམ་སྒྲིག λ² - (རྗེས་འཇུག)λ + ངེས་གྲངས = 0 ཡི་ལན་ཡིན, རྗེས་འཇུག་ནི་དབུས་ཐིག་བསྡོམས, ངེས་གྲངས་ནི་ཐིག་ཁྲམའི་ངེས་གྲངས་ཡིན།\n\nདཔེར་བརྗོད། [[4,3],[3,-4]] ཡི་རང་ཐང་འཚོལ་ཤིག།\nརྗེས་འཇུག = 0, ངེས་གྲངས = (4)(-4)-(3)(3) = -25། λ² - 25 = 0, དེས་ན λ² = 25, λ = ±5།",
+    matEigenvaluesPrompt: "A = {A} ཡི་རང་ཐང་འཚོལ་ཤིག།",
+    matEigenvaluesExplain: "trace(A) = {trace}, det(A) = {det}། λ² - {trace}λ + ({det}) = 0 སེལ་ན λ = {lambda1} དང λ = {lambda2} ཐོན།",
+
+    matTopicTitle_det_scalar_property: "གྲངས་ཐང་འཕར་བའི་ངེས་གྲངས།", matTopicDesc_det_scalar_property: "det(A) ལས 2×2 ཐིག་ཁྲམ་གྱི det(kA) འཚོལ།",
+    matLearn_det_scalar_property: "2×2 ཐིག་ཁྲམ་ལ་གྲངས་ཐང k འཕར་ན, ངེས་གྲངས་ལའང k² འཕར: det(kA) = k²·det(A)།\n\nདཔེར་བརྗོད། det(A) = 5། det(3A) འཚོལ་ཤིག།\ndet(3A) = 3²×5 = 9×5 = 45།",
+    matDetScalarPropPrompt: "2×2 ཐིག་ཁྲམ A ལ det(A) = {detA} ཡིན། det({k}A) འཚོལ་ཤིག།",
+    matDetScalarPropExplain: "det(kA) = k²·det(A) = {k}²×{detA} = {kSq}×{detA} = {answer}།",
+
+    matTopicTitle_det_product_property: "འཕར་འབྲས་ཀྱི་ངེས་གྲངས།", matTopicDesc_det_product_property: "det(A) དང det(B) ལས det(AB) འཚོལ།",
+    matLearn_det_product_property: "འཕར་འབྲས་ཀྱི་ངེས་གྲངས་ནི་ངེས་གྲངས་སོ་སོའི་འཕར་འབྲས་དང་མཚུངས: det(AB) = det(A)·det(B)—ཐིག་ཁྲམ་གཉིས་ཐད་ཀར་འཕར་མི་དགོས།\n\nདཔེར་བརྗོད། det(A) = 4, det(B) = -3། det(AB) འཚོལ་ཤིག།\ndet(AB) = 4×(-3) = -12།",
+    matDetProductPropPrompt: "det(A) = {detA}, det(B) = {detB}། det(AB) འཚོལ་ཤིག།",
+    matDetProductPropExplain: "det(AB) = det(A) × det(B) = {detA} × {detB} = {answer}།",
+
+    matTopicTitle_homogeneous_system: "ཀླད་ཀོར་མཉམ་སྒྲིག", matTopicDesc_homogeneous_system: "Ax=0 ལ ཀླད་ཀོར་ལན་ཙམ་ཡོད་མིན་བརྟག",
+    matLearn_homogeneous_system: "ཀླད་ཀོར་མཉམ་སྒྲིག Ax=0 ལ ནམ་ཡང་ཀླད་ཀོར་ལན x=0 ཡོད། det(A)≠0 ཡིན་ན་མ་གཏོགས་ལན་དེ་ཙམ་མེད། det(A)=0 ཡིན་ན, ལན་མཐའ་མེད་ཡོད།\n\nདཔེར་བརྗོད། [[2,4],[1,2]] ལ ཀླད་ཀོར་ལན་ཙམ་ཡོད་དམ?\ndet = (2)(2)-(4)(1) = 0, དེས་ན་མིན—ལན་མཐའ་མེད་ཡོད།",
+    matHomogeneousPrompt: "མཉམ་སྒྲིག Ax = 0 ལ ཀླད་ཀོར་ལན x = 0 ཙམ་ཡོད་དམ, A = {A} ཡིན་ན?",
+    matHomogeneousExplain: "det(A) = {det}། det(A) ≠ 0 ཡིན་ན་མ་གཏོགས་ཀླད་ཀོར་ལན་ཙམ་མེད, དེས་ན་ལན་ནི {answer} ཡིན།",
+
+    matTopicTitle_find_scalar: "གྲངས་ཐང་འཕར་བའི་ཐང་འཚོལ།", matTopicDesc_find_scalar: "kA = B ཡིན་པའི k འཚོལ།",
+    matLearn_find_scalar: "B = kA (k གྲངས་ཐང་ཞིག) ཡིན་ན, མཉམ་གནས་གྲངས་ཀླད་ཀོར་མིན་པ་བཞིན་བགོས་ནས k འཚོལ་ཐུབ: k = Bའི་གྲངས / Aའི་གྲངས།\n\nདཔེར་བརྗོད། A = [[2,3],[1,4]], B = [[6,9],[3,12]]། k འཚོལ་ཤིག།\nk = 6/2 = 3 (བརྟག་དཔྱད: 3×[[2,3],[1,4]] = [[6,9],[3,12]], འགྲིག)།",
+    matFindScalarPrompt: "kA = B ཡིན་པའི k འཚོལ་ཤིག, A = {A}, B = {B}།",
+    matFindScalarExplain: "མཉམ་གནས་གྲངས་བསྡུར་ན k = {k} ཐོན།",
+
+    matTopicTitle_linear_combo: "ཐིག་ཁྲམ་གྱི་རིམ་འགྲིག་མཉམ་སྦྱོར།", matTopicDesc_linear_combo: "ཐིག་ཁྲམ་གཉིས་ཀྱི k₁A + k₂B རྩིས།",
+    matLearn_linear_combo: "ཐིག་ཁྲམ་གྱི་རིམ་འགྲིག་མཉམ་སྦྱོར་གྱིས་ཐིག་ཁྲམ་རེ་རེར་གྲངས་ཐང་འཕར, དེ་ནས་ས་ཁོངས་མཚུངས་པ་བཞིན་སྣོན: k₁A + k₂B།\n\nདཔེར་བརྗོད། 2A + 3B འཚོལ་ཤིག, A = [[1,0],[0,1]], B = [[2,1],[1,2]]།\n2A = [[2,0],[0,2]]། 3B = [[6,3],[3,6]]། བསྡོམས = [[8,3],[3,8]]།",
+    matLinearComboPrompt: "{k1}A + {k2}B འཚོལ་ཤིག, A = {A}, B = {B}།",
+    matLinearComboExplain: "{k1}A + {k2}B = {C}།",
+
+    matTopicTitle_solve_for_x: "མི་ཤེས་པའི་གྲངས་སེལ་བ།", matTopicDesc_solve_for_x: "x ཡོད་པའི་ཐིག་ཁྲམའི་ངེས་གྲངས་ཤེས་ནས x འཚོལ།",
+    matLearn_solve_for_x: "ཐིག་ཁྲམ་ཞིག་ནང་མི་ཤེས་པའི་གྲངས x ཡོད་ལ ངེས་གྲངས་ཤེས་ན, ངེས་གྲངས་གྲུབ་ཆས x སེལ་ཐུབ།\n\nདཔེར་བརྗོད། [[x,2],[3,5]] ཡི་ངེས་གྲངས4ཡིན། x འཚོལ་ཤིག།\n5x - 6 = 4, དེས་ན 5x = 10, x = 2།",
+    matSolveXPrompt: "A = {A} ཡི་ངེས་གྲངས {D} ཡིན། x འཚོལ་ཤིག།",
+    matSolveXExplain: "ངེས་གྲངས་ནི xd - bc = x({d}) - ({b})({c}) = {D}, དེས་ན x×{d} = {D} + {bc} = {sum}, x = {x0} ཐོན།",
+
+    matTopicTitle_symmetric_check: "མཉམ་ལྡོག་ཐིག་ཁྲམ།", matTopicDesc_symmetric_check: "ཐིག་ཁྲམ་ཞིག་མཉམ་ལྡོག་ཡིན་མིན་བརྟག",
+    matLearn_symmetric_check: "ཐིག་ཁྲམ་ཞིག་རང་ཉིད་ཀྱི་བརྗེས་པ་དང་མཚུངས་ན་མཉམ་ལྡོག་ཡིན—2×2 ཐིག་ཁྲམ [[a,b],[c,d]] ལ, འདིའི་དོན་ནི b = c ཙམ།\n\nདཔེར་བརྗོད། [[3,5],[5,7]] མཉམ་ལྡོག་ཡིན་ནམ?\nb=5, c=5, དེས་ན་རེད།",
+    matSymmetricPrompt: "A = {A} མཉམ་ལྡོག་ཡིན་ནམ?",
+    matSymmetricExplain: "A མཉམ་ལྡོག་ཡིན་པར དབུས་མེད་གྲངས་མཐུན་དགོས: b = {b}, c = {c}། དེས་ན་ལན་ནི {answer} ཡིན།",
+
+    matTopicTitle_equality_check: "ཐིག་ཁྲམ་མཉམ་པ།", matTopicDesc_equality_check: "ཐིག་ཁྲམ་གཉིས་མཉམ་པ་ཡིན་མིན་བརྟག",
+    matLearn_equality_check: "ཐིག་ཁྲམ་གཉིས་མཉམ་པ་ནི་མཉམ་གནས་གྲངས་ཚང་མ་གཏན་གཅིག་མཚུངས་སྐབས་ཙམ་ཡིན།\n\nདཔེར་བརྗོད། [[1,2],[3,4]] དང [[1,2],[3,5]] མཉམ་པ་ཡིན་ནམ?\nགཡས་སྨད་ཀྱི་གྲངས་མི་མཚུངས (4 དང 5), དེས་ན་མཉམ་པ་མིན།",
+    matEqualityPrompt: "A = {A} དང B = {B} མཉམ་པ་ཡིན་ནམ?",
+    matEqualityExplain: "A དང B ཡི་གྲངས་རེ་རེ་བསྡུར་ན, ལན་ནི {answer} ཡིན།",
+
     businessTitle: "ཚོང་ལས་དོན་ཚན།",
     businessSub: "དངུལ་རྩིས, དཔལ་འབྱོར་རིག་པ, དེ་དག་བཟོ་མཁན་གྱི་ལག་རྩལ་ཚོང་ལས། དོན་ཚན 3 སློབ་ནས་གཅིག་གི་ཐད་ཀར་བརྟག་ཞིབ་བྱེད། ཐོག་མར་གདམ་ཁ་བཞིའི་དྲི་བ, རྗེས་སུ་དྲན་པ་ལས་ཡིག་འབྲི་དགོས།",
     bizFinanceTitle: "དངུལ་རྩིས།", bizFinanceDesc: "དངུལ, རྩ་ཆེའི་བཙོང་ཉོ, ཚོང་ལས་ཀྱིས་དེ་དག་ཇི་ལྟར་སྐྱོང་མིན།",
@@ -7295,6 +7717,12 @@ document.addEventListener('keydown', function(e){
   } else if(state.screen === 'cplx_practice' && state.cplxSession){
     if(state.cplxSession.answered) nextCplxQuestion();
     else submitCplxAnswer();
+  } else if(state.screen === 'seq_practice' && state.seqSession){
+    if(state.seqSession.answered) nextSeqQuestion();
+    else submitSeqAnswer();
+  } else if(state.screen === 'mat_practice' && state.matSession){
+    if(state.matSession.answered) nextMatQuestion();
+    else submitMatAnswer();
   }
 });
 
@@ -7364,6 +7792,14 @@ const screens = {
   cplx_learn: renderCplxLearn,
   cplx_practice: renderCplxPractice,
   cplx_complete: renderCplxComplete,
+  seq_menu: renderSeqMenu,
+  seq_learn: renderSeqLearn,
+  seq_practice: renderSeqPractice,
+  seq_complete: renderSeqComplete,
+  mat_menu: renderMatMenu,
+  mat_learn: renderMatLearn,
+  mat_practice: renderMatPractice,
+  mat_complete: renderMatComplete,
   business_menu: renderBusinessMenu,
   biz_week_menu: renderCategoryWeekMenu,
   business_learn: renderBusinessLearn,
@@ -7645,6 +8081,14 @@ function renderHome(){
       <button class="practice-tile" onclick="state.screen='cplx_menu'; render();">
         <div class="glyph">🌀</div>
         <div class="pt-title">${t('complexTitle')}</div>
+      </button>
+      <button class="practice-tile" onclick="state.screen='seq_menu'; render();">
+        <div class="glyph">🔢</div>
+        <div class="pt-title">${t('sequencesTitle')}</div>
+      </button>
+      <button class="practice-tile" onclick="state.screen='mat_menu'; render();">
+        <div class="glyph">🔲</div>
+        <div class="pt-title">${t('matricesTitle')}</div>
       </button>
       <button class="practice-tile" onclick="state.screen='business_menu'; render();">
         <div class="glyph">💼</div>
@@ -11323,6 +11767,716 @@ function renderCplxComplete(){
 
 function backToCplxMenu(){ state.screen='cplx_menu'; render(); }
 function exitCplxPractice(){ state.screen='cplx_menu'; render(); }
+
+// ---- sequences & series learning: Month 10, extending the progression
+// further. Same architecture as the previous nine months. Series sums are
+// deliberately picked so they never need construction tricks: an arithmetic
+// series' sum n(a1+an)/2 is always an integer because n(n-1) is always even,
+// and a geometric series with integer first term and integer ratio is a sum
+// of integers by definition — only the infinite geometric series (whose
+// ratio must be a proper fraction) needs to be built backwards from a clean
+// answer, the same way probability's fraction topics were.
+function seqProblemArithmeticNth(){
+  const a1 = randInt(-20,20), d = nonZeroRandInt(-9,9), n = randInt(5,20);
+  const answer = a1+(n-1)*d;
+  return {
+    promptText: t('seqArithNthPrompt', {a1,d,n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('seqArithNthExplain', {a1,d,n,answer}),
+  };
+}
+function seqProblemGeometricNth(){
+  const a1 = randInt(1,5), r = [2,3,-2,-3][randInt(0,3)], n = randInt(2,6);
+  const answer = a1*Math.pow(r,n-1);
+  return {
+    promptText: t('seqGeomNthPrompt', {a1,r,n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('seqGeomNthExplain', {a1,r,n,answer}),
+  };
+}
+function seqProblemArithSeriesSum(){
+  const a1 = randInt(-10,10), d = nonZeroRandInt(-5,5), n = randInt(4,15);
+  const an = a1+(n-1)*d;
+  const answer = n*(a1+an)/2;
+  return {
+    promptText: t('seqArithSeriesSumPrompt', {a1,d,n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('seqArithSeriesSumExplain', {a1,d,n,an,answer}),
+  };
+}
+function seqProblemGeomSeriesSum(){
+  const a1 = randInt(1,5), r = [2,3,-2,-3][randInt(0,3)], n = randInt(3,6);
+  let sum=0, term=a1;
+  for(let i=0;i<n;i++){ sum+=term; term*=r; }
+  return {
+    promptText: t('seqGeomSeriesSumPrompt', {a1,r,n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===sum; },
+    explain: t('seqGeomSeriesSumExplain', {a1,r,n,sum}),
+  };
+}
+function seqProblemGeomSeriesInfinite(){
+  const k = randInt(2,6);
+  const m = randInt(1,10);
+  const a1 = m*(k-1);
+  const answer = m*k;
+  return {
+    promptText: t('seqGeomSeriesInfinitePrompt', {a1, k}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('seqGeomSeriesInfiniteExplain', {a1, k, answer}),
+  };
+}
+function seqProblemSigmaLinear(){
+  const c = randInt(1,5), d = randInt(-5,5), n = randInt(3,10);
+  const expr = `${c}i${signedCoeffTerm(d,'')}`;
+  const term1 = c*n*(n+1)/2, term2 = d*n;
+  const answer = term1+term2;
+  return {
+    promptText: t('seqSigmaLinearPrompt', {expr, n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('seqSigmaLinearExplain', {term1, term2, answer}),
+  };
+}
+function seqProblemSumFirstN(){
+  const n = randInt(5,30);
+  const answer = n*(n+1)/2;
+  return {
+    promptText: t('seqSumFirstNPrompt', {n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('seqSumFirstNExplain', {n, product:n*(n+1), answer}),
+  };
+}
+function seqProblemSumOfSquares(){
+  const n = randInt(3,15);
+  const answer = n*(n+1)*(2*n+1)/6;
+  return {
+    promptText: t('seqSumOfSquaresPrompt', {n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('seqSumOfSquaresExplain', {n, twonp1:2*n+1, answer}),
+  };
+}
+function seqProblemFibonacci(){
+  const a1 = randInt(1,5), a2 = randInt(1,5);
+  const n = randInt(5,10);
+  let prev=a1, curr=a2;
+  for(let i=3;i<=n;i++){ const next=prev+curr; prev=curr; curr=next; }
+  return {
+    promptText: t('seqFibonacciPrompt', {a1,a2,n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===curr; },
+    explain: t('seqFibonacciExplain', {a1,a2,n,answer:curr}),
+  };
+}
+function seqProblemRecursive(){
+  const a1 = randInt(1,5), k = randInt(2,3), c = randInt(-5,5), n = randInt(3,6);
+  let curr = a1;
+  for(let i=2;i<=n;i++){ curr = k*curr+c; }
+  return {
+    promptText: t('seqRecursivePrompt', {a1,k,c,n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===curr; },
+    explain: t('seqRecursiveExplain', {a1,k,c,n,answer:curr}),
+  };
+}
+function seqProblemCommonDifference(){
+  const d = nonZeroRandInt(-9,9);
+  const a1 = randInt(-20,20);
+  const m = randInt(2,10), n = randInt(1,m-1);
+  const am = a1+(m-1)*d, an = a1+(n-1)*d;
+  return {
+    promptText: t('seqCommonDiffPrompt', {m, am, n, an}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===d; },
+    explain: t('seqCommonDiffExplain', {am, an, diff:am-an, mn:m-n, d}),
+  };
+}
+function seqProblemCommonRatio(){
+  // Restricted to positive ratios: a negative r is indistinguishable from
+  // its positive counterpart whenever the term gap (m-n) is even, since
+  // both give the exact same am/an — that ambiguity would let a correct
+  // answer get marked wrong, so it's avoided rather than special-cased.
+  const r = [2,3,4,5][randInt(0,3)];
+  const a1 = randInt(1,5);
+  const n = randInt(1,4), m = n+randInt(1,3);
+  const an = a1*Math.pow(r,n-1), am = a1*Math.pow(r,m-1);
+  return {
+    promptText: t('seqCommonRatioPrompt', {n, an, m, am}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===r; },
+    explain: t('seqCommonRatioExplain', {am, an, ratioPow:m-n, r}),
+  };
+}
+function seqProblemConvergence(){
+  const q = randInt(2,9);
+  let p;
+  if(Math.random()<0.5){ p = randInt(1,q-1)*(Math.random()<0.5?-1:1); }
+  else { p = randInt(q+1,q+9)*(Math.random()<0.5?-1:1); }
+  const converges = Math.abs(p) < q;
+  const absP = Math.abs(p);
+  const compareText = converges ? `${absP}/${q} < 1` : `${absP}/${q} ≥ 1`;
+  return {
+    promptText: t('seqConvergencePrompt', {p, q}),
+    inputs: [{key:'ans', placeholder:t('discBoolAnswerPlaceholder')}],
+    check(vals){ return parseBool(vals.ans)===converges; },
+    explain: t('seqConvergenceExplain', {absP, q, compareText, resultWord: converges?t('seqConverges'):t('seqDiverges')}),
+  };
+}
+
+const SEQ_TOPICS = [
+  {key:'arithmetic_nth_term', build:seqProblemArithmeticNth},
+  {key:'geometric_nth_term', build:seqProblemGeometricNth},
+  {key:'arithmetic_series_sum', build:seqProblemArithSeriesSum},
+  {key:'geometric_series_sum', build:seqProblemGeomSeriesSum},
+  {key:'geometric_series_infinite', build:seqProblemGeomSeriesInfinite},
+  {key:'sigma_linear', build:seqProblemSigmaLinear},
+  {key:'sum_first_n', build:seqProblemSumFirstN},
+  {key:'sum_of_squares', build:seqProblemSumOfSquares},
+  {key:'fibonacci', build:seqProblemFibonacci},
+  {key:'recursive_sequence', build:seqProblemRecursive},
+  {key:'common_difference', build:seqProblemCommonDifference},
+  {key:'common_ratio', build:seqProblemCommonRatio},
+  {key:'series_convergence', build:seqProblemConvergence},
+];
+function seqTopicByKey(key){ return SEQ_TOPICS.find(x=>x.key===key); }
+
+function renderSeqMenu(){
+  const cards = SEQ_TOPICS.map(topic=>{
+    const best = (state.game.sequences && state.game.sequences[topic.key]) ? state.game.sequences[topic.key].best : 0;
+    return `
+    <button class="track-card" onclick="openSeqTopic('${topic.key}')">
+      <div class="glyph">🔢</div>
+      <div>
+        <div class="tc-title">${t('seqTopicTitle_'+topic.key)}</div>
+        <div class="tc-sub">${t('seqTopicDesc_'+topic.key)}</div>
+      </div>
+      <div class="tc-progress">${best ? t('mathBestLabel',{n:best}) : t('startArrow')}</div>
+    </button>`;
+  }).join('');
+
+  return `
+  ${topbar({back:'goHome()'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>${t('sequencesTitle')}</h1>
+      <div class="sub">${t('sequencesSub')}</div>
+    </div>
+    <div class="track-grid">${cards}</div>
+  </div>
+  `;
+}
+
+function openSeqTopic(topicKey){
+  state.seqSession = {topicKey};
+  state.screen = 'seq_learn';
+  render();
+}
+
+function renderSeqLearn(){
+  const topicKey = state.seqSession.topicKey;
+  return `
+  ${topbar({back:'state.screen="seq_menu"; render();'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero" style="padding-top:8px;">
+      <h1 style="font-size:26px;">${t('seqTopicTitle_'+topicKey)}</h1>
+    </div>
+    <div class="profile-card" style="text-align:left; line-height:1.6; font-size:14.5px; color:var(--snow-dim); white-space:pre-line;">${t('seqLearn_'+topicKey)}</div>
+    <button class="btn btn-primary btn-block" onclick="startSeqPractice('${topicKey}')">${t('startPracticeBtn')}</button>
+  </div>
+  `;
+}
+
+function startSeqPractice(topicKey){
+  const topic = seqTopicByKey(topicKey);
+  state.seqSession = {
+    topicKey,
+    current: topic.build(),
+    correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
+    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+  };
+  state.screen = 'seq_practice';
+  render();
+  focusSeqInput();
+}
+function focusSeqInput(){
+  setTimeout(()=>{ const el=document.querySelector('.seq-input'); if(el) el.focus(); }, 30);
+}
+
+function renderSeqPractice(){
+  const s = state.seqSession;
+  const q = s.current;
+  const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
+
+  const inputsHtml = q.inputs.map(inp=>`
+    <div style="flex:1;">
+      ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
+      <input class="seq-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
+        placeholder="${inp.placeholder||''}"
+        style="text-align:center; font-size:22px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
+        oninput="state.seqSession.inputs['${inp.key}']=this.value">
+    </div>`).join('');
+
+  const feedback = s.answered ? `
+    <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
+      <div class="fb-text">
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
+        <div class="fb-sub">${q.explain}</div>
+      </div>
+      <button class="btn btn-light" onclick="nextSeqQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
+    </div>` : '';
+
+  return `
+  ${topbar({back:'exitSeqPractice()'})}
+  <div class="lesson">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;">
+      <div class="hearts-row">${Array.from({length:MATH_MAX_MISTAKES}).map((_,i)=>`<span>${i<(MATH_MAX_MISTAKES-s.mistakes)?'❤️':'🩶'}</span>`).join('')}</div>
+      <div style="font-size:12px; color:var(--snow-dim); text-align:right;">${t('correctAnswersLabel')}: ${s.correct}${s.combo>=3?`<br><span style="color:var(--gold);">${comboBadge(s.combo)} ${t('comboLabel',{n:s.combo})}</span>`:''}</div>
+    </div>
+    <div class="q-wrap">
+      <div class="q-card">
+        <div class="q-eyebrow">${t('seqTopicTitle_'+s.topicKey)}</div>
+        <div class="q-prompt" style="font-size:20px;">${q.promptText}</div>
+      </div>
+      <div style="display:flex; gap:12px; align-items:flex-end;">${inputsHtml}</div>
+      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitSeqAnswer()">${t('checkBtn')}</button>` : ''}
+    </div>
+  </div>
+  ${feedback}
+  `;
+}
+
+function submitSeqAnswer(){
+  const s = state.seqSession;
+  if(!s || s.answered) return;
+  const q = s.current;
+  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
+  const correct = q.check(s.inputs);
+  s.answered = true; s.lastCorrect = correct;
+  if(correct) registerCorrectAnswer(s, state.game);
+  else registerWrongAnswer(s);
+  render();
+}
+
+function nextSeqQuestion(){
+  const s = state.seqSession;
+  if(s.mistakes>=MATH_MAX_MISTAKES){ finishSeqPractice(); return; }
+  const topic = seqTopicByKey(s.topicKey);
+  s.answered=false; s.lastCorrect=null; s.inputs={};
+  s.current = topic.build();
+  render();
+  focusSeqInput();
+}
+
+function finishSeqPractice(){
+  const s = state.seqSession;
+  if(!state.game.sequences) state.game.sequences = {};
+  const rec = state.game.sequences[s.topicKey] || (state.game.sequences[s.topicKey] = {best:0});
+  s.isNewBest = s.correct > rec.best;
+  if(s.isNewBest) rec.best = s.correct;
+  touchStreak();
+  s.newAchievements = checkAchievements(state.game);
+  state.screen='seq_complete';
+  render();
+}
+
+function renderSeqComplete(){
+  const s = state.seqSession;
+  const best = state.game.sequences[s.topicKey].best;
+  const lvl = xpLevel(state.game.xp);
+  return `
+  ${topbar()}
+  <div class="complete ${appLangClass()}">
+    <div class="medal">${s.isNewBest ? '🏆' : '🎯'}</div>
+    <h2>${s.isNewBest ? t('newBestReached') : t('checkpointReached')}</h2>
+    <div class="stat-row">
+      <div class="stat-box"><div class="val">${s.correct}</div><div class="lab">${t('correctAnswersLabel')}</div></div>
+      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
+    </div>
+    <div style="color:var(--snow-dim); font-size:13px;">${t('mathBestLabel',{n:best})} · ${t('levelLabel',{n:lvl.level})}</div>
+    ${achievementBannerHtml(s.newAchievements)}
+    <button class="btn btn-primary btn-block" onclick="backToSeqMenu()">${t('backToSeqMenuBtn')}</button>
+  </div>`;
+}
+
+function backToSeqMenu(){ state.screen='seq_menu'; render(); }
+function exitSeqPractice(){ state.screen='seq_menu'; render(); }
+
+// ---- matrices & linear systems learning: Month 11, returning to linear
+// algebra's territory (Month 3) for more advanced ground — Cramer's rule,
+// rank, trace, eigenvalues, and matrix-property questions. Reuses linear
+// algebra's matrixText/matrixShape (for the 2x2-grid input layout) and
+// algebra's leadTerm/signedCoeffTerm (for displaying the system of
+// equations in Cramer's rule) rather than re-deriving them. Eigenvalues are
+// engineered from a symmetric matrix built off a Pythagorean triple (the
+// same LINALG_TRIPLES used by linear algebra's vector magnitude) so the
+// characteristic equation's discriminant is always a perfect square and the
+// two eigenvalues come out as clean integers.
+function matProblemCramersRule(){
+  let a,b,c,d;
+  do{ a=randInt(-6,6); b=randInt(-6,6); c=randInt(-6,6); d=randInt(-6,6); } while(a*d-b*c===0);
+  const x0=randInt(-8,8), y0=randInt(-8,8);
+  const e=a*x0+b*y0, f=c*x0+d*y0;
+  const D = a*d-b*c, Dx = e*d-b*f, Dy = a*f-e*c;
+  return {
+    promptText: t('matCramersPrompt', {
+      eq1:`${leadTerm(a,'x')}${signedCoeffTerm(b,'y')} = ${e}`,
+      eq2:`${leadTerm(c,'x')}${signedCoeffTerm(d,'y')} = ${f}`,
+    }),
+    inputs: [{key:'x',label:'x'},{key:'y',label:'y'}],
+    check(vals){ return Number(vals.x)===x0 && Number(vals.y)===y0; },
+    explain: t('matCramersExplain', {D, Dx, Dy, x0, y0}),
+  };
+}
+function matProblemPower(){
+  const a=randInt(-5,5), b=randInt(-5,5), c=randInt(-5,5), d=randInt(-5,5);
+  const c11=a*a+b*c, c12=a*b+b*d, c21=c*a+d*c, c22=c*b+d*d;
+  return {
+    promptText: t('matPowerPrompt', {A:matrixText([[a,b],[c,d]])}),
+    inputs: [{key:'c11'},{key:'c12'},{key:'c21'},{key:'c22'}],
+    matrixShape: [2,2],
+    check(vals){ return Number(vals.c11)===c11 && Number(vals.c12)===c12 && Number(vals.c21)===c21 && Number(vals.c22)===c22; },
+    explain: t('matPowerExplain', {C:matrixText([[c11,c12],[c21,c22]])}),
+  };
+}
+function matProblemRank(){
+  const kind = randInt(0,2);
+  let A, rank;
+  if(kind===0){ A=[[0,0],[0,0]]; rank=0; }
+  else if(kind===1){
+    const a=nonZeroRandInt(-5,5), b=nonZeroRandInt(-5,5);
+    const k=nonZeroRandInt(-3,3);
+    A=[[a,b],[a*k,b*k]]; rank=1;
+  } else {
+    let a,b,c,d; do{ a=randInt(-5,5); b=randInt(-5,5); c=randInt(-5,5); d=randInt(-5,5); } while(a*d-b*c===0);
+    A=[[a,b],[c,d]]; rank=2;
+  }
+  return {
+    promptText: t('matRankPrompt', {A:matrixText(A)}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===rank; },
+    explain: t('matRankExplain', {rank}),
+  };
+}
+function matProblemTrace(){
+  const use3 = Math.random()<0.5;
+  if(use3){
+    const m = Array.from({length:3},()=>Array.from({length:3},()=>randInt(-9,9)));
+    const trace = m[0][0]+m[1][1]+m[2][2];
+    return {
+      promptText: t('matTracePrompt', {A:matrixText(m)}),
+      inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+      check(vals){ return Number(vals.ans)===trace; },
+      explain: t('matTrace3Explain', {d1:m[0][0], d2:m[1][1], d3:m[2][2], answer:trace}),
+    };
+  }
+  const a=randInt(-9,9), b=randInt(-9,9), c=randInt(-9,9), d=randInt(-9,9);
+  const trace=a+d;
+  return {
+    promptText: t('matTracePrompt', {A:matrixText([[a,b],[c,d]])}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===trace; },
+    explain: t('matTrace2Explain', {a, d, answer:trace}),
+  };
+}
+function matProblemEigenvalues(){
+  const [leg1,leg2,h] = LINALG_TRIPLES[randInt(0,LINALG_TRIPLES.length-1)];
+  const m = randInt(-10,10);
+  const a = m+leg1, d = m-leg1, b = leg2;
+  const lambda1 = m-h, lambda2 = m+h;
+  return {
+    promptText: t('matEigenvaluesPrompt', {A:matrixText([[a,b],[b,d]])}),
+    inputs: [{key:'small',label:t('algSmallerRootLabel')},{key:'large',label:t('algLargerRootLabel')}],
+    check(vals){ return Number(vals.small)===lambda1 && Number(vals.large)===lambda2; },
+    explain: t('matEigenvaluesExplain', {trace:a+d, det:a*d-b*b, lambda1, lambda2}),
+  };
+}
+function matProblemDetScalarProperty(){
+  const detA = randInt(1,9)*(Math.random()<0.5?-1:1);
+  const k = nonZeroRandInt(-5,5);
+  const answer = k*k*detA;
+  return {
+    promptText: t('matDetScalarPropPrompt', {detA, k}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('matDetScalarPropExplain', {k, kSq:k*k, detA, answer}),
+  };
+}
+function matProblemDetProductProperty(){
+  const detA = randInt(1,9)*(Math.random()<0.5?-1:1), detB = randInt(1,9)*(Math.random()<0.5?-1:1);
+  const answer = detA*detB;
+  return {
+    promptText: t('matDetProductPropPrompt', {detA, detB}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('matDetProductPropExplain', {detA, detB, answer}),
+  };
+}
+function matProblemHomogeneous(){
+  const trivialOnly = Math.random()<0.5;
+  let a,b,c,d;
+  if(trivialOnly){ do{ a=randInt(-6,6); b=randInt(-6,6); c=randInt(-6,6); d=randInt(-6,6); } while(a*d-b*c===0); }
+  else { a=randInt(-6,6); b=randInt(-6,6); const k=nonZeroRandInt(-3,3); c=a*k; d=b*k; }
+  return {
+    promptText: t('matHomogeneousPrompt', {A:matrixText([[a,b],[c,d]])}),
+    inputs: [{key:'ans', placeholder:t('discBoolAnswerPlaceholder')}],
+    check(vals){ return parseBool(vals.ans)===trivialOnly; },
+    explain: t('matHomogeneousExplain', {det:a*d-b*c, answer: trivialOnly?'True':'False'}),
+  };
+}
+function matProblemFindScalar(){
+  let a,b,c,d; do{ a=randInt(-5,5); b=randInt(-5,5); c=randInt(-5,5); d=randInt(-5,5); } while(a===0&&b===0&&c===0&&d===0);
+  const k = nonZeroRandInt(-6,6);
+  const B = [[k*a,k*b],[k*c,k*d]];
+  return {
+    promptText: t('matFindScalarPrompt', {A:matrixText([[a,b],[c,d]]), B:matrixText(B)}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===k; },
+    explain: t('matFindScalarExplain', {k}),
+  };
+}
+function matProblemLinearCombo(){
+  const a11=randInt(-9,9), a12=randInt(-9,9), a21=randInt(-9,9), a22=randInt(-9,9);
+  const b11=randInt(-9,9), b12=randInt(-9,9), b21=randInt(-9,9), b22=randInt(-9,9);
+  const k1=nonZeroRandInt(-4,4), k2=nonZeroRandInt(-4,4);
+  const c11=k1*a11+k2*b11, c12=k1*a12+k2*b12, c21=k1*a21+k2*b21, c22=k1*a22+k2*b22;
+  return {
+    promptText: t('matLinearComboPrompt', {k1, A:matrixText([[a11,a12],[a21,a22]]), k2, B:matrixText([[b11,b12],[b21,b22]])}),
+    inputs: [{key:'c11'},{key:'c12'},{key:'c21'},{key:'c22'}],
+    matrixShape:[2,2],
+    check(vals){ return Number(vals.c11)===c11 && Number(vals.c12)===c12 && Number(vals.c21)===c21 && Number(vals.c22)===c22; },
+    explain: t('matLinearComboExplain', {C:matrixText([[c11,c12],[c21,c22]])}),
+  };
+}
+function matProblemSolveForX(){
+  const b=randInt(-9,9), c=randInt(-9,9), d=nonZeroRandInt(-9,9);
+  const x0=randInt(-9,9);
+  const D = x0*d - b*c;
+  return {
+    promptText: t('matSolveXPrompt', {A:matrixText([['x',b],[c,d]]), D}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===x0; },
+    explain: t('matSolveXExplain', {b,c,d,bc:b*c,D,sum:D+b*c,x0}),
+  };
+}
+function matProblemSymmetricCheck(){
+  const isSym = Math.random()<0.5;
+  const a=randInt(-9,9), d=randInt(-9,9), b=randInt(-9,9);
+  let c = isSym ? b : b+nonZeroRandInt(-5,5);
+  return {
+    promptText: t('matSymmetricPrompt', {A:matrixText([[a,b],[c,d]])}),
+    inputs: [{key:'ans', placeholder:t('discBoolAnswerPlaceholder')}],
+    check(vals){ return parseBool(vals.ans)===(b===c); },
+    explain: t('matSymmetricExplain', {b, c, answer: (b===c)?'True':'False'}),
+  };
+}
+function matProblemEqualityCheck(){
+  const a11=randInt(-9,9), a12=randInt(-9,9), a21=randInt(-9,9), a22=randInt(-9,9);
+  const equal = Math.random()<0.5;
+  let b11=a11,b12=a12,b21=a21,b22=a22;
+  if(!equal){
+    const idx = randInt(0,3);
+    const delta = nonZeroRandInt(-3,3);
+    if(idx===0) b11+=delta; else if(idx===1) b12+=delta; else if(idx===2) b21+=delta; else b22+=delta;
+  }
+  return {
+    promptText: t('matEqualityPrompt', {A:matrixText([[a11,a12],[a21,a22]]), B:matrixText([[b11,b12],[b21,b22]])}),
+    inputs: [{key:'ans', placeholder:t('discBoolAnswerPlaceholder')}],
+    check(vals){ return parseBool(vals.ans)===equal; },
+    explain: t('matEqualityExplain', {answer: equal?'True':'False'}),
+  };
+}
+
+const MAT_TOPICS = [
+  {key:'cramers_rule', build:matProblemCramersRule},
+  {key:'matrix_power', build:matProblemPower},
+  {key:'matrix_rank', build:matProblemRank},
+  {key:'matrix_trace', build:matProblemTrace},
+  {key:'eigenvalues', build:matProblemEigenvalues},
+  {key:'det_scalar_property', build:matProblemDetScalarProperty},
+  {key:'det_product_property', build:matProblemDetProductProperty},
+  {key:'homogeneous_system', build:matProblemHomogeneous},
+  {key:'find_scalar', build:matProblemFindScalar},
+  {key:'linear_combo', build:matProblemLinearCombo},
+  {key:'solve_for_x', build:matProblemSolveForX},
+  {key:'symmetric_check', build:matProblemSymmetricCheck},
+  {key:'equality_check', build:matProblemEqualityCheck},
+];
+function matTopicByKey(key){ return MAT_TOPICS.find(x=>x.key===key); }
+
+function renderMatMenu(){
+  const cards = MAT_TOPICS.map(topic=>{
+    const best = (state.game.matrices && state.game.matrices[topic.key]) ? state.game.matrices[topic.key].best : 0;
+    return `
+    <button class="track-card" onclick="openMatTopic('${topic.key}')">
+      <div class="glyph">🔲</div>
+      <div>
+        <div class="tc-title">${t('matTopicTitle_'+topic.key)}</div>
+        <div class="tc-sub">${t('matTopicDesc_'+topic.key)}</div>
+      </div>
+      <div class="tc-progress">${best ? t('mathBestLabel',{n:best}) : t('startArrow')}</div>
+    </button>`;
+  }).join('');
+
+  return `
+  ${topbar({back:'goHome()'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>${t('matricesTitle')}</h1>
+      <div class="sub">${t('matricesSub')}</div>
+    </div>
+    <div class="track-grid">${cards}</div>
+  </div>
+  `;
+}
+
+function openMatTopic(topicKey){
+  state.matSession = {topicKey};
+  state.screen = 'mat_learn';
+  render();
+}
+
+function renderMatLearn(){
+  const topicKey = state.matSession.topicKey;
+  return `
+  ${topbar({back:'state.screen="mat_menu"; render();'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero" style="padding-top:8px;">
+      <h1 style="font-size:26px;">${t('matTopicTitle_'+topicKey)}</h1>
+    </div>
+    <div class="profile-card" style="text-align:left; line-height:1.6; font-size:14.5px; color:var(--snow-dim); white-space:pre-line;">${t('matLearn_'+topicKey)}</div>
+    <button class="btn btn-primary btn-block" onclick="startMatPractice('${topicKey}')">${t('startPracticeBtn')}</button>
+  </div>
+  `;
+}
+
+function startMatPractice(topicKey){
+  const topic = matTopicByKey(topicKey);
+  state.matSession = {
+    topicKey,
+    current: topic.build(),
+    correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
+    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+  };
+  state.screen = 'mat_practice';
+  render();
+  focusMatInput();
+}
+function focusMatInput(){
+  setTimeout(()=>{ const el=document.querySelector('.mat-input'); if(el) el.focus(); }, 30);
+}
+
+function renderMatPractice(){
+  const s = state.matSession;
+  const q = s.current;
+  const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
+
+  const inputBox = (inp) => `
+    <div style="flex:1;">
+      ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
+      <input class="mat-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
+        placeholder="${inp.placeholder||''}"
+        style="text-align:center; font-size:20px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
+        oninput="state.matSession.inputs['${inp.key}']=this.value">
+    </div>`;
+
+  const inputsHtml = q.matrixShape
+    ? `<div style="display:grid; grid-template-columns:repeat(${q.matrixShape[1]}, 1fr); gap:10px; max-width:240px; margin:0 auto;">${q.inputs.map(inputBox).join('')}</div>`
+    : `<div style="display:flex; gap:12px; align-items:flex-end;">${q.inputs.map(inputBox).join('')}</div>`;
+
+  const feedback = s.answered ? `
+    <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
+      <div class="fb-text">
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
+        <div class="fb-sub">${q.explain}</div>
+      </div>
+      <button class="btn btn-light" onclick="nextMatQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
+    </div>` : '';
+
+  return `
+  ${topbar({back:'exitMatPractice()'})}
+  <div class="lesson">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;">
+      <div class="hearts-row">${Array.from({length:MATH_MAX_MISTAKES}).map((_,i)=>`<span>${i<(MATH_MAX_MISTAKES-s.mistakes)?'❤️':'🩶'}</span>`).join('')}</div>
+      <div style="font-size:12px; color:var(--snow-dim); text-align:right;">${t('correctAnswersLabel')}: ${s.correct}${s.combo>=3?`<br><span style="color:var(--gold);">${comboBadge(s.combo)} ${t('comboLabel',{n:s.combo})}</span>`:''}</div>
+    </div>
+    <div class="q-wrap">
+      <div class="q-card">
+        <div class="q-eyebrow">${t('matTopicTitle_'+s.topicKey)}</div>
+        <div class="q-prompt" style="font-size:20px;">${q.promptText}</div>
+      </div>
+      ${inputsHtml}
+      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitMatAnswer()">${t('checkBtn')}</button>` : ''}
+    </div>
+  </div>
+  ${feedback}
+  `;
+}
+
+function submitMatAnswer(){
+  const s = state.matSession;
+  if(!s || s.answered) return;
+  const q = s.current;
+  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
+  const correct = q.check(s.inputs);
+  s.answered = true; s.lastCorrect = correct;
+  if(correct) registerCorrectAnswer(s, state.game);
+  else registerWrongAnswer(s);
+  render();
+}
+
+function nextMatQuestion(){
+  const s = state.matSession;
+  if(s.mistakes>=MATH_MAX_MISTAKES){ finishMatPractice(); return; }
+  const topic = matTopicByKey(s.topicKey);
+  s.answered=false; s.lastCorrect=null; s.inputs={};
+  s.current = topic.build();
+  render();
+  focusMatInput();
+}
+
+function finishMatPractice(){
+  const s = state.matSession;
+  if(!state.game.matrices) state.game.matrices = {};
+  const rec = state.game.matrices[s.topicKey] || (state.game.matrices[s.topicKey] = {best:0});
+  s.isNewBest = s.correct > rec.best;
+  if(s.isNewBest) rec.best = s.correct;
+  touchStreak();
+  s.newAchievements = checkAchievements(state.game);
+  state.screen='mat_complete';
+  render();
+}
+
+function renderMatComplete(){
+  const s = state.matSession;
+  const best = state.game.matrices[s.topicKey].best;
+  const lvl = xpLevel(state.game.xp);
+  return `
+  ${topbar()}
+  <div class="complete ${appLangClass()}">
+    <div class="medal">${s.isNewBest ? '🏆' : '🎯'}</div>
+    <h2>${s.isNewBest ? t('newBestReached') : t('checkpointReached')}</h2>
+    <div class="stat-row">
+      <div class="stat-box"><div class="val">${s.correct}</div><div class="lab">${t('correctAnswersLabel')}</div></div>
+      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
+    </div>
+    <div style="color:var(--snow-dim); font-size:13px;">${t('mathBestLabel',{n:best})} · ${t('levelLabel',{n:lvl.level})}</div>
+    ${achievementBannerHtml(s.newAchievements)}
+    <button class="btn btn-primary btn-block" onclick="backToMatMenu()">${t('backToMatMenuBtn')}</button>
+  </div>`;
+}
+
+function backToMatMenu(){ state.screen='mat_menu'; render(); }
+function exitMatPractice(){ state.screen='mat_menu'; render(); }
 
 // ---- business concepts: Finance, Economics and Tech Companies. Different
 // shape from algebra/calculus — these are qualitative concepts, not
