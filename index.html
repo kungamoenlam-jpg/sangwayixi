@@ -257,6 +257,35 @@
   }
   .stmt-value.stmt-correct{color:var(--good);}
   .stmt-value.stmt-wrong{color:var(--bad);}
+  /* ---- visual math notation: bracket matrices, stacked fractions, and the
+     step-by-step guided-answer UI shared by every math practice mode. ---- */
+  .math-matrix{display:inline-flex; align-items:stretch; vertical-align:middle; margin:2px 4px;}
+  .mm-bracket{width:7px; flex-shrink:0; border-top:2.5px solid currentColor; border-bottom:2.5px solid currentColor;}
+  .mm-bracket.left{border-left:2.5px solid currentColor;}
+  .mm-bracket.right{border-right:2.5px solid currentColor;}
+  .mm-grid{display:grid; gap:5px 16px; padding:4px 9px; align-items:center;}
+  .mm-cell{text-align:center; font-family:var(--font-display); font-weight:700; min-width:1em;}
+  .math-frac{display:inline-flex; align-items:center; vertical-align:middle; margin:0 3px;}
+  .math-frac .mf-sign{margin-right:2px;}
+  .math-frac .mf-stack{display:inline-flex; flex-direction:column; align-items:center; font-family:var(--font-display); font-weight:700; line-height:1.3; vertical-align:middle;}
+  .math-frac .mf-num, .math-frac .mf-den{padding:0 2px;}
+  .math-frac .mf-bar{width:100%; height:2px; background:currentColor; margin:1px 0;}
+
+  .frac-input{display:inline-flex; flex-direction:column; align-items:center; gap:4px;}
+  .frac-input input{width:100%; text-align:center;}
+  .frac-input .frac-input-bar{width:100%; height:2px; background:rgba(255,255,255,.4);}
+
+  .step-row{border-radius:14px; padding:14px 16px; text-align:left; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); width:100%;}
+  .step-row.active{background:rgba(255,255,255,.07); border-color:rgba(232,163,61,.5);}
+  .step-row.done.correct{border-color:rgba(63,174,114,.45); background:rgba(63,174,114,.07);}
+  .step-row.done.wrong{border-color:rgba(225,88,75,.45); background:rgba(225,88,75,.07);}
+  .step-label{font-size:11.5px; color:var(--snow-dim); text-transform:uppercase; letter-spacing:.08em; margin-bottom:8px; display:flex; align-items:center; gap:6px;}
+  .step-icon{font-size:14px;}
+  .step-prompt{font-family:var(--font-display); font-size:16px; font-weight:600; margin-bottom:10px; line-height:1.4;}
+  .step-explain{font-size:13px; color:var(--snow-dim); margin-top:8px; line-height:1.55;}
+  .step-values{font-family:var(--font-display); font-size:16px; font-weight:700;}
+  .step-list{display:flex; flex-direction:column; gap:10px; width:100%;}
+
   .biz-switch{width:48px; height:28px; border-radius:999px; background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.25); position:relative; flex-shrink:0; padding:0; cursor:pointer; transition:background .15s ease;}
   .biz-switch.on{background:var(--gold); border-color:var(--gold);}
   .biz-switch-knob{position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%; background:var(--snow); transition:left .15s ease; box-shadow:0 1px 3px rgba(0,0,0,.3);}
@@ -4627,6 +4656,7 @@ const I18N = {
     mathHardTitle: "Hard", mathHardSub: "Three-digit arithmetic, two-digit by two-digit multiplication.",
     mathBestLabel: "Best: {n} correct",
     solveEyebrow: "Solve", checkBtn: "Check",
+    stepLabel: "Step {n} of {total}", nextStepBtn: "Next step →",
     yourAnswerPlaceholder: "Your answer",
     correctAnswersLabel: "Correct answers", newBestReached: "New best!",
     backToMathMenuBtn: "Back to Mental Math",
@@ -5356,7 +5386,12 @@ const I18N = {
     matTopicTitle_cramers_rule: "Cramer's Rule", matTopicDesc_cramers_rule: "Solve a 2×2 system of equations using determinants",
     matLearn_cramers_rule: "Cramer's rule solves a system using determinants. For ax+by=e and cx+dy=f, let D be the determinant of the coefficient matrix, Dx be D with the x-column replaced by (e,f), and Dy be D with the y-column replaced by (e,f). Then x = Dx/D and y = Dy/D.\n\nExample: solve 2x+y=5 and x-y=1.\nD = (2)(-1)-(1)(1) = -3. Dx = (5)(-1)-(1)(1) = -6, so x = -6/-3 = 2. Dy = (2)(1)-(5)(1) = -3, so y = -3/-3 = 1.",
     matCramersPrompt: "Solve using Cramer's rule: {eq1}, and {eq2}",
-    matCramersExplain: "D = {D}, Dx = {Dx}, Dy = {Dy}. x = Dx/D = {x0}, y = Dy/D = {y0}.",
+    matCramersStep1Prompt: "Step 1: Find D, the determinant of the coefficient matrix.",
+    matCramersStep1Explain: "D = ad − bc = ({a})({d}) − ({b})({c}) = {ad} − {bc} = {D}.",
+    matCramersStep2Prompt: "Step 2: Find Dx (D with the x-column replaced by the right-hand side) and Dy (D with the y-column replaced).",
+    matCramersStep2Explain: "Dx = ({e})({d}) − ({b})({f}) = {Dx}. Dy = ({a})({f}) − ({e})({c}) = {Dy}.",
+    matCramersStep3Prompt: "Step 3: Find x = Dx/D and y = Dy/D.",
+    matCramersStep3Explain: "x = Dx/D = {Dx}/{D} = {x0}. y = Dy/D = {Dy}/{D} = {y0}.",
 
     matTopicTitle_matrix_power: "Matrix Powers", matTopicDesc_matrix_power: "Compute A² for a 2×2 matrix",
     matLearn_matrix_power: "Squaring a matrix means multiplying it by itself: A² = A × A, using the normal rules of matrix multiplication.\n\nExample: square A = [[1,2],[3,4]].\nA² = [[1×1+2×3, 1×2+2×4], [3×1+4×3, 3×2+4×4]] = [[7,10],[15,22]].",
@@ -5377,7 +5412,11 @@ const I18N = {
     matTopicTitle_eigenvalues: "Eigenvalues", matTopicDesc_eigenvalues: "Find the eigenvalues of a 2×2 matrix",
     matLearn_eigenvalues: "The eigenvalues of a 2×2 matrix solve the characteristic equation λ² - (trace)λ + det = 0, where trace is the sum of the diagonal and det is the determinant.\n\nExample: find the eigenvalues of [[4,3],[3,-4]].\ntrace = 0, det = (4)(-4)-(3)(3) = -25. λ² - 25 = 0, so λ² = 25, λ = ±5.",
     matEigenvaluesPrompt: "Find the eigenvalues of A = {A}",
-    matEigenvaluesExplain: "trace(A) = {trace}, det(A) = {det}. Solving λ² - {trace}λ + ({det}) = 0 gives λ = {lambda1} and λ = {lambda2}.",
+    matTraceLabel: "Trace", matDetLabel: "Determinant",
+    matEigenvaluesStep1Prompt: "Step 1: Find the trace and determinant of A.",
+    matEigenvaluesStep1Explain: "trace(A) = a + d = {a} + {d} = {trace}. det(A) = ad − b² = ({a})({d}) − {b}² = {det}.",
+    matEigenvaluesStep2Prompt: "Step 2: Solve λ² − (trace)λ + det = 0 for the two eigenvalues.",
+    matEigenvaluesStep2Explain: "λ² − {trace}λ + ({det}) = 0 gives λ = {lambda1} and λ = {lambda2}.",
 
     matTopicTitle_det_scalar_property: "Determinant of a Scalar Multiple", matTopicDesc_det_scalar_property: "Find det(kA) from det(A) for a 2×2 matrix",
     matLearn_det_scalar_property: "Scaling a 2×2 matrix by k multiplies its determinant by k²: det(kA) = k²·det(A).\n\nExample: det(A) = 5. Find det(3A).\ndet(3A) = 3²×5 = 9×5 = 45.",
@@ -5740,6 +5779,7 @@ const I18N = {
     mathHardTitle: "困难", mathHardSub: "三位数运算，两位数乘两位数。",
     mathBestLabel: "最佳：{n} 题正确",
     solveEyebrow: "计算", checkBtn: "检查",
+    stepLabel: "第 {n} 步，共 {total} 步", nextStepBtn: "下一步 →",
     yourAnswerPlaceholder: "输入答案",
     correctAnswersLabel: "答对题数", newBestReached: "刷新最佳成绩！",
     backToMathMenuBtn: "返回心算练习",
@@ -6469,7 +6509,12 @@ const I18N = {
     matTopicTitle_cramers_rule: "克莱姆法则", matTopicDesc_cramers_rule: "用行列式求解2×2方程组",
     matLearn_cramers_rule: "克莱姆法则用行列式求解方程组。对于 ax+by=e 和 cx+dy=f，设 D 为系数矩阵的行列式，Dx 为把x列替换成(e,f)后的行列式，Dy 为把y列替换成(e,f)后的行列式。则 x = Dx/D，y = Dy/D。\n\n例如：解 2x+y=5 和 x-y=1。\nD = (2)(-1)-(1)(1) = -3。Dx = (5)(-1)-(1)(1) = -6，所以 x = -6/-3 = 2。Dy = (2)(1)-(5)(1) = -3，所以 y = -3/-3 = 1。",
     matCramersPrompt: "用克莱姆法则解：{eq1}，以及 {eq2}",
-    matCramersExplain: "D = {D}，Dx = {Dx}，Dy = {Dy}。x = Dx/D = {x0}，y = Dy/D = {y0}。",
+    matCramersStep1Prompt: "第一步：求 D，即系数矩阵的行列式。",
+    matCramersStep1Explain: "D = ad − bc = ({a})({d}) − ({b})({c}) = {ad} − {bc} = {D}。",
+    matCramersStep2Prompt: "第二步：求 Dx（把 D 中的 x 列换成右边的常数）和 Dy（把 y 列换成右边的常数）。",
+    matCramersStep2Explain: "Dx = ({e})({d}) − ({b})({f}) = {Dx}。Dy = ({a})({f}) − ({e})({c}) = {Dy}。",
+    matCramersStep3Prompt: "第三步：求 x = Dx/D 和 y = Dy/D。",
+    matCramersStep3Explain: "x = Dx/D = {Dx}/{D} = {x0}。y = Dy/D = {Dy}/{D} = {y0}。",
 
     matTopicTitle_matrix_power: "矩阵的幂", matTopicDesc_matrix_power: "计算2×2矩阵的A²",
     matLearn_matrix_power: "矩阵的平方就是它自己乘以自己：A² = A × A，按照矩阵乘法的常规规则。\n\n例如：求 A = [[1,2],[3,4]] 的平方。\nA² = [[1×1+2×3, 1×2+2×4], [3×1+4×3, 3×2+4×4]] = [[7,10],[15,22]]。",
@@ -6490,7 +6535,11 @@ const I18N = {
     matTopicTitle_eigenvalues: "特征值", matTopicDesc_eigenvalues: "求2×2矩阵的特征值",
     matLearn_eigenvalues: "2×2矩阵的特征值是特征方程 λ² - (迹)λ + 行列式 = 0 的解，其中迹是对角线之和，行列式是矩阵的行列式。\n\n例如：求 [[4,3],[3,-4]] 的特征值。\n迹 = 0，行列式 = (4)(-4)-(3)(3) = -25。λ² - 25 = 0，所以 λ² = 25，λ = ±5。",
     matEigenvaluesPrompt: "求 A = {A} 的特征值",
-    matEigenvaluesExplain: "trace(A) = {trace}，det(A) = {det}。解 λ² - {trace}λ + ({det}) = 0，得 λ = {lambda1} 和 λ = {lambda2}。",
+    matTraceLabel: "迹", matDetLabel: "行列式",
+    matEigenvaluesStep1Prompt: "第一步：求 A 的迹和行列式。",
+    matEigenvaluesStep1Explain: "trace(A) = a + d = {a} + {d} = {trace}。det(A) = ad − b² = ({a})({d}) − {b}² = {det}。",
+    matEigenvaluesStep2Prompt: "第二步：解特征方程 λ² − (迹)λ + 行列式 = 0，求两个特征值。",
+    matEigenvaluesStep2Explain: "λ² − {trace}λ + ({det}) = 0，得 λ = {lambda1} 和 λ = {lambda2}。",
 
     matTopicTitle_det_scalar_property: "数乘矩阵的行列式", matTopicDesc_det_scalar_property: "由 det(A) 求2×2矩阵的 det(kA)",
     matLearn_det_scalar_property: "将2×2矩阵乘以标量k，其行列式会乘以k²：det(kA) = k²·det(A)。\n\n例如：det(A) = 5，求 det(3A)。\ndet(3A) = 3²×5 = 9×5 = 45。",
@@ -6746,6 +6795,7 @@ const I18N = {
     mathHardTitle: "ཁག་པོ།", mathHardSub: "གྲངས་ཀ་གསུམ་གྱི་རྩིས་དང་གྲངས་ཀ་གཉིས་འཕར་བ་གཉིས།",
     mathBestLabel: "མཐོ་ཤོས། ལན་ཚང་{n}",
     solveEyebrow: "རྩིས་ཤིག", checkBtn: "ཞིབ་བཤེར།",
+    stepLabel: "རིམ་པ {n}/{total}", nextStepBtn: "རིམ་པ་རྗེས་མ →",
     yourAnswerPlaceholder: "ལན་འབྲི་རོགས།",
     correctAnswersLabel: "ལན་ཚང་བའི་གྲངས།", newBestReached: "མཐོ་ཤོས་གསར་པ།",
     backToMathMenuBtn: "སེམས་རྩིས་སུ་ལོག",
@@ -7475,7 +7525,12 @@ const I18N = {
     matTopicTitle_cramers_rule: "ངེས་གྲངས་བརྒྱུད་མཉམ་སྒྲིག་སེལ་བ།", matTopicDesc_cramers_rule: "ངེས་གྲངས་བེད་སྤྱོད་ཀྱིས 2×2 མཉམ་སྒྲིག་སེལ།",
     matLearn_cramers_rule: "ངེས་གྲངས་བརྒྱུད་མཉམ་སྒྲིག་སེལ་ཐབས་ལྟར, ax+by=e དང cx+dy=f ལ, D ནི་ཆ་མཉམ་གྲངས་ཐིག་ཁྲམའི་ངེས་གྲངས, Dx ནི x-ཀེར་ཐིག (e,f) ཡིས་བརྗེས་པའི D, Dy ནི y-ཀེར་ཐིག (e,f) ཡིས་བརྗེས་པའི D ཡིན། དེ་ནས x = Dx/D, y = Dy/D།\n\nདཔེར་བརྗོད། 2x+y=5 དང x-y=1 སེལ་ཤིག།\nD = (2)(-1)-(1)(1) = -3། Dx = (5)(-1)-(1)(1) = -6, དེས་ན x = -6/-3 = 2། Dy = (2)(1)-(5)(1) = -3, དེས་ན y = -3/-3 = 1།",
     matCramersPrompt: "ངེས་གྲངས་བརྒྱུད་སེལ་ཤིག: {eq1}, དེ་དང {eq2}",
-    matCramersExplain: "D = {D}, Dx = {Dx}, Dy = {Dy}། x = Dx/D = {x0}, y = Dy/D = {y0}།",
+    matCramersStep1Prompt: "རིམ་པ1པ: D, ཆ་མཉམ་གྲངས་ཐིག་ཁྲམའི་ངེས་གྲངས་འཚོལ་ཤིག།",
+    matCramersStep1Explain: "D = ad − bc = ({a})({d}) − ({b})({c}) = {ad} − {bc} = {D}།",
+    matCramersStep2Prompt: "རིམ་པ2པ: Dx (D ནང x-ཀེར་ཐིག་གཡས་གྲངས་ཡིས་བརྗེས) དང Dy (y-ཀེར་ཐིག་བརྗེས) འཚོལ་ཤིག།",
+    matCramersStep2Explain: "Dx = ({e})({d}) − ({b})({f}) = {Dx}། Dy = ({a})({f}) − ({e})({c}) = {Dy}།",
+    matCramersStep3Prompt: "རིམ་པ3པ: x = Dx/D དང y = Dy/D འཚོལ་ཤིག།",
+    matCramersStep3Explain: "x = Dx/D = {Dx}/{D} = {x0}། y = Dy/D = {Dy}/{D} = {y0}།",
 
     matTopicTitle_matrix_power: "ཐིག་ཁྲམ་འཕར་ཆ།", matTopicDesc_matrix_power: "2×2 ཐིག་ཁྲམ་གྱི A² རྩིས།",
     matLearn_matrix_power: "ཐིག་ཁྲམ་སྒྲིལ་བ་ཞེས་པ་ནི་དེ་རང་ཉིད་དང་འཕར་བ: A² = A × A, ཐིག་ཁྲམ་འཕར་བའི་སྒྲིག་གཞི་སྤྱིར་བཏང་ལྟར།\n\nདཔེར་བརྗོད། A = [[1,2],[3,4]] སྒྲིལ་ཤིག།\nA² = [[1×1+2×3, 1×2+2×4], [3×1+4×3, 3×2+4×4]] = [[7,10],[15,22]]།",
@@ -7496,7 +7551,11 @@ const I18N = {
     matTopicTitle_eigenvalues: "རང་ཐང་།", matTopicDesc_eigenvalues: "2×2 ཐིག་ཁྲམ་གྱི་རང་ཐང་འཚོལ།",
     matLearn_eigenvalues: "2×2 ཐིག་ཁྲམ་ཞིག་གི་རང་ཐང་ནི་རང་མཚན་མཉམ་སྒྲིག λ² - (རྗེས་འཇུག)λ + ངེས་གྲངས = 0 ཡི་ལན་ཡིན, རྗེས་འཇུག་ནི་དབུས་ཐིག་བསྡོམས, ངེས་གྲངས་ནི་ཐིག་ཁྲམའི་ངེས་གྲངས་ཡིན།\n\nདཔེར་བརྗོད། [[4,3],[3,-4]] ཡི་རང་ཐང་འཚོལ་ཤིག།\nརྗེས་འཇུག = 0, ངེས་གྲངས = (4)(-4)-(3)(3) = -25། λ² - 25 = 0, དེས་ན λ² = 25, λ = ±5།",
     matEigenvaluesPrompt: "A = {A} ཡི་རང་ཐང་འཚོལ་ཤིག།",
-    matEigenvaluesExplain: "trace(A) = {trace}, det(A) = {det}། λ² - {trace}λ + ({det}) = 0 སེལ་ན λ = {lambda1} དང λ = {lambda2} ཐོན།",
+    matTraceLabel: "རྗེས་འཇུག", matDetLabel: "ངེས་གྲངས།",
+    matEigenvaluesStep1Prompt: "རིམ་པ1པ: A ཡི་རྗེས་འཇུག་དང་ངེས་གྲངས་འཚོལ་ཤིག།",
+    matEigenvaluesStep1Explain: "trace(A) = a + d = {a} + {d} = {trace}། det(A) = ad − b² = ({a})({d}) − {b}² = {det}།",
+    matEigenvaluesStep2Prompt: "རིམ་པ2པ: λ² − (རྗེས་འཇུག)λ + ངེས་གྲངས = 0 སེལ་ནས་རང་ཐང་གཉིས་འཚོལ་ཤིག།",
+    matEigenvaluesStep2Explain: "λ² − {trace}λ + ({det}) = 0 གིས λ = {lambda1} དང λ = {lambda2} སྟོན།",
 
     matTopicTitle_det_scalar_property: "གྲངས་ཐང་འཕར་བའི་ངེས་གྲངས།", matTopicDesc_det_scalar_property: "det(A) ལས 2×2 ཐིག་ཁྲམ་གྱི det(kA) འཚོལ།",
     matLearn_det_scalar_property: "2×2 ཐིག་ཁྲམ་ལ་གྲངས་ཐང k འཕར་ན, ངེས་གྲངས་ལའང k² འཕར: det(kA) = k²·det(A)།\n\nདཔེར་བརྗོད། det(A) = 5། det(3A) འཚོལ་ཤིག།\ndet(3A) = 3²×5 = 9×5 = 45།",
@@ -7690,39 +7749,28 @@ document.addEventListener('keydown', function(e){
   if(state.screen === 'math_practice' && state.mathSession){
     if(state.mathSession.answered) nextMathQuestion();
     else submitMathAnswer();
-  } else if(state.screen === 'algebra_practice' && state.algebraSession){
-    if(state.algebraSession.answered) nextAlgebraQuestion();
-    else submitAlgebraAnswer();
-  } else if(state.screen === 'calc_practice' && state.calcSession){
-    if(state.calcSession.answered) nextCalcQuestion();
-    else submitCalcAnswer();
-  } else if(state.screen === 'linalg_practice' && state.linalgSession){
-    if(state.linalgSession.answered) nextLinAlgQuestion();
-    else submitLinAlgAnswer();
-  } else if(state.screen === 'disc_practice' && state.discSession){
-    if(state.discSession.answered) nextDiscQuestion();
-    else submitDiscAnswer();
-  } else if(state.screen === 'prob_practice' && state.probSession){
-    if(state.probSession.answered) nextProbQuestion();
-    else submitProbAnswer();
-  } else if(state.screen === 'stat_practice' && state.statSession){
-    if(state.statSession.answered) nextStatQuestion();
-    else submitStatAnswer();
-  } else if(state.screen === 'geom_practice' && state.geomSession){
-    if(state.geomSession.answered) nextGeomQuestion();
-    else submitGeomAnswer();
-  } else if(state.screen === 'trig_practice' && state.trigSession){
-    if(state.trigSession.answered) nextTrigQuestion();
-    else submitTrigAnswer();
-  } else if(state.screen === 'cplx_practice' && state.cplxSession){
-    if(state.cplxSession.answered) nextCplxQuestion();
-    else submitCplxAnswer();
-  } else if(state.screen === 'seq_practice' && state.seqSession){
-    if(state.seqSession.answered) nextSeqQuestion();
-    else submitSeqAnswer();
-  } else if(state.screen === 'mat_practice' && state.matSession){
-    if(state.matSession.answered) nextMatQuestion();
-    else submitMatAnswer();
+  } else {
+    // Every other math mode shares the same guided step-engine: Enter
+    // submits the current step, then either reveals the next step or (once
+    // the last step of the problem is answered) advances to a new problem.
+    const modeByScreen = {
+      algebra_practice: ['algebraSession','Algebra'], calc_practice: ['calcSession','Calc'],
+      linalg_practice: ['linalgSession','LinAlg'], disc_practice: ['discSession','Disc'],
+      prob_practice: ['probSession','Prob'], stat_practice: ['statSession','Stat'],
+      geom_practice: ['geomSession','Geom'], trig_practice: ['trigSession','Trig'],
+      cplx_practice: ['cplxSession','Cplx'], seq_practice: ['seqSession','Seq'],
+      mat_practice: ['matSession','Mat'],
+    };
+    const mode = modeByScreen[state.screen];
+    if(mode){
+      const [sessionKey, S] = mode;
+      const s = state[sessionKey];
+      if(s){
+        if(!s.answered) window['submit'+S+'Step']();
+        else if(s.stepIndex === s.steps.length-1) window['next'+S+'Question']();
+        else window['next'+S+'Step']();
+      }
+    }
   }
 });
 
@@ -8556,7 +8604,7 @@ function algProblemFractions(){
   const num = p*k, den = q*k;
   return {
     promptText: t('algFractionsPrompt', {expr:`${num}/${den}`}),
-    inputs: [{key:'ans', placeholder:t('algFractionAnswerPlaceholder')}],
+    inputs: [{key:'ans', placeholder:t('algFractionAnswerPlaceholder'), fracInput:true}],
     check(vals){ const f = parseFraction(vals.ans); return !!f && f.p===p && f.q===q; },
     explain: t('algFractionsExplain', {num, den, k, p, q}),
   };
@@ -8783,11 +8831,12 @@ function renderAlgebraLearn(){
 
 function startAlgebraPractice(topicKey){
   const topic = algTopicByKey(topicKey);
+  const problem = topic.build();
   state.algebraSession = {
-    topicKey,
-    current: topic.build(),
+    topicKey, problem, steps: normalizeSteps(problem),
+    stepIndex:0, stepInputs:{}, stepResults:[], anyWrong:false, pendingResult:null,
     correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
-    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+    combo:0, maxCombo:0, newAchievements:[]
   };
   state.screen = 'algebra_practice';
   render();
@@ -8799,24 +8848,84 @@ function focusAlgebraInput(){
 
 function renderAlgebraPractice(){
   const s = state.algebraSession;
-  const q = s.current;
+  const steps = s.steps;
+  const multiStep = steps.length > 1;
+  const stepIndex = s.stepIndex;
+  const curStep = steps[stepIndex];
+  const isLastStep = stepIndex === steps.length-1;
   const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
 
-  const inputsHtml = q.inputs.map(inp=>`
+  const inputBox = (inp) => {
+    if(inp.fracInput){
+      const numVal = s.stepInputs[inp.key+'_num']||'', denVal = s.stepInputs[inp.key+'_den']||'';
+      return `
+      <div style="flex:1; max-width:110px;">
+        ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px; text-align:center;">${inp.label}</div>` : ''}
+        <div class="frac-input">
+          <input class="algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${numVal}"
+            oninput="setFracInputPart(state.algebraSession,'${inp.key}','num',this.value)">
+          <div class="frac-input-bar"></div>
+          <input class="algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${denVal}"
+            oninput="setFracInputPart(state.algebraSession,'${inp.key}','den',this.value)">
+        </div>
+      </div>`;
+    }
+    return `
     <div style="flex:1;">
       ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
       <input class="algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
         placeholder="${inp.placeholder||''}"
-        style="text-align:center; font-size:22px; font-family:var(--font-display); font-weight:700; width:100%;"
-        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
-        oninput="state.algebraSession.inputs['${inp.key}']=this.value">
-    </div>`).join('');
+        style="text-align:center; font-size:20px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.stepInputs[inp.key]||'')}"
+        oninput="state.algebraSession.stepInputs['${inp.key}']=this.value">
+    </div>`;
+  };
 
-  const feedback = s.answered ? `
+  const inputsHtml = curStep.matrixShape
+    ? `<div style="display:grid; grid-template-columns:repeat(${curStep.matrixShape[1]}, 1fr); gap:10px; max-width:240px; margin:0 auto;">${curStep.inputs.map(inputBox).join('')}</div>`
+    : `<div style="display:flex; gap:12px; align-items:flex-end; justify-content:center;">${curStep.inputs.map(inputBox).join('')}</div>`;
+
+  const stepRowHtml = (r) => `
+    <div class="step-row done ${r.correct?'correct':'wrong'}">
+      <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+      <div class="step-values">${enhanceMath(r.valuesText)}</div>
+      <div class="step-explain">${enhanceMath(r.explain)}</div>
+    </div>`;
+  const doneRowsHtml = multiStep ? s.stepResults.map(stepRowHtml).join('') : '';
+
+  let activeStepHtml = '';
+  if(!(s.answered && isLastStep)){
+    if(!s.answered){
+      activeStepHtml = multiStep ? `
+        <div class="step-row active">
+          <div class="step-label">${t('stepLabel',{n:stepIndex+1, total:steps.length})}</div>
+          ${curStep.prompt ? `<div class="step-prompt">${enhanceMath(curStep.prompt)}</div>` : ''}
+          ${inputsHtml}
+          <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="submitAlgebraStep()">${t('checkBtn')}</button>
+        </div>` : `
+        ${inputsHtml}
+        <button class="btn btn-primary btn-block" onclick="submitAlgebraStep()">${t('checkBtn')}</button>`;
+    } else {
+      const r = s.pendingResult;
+      activeStepHtml = `
+        <div class="step-row done ${r.correct?'correct':'wrong'}">
+          <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+          <div class="step-values">${enhanceMath(r.valuesText)}</div>
+          <div class="step-explain">${enhanceMath(r.explain)}</div>
+          <button class="btn btn-light btn-block" style="margin-top:10px;" onclick="nextAlgebraStep()">${t('nextStepBtn')}</button>
+        </div>`;
+    }
+  }
+
+  const feedback = (s.answered && isLastStep) ? `
     <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
       <div class="fb-text">
         <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
-        <div class="fb-sub">${q.explain}</div>
+        ${!multiStep ? `<div class="fb-sub">${enhanceMath(curStep.explain)}</div>` : ''}
       </div>
       <button class="btn btn-light" onclick="nextAlgebraQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
     </div>` : '';
@@ -8831,34 +8940,57 @@ function renderAlgebraPractice(){
     <div class="q-wrap">
       <div class="q-card">
         <div class="q-eyebrow">${t('algTopicTitle_'+s.topicKey)}</div>
-        <div class="q-prompt" style="font-size:24px;">${q.promptText}</div>
+        <div class="q-prompt" style="font-size:24px;">${enhanceMath(s.problem.promptText)}</div>
       </div>
-      <div style="display:flex; gap:12px; align-items:flex-end;">${inputsHtml}</div>
-      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitAlgebraAnswer()">${t('checkBtn')}</button>` : ''}
+      ${multiStep ? `<div class="step-list">${doneRowsHtml}${activeStepHtml}</div>` : activeStepHtml}
     </div>
   </div>
   ${feedback}
   `;
 }
 
-function submitAlgebraAnswer(){
+function submitAlgebraStep(){
   const s = state.algebraSession;
   if(!s || s.answered) return;
-  const q = s.current;
-  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
-  const correct = q.check(s.inputs);
-  s.answered = true; s.lastCorrect = correct;
-  if(correct) registerCorrectAnswer(s, state.game);
-  else registerWrongAnswer(s);
+  const steps = s.steps;
+  const step = steps[s.stepIndex];
+  for(const inp of step.inputs){ if(!s.stepInputs[inp.key]) return; }
+  const correct = step.check(s.stepInputs);
+  if(!correct) s.anyWrong = true;
+  const valuesText = step.inputs.map(inp=>s.stepInputs[inp.key]).join(', ');
+  const result = {prompt: step.prompt, valuesText, explain: step.explain, correct};
+  const isLastStep = s.stepIndex === steps.length-1;
+  if(isLastStep){
+    s.stepResults.push(result);
+    const problemCorrect = !s.anyWrong;
+    s.answered = true; s.lastCorrect = problemCorrect;
+    if(problemCorrect) registerCorrectAnswer(s, state.game);
+    else registerWrongAnswer(s);
+  } else {
+    s.pendingResult = result;
+    s.answered = true; s.lastCorrect = correct;
+  }
   render();
+}
+
+function nextAlgebraStep(){
+  const s = state.algebraSession;
+  s.stepResults.push(s.pendingResult);
+  s.pendingResult = null;
+  s.stepIndex += 1;
+  s.answered = false; s.lastCorrect = null; s.stepInputs = {};
+  render();
+  focusAlgebraInput();
 }
 
 function nextAlgebraQuestion(){
   const s = state.algebraSession;
   if(s.mistakes>=MATH_MAX_MISTAKES){ finishAlgebraPractice(); return; }
   const topic = algTopicByKey(s.topicKey);
-  s.answered=false; s.lastCorrect=null; s.inputs={};
-  s.current = topic.build();
+  const problem = topic.build();
+  s.problem = problem; s.steps = normalizeSteps(problem);
+  s.stepIndex=0; s.stepInputs={}; s.stepResults=[]; s.anyWrong=false; s.pendingResult=null;
+  s.answered=false; s.lastCorrect=null;
   render();
   focusAlgebraInput();
 }
@@ -9114,11 +9246,12 @@ function renderCalcLearn(){
 
 function startCalcPractice(topicKey){
   const topic = calcTopicByKey(topicKey);
+  const problem = topic.build();
   state.calcSession = {
-    topicKey,
-    current: topic.build(),
+    topicKey, problem, steps: normalizeSteps(problem),
+    stepIndex:0, stepInputs:{}, stepResults:[], anyWrong:false, pendingResult:null,
     correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
-    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+    combo:0, maxCombo:0, newAchievements:[]
   };
   state.screen = 'calc_practice';
   render();
@@ -9130,24 +9263,84 @@ function focusCalcInput(){
 
 function renderCalcPractice(){
   const s = state.calcSession;
-  const q = s.current;
+  const steps = s.steps;
+  const multiStep = steps.length > 1;
+  const stepIndex = s.stepIndex;
+  const curStep = steps[stepIndex];
+  const isLastStep = stepIndex === steps.length-1;
   const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
 
-  const inputsHtml = q.inputs.map(inp=>`
+  const inputBox = (inp) => {
+    if(inp.fracInput){
+      const numVal = s.stepInputs[inp.key+'_num']||'', denVal = s.stepInputs[inp.key+'_den']||'';
+      return `
+      <div style="flex:1; max-width:110px;">
+        ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px; text-align:center;">${inp.label}</div>` : ''}
+        <div class="frac-input">
+          <input class="calc-input algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${numVal}"
+            oninput="setFracInputPart(state.calcSession,'${inp.key}','num',this.value)">
+          <div class="frac-input-bar"></div>
+          <input class="algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${denVal}"
+            oninput="setFracInputPart(state.calcSession,'${inp.key}','den',this.value)">
+        </div>
+      </div>`;
+    }
+    return `
     <div style="flex:1;">
       ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
       <input class="calc-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
         placeholder="${inp.placeholder||''}"
-        style="text-align:center; font-size:22px; font-family:var(--font-display); font-weight:700; width:100%;"
-        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
-        oninput="state.calcSession.inputs['${inp.key}']=this.value">
-    </div>`).join('');
+        style="text-align:center; font-size:20px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.stepInputs[inp.key]||'')}"
+        oninput="state.calcSession.stepInputs['${inp.key}']=this.value">
+    </div>`;
+  };
 
-  const feedback = s.answered ? `
+  const inputsHtml = curStep.matrixShape
+    ? `<div style="display:grid; grid-template-columns:repeat(${curStep.matrixShape[1]}, 1fr); gap:10px; max-width:240px; margin:0 auto;">${curStep.inputs.map(inputBox).join('')}</div>`
+    : `<div style="display:flex; gap:12px; align-items:flex-end; justify-content:center;">${curStep.inputs.map(inputBox).join('')}</div>`;
+
+  const stepRowHtml = (r) => `
+    <div class="step-row done ${r.correct?'correct':'wrong'}">
+      <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+      <div class="step-values">${enhanceMath(r.valuesText)}</div>
+      <div class="step-explain">${enhanceMath(r.explain)}</div>
+    </div>`;
+  const doneRowsHtml = multiStep ? s.stepResults.map(stepRowHtml).join('') : '';
+
+  let activeStepHtml = '';
+  if(!(s.answered && isLastStep)){
+    if(!s.answered){
+      activeStepHtml = multiStep ? `
+        <div class="step-row active">
+          <div class="step-label">${t('stepLabel',{n:stepIndex+1, total:steps.length})}</div>
+          ${curStep.prompt ? `<div class="step-prompt">${enhanceMath(curStep.prompt)}</div>` : ''}
+          ${inputsHtml}
+          <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="submitCalcStep()">${t('checkBtn')}</button>
+        </div>` : `
+        ${inputsHtml}
+        <button class="btn btn-primary btn-block" onclick="submitCalcStep()">${t('checkBtn')}</button>`;
+    } else {
+      const r = s.pendingResult;
+      activeStepHtml = `
+        <div class="step-row done ${r.correct?'correct':'wrong'}">
+          <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+          <div class="step-values">${enhanceMath(r.valuesText)}</div>
+          <div class="step-explain">${enhanceMath(r.explain)}</div>
+          <button class="btn btn-light btn-block" style="margin-top:10px;" onclick="nextCalcStep()">${t('nextStepBtn')}</button>
+        </div>`;
+    }
+  }
+
+  const feedback = (s.answered && isLastStep) ? `
     <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
       <div class="fb-text">
         <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
-        <div class="fb-sub">${q.explain}</div>
+        ${!multiStep ? `<div class="fb-sub">${enhanceMath(curStep.explain)}</div>` : ''}
       </div>
       <button class="btn btn-light" onclick="nextCalcQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
     </div>` : '';
@@ -9162,34 +9355,57 @@ function renderCalcPractice(){
     <div class="q-wrap">
       <div class="q-card">
         <div class="q-eyebrow">${t('calcTopicTitle_'+s.topicKey)}</div>
-        <div class="q-prompt" style="font-size:22px;">${q.promptText}</div>
+        <div class="q-prompt" style="font-size:22px;">${enhanceMath(s.problem.promptText)}</div>
       </div>
-      <div style="display:flex; gap:12px; align-items:flex-end;">${inputsHtml}</div>
-      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitCalcAnswer()">${t('checkBtn')}</button>` : ''}
+      ${multiStep ? `<div class="step-list">${doneRowsHtml}${activeStepHtml}</div>` : activeStepHtml}
     </div>
   </div>
   ${feedback}
   `;
 }
 
-function submitCalcAnswer(){
+function submitCalcStep(){
   const s = state.calcSession;
   if(!s || s.answered) return;
-  const q = s.current;
-  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
-  const correct = q.check(s.inputs);
-  s.answered = true; s.lastCorrect = correct;
-  if(correct) registerCorrectAnswer(s, state.game);
-  else registerWrongAnswer(s);
+  const steps = s.steps;
+  const step = steps[s.stepIndex];
+  for(const inp of step.inputs){ if(!s.stepInputs[inp.key]) return; }
+  const correct = step.check(s.stepInputs);
+  if(!correct) s.anyWrong = true;
+  const valuesText = step.inputs.map(inp=>s.stepInputs[inp.key]).join(', ');
+  const result = {prompt: step.prompt, valuesText, explain: step.explain, correct};
+  const isLastStep = s.stepIndex === steps.length-1;
+  if(isLastStep){
+    s.stepResults.push(result);
+    const problemCorrect = !s.anyWrong;
+    s.answered = true; s.lastCorrect = problemCorrect;
+    if(problemCorrect) registerCorrectAnswer(s, state.game);
+    else registerWrongAnswer(s);
+  } else {
+    s.pendingResult = result;
+    s.answered = true; s.lastCorrect = correct;
+  }
   render();
+}
+
+function nextCalcStep(){
+  const s = state.calcSession;
+  s.stepResults.push(s.pendingResult);
+  s.pendingResult = null;
+  s.stepIndex += 1;
+  s.answered = false; s.lastCorrect = null; s.stepInputs = {};
+  render();
+  focusCalcInput();
 }
 
 function nextCalcQuestion(){
   const s = state.calcSession;
   if(s.mistakes>=MATH_MAX_MISTAKES){ finishCalcPractice(); return; }
   const topic = calcTopicByKey(s.topicKey);
-  s.answered=false; s.lastCorrect=null; s.inputs={};
-  s.current = topic.build();
+  const problem = topic.build();
+  s.problem = problem; s.steps = normalizeSteps(problem);
+  s.stepIndex=0; s.stepInputs={}; s.stepResults=[]; s.anyWrong=false; s.pendingResult=null;
+  s.answered=false; s.lastCorrect=null;
   render();
   focusCalcInput();
 }
@@ -9240,7 +9456,55 @@ function exitCalcPractice(){ state.screen='calc_menu'; render(); }
 // inverse (engineered to determinant ±1 so the inverse entries stay integers,
 // since fraction-typing wasn't part of this pass).
 function vectorText(comps){ return `(${comps.join(', ')})`; }
-function matrixText(rows){ return `[${rows.map(r=>`[${r.join(', ')}]`).join(', ')}]`; }
+// Renders an actual bracket-style matrix (rows of cells between two tall
+// brackets) instead of "[[1,2],[3,4]]" plain text — used everywhere a
+// matrix is shown in a prompt or explanation, across linear algebra and
+// matrices & linear systems. Non-numeric cells (e.g. the literal 'x' in a
+// solve-for-x problem) pass through unchanged.
+function matrixHTML(rows){
+  const cols = rows[0].length;
+  const cells = rows.flat().map(v=>`<span class="mm-cell">${v}</span>`).join('');
+  return `<span class="math-matrix"><span class="mm-bracket left"></span><span class="mm-grid" style="grid-template-columns:repeat(${cols}, auto);">${cells}</span><span class="mm-bracket right"></span></span>`;
+}
+// Renders a numeric fraction as a stacked numerator/denominator with a bar,
+// instead of "p/q" plain text.
+function fracHTML(p, q){
+  const neg = (p<0) !== (q<0);
+  const ap = Math.abs(p), aq = Math.abs(q);
+  return `<span class="math-frac">${neg?'<span class="mf-sign">−</span>':''}<span class="mf-stack"><span class="mf-num">${ap}</span><span class="mf-bar"></span><span class="mf-den">${aq}</span></span></span>`;
+}
+// Post-processes an already-i18n-interpolated prompt/explain string, turning
+// any plain numeric "p/q" substring (an answer or an intermediate result,
+// e.g. "reduced to 3/4" or "x = -6/-3 = 2") into a stacked visual fraction.
+// Deliberately only matches digit/digit patterns — a symbolic formula like
+// "n(n+1)/2" or "Dx/D" is left as plain text, since there's no single clean
+// numeric fraction to render until the variables are substituted with
+// numbers. Never applied to input placeholders (those stay plain text hints
+// inside the input box, not HTML).
+function enhanceMath(str){
+  if(str==null) return str;
+  return str.replace(/(-?\d+)\/(-?\d+)(?!\d)/g, (m,p,q)=>fracHTML(Number(p), Number(q)));
+}
+// Normalizes a problem into its list of answer steps. Most problems are a
+// single step (the legacy {inputs, check, explain} shape, auto-wrapped here
+// with no separate step prompt so they render exactly as a one-shot
+// question, unchanged from before this feature existed); problems that
+// naturally break into a sequence (Cramer's rule: D, then Dx, Dy, then x, y)
+// return {steps:[...]} directly and get the guided, one-step-at-a-time UI.
+function normalizeSteps(problem){
+  if(problem.steps) return problem.steps;
+  return [{prompt:null, inputs:problem.inputs, check:problem.check, explain:problem.explain, matrixShape:problem.matrixShape}];
+}
+// Backs a two-box numerator/denominator input (used wherever an input is
+// marked fracInput:true) — keeps the two typed halves for redisplay, and
+// recomputes a single "num/den" string under the input's own key so the
+// existing check() functions (which already expect that format, via
+// parseFraction) don't need to know the answer came from two boxes instead
+// of one. Shared by every math mode's practice screen.
+function setFracInputPart(session, key, part, val){
+  session.stepInputs[key+'_'+part] = val;
+  session.stepInputs[key] = (session.stepInputs[key+'_num']||'') + '/' + (session.stepInputs[key+'_den']||'');
+}
 
 function linalgProblemVectorAddition(){
   const a1=randInt(-9,9), b1=randInt(-9,9), a2=randInt(-9,9), b2=randInt(-9,9);
@@ -9306,11 +9570,11 @@ function linalgProblemMatrixAddition(){
   const b11=randInt(-9,9), b12=randInt(-9,9), b21=randInt(-9,9), b22=randInt(-9,9);
   const c11=a11+b11, c12=a12+b12, c21=a21+b21, c22=a22+b22;
   return {
-    promptText: t('linalgMatrixAddPrompt', {A:matrixText([[a11,a12],[a21,a22]]), B:matrixText([[b11,b12],[b21,b22]])}),
+    promptText: t('linalgMatrixAddPrompt', {A:matrixHTML([[a11,a12],[a21,a22]]), B:matrixHTML([[b11,b12],[b21,b22]])}),
     inputs: [{key:'c11'},{key:'c12'},{key:'c21'},{key:'c22'}],
     matrixShape: [2,2],
     check(vals){ return Number(vals.c11)===c11 && Number(vals.c12)===c12 && Number(vals.c21)===c21 && Number(vals.c22)===c22; },
-    explain: t('linalgMatrixAddExplain', {C:matrixText([[c11,c12],[c21,c22]])}),
+    explain: t('linalgMatrixAddExplain', {C:matrixHTML([[c11,c12],[c21,c22]])}),
   };
 }
 function linalgProblemMatrixScalar(){
@@ -9318,11 +9582,11 @@ function linalgProblemMatrixScalar(){
   const k=nonZeroRandInt(-5,5);
   const c11=k*a11, c12=k*a12, c21=k*a21, c22=k*a22;
   return {
-    promptText: t('linalgMatrixScalarPrompt', {k, A:matrixText([[a11,a12],[a21,a22]])}),
+    promptText: t('linalgMatrixScalarPrompt', {k, A:matrixHTML([[a11,a12],[a21,a22]])}),
     inputs: [{key:'c11'},{key:'c12'},{key:'c21'},{key:'c22'}],
     matrixShape: [2,2],
     check(vals){ return Number(vals.c11)===c11 && Number(vals.c12)===c12 && Number(vals.c21)===c21 && Number(vals.c22)===c22; },
-    explain: t('linalgMatrixScalarExplain', {k, C:matrixText([[c11,c12],[c21,c22]])}),
+    explain: t('linalgMatrixScalarExplain', {k, C:matrixHTML([[c11,c12],[c21,c22]])}),
   };
 }
 function linalgProblemMatrixVector(){
@@ -9330,7 +9594,7 @@ function linalgProblemMatrixVector(){
   const x0=randInt(-6,6), y0=randInt(-6,6);
   const rx=a11*x0+a12*y0, ry=a21*x0+a22*y0;
   return {
-    promptText: t('linalgMatVecPrompt', {A:matrixText([[a11,a12],[a21,a22]]), v:vectorText([x0,y0])}),
+    promptText: t('linalgMatVecPrompt', {A:matrixHTML([[a11,a12],[a21,a22]]), v:vectorText([x0,y0])}),
     inputs: [{key:'x', label:'x'}, {key:'y', label:'y'}],
     check(vals){ return Number(vals.x)===rx && Number(vals.y)===ry; },
     explain: t('linalgMatVecExplain', {
@@ -9345,18 +9609,18 @@ function linalgProblemMatrixMultiplication(){
   const c11=a11*b11+a12*b21, c12=a11*b12+a12*b22;
   const c21=a21*b11+a22*b21, c22=a21*b12+a22*b22;
   return {
-    promptText: t('linalgMatrixMultPrompt', {A:matrixText([[a11,a12],[a21,a22]]), B:matrixText([[b11,b12],[b21,b22]])}),
+    promptText: t('linalgMatrixMultPrompt', {A:matrixHTML([[a11,a12],[a21,a22]]), B:matrixHTML([[b11,b12],[b21,b22]])}),
     inputs: [{key:'c11'},{key:'c12'},{key:'c21'},{key:'c22'}],
     matrixShape: [2,2],
     check(vals){ return Number(vals.c11)===c11 && Number(vals.c12)===c12 && Number(vals.c21)===c21 && Number(vals.c22)===c22; },
-    explain: t('linalgMatrixMultExplain', {C:matrixText([[c11,c12],[c21,c22]])}),
+    explain: t('linalgMatrixMultExplain', {C:matrixHTML([[c11,c12],[c21,c22]])}),
   };
 }
 function linalgProblemDet2(){
   const a=randInt(-9,9), b=randInt(-9,9), c=randInt(-9,9), d=randInt(-9,9);
   const answer=a*d-b*c;
   return {
-    promptText: t('linalgDet2Prompt', {A:matrixText([[a,b],[c,d]])}),
+    promptText: t('linalgDet2Prompt', {A:matrixHTML([[a,b],[c,d]])}),
     inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
     check(vals){ return Number(vals.ans)===answer; },
     explain: t('linalgDet2Explain', {ad:a*d, bc:b*c, answer}),
@@ -9368,7 +9632,7 @@ function linalgProblemDet3(){
   const t1=a*(e*i-f*h), t2=b*(d*i-f*g), t3=c*(d*h-e*g);
   const answer = t1 - t2 + t3;
   return {
-    promptText: t('linalgDet3Prompt', {A:matrixText(m)}),
+    promptText: t('linalgDet3Prompt', {A:matrixHTML(m)}),
     inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
     check(vals){ return Number(vals.ans)===answer; },
     explain: t('linalgDet3Explain', {
@@ -9382,7 +9646,7 @@ function linalgProblemTranspose(){
   const row = randInt(0,2), col = randInt(0,1);
   const answer = m[col][row];
   return {
-    promptText: t('linalgTransposePrompt', {A:matrixText(m), i:row+1, j:col+1}),
+    promptText: t('linalgTransposePrompt', {A:matrixHTML(m), i:row+1, j:col+1}),
     inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
     check(vals){ return Number(vals.ans)===answer; },
     explain: t('linalgTransposeExplain', {i:row+1, j:col+1, origI:col+1, origJ:row+1, answer}),
@@ -9396,11 +9660,11 @@ function linalgProblemInverse(){
   } while(Math.abs(det)!==1);
   const i11=d/det, i12=-b/det, i21=-c/det, i22=a/det;
   return {
-    promptText: t('linalgInversePrompt', {A:matrixText([[a,b],[c,d]])}),
+    promptText: t('linalgInversePrompt', {A:matrixHTML([[a,b],[c,d]])}),
     inputs: [{key:'c11'},{key:'c12'},{key:'c21'},{key:'c22'}],
     matrixShape: [2,2],
     check(vals){ return Number(vals.c11)===i11 && Number(vals.c12)===i12 && Number(vals.c21)===i21 && Number(vals.c22)===i22; },
-    explain: t('linalgInverseExplain', {det, C:matrixText([[i11,i12],[i21,i22]])}),
+    explain: t('linalgInverseExplain', {det, C:matrixHTML([[i11,i12],[i21,i22]])}),
   };
 }
 
@@ -9469,11 +9733,12 @@ function renderLinAlgLearn(){
 
 function startLinAlgPractice(topicKey){
   const topic = linalgTopicByKey(topicKey);
+  const problem = topic.build();
   state.linalgSession = {
-    topicKey,
-    current: topic.build(),
+    topicKey, problem, steps: normalizeSteps(problem),
+    stepIndex:0, stepInputs:{}, stepResults:[], anyWrong:false, pendingResult:null,
     correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
-    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+    combo:0, maxCombo:0, newAchievements:[]
   };
   state.screen = 'linalg_practice';
   render();
@@ -9485,28 +9750,84 @@ function focusLinAlgInput(){
 
 function renderLinAlgPractice(){
   const s = state.linalgSession;
-  const q = s.current;
+  const steps = s.steps;
+  const multiStep = steps.length > 1;
+  const stepIndex = s.stepIndex;
+  const curStep = steps[stepIndex];
+  const isLastStep = stepIndex === steps.length-1;
   const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
 
-  const inputBox = (inp) => `
+  const inputBox = (inp) => {
+    if(inp.fracInput){
+      const numVal = s.stepInputs[inp.key+'_num']||'', denVal = s.stepInputs[inp.key+'_den']||'';
+      return `
+      <div style="flex:1; max-width:110px;">
+        ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px; text-align:center;">${inp.label}</div>` : ''}
+        <div class="frac-input">
+          <input class="linalg-input algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${numVal}"
+            oninput="setFracInputPart(state.linalgSession,'${inp.key}','num',this.value)">
+          <div class="frac-input-bar"></div>
+          <input class="algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${denVal}"
+            oninput="setFracInputPart(state.linalgSession,'${inp.key}','den',this.value)">
+        </div>
+      </div>`;
+    }
+    return `
     <div style="flex:1;">
       ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
       <input class="linalg-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
         placeholder="${inp.placeholder||''}"
         style="text-align:center; font-size:20px; font-family:var(--font-display); font-weight:700; width:100%;"
-        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
-        oninput="state.linalgSession.inputs['${inp.key}']=this.value">
+        ${s.answered?'disabled':''} value="${(s.stepInputs[inp.key]||'')}"
+        oninput="state.linalgSession.stepInputs['${inp.key}']=this.value">
     </div>`;
+  };
 
-  const inputsHtml = q.matrixShape
-    ? `<div style="display:grid; grid-template-columns:repeat(${q.matrixShape[1]}, 1fr); gap:10px; max-width:240px; margin:0 auto;">${q.inputs.map(inputBox).join('')}</div>`
-    : `<div style="display:flex; gap:12px; align-items:flex-end;">${q.inputs.map(inputBox).join('')}</div>`;
+  const inputsHtml = curStep.matrixShape
+    ? `<div style="display:grid; grid-template-columns:repeat(${curStep.matrixShape[1]}, 1fr); gap:10px; max-width:240px; margin:0 auto;">${curStep.inputs.map(inputBox).join('')}</div>`
+    : `<div style="display:flex; gap:12px; align-items:flex-end; justify-content:center;">${curStep.inputs.map(inputBox).join('')}</div>`;
 
-  const feedback = s.answered ? `
+  const stepRowHtml = (r) => `
+    <div class="step-row done ${r.correct?'correct':'wrong'}">
+      <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+      <div class="step-values">${enhanceMath(r.valuesText)}</div>
+      <div class="step-explain">${enhanceMath(r.explain)}</div>
+    </div>`;
+  const doneRowsHtml = multiStep ? s.stepResults.map(stepRowHtml).join('') : '';
+
+  let activeStepHtml = '';
+  if(!(s.answered && isLastStep)){
+    if(!s.answered){
+      activeStepHtml = multiStep ? `
+        <div class="step-row active">
+          <div class="step-label">${t('stepLabel',{n:stepIndex+1, total:steps.length})}</div>
+          ${curStep.prompt ? `<div class="step-prompt">${enhanceMath(curStep.prompt)}</div>` : ''}
+          ${inputsHtml}
+          <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="submitLinAlgStep()">${t('checkBtn')}</button>
+        </div>` : `
+        ${inputsHtml}
+        <button class="btn btn-primary btn-block" onclick="submitLinAlgStep()">${t('checkBtn')}</button>`;
+    } else {
+      const r = s.pendingResult;
+      activeStepHtml = `
+        <div class="step-row done ${r.correct?'correct':'wrong'}">
+          <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+          <div class="step-values">${enhanceMath(r.valuesText)}</div>
+          <div class="step-explain">${enhanceMath(r.explain)}</div>
+          <button class="btn btn-light btn-block" style="margin-top:10px;" onclick="nextLinAlgStep()">${t('nextStepBtn')}</button>
+        </div>`;
+    }
+  }
+
+  const feedback = (s.answered && isLastStep) ? `
     <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
       <div class="fb-text">
         <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
-        <div class="fb-sub">${q.explain}</div>
+        ${!multiStep ? `<div class="fb-sub">${enhanceMath(curStep.explain)}</div>` : ''}
       </div>
       <button class="btn btn-light" onclick="nextLinAlgQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
     </div>` : '';
@@ -9521,34 +9842,57 @@ function renderLinAlgPractice(){
     <div class="q-wrap">
       <div class="q-card">
         <div class="q-eyebrow">${t('linalgTopicTitle_'+s.topicKey)}</div>
-        <div class="q-prompt" style="font-size:20px;">${q.promptText}</div>
+        <div class="q-prompt" style="font-size:20px;">${enhanceMath(s.problem.promptText)}</div>
       </div>
-      ${inputsHtml}
-      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitLinAlgAnswer()">${t('checkBtn')}</button>` : ''}
+      ${multiStep ? `<div class="step-list">${doneRowsHtml}${activeStepHtml}</div>` : activeStepHtml}
     </div>
   </div>
   ${feedback}
   `;
 }
 
-function submitLinAlgAnswer(){
+function submitLinAlgStep(){
   const s = state.linalgSession;
   if(!s || s.answered) return;
-  const q = s.current;
-  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
-  const correct = q.check(s.inputs);
-  s.answered = true; s.lastCorrect = correct;
-  if(correct) registerCorrectAnswer(s, state.game);
-  else registerWrongAnswer(s);
+  const steps = s.steps;
+  const step = steps[s.stepIndex];
+  for(const inp of step.inputs){ if(!s.stepInputs[inp.key]) return; }
+  const correct = step.check(s.stepInputs);
+  if(!correct) s.anyWrong = true;
+  const valuesText = step.inputs.map(inp=>s.stepInputs[inp.key]).join(', ');
+  const result = {prompt: step.prompt, valuesText, explain: step.explain, correct};
+  const isLastStep = s.stepIndex === steps.length-1;
+  if(isLastStep){
+    s.stepResults.push(result);
+    const problemCorrect = !s.anyWrong;
+    s.answered = true; s.lastCorrect = problemCorrect;
+    if(problemCorrect) registerCorrectAnswer(s, state.game);
+    else registerWrongAnswer(s);
+  } else {
+    s.pendingResult = result;
+    s.answered = true; s.lastCorrect = correct;
+  }
   render();
+}
+
+function nextLinAlgStep(){
+  const s = state.linalgSession;
+  s.stepResults.push(s.pendingResult);
+  s.pendingResult = null;
+  s.stepIndex += 1;
+  s.answered = false; s.lastCorrect = null; s.stepInputs = {};
+  render();
+  focusLinAlgInput();
 }
 
 function nextLinAlgQuestion(){
   const s = state.linalgSession;
   if(s.mistakes>=MATH_MAX_MISTAKES){ finishLinAlgPractice(); return; }
   const topic = linalgTopicByKey(s.topicKey);
-  s.answered=false; s.lastCorrect=null; s.inputs={};
-  s.current = topic.build();
+  const problem = topic.build();
+  s.problem = problem; s.steps = normalizeSteps(problem);
+  s.stepIndex=0; s.stepInputs={}; s.stepResults=[]; s.anyWrong=false; s.pendingResult=null;
+  s.answered=false; s.lastCorrect=null;
   render();
   focusLinAlgInput();
 }
@@ -9844,11 +10188,12 @@ function renderDiscLearn(){
 
 function startDiscPractice(topicKey){
   const topic = discTopicByKey(topicKey);
+  const problem = topic.build();
   state.discSession = {
-    topicKey,
-    current: topic.build(),
+    topicKey, problem, steps: normalizeSteps(problem),
+    stepIndex:0, stepInputs:{}, stepResults:[], anyWrong:false, pendingResult:null,
     correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
-    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+    combo:0, maxCombo:0, newAchievements:[]
   };
   state.screen = 'disc_practice';
   render();
@@ -9860,24 +10205,84 @@ function focusDiscInput(){
 
 function renderDiscPractice(){
   const s = state.discSession;
-  const q = s.current;
+  const steps = s.steps;
+  const multiStep = steps.length > 1;
+  const stepIndex = s.stepIndex;
+  const curStep = steps[stepIndex];
+  const isLastStep = stepIndex === steps.length-1;
   const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
 
-  const inputsHtml = q.inputs.map(inp=>`
+  const inputBox = (inp) => {
+    if(inp.fracInput){
+      const numVal = s.stepInputs[inp.key+'_num']||'', denVal = s.stepInputs[inp.key+'_den']||'';
+      return `
+      <div style="flex:1; max-width:110px;">
+        ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px; text-align:center;">${inp.label}</div>` : ''}
+        <div class="frac-input">
+          <input class="disc-input algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${numVal}"
+            oninput="setFracInputPart(state.discSession,'${inp.key}','num',this.value)">
+          <div class="frac-input-bar"></div>
+          <input class="algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${denVal}"
+            oninput="setFracInputPart(state.discSession,'${inp.key}','den',this.value)">
+        </div>
+      </div>`;
+    }
+    return `
     <div style="flex:1;">
       ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
       <input class="disc-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
         placeholder="${inp.placeholder||''}"
-        style="text-align:center; font-size:22px; font-family:var(--font-display); font-weight:700; width:100%;"
-        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
-        oninput="state.discSession.inputs['${inp.key}']=this.value">
-    </div>`).join('');
+        style="text-align:center; font-size:20px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.stepInputs[inp.key]||'')}"
+        oninput="state.discSession.stepInputs['${inp.key}']=this.value">
+    </div>`;
+  };
 
-  const feedback = s.answered ? `
+  const inputsHtml = curStep.matrixShape
+    ? `<div style="display:grid; grid-template-columns:repeat(${curStep.matrixShape[1]}, 1fr); gap:10px; max-width:240px; margin:0 auto;">${curStep.inputs.map(inputBox).join('')}</div>`
+    : `<div style="display:flex; gap:12px; align-items:flex-end; justify-content:center;">${curStep.inputs.map(inputBox).join('')}</div>`;
+
+  const stepRowHtml = (r) => `
+    <div class="step-row done ${r.correct?'correct':'wrong'}">
+      <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+      <div class="step-values">${enhanceMath(r.valuesText)}</div>
+      <div class="step-explain">${enhanceMath(r.explain)}</div>
+    </div>`;
+  const doneRowsHtml = multiStep ? s.stepResults.map(stepRowHtml).join('') : '';
+
+  let activeStepHtml = '';
+  if(!(s.answered && isLastStep)){
+    if(!s.answered){
+      activeStepHtml = multiStep ? `
+        <div class="step-row active">
+          <div class="step-label">${t('stepLabel',{n:stepIndex+1, total:steps.length})}</div>
+          ${curStep.prompt ? `<div class="step-prompt">${enhanceMath(curStep.prompt)}</div>` : ''}
+          ${inputsHtml}
+          <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="submitDiscStep()">${t('checkBtn')}</button>
+        </div>` : `
+        ${inputsHtml}
+        <button class="btn btn-primary btn-block" onclick="submitDiscStep()">${t('checkBtn')}</button>`;
+    } else {
+      const r = s.pendingResult;
+      activeStepHtml = `
+        <div class="step-row done ${r.correct?'correct':'wrong'}">
+          <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+          <div class="step-values">${enhanceMath(r.valuesText)}</div>
+          <div class="step-explain">${enhanceMath(r.explain)}</div>
+          <button class="btn btn-light btn-block" style="margin-top:10px;" onclick="nextDiscStep()">${t('nextStepBtn')}</button>
+        </div>`;
+    }
+  }
+
+  const feedback = (s.answered && isLastStep) ? `
     <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
       <div class="fb-text">
         <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
-        <div class="fb-sub">${q.explain}</div>
+        ${!multiStep ? `<div class="fb-sub">${enhanceMath(curStep.explain)}</div>` : ''}
       </div>
       <button class="btn btn-light" onclick="nextDiscQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
     </div>` : '';
@@ -9892,34 +10297,57 @@ function renderDiscPractice(){
     <div class="q-wrap">
       <div class="q-card">
         <div class="q-eyebrow">${t('discTopicTitle_'+s.topicKey)}</div>
-        <div class="q-prompt" style="font-size:22px;">${q.promptText}</div>
+        <div class="q-prompt" style="font-size:22px;">${enhanceMath(s.problem.promptText)}</div>
       </div>
-      <div style="display:flex; gap:12px; align-items:flex-end;">${inputsHtml}</div>
-      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitDiscAnswer()">${t('checkBtn')}</button>` : ''}
+      ${multiStep ? `<div class="step-list">${doneRowsHtml}${activeStepHtml}</div>` : activeStepHtml}
     </div>
   </div>
   ${feedback}
   `;
 }
 
-function submitDiscAnswer(){
+function submitDiscStep(){
   const s = state.discSession;
   if(!s || s.answered) return;
-  const q = s.current;
-  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
-  const correct = q.check(s.inputs);
-  s.answered = true; s.lastCorrect = correct;
-  if(correct) registerCorrectAnswer(s, state.game);
-  else registerWrongAnswer(s);
+  const steps = s.steps;
+  const step = steps[s.stepIndex];
+  for(const inp of step.inputs){ if(!s.stepInputs[inp.key]) return; }
+  const correct = step.check(s.stepInputs);
+  if(!correct) s.anyWrong = true;
+  const valuesText = step.inputs.map(inp=>s.stepInputs[inp.key]).join(', ');
+  const result = {prompt: step.prompt, valuesText, explain: step.explain, correct};
+  const isLastStep = s.stepIndex === steps.length-1;
+  if(isLastStep){
+    s.stepResults.push(result);
+    const problemCorrect = !s.anyWrong;
+    s.answered = true; s.lastCorrect = problemCorrect;
+    if(problemCorrect) registerCorrectAnswer(s, state.game);
+    else registerWrongAnswer(s);
+  } else {
+    s.pendingResult = result;
+    s.answered = true; s.lastCorrect = correct;
+  }
   render();
+}
+
+function nextDiscStep(){
+  const s = state.discSession;
+  s.stepResults.push(s.pendingResult);
+  s.pendingResult = null;
+  s.stepIndex += 1;
+  s.answered = false; s.lastCorrect = null; s.stepInputs = {};
+  render();
+  focusDiscInput();
 }
 
 function nextDiscQuestion(){
   const s = state.discSession;
   if(s.mistakes>=MATH_MAX_MISTAKES){ finishDiscPractice(); return; }
   const topic = discTopicByKey(s.topicKey);
-  s.answered=false; s.lastCorrect=null; s.inputs={};
-  s.current = topic.build();
+  const problem = topic.build();
+  s.problem = problem; s.steps = normalizeSteps(problem);
+  s.stepIndex=0; s.stepInputs={}; s.stepResults=[]; s.anyWrong=false; s.pendingResult=null;
+  s.answered=false; s.lastCorrect=null;
   render();
   focusDiscInput();
 }
@@ -9981,7 +10409,7 @@ function probProblemSimple(){
   const g = gcd(favorable,total); const rp=favorable/g, rq=total/g;
   return {
     promptText: t('probSimplePrompt', {favorable, other}),
-    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder'), fracInput:true}],
     check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
     explain: t('probSimpleExplain', {favorable, total, rp, rq}),
   };
@@ -9992,7 +10420,7 @@ function probProblemComplement(){
   const np = q-p; const g=gcd(np,q); const rp=np/g, rq=q/g;
   return {
     promptText: t('probComplementPrompt', {p, q}),
-    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder'), fracInput:true}],
     check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
     explain: t('probComplementExplain', {p, q, np, rp, rq}),
   };
@@ -10004,7 +10432,7 @@ function probProblemIndependentAnd(){
   const g = gcd(num,den); const rp=num/g, rq=den/g;
   return {
     promptText: t('probIndependentAndPrompt', {p1,q1,p2,q2}),
-    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder'), fracInput:true}],
     check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
     explain: t('probIndependentAndExplain', {p1,q1,p2,q2,num,den,rp,rq}),
   };
@@ -10019,7 +10447,7 @@ function probProblemMutuallyExclusiveOr(){
   const g = gcd(num,den); const rp=num/g, rq=den/g;
   return {
     promptText: t('probMutuallyExclusiveOrPrompt', {p1,q1,p2,q2}),
-    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder'), fracInput:true}],
     check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
     explain: t('probMutuallyExclusiveOrExplain', {p1,q1,p2,q2,num,den,rp,rq}),
   };
@@ -10031,7 +10459,7 @@ function probProblemConditional(){
   const g = gcd(a,b); const rp=a/g, rq=b/g;
   return {
     promptText: t('probConditionalPrompt', {a, q, b}),
-    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder'), fracInput:true}],
     check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
     explain: t('probConditionalExplain', {a, q, b, rp, rq}),
   };
@@ -10043,7 +10471,7 @@ function probProblemDiceSum(){
   const g = gcd(favorable,36); const rp=favorable/g, rq=36/g;
   return {
     promptText: t('probDiceSumPrompt', {target}),
-    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder'), fracInput:true}],
     check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
     explain: t('probDiceSumExplain', {favorable, target, rp, rq}),
   };
@@ -10054,7 +10482,7 @@ function probProblemCard(){
   const g = gcd(favorable,52); const rp=favorable/g, rq=52/g;
   return {
     promptText: t('probCardPrompt_'+key),
-    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder'), fracInput:true}],
     check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
     explain: t('probCardExplain', {favorable, rp, rq}),
   };
@@ -10067,7 +10495,7 @@ function probProblemCombinatorial(){
   const g = gcd(favorable,total); const rp=favorable/g, rq=total/g;
   return {
     promptText: t('probCombinatorialPrompt', {n, k, r}),
-    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder'), fracInput:true}],
     check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
     explain: t('probCombinatorialExplain', {k, r, n, favorable, total, rp, rq}),
   };
@@ -10093,7 +10521,7 @@ function probProblemBinomial(){
   const g = gcd(favorable,total); const rp=favorable/g, rq=total/g;
   return {
     promptText: t('probBinomialPrompt', {n, k}),
-    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder'), fracInput:true}],
     check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
     explain: t('probBinomialExplain', {n, k, favorable, total, rp, rq}),
   };
@@ -10104,7 +10532,7 @@ function probProblemOddsToProb(){
   const g = gcd(a,total); const rp=a/g, rq=total/g;
   return {
     promptText: t('probOddsToProbPrompt', {a, b}),
-    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder'), fracInput:true}],
     check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
     explain: t('probOddsToProbExplain', {a, b, total, rp, rq}),
   };
@@ -10129,7 +10557,7 @@ function probProblemAtLeastOne(){
   const g = gcd(num,den); const rp=num/g, rq=den/g;
   return {
     promptText: t('probAtLeastOnePrompt', {d, n}),
-    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder'), fracInput:true}],
     check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===rp && f.q===rq; },
     explain: t('probAtLeastOneExplain', {d, n, dm1:d-1, d1n, dn, num, rp, rq}),
   };
@@ -10200,11 +10628,12 @@ function renderProbLearn(){
 
 function startProbPractice(topicKey){
   const topic = probTopicByKey(topicKey);
+  const problem = topic.build();
   state.probSession = {
-    topicKey,
-    current: topic.build(),
+    topicKey, problem, steps: normalizeSteps(problem),
+    stepIndex:0, stepInputs:{}, stepResults:[], anyWrong:false, pendingResult:null,
     correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
-    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+    combo:0, maxCombo:0, newAchievements:[]
   };
   state.screen = 'prob_practice';
   render();
@@ -10216,24 +10645,84 @@ function focusProbInput(){
 
 function renderProbPractice(){
   const s = state.probSession;
-  const q = s.current;
+  const steps = s.steps;
+  const multiStep = steps.length > 1;
+  const stepIndex = s.stepIndex;
+  const curStep = steps[stepIndex];
+  const isLastStep = stepIndex === steps.length-1;
   const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
 
-  const inputsHtml = q.inputs.map(inp=>`
+  const inputBox = (inp) => {
+    if(inp.fracInput){
+      const numVal = s.stepInputs[inp.key+'_num']||'', denVal = s.stepInputs[inp.key+'_den']||'';
+      return `
+      <div style="flex:1; max-width:110px;">
+        ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px; text-align:center;">${inp.label}</div>` : ''}
+        <div class="frac-input">
+          <input class="prob-input algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${numVal}"
+            oninput="setFracInputPart(state.probSession,'${inp.key}','num',this.value)">
+          <div class="frac-input-bar"></div>
+          <input class="algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${denVal}"
+            oninput="setFracInputPart(state.probSession,'${inp.key}','den',this.value)">
+        </div>
+      </div>`;
+    }
+    return `
     <div style="flex:1;">
       ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
       <input class="prob-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
         placeholder="${inp.placeholder||''}"
-        style="text-align:center; font-size:22px; font-family:var(--font-display); font-weight:700; width:100%;"
-        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
-        oninput="state.probSession.inputs['${inp.key}']=this.value">
-    </div>`).join('');
+        style="text-align:center; font-size:20px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.stepInputs[inp.key]||'')}"
+        oninput="state.probSession.stepInputs['${inp.key}']=this.value">
+    </div>`;
+  };
 
-  const feedback = s.answered ? `
+  const inputsHtml = curStep.matrixShape
+    ? `<div style="display:grid; grid-template-columns:repeat(${curStep.matrixShape[1]}, 1fr); gap:10px; max-width:240px; margin:0 auto;">${curStep.inputs.map(inputBox).join('')}</div>`
+    : `<div style="display:flex; gap:12px; align-items:flex-end; justify-content:center;">${curStep.inputs.map(inputBox).join('')}</div>`;
+
+  const stepRowHtml = (r) => `
+    <div class="step-row done ${r.correct?'correct':'wrong'}">
+      <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+      <div class="step-values">${enhanceMath(r.valuesText)}</div>
+      <div class="step-explain">${enhanceMath(r.explain)}</div>
+    </div>`;
+  const doneRowsHtml = multiStep ? s.stepResults.map(stepRowHtml).join('') : '';
+
+  let activeStepHtml = '';
+  if(!(s.answered && isLastStep)){
+    if(!s.answered){
+      activeStepHtml = multiStep ? `
+        <div class="step-row active">
+          <div class="step-label">${t('stepLabel',{n:stepIndex+1, total:steps.length})}</div>
+          ${curStep.prompt ? `<div class="step-prompt">${enhanceMath(curStep.prompt)}</div>` : ''}
+          ${inputsHtml}
+          <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="submitProbStep()">${t('checkBtn')}</button>
+        </div>` : `
+        ${inputsHtml}
+        <button class="btn btn-primary btn-block" onclick="submitProbStep()">${t('checkBtn')}</button>`;
+    } else {
+      const r = s.pendingResult;
+      activeStepHtml = `
+        <div class="step-row done ${r.correct?'correct':'wrong'}">
+          <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+          <div class="step-values">${enhanceMath(r.valuesText)}</div>
+          <div class="step-explain">${enhanceMath(r.explain)}</div>
+          <button class="btn btn-light btn-block" style="margin-top:10px;" onclick="nextProbStep()">${t('nextStepBtn')}</button>
+        </div>`;
+    }
+  }
+
+  const feedback = (s.answered && isLastStep) ? `
     <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
       <div class="fb-text">
         <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
-        <div class="fb-sub">${q.explain}</div>
+        ${!multiStep ? `<div class="fb-sub">${enhanceMath(curStep.explain)}</div>` : ''}
       </div>
       <button class="btn btn-light" onclick="nextProbQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
     </div>` : '';
@@ -10248,34 +10737,57 @@ function renderProbPractice(){
     <div class="q-wrap">
       <div class="q-card">
         <div class="q-eyebrow">${t('probTopicTitle_'+s.topicKey)}</div>
-        <div class="q-prompt" style="font-size:22px;">${q.promptText}</div>
+        <div class="q-prompt" style="font-size:22px;">${enhanceMath(s.problem.promptText)}</div>
       </div>
-      <div style="display:flex; gap:12px; align-items:flex-end;">${inputsHtml}</div>
-      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitProbAnswer()">${t('checkBtn')}</button>` : ''}
+      ${multiStep ? `<div class="step-list">${doneRowsHtml}${activeStepHtml}</div>` : activeStepHtml}
     </div>
   </div>
   ${feedback}
   `;
 }
 
-function submitProbAnswer(){
+function submitProbStep(){
   const s = state.probSession;
   if(!s || s.answered) return;
-  const q = s.current;
-  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
-  const correct = q.check(s.inputs);
-  s.answered = true; s.lastCorrect = correct;
-  if(correct) registerCorrectAnswer(s, state.game);
-  else registerWrongAnswer(s);
+  const steps = s.steps;
+  const step = steps[s.stepIndex];
+  for(const inp of step.inputs){ if(!s.stepInputs[inp.key]) return; }
+  const correct = step.check(s.stepInputs);
+  if(!correct) s.anyWrong = true;
+  const valuesText = step.inputs.map(inp=>s.stepInputs[inp.key]).join(', ');
+  const result = {prompt: step.prompt, valuesText, explain: step.explain, correct};
+  const isLastStep = s.stepIndex === steps.length-1;
+  if(isLastStep){
+    s.stepResults.push(result);
+    const problemCorrect = !s.anyWrong;
+    s.answered = true; s.lastCorrect = problemCorrect;
+    if(problemCorrect) registerCorrectAnswer(s, state.game);
+    else registerWrongAnswer(s);
+  } else {
+    s.pendingResult = result;
+    s.answered = true; s.lastCorrect = correct;
+  }
   render();
+}
+
+function nextProbStep(){
+  const s = state.probSession;
+  s.stepResults.push(s.pendingResult);
+  s.pendingResult = null;
+  s.stepIndex += 1;
+  s.answered = false; s.lastCorrect = null; s.stepInputs = {};
+  render();
+  focusProbInput();
 }
 
 function nextProbQuestion(){
   const s = state.probSession;
   if(s.mistakes>=MATH_MAX_MISTAKES){ finishProbPractice(); return; }
   const topic = probTopicByKey(s.topicKey);
-  s.answered=false; s.lastCorrect=null; s.inputs={};
-  s.current = topic.build();
+  const problem = topic.build();
+  s.problem = problem; s.steps = normalizeSteps(problem);
+  s.stepIndex=0; s.stepInputs={}; s.stepResults=[]; s.anyWrong=false; s.pendingResult=null;
+  s.answered=false; s.lastCorrect=null;
   render();
   focusProbInput();
 }
@@ -10587,11 +11099,12 @@ function renderStatLearn(){
 
 function startStatPractice(topicKey){
   const topic = statTopicByKey(topicKey);
+  const problem = topic.build();
   state.statSession = {
-    topicKey,
-    current: topic.build(),
+    topicKey, problem, steps: normalizeSteps(problem),
+    stepIndex:0, stepInputs:{}, stepResults:[], anyWrong:false, pendingResult:null,
     correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
-    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+    combo:0, maxCombo:0, newAchievements:[]
   };
   state.screen = 'stat_practice';
   render();
@@ -10603,24 +11116,84 @@ function focusStatInput(){
 
 function renderStatPractice(){
   const s = state.statSession;
-  const q = s.current;
+  const steps = s.steps;
+  const multiStep = steps.length > 1;
+  const stepIndex = s.stepIndex;
+  const curStep = steps[stepIndex];
+  const isLastStep = stepIndex === steps.length-1;
   const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
 
-  const inputsHtml = q.inputs.map(inp=>`
+  const inputBox = (inp) => {
+    if(inp.fracInput){
+      const numVal = s.stepInputs[inp.key+'_num']||'', denVal = s.stepInputs[inp.key+'_den']||'';
+      return `
+      <div style="flex:1; max-width:110px;">
+        ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px; text-align:center;">${inp.label}</div>` : ''}
+        <div class="frac-input">
+          <input class="stat-input algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${numVal}"
+            oninput="setFracInputPart(state.statSession,'${inp.key}','num',this.value)">
+          <div class="frac-input-bar"></div>
+          <input class="algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${denVal}"
+            oninput="setFracInputPart(state.statSession,'${inp.key}','den',this.value)">
+        </div>
+      </div>`;
+    }
+    return `
     <div style="flex:1;">
       ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
       <input class="stat-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
         placeholder="${inp.placeholder||''}"
-        style="text-align:center; font-size:22px; font-family:var(--font-display); font-weight:700; width:100%;"
-        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
-        oninput="state.statSession.inputs['${inp.key}']=this.value">
-    </div>`).join('');
+        style="text-align:center; font-size:20px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.stepInputs[inp.key]||'')}"
+        oninput="state.statSession.stepInputs['${inp.key}']=this.value">
+    </div>`;
+  };
 
-  const feedback = s.answered ? `
+  const inputsHtml = curStep.matrixShape
+    ? `<div style="display:grid; grid-template-columns:repeat(${curStep.matrixShape[1]}, 1fr); gap:10px; max-width:240px; margin:0 auto;">${curStep.inputs.map(inputBox).join('')}</div>`
+    : `<div style="display:flex; gap:12px; align-items:flex-end; justify-content:center;">${curStep.inputs.map(inputBox).join('')}</div>`;
+
+  const stepRowHtml = (r) => `
+    <div class="step-row done ${r.correct?'correct':'wrong'}">
+      <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+      <div class="step-values">${enhanceMath(r.valuesText)}</div>
+      <div class="step-explain">${enhanceMath(r.explain)}</div>
+    </div>`;
+  const doneRowsHtml = multiStep ? s.stepResults.map(stepRowHtml).join('') : '';
+
+  let activeStepHtml = '';
+  if(!(s.answered && isLastStep)){
+    if(!s.answered){
+      activeStepHtml = multiStep ? `
+        <div class="step-row active">
+          <div class="step-label">${t('stepLabel',{n:stepIndex+1, total:steps.length})}</div>
+          ${curStep.prompt ? `<div class="step-prompt">${enhanceMath(curStep.prompt)}</div>` : ''}
+          ${inputsHtml}
+          <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="submitStatStep()">${t('checkBtn')}</button>
+        </div>` : `
+        ${inputsHtml}
+        <button class="btn btn-primary btn-block" onclick="submitStatStep()">${t('checkBtn')}</button>`;
+    } else {
+      const r = s.pendingResult;
+      activeStepHtml = `
+        <div class="step-row done ${r.correct?'correct':'wrong'}">
+          <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+          <div class="step-values">${enhanceMath(r.valuesText)}</div>
+          <div class="step-explain">${enhanceMath(r.explain)}</div>
+          <button class="btn btn-light btn-block" style="margin-top:10px;" onclick="nextStatStep()">${t('nextStepBtn')}</button>
+        </div>`;
+    }
+  }
+
+  const feedback = (s.answered && isLastStep) ? `
     <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
       <div class="fb-text">
         <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
-        <div class="fb-sub">${q.explain}</div>
+        ${!multiStep ? `<div class="fb-sub">${enhanceMath(curStep.explain)}</div>` : ''}
       </div>
       <button class="btn btn-light" onclick="nextStatQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
     </div>` : '';
@@ -10635,34 +11208,57 @@ function renderStatPractice(){
     <div class="q-wrap">
       <div class="q-card">
         <div class="q-eyebrow">${t('statTopicTitle_'+s.topicKey)}</div>
-        <div class="q-prompt" style="font-size:20px;">${q.promptText}</div>
+        <div class="q-prompt" style="font-size:20px;">${enhanceMath(s.problem.promptText)}</div>
       </div>
-      <div style="display:flex; gap:12px; align-items:flex-end;">${inputsHtml}</div>
-      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitStatAnswer()">${t('checkBtn')}</button>` : ''}
+      ${multiStep ? `<div class="step-list">${doneRowsHtml}${activeStepHtml}</div>` : activeStepHtml}
     </div>
   </div>
   ${feedback}
   `;
 }
 
-function submitStatAnswer(){
+function submitStatStep(){
   const s = state.statSession;
   if(!s || s.answered) return;
-  const q = s.current;
-  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
-  const correct = q.check(s.inputs);
-  s.answered = true; s.lastCorrect = correct;
-  if(correct) registerCorrectAnswer(s, state.game);
-  else registerWrongAnswer(s);
+  const steps = s.steps;
+  const step = steps[s.stepIndex];
+  for(const inp of step.inputs){ if(!s.stepInputs[inp.key]) return; }
+  const correct = step.check(s.stepInputs);
+  if(!correct) s.anyWrong = true;
+  const valuesText = step.inputs.map(inp=>s.stepInputs[inp.key]).join(', ');
+  const result = {prompt: step.prompt, valuesText, explain: step.explain, correct};
+  const isLastStep = s.stepIndex === steps.length-1;
+  if(isLastStep){
+    s.stepResults.push(result);
+    const problemCorrect = !s.anyWrong;
+    s.answered = true; s.lastCorrect = problemCorrect;
+    if(problemCorrect) registerCorrectAnswer(s, state.game);
+    else registerWrongAnswer(s);
+  } else {
+    s.pendingResult = result;
+    s.answered = true; s.lastCorrect = correct;
+  }
   render();
+}
+
+function nextStatStep(){
+  const s = state.statSession;
+  s.stepResults.push(s.pendingResult);
+  s.pendingResult = null;
+  s.stepIndex += 1;
+  s.answered = false; s.lastCorrect = null; s.stepInputs = {};
+  render();
+  focusStatInput();
 }
 
 function nextStatQuestion(){
   const s = state.statSession;
   if(s.mistakes>=MATH_MAX_MISTAKES){ finishStatPractice(); return; }
   const topic = statTopicByKey(s.topicKey);
-  s.answered=false; s.lastCorrect=null; s.inputs={};
-  s.current = topic.build();
+  const problem = topic.build();
+  s.problem = problem; s.steps = normalizeSteps(problem);
+  s.stepIndex=0; s.stepInputs={}; s.stepResults=[]; s.anyWrong=false; s.pendingResult=null;
+  s.answered=false; s.lastCorrect=null;
   render();
   focusStatInput();
 }
@@ -10911,11 +11507,12 @@ function renderGeomLearn(){
 
 function startGeomPractice(topicKey){
   const topic = geomTopicByKey(topicKey);
+  const problem = topic.build();
   state.geomSession = {
-    topicKey,
-    current: topic.build(),
+    topicKey, problem, steps: normalizeSteps(problem),
+    stepIndex:0, stepInputs:{}, stepResults:[], anyWrong:false, pendingResult:null,
     correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
-    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+    combo:0, maxCombo:0, newAchievements:[]
   };
   state.screen = 'geom_practice';
   render();
@@ -10927,24 +11524,84 @@ function focusGeomInput(){
 
 function renderGeomPractice(){
   const s = state.geomSession;
-  const q = s.current;
+  const steps = s.steps;
+  const multiStep = steps.length > 1;
+  const stepIndex = s.stepIndex;
+  const curStep = steps[stepIndex];
+  const isLastStep = stepIndex === steps.length-1;
   const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
 
-  const inputsHtml = q.inputs.map(inp=>`
+  const inputBox = (inp) => {
+    if(inp.fracInput){
+      const numVal = s.stepInputs[inp.key+'_num']||'', denVal = s.stepInputs[inp.key+'_den']||'';
+      return `
+      <div style="flex:1; max-width:110px;">
+        ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px; text-align:center;">${inp.label}</div>` : ''}
+        <div class="frac-input">
+          <input class="geom-input algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${numVal}"
+            oninput="setFracInputPart(state.geomSession,'${inp.key}','num',this.value)">
+          <div class="frac-input-bar"></div>
+          <input class="algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${denVal}"
+            oninput="setFracInputPart(state.geomSession,'${inp.key}','den',this.value)">
+        </div>
+      </div>`;
+    }
+    return `
     <div style="flex:1;">
       ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
       <input class="geom-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
         placeholder="${inp.placeholder||''}"
-        style="text-align:center; font-size:22px; font-family:var(--font-display); font-weight:700; width:100%;"
-        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
-        oninput="state.geomSession.inputs['${inp.key}']=this.value">
-    </div>`).join('');
+        style="text-align:center; font-size:20px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.stepInputs[inp.key]||'')}"
+        oninput="state.geomSession.stepInputs['${inp.key}']=this.value">
+    </div>`;
+  };
 
-  const feedback = s.answered ? `
+  const inputsHtml = curStep.matrixShape
+    ? `<div style="display:grid; grid-template-columns:repeat(${curStep.matrixShape[1]}, 1fr); gap:10px; max-width:240px; margin:0 auto;">${curStep.inputs.map(inputBox).join('')}</div>`
+    : `<div style="display:flex; gap:12px; align-items:flex-end; justify-content:center;">${curStep.inputs.map(inputBox).join('')}</div>`;
+
+  const stepRowHtml = (r) => `
+    <div class="step-row done ${r.correct?'correct':'wrong'}">
+      <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+      <div class="step-values">${enhanceMath(r.valuesText)}</div>
+      <div class="step-explain">${enhanceMath(r.explain)}</div>
+    </div>`;
+  const doneRowsHtml = multiStep ? s.stepResults.map(stepRowHtml).join('') : '';
+
+  let activeStepHtml = '';
+  if(!(s.answered && isLastStep)){
+    if(!s.answered){
+      activeStepHtml = multiStep ? `
+        <div class="step-row active">
+          <div class="step-label">${t('stepLabel',{n:stepIndex+1, total:steps.length})}</div>
+          ${curStep.prompt ? `<div class="step-prompt">${enhanceMath(curStep.prompt)}</div>` : ''}
+          ${inputsHtml}
+          <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="submitGeomStep()">${t('checkBtn')}</button>
+        </div>` : `
+        ${inputsHtml}
+        <button class="btn btn-primary btn-block" onclick="submitGeomStep()">${t('checkBtn')}</button>`;
+    } else {
+      const r = s.pendingResult;
+      activeStepHtml = `
+        <div class="step-row done ${r.correct?'correct':'wrong'}">
+          <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+          <div class="step-values">${enhanceMath(r.valuesText)}</div>
+          <div class="step-explain">${enhanceMath(r.explain)}</div>
+          <button class="btn btn-light btn-block" style="margin-top:10px;" onclick="nextGeomStep()">${t('nextStepBtn')}</button>
+        </div>`;
+    }
+  }
+
+  const feedback = (s.answered && isLastStep) ? `
     <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
       <div class="fb-text">
         <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
-        <div class="fb-sub">${q.explain}</div>
+        ${!multiStep ? `<div class="fb-sub">${enhanceMath(curStep.explain)}</div>` : ''}
       </div>
       <button class="btn btn-light" onclick="nextGeomQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
     </div>` : '';
@@ -10959,34 +11616,57 @@ function renderGeomPractice(){
     <div class="q-wrap">
       <div class="q-card">
         <div class="q-eyebrow">${t('geomTopicTitle_'+s.topicKey)}</div>
-        <div class="q-prompt" style="font-size:20px;">${q.promptText}</div>
+        <div class="q-prompt" style="font-size:20px;">${enhanceMath(s.problem.promptText)}</div>
       </div>
-      <div style="display:flex; gap:12px; align-items:flex-end;">${inputsHtml}</div>
-      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitGeomAnswer()">${t('checkBtn')}</button>` : ''}
+      ${multiStep ? `<div class="step-list">${doneRowsHtml}${activeStepHtml}</div>` : activeStepHtml}
     </div>
   </div>
   ${feedback}
   `;
 }
 
-function submitGeomAnswer(){
+function submitGeomStep(){
   const s = state.geomSession;
   if(!s || s.answered) return;
-  const q = s.current;
-  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
-  const correct = q.check(s.inputs);
-  s.answered = true; s.lastCorrect = correct;
-  if(correct) registerCorrectAnswer(s, state.game);
-  else registerWrongAnswer(s);
+  const steps = s.steps;
+  const step = steps[s.stepIndex];
+  for(const inp of step.inputs){ if(!s.stepInputs[inp.key]) return; }
+  const correct = step.check(s.stepInputs);
+  if(!correct) s.anyWrong = true;
+  const valuesText = step.inputs.map(inp=>s.stepInputs[inp.key]).join(', ');
+  const result = {prompt: step.prompt, valuesText, explain: step.explain, correct};
+  const isLastStep = s.stepIndex === steps.length-1;
+  if(isLastStep){
+    s.stepResults.push(result);
+    const problemCorrect = !s.anyWrong;
+    s.answered = true; s.lastCorrect = problemCorrect;
+    if(problemCorrect) registerCorrectAnswer(s, state.game);
+    else registerWrongAnswer(s);
+  } else {
+    s.pendingResult = result;
+    s.answered = true; s.lastCorrect = correct;
+  }
   render();
+}
+
+function nextGeomStep(){
+  const s = state.geomSession;
+  s.stepResults.push(s.pendingResult);
+  s.pendingResult = null;
+  s.stepIndex += 1;
+  s.answered = false; s.lastCorrect = null; s.stepInputs = {};
+  render();
+  focusGeomInput();
 }
 
 function nextGeomQuestion(){
   const s = state.geomSession;
   if(s.mistakes>=MATH_MAX_MISTAKES){ finishGeomPractice(); return; }
   const topic = geomTopicByKey(s.topicKey);
-  s.answered=false; s.lastCorrect=null; s.inputs={};
-  s.current = topic.build();
+  const problem = topic.build();
+  s.problem = problem; s.steps = normalizeSteps(problem);
+  s.stepIndex=0; s.stepInputs={}; s.stepResults=[]; s.anyWrong=false; s.pendingResult=null;
+  s.answered=false; s.lastCorrect=null;
   render();
   focusGeomInput();
 }
@@ -11109,7 +11789,7 @@ function trigProblemPythagIdentity(){
   const answer = giveSin ? b : a;
   return {
     promptText: t(giveSin?'trigPythagIdentitySinPrompt':'trigPythagIdentityCosPrompt', {given:givenVal, c}),
-    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder')}],
+    inputs: [{key:'ans', placeholder:t('probFractionAnswerPlaceholder'), fracInput:true}],
     check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===answer && f.q===c; },
     explain: t('trigPythagIdentityExplain', {given:givenVal, c, givenSq:givenVal*givenVal, cSq:c*c, diff:c*c-givenVal*givenVal, answer}),
   };
@@ -11203,7 +11883,7 @@ function trigProblemAmplitudePeriod(){
     promptText: t('trigAmplitudePeriodPrompt', {A, B}),
     inputs: [
       {key:'amp', label:t('trigAmplitudeLabel'), placeholder:t('algNumericAnswerPlaceholder')},
-      {key:'period', label:t('trigPeriodLabel'), placeholder:t('probFractionAnswerPlaceholder')},
+      {key:'period', label:t('trigPeriodLabel'), placeholder:t('probFractionAnswerPlaceholder'), fracInput:true},
     ],
     check(vals){ const f=parseFraction(vals.period); return Number(vals.amp)===amplitude && !!f && f.p===pc_p && f.q===pc_q; },
     explain: t('trigAmplitudePeriodExplain', {amplitude, periodText:piFracText(pc_p,pc_q)}),
@@ -11301,11 +11981,12 @@ function renderTrigLearn(){
 
 function startTrigPractice(topicKey){
   const topic = trigTopicByKey(topicKey);
+  const problem = topic.build();
   state.trigSession = {
-    topicKey,
-    current: topic.build(),
+    topicKey, problem, steps: normalizeSteps(problem),
+    stepIndex:0, stepInputs:{}, stepResults:[], anyWrong:false, pendingResult:null,
     correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
-    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+    combo:0, maxCombo:0, newAchievements:[]
   };
   state.screen = 'trig_practice';
   render();
@@ -11317,24 +11998,84 @@ function focusTrigInput(){
 
 function renderTrigPractice(){
   const s = state.trigSession;
-  const q = s.current;
+  const steps = s.steps;
+  const multiStep = steps.length > 1;
+  const stepIndex = s.stepIndex;
+  const curStep = steps[stepIndex];
+  const isLastStep = stepIndex === steps.length-1;
   const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
 
-  const inputsHtml = q.inputs.map(inp=>`
+  const inputBox = (inp) => {
+    if(inp.fracInput){
+      const numVal = s.stepInputs[inp.key+'_num']||'', denVal = s.stepInputs[inp.key+'_den']||'';
+      return `
+      <div style="flex:1; max-width:110px;">
+        ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px; text-align:center;">${inp.label}</div>` : ''}
+        <div class="frac-input">
+          <input class="trig-input algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${numVal}"
+            oninput="setFracInputPart(state.trigSession,'${inp.key}','num',this.value)">
+          <div class="frac-input-bar"></div>
+          <input class="algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${denVal}"
+            oninput="setFracInputPart(state.trigSession,'${inp.key}','den',this.value)">
+        </div>
+      </div>`;
+    }
+    return `
     <div style="flex:1;">
       ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
       <input class="trig-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
         placeholder="${inp.placeholder||''}"
-        style="text-align:center; font-size:22px; font-family:var(--font-display); font-weight:700; width:100%;"
-        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
-        oninput="state.trigSession.inputs['${inp.key}']=this.value">
-    </div>`).join('');
+        style="text-align:center; font-size:20px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.stepInputs[inp.key]||'')}"
+        oninput="state.trigSession.stepInputs['${inp.key}']=this.value">
+    </div>`;
+  };
 
-  const feedback = s.answered ? `
+  const inputsHtml = curStep.matrixShape
+    ? `<div style="display:grid; grid-template-columns:repeat(${curStep.matrixShape[1]}, 1fr); gap:10px; max-width:240px; margin:0 auto;">${curStep.inputs.map(inputBox).join('')}</div>`
+    : `<div style="display:flex; gap:12px; align-items:flex-end; justify-content:center;">${curStep.inputs.map(inputBox).join('')}</div>`;
+
+  const stepRowHtml = (r) => `
+    <div class="step-row done ${r.correct?'correct':'wrong'}">
+      <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+      <div class="step-values">${enhanceMath(r.valuesText)}</div>
+      <div class="step-explain">${enhanceMath(r.explain)}</div>
+    </div>`;
+  const doneRowsHtml = multiStep ? s.stepResults.map(stepRowHtml).join('') : '';
+
+  let activeStepHtml = '';
+  if(!(s.answered && isLastStep)){
+    if(!s.answered){
+      activeStepHtml = multiStep ? `
+        <div class="step-row active">
+          <div class="step-label">${t('stepLabel',{n:stepIndex+1, total:steps.length})}</div>
+          ${curStep.prompt ? `<div class="step-prompt">${enhanceMath(curStep.prompt)}</div>` : ''}
+          ${inputsHtml}
+          <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="submitTrigStep()">${t('checkBtn')}</button>
+        </div>` : `
+        ${inputsHtml}
+        <button class="btn btn-primary btn-block" onclick="submitTrigStep()">${t('checkBtn')}</button>`;
+    } else {
+      const r = s.pendingResult;
+      activeStepHtml = `
+        <div class="step-row done ${r.correct?'correct':'wrong'}">
+          <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+          <div class="step-values">${enhanceMath(r.valuesText)}</div>
+          <div class="step-explain">${enhanceMath(r.explain)}</div>
+          <button class="btn btn-light btn-block" style="margin-top:10px;" onclick="nextTrigStep()">${t('nextStepBtn')}</button>
+        </div>`;
+    }
+  }
+
+  const feedback = (s.answered && isLastStep) ? `
     <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
       <div class="fb-text">
         <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
-        <div class="fb-sub">${q.explain}</div>
+        ${!multiStep ? `<div class="fb-sub">${enhanceMath(curStep.explain)}</div>` : ''}
       </div>
       <button class="btn btn-light" onclick="nextTrigQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
     </div>` : '';
@@ -11349,34 +12090,57 @@ function renderTrigPractice(){
     <div class="q-wrap">
       <div class="q-card">
         <div class="q-eyebrow">${t('trigTopicTitle_'+s.topicKey)}</div>
-        <div class="q-prompt" style="font-size:20px;">${q.promptText}</div>
+        <div class="q-prompt" style="font-size:20px;">${enhanceMath(s.problem.promptText)}</div>
       </div>
-      <div style="display:flex; gap:12px; align-items:flex-end;">${inputsHtml}</div>
-      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitTrigAnswer()">${t('checkBtn')}</button>` : ''}
+      ${multiStep ? `<div class="step-list">${doneRowsHtml}${activeStepHtml}</div>` : activeStepHtml}
     </div>
   </div>
   ${feedback}
   `;
 }
 
-function submitTrigAnswer(){
+function submitTrigStep(){
   const s = state.trigSession;
   if(!s || s.answered) return;
-  const q = s.current;
-  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
-  const correct = q.check(s.inputs);
-  s.answered = true; s.lastCorrect = correct;
-  if(correct) registerCorrectAnswer(s, state.game);
-  else registerWrongAnswer(s);
+  const steps = s.steps;
+  const step = steps[s.stepIndex];
+  for(const inp of step.inputs){ if(!s.stepInputs[inp.key]) return; }
+  const correct = step.check(s.stepInputs);
+  if(!correct) s.anyWrong = true;
+  const valuesText = step.inputs.map(inp=>s.stepInputs[inp.key]).join(', ');
+  const result = {prompt: step.prompt, valuesText, explain: step.explain, correct};
+  const isLastStep = s.stepIndex === steps.length-1;
+  if(isLastStep){
+    s.stepResults.push(result);
+    const problemCorrect = !s.anyWrong;
+    s.answered = true; s.lastCorrect = problemCorrect;
+    if(problemCorrect) registerCorrectAnswer(s, state.game);
+    else registerWrongAnswer(s);
+  } else {
+    s.pendingResult = result;
+    s.answered = true; s.lastCorrect = correct;
+  }
   render();
+}
+
+function nextTrigStep(){
+  const s = state.trigSession;
+  s.stepResults.push(s.pendingResult);
+  s.pendingResult = null;
+  s.stepIndex += 1;
+  s.answered = false; s.lastCorrect = null; s.stepInputs = {};
+  render();
+  focusTrigInput();
 }
 
 function nextTrigQuestion(){
   const s = state.trigSession;
   if(s.mistakes>=MATH_MAX_MISTAKES){ finishTrigPractice(); return; }
   const topic = trigTopicByKey(s.topicKey);
-  s.answered=false; s.lastCorrect=null; s.inputs={};
-  s.current = topic.build();
+  const problem = topic.build();
+  s.problem = problem; s.steps = normalizeSteps(problem);
+  s.stepIndex=0; s.stepInputs={}; s.stepResults=[]; s.anyWrong=false; s.pendingResult=null;
+  s.answered=false; s.lastCorrect=null;
   render();
   focusTrigInput();
 }
@@ -11653,11 +12417,12 @@ function renderCplxLearn(){
 
 function startCplxPractice(topicKey){
   const topic = cplxTopicByKey(topicKey);
+  const problem = topic.build();
   state.cplxSession = {
-    topicKey,
-    current: topic.build(),
+    topicKey, problem, steps: normalizeSteps(problem),
+    stepIndex:0, stepInputs:{}, stepResults:[], anyWrong:false, pendingResult:null,
     correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
-    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+    combo:0, maxCombo:0, newAchievements:[]
   };
   state.screen = 'cplx_practice';
   render();
@@ -11669,24 +12434,84 @@ function focusCplxInput(){
 
 function renderCplxPractice(){
   const s = state.cplxSession;
-  const q = s.current;
+  const steps = s.steps;
+  const multiStep = steps.length > 1;
+  const stepIndex = s.stepIndex;
+  const curStep = steps[stepIndex];
+  const isLastStep = stepIndex === steps.length-1;
   const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
 
-  const inputsHtml = q.inputs.map(inp=>`
+  const inputBox = (inp) => {
+    if(inp.fracInput){
+      const numVal = s.stepInputs[inp.key+'_num']||'', denVal = s.stepInputs[inp.key+'_den']||'';
+      return `
+      <div style="flex:1; max-width:110px;">
+        ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px; text-align:center;">${inp.label}</div>` : ''}
+        <div class="frac-input">
+          <input class="cplx-input algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${numVal}"
+            oninput="setFracInputPart(state.cplxSession,'${inp.key}','num',this.value)">
+          <div class="frac-input-bar"></div>
+          <input class="algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${denVal}"
+            oninput="setFracInputPart(state.cplxSession,'${inp.key}','den',this.value)">
+        </div>
+      </div>`;
+    }
+    return `
     <div style="flex:1;">
       ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
       <input class="cplx-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
         placeholder="${inp.placeholder||''}"
-        style="text-align:center; font-size:22px; font-family:var(--font-display); font-weight:700; width:100%;"
-        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
-        oninput="state.cplxSession.inputs['${inp.key}']=this.value">
-    </div>`).join('');
+        style="text-align:center; font-size:20px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.stepInputs[inp.key]||'')}"
+        oninput="state.cplxSession.stepInputs['${inp.key}']=this.value">
+    </div>`;
+  };
 
-  const feedback = s.answered ? `
+  const inputsHtml = curStep.matrixShape
+    ? `<div style="display:grid; grid-template-columns:repeat(${curStep.matrixShape[1]}, 1fr); gap:10px; max-width:240px; margin:0 auto;">${curStep.inputs.map(inputBox).join('')}</div>`
+    : `<div style="display:flex; gap:12px; align-items:flex-end; justify-content:center;">${curStep.inputs.map(inputBox).join('')}</div>`;
+
+  const stepRowHtml = (r) => `
+    <div class="step-row done ${r.correct?'correct':'wrong'}">
+      <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+      <div class="step-values">${enhanceMath(r.valuesText)}</div>
+      <div class="step-explain">${enhanceMath(r.explain)}</div>
+    </div>`;
+  const doneRowsHtml = multiStep ? s.stepResults.map(stepRowHtml).join('') : '';
+
+  let activeStepHtml = '';
+  if(!(s.answered && isLastStep)){
+    if(!s.answered){
+      activeStepHtml = multiStep ? `
+        <div class="step-row active">
+          <div class="step-label">${t('stepLabel',{n:stepIndex+1, total:steps.length})}</div>
+          ${curStep.prompt ? `<div class="step-prompt">${enhanceMath(curStep.prompt)}</div>` : ''}
+          ${inputsHtml}
+          <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="submitCplxStep()">${t('checkBtn')}</button>
+        </div>` : `
+        ${inputsHtml}
+        <button class="btn btn-primary btn-block" onclick="submitCplxStep()">${t('checkBtn')}</button>`;
+    } else {
+      const r = s.pendingResult;
+      activeStepHtml = `
+        <div class="step-row done ${r.correct?'correct':'wrong'}">
+          <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+          <div class="step-values">${enhanceMath(r.valuesText)}</div>
+          <div class="step-explain">${enhanceMath(r.explain)}</div>
+          <button class="btn btn-light btn-block" style="margin-top:10px;" onclick="nextCplxStep()">${t('nextStepBtn')}</button>
+        </div>`;
+    }
+  }
+
+  const feedback = (s.answered && isLastStep) ? `
     <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
       <div class="fb-text">
         <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
-        <div class="fb-sub">${q.explain}</div>
+        ${!multiStep ? `<div class="fb-sub">${enhanceMath(curStep.explain)}</div>` : ''}
       </div>
       <button class="btn btn-light" onclick="nextCplxQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
     </div>` : '';
@@ -11701,34 +12526,57 @@ function renderCplxPractice(){
     <div class="q-wrap">
       <div class="q-card">
         <div class="q-eyebrow">${t('cplxTopicTitle_'+s.topicKey)}</div>
-        <div class="q-prompt" style="font-size:20px;">${q.promptText}</div>
+        <div class="q-prompt" style="font-size:20px;">${enhanceMath(s.problem.promptText)}</div>
       </div>
-      <div style="display:flex; gap:12px; align-items:flex-end;">${inputsHtml}</div>
-      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitCplxAnswer()">${t('checkBtn')}</button>` : ''}
+      ${multiStep ? `<div class="step-list">${doneRowsHtml}${activeStepHtml}</div>` : activeStepHtml}
     </div>
   </div>
   ${feedback}
   `;
 }
 
-function submitCplxAnswer(){
+function submitCplxStep(){
   const s = state.cplxSession;
   if(!s || s.answered) return;
-  const q = s.current;
-  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
-  const correct = q.check(s.inputs);
-  s.answered = true; s.lastCorrect = correct;
-  if(correct) registerCorrectAnswer(s, state.game);
-  else registerWrongAnswer(s);
+  const steps = s.steps;
+  const step = steps[s.stepIndex];
+  for(const inp of step.inputs){ if(!s.stepInputs[inp.key]) return; }
+  const correct = step.check(s.stepInputs);
+  if(!correct) s.anyWrong = true;
+  const valuesText = step.inputs.map(inp=>s.stepInputs[inp.key]).join(', ');
+  const result = {prompt: step.prompt, valuesText, explain: step.explain, correct};
+  const isLastStep = s.stepIndex === steps.length-1;
+  if(isLastStep){
+    s.stepResults.push(result);
+    const problemCorrect = !s.anyWrong;
+    s.answered = true; s.lastCorrect = problemCorrect;
+    if(problemCorrect) registerCorrectAnswer(s, state.game);
+    else registerWrongAnswer(s);
+  } else {
+    s.pendingResult = result;
+    s.answered = true; s.lastCorrect = correct;
+  }
   render();
+}
+
+function nextCplxStep(){
+  const s = state.cplxSession;
+  s.stepResults.push(s.pendingResult);
+  s.pendingResult = null;
+  s.stepIndex += 1;
+  s.answered = false; s.lastCorrect = null; s.stepInputs = {};
+  render();
+  focusCplxInput();
 }
 
 function nextCplxQuestion(){
   const s = state.cplxSession;
   if(s.mistakes>=MATH_MAX_MISTAKES){ finishCplxPractice(); return; }
   const topic = cplxTopicByKey(s.topicKey);
-  s.answered=false; s.lastCorrect=null; s.inputs={};
-  s.current = topic.build();
+  const problem = topic.build();
+  s.problem = problem; s.steps = normalizeSteps(problem);
+  s.stepIndex=0; s.stepInputs={}; s.stepResults=[]; s.anyWrong=false; s.pendingResult=null;
+  s.answered=false; s.lastCorrect=null;
   render();
   focusCplxInput();
 }
@@ -11994,11 +12842,12 @@ function renderSeqLearn(){
 
 function startSeqPractice(topicKey){
   const topic = seqTopicByKey(topicKey);
+  const problem = topic.build();
   state.seqSession = {
-    topicKey,
-    current: topic.build(),
+    topicKey, problem, steps: normalizeSteps(problem),
+    stepIndex:0, stepInputs:{}, stepResults:[], anyWrong:false, pendingResult:null,
     correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
-    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+    combo:0, maxCombo:0, newAchievements:[]
   };
   state.screen = 'seq_practice';
   render();
@@ -12010,24 +12859,84 @@ function focusSeqInput(){
 
 function renderSeqPractice(){
   const s = state.seqSession;
-  const q = s.current;
+  const steps = s.steps;
+  const multiStep = steps.length > 1;
+  const stepIndex = s.stepIndex;
+  const curStep = steps[stepIndex];
+  const isLastStep = stepIndex === steps.length-1;
   const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
 
-  const inputsHtml = q.inputs.map(inp=>`
+  const inputBox = (inp) => {
+    if(inp.fracInput){
+      const numVal = s.stepInputs[inp.key+'_num']||'', denVal = s.stepInputs[inp.key+'_den']||'';
+      return `
+      <div style="flex:1; max-width:110px;">
+        ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px; text-align:center;">${inp.label}</div>` : ''}
+        <div class="frac-input">
+          <input class="seq-input algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${numVal}"
+            oninput="setFracInputPart(state.seqSession,'${inp.key}','num',this.value)">
+          <div class="frac-input-bar"></div>
+          <input class="algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${denVal}"
+            oninput="setFracInputPart(state.seqSession,'${inp.key}','den',this.value)">
+        </div>
+      </div>`;
+    }
+    return `
     <div style="flex:1;">
       ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
       <input class="seq-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
         placeholder="${inp.placeholder||''}"
-        style="text-align:center; font-size:22px; font-family:var(--font-display); font-weight:700; width:100%;"
-        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
-        oninput="state.seqSession.inputs['${inp.key}']=this.value">
-    </div>`).join('');
+        style="text-align:center; font-size:20px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.stepInputs[inp.key]||'')}"
+        oninput="state.seqSession.stepInputs['${inp.key}']=this.value">
+    </div>`;
+  };
 
-  const feedback = s.answered ? `
+  const inputsHtml = curStep.matrixShape
+    ? `<div style="display:grid; grid-template-columns:repeat(${curStep.matrixShape[1]}, 1fr); gap:10px; max-width:240px; margin:0 auto;">${curStep.inputs.map(inputBox).join('')}</div>`
+    : `<div style="display:flex; gap:12px; align-items:flex-end; justify-content:center;">${curStep.inputs.map(inputBox).join('')}</div>`;
+
+  const stepRowHtml = (r) => `
+    <div class="step-row done ${r.correct?'correct':'wrong'}">
+      <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+      <div class="step-values">${enhanceMath(r.valuesText)}</div>
+      <div class="step-explain">${enhanceMath(r.explain)}</div>
+    </div>`;
+  const doneRowsHtml = multiStep ? s.stepResults.map(stepRowHtml).join('') : '';
+
+  let activeStepHtml = '';
+  if(!(s.answered && isLastStep)){
+    if(!s.answered){
+      activeStepHtml = multiStep ? `
+        <div class="step-row active">
+          <div class="step-label">${t('stepLabel',{n:stepIndex+1, total:steps.length})}</div>
+          ${curStep.prompt ? `<div class="step-prompt">${enhanceMath(curStep.prompt)}</div>` : ''}
+          ${inputsHtml}
+          <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="submitSeqStep()">${t('checkBtn')}</button>
+        </div>` : `
+        ${inputsHtml}
+        <button class="btn btn-primary btn-block" onclick="submitSeqStep()">${t('checkBtn')}</button>`;
+    } else {
+      const r = s.pendingResult;
+      activeStepHtml = `
+        <div class="step-row done ${r.correct?'correct':'wrong'}">
+          <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+          <div class="step-values">${enhanceMath(r.valuesText)}</div>
+          <div class="step-explain">${enhanceMath(r.explain)}</div>
+          <button class="btn btn-light btn-block" style="margin-top:10px;" onclick="nextSeqStep()">${t('nextStepBtn')}</button>
+        </div>`;
+    }
+  }
+
+  const feedback = (s.answered && isLastStep) ? `
     <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
       <div class="fb-text">
         <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
-        <div class="fb-sub">${q.explain}</div>
+        ${!multiStep ? `<div class="fb-sub">${enhanceMath(curStep.explain)}</div>` : ''}
       </div>
       <button class="btn btn-light" onclick="nextSeqQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
     </div>` : '';
@@ -12042,34 +12951,57 @@ function renderSeqPractice(){
     <div class="q-wrap">
       <div class="q-card">
         <div class="q-eyebrow">${t('seqTopicTitle_'+s.topicKey)}</div>
-        <div class="q-prompt" style="font-size:20px;">${q.promptText}</div>
+        <div class="q-prompt" style="font-size:20px;">${enhanceMath(s.problem.promptText)}</div>
       </div>
-      <div style="display:flex; gap:12px; align-items:flex-end;">${inputsHtml}</div>
-      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitSeqAnswer()">${t('checkBtn')}</button>` : ''}
+      ${multiStep ? `<div class="step-list">${doneRowsHtml}${activeStepHtml}</div>` : activeStepHtml}
     </div>
   </div>
   ${feedback}
   `;
 }
 
-function submitSeqAnswer(){
+function submitSeqStep(){
   const s = state.seqSession;
   if(!s || s.answered) return;
-  const q = s.current;
-  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
-  const correct = q.check(s.inputs);
-  s.answered = true; s.lastCorrect = correct;
-  if(correct) registerCorrectAnswer(s, state.game);
-  else registerWrongAnswer(s);
+  const steps = s.steps;
+  const step = steps[s.stepIndex];
+  for(const inp of step.inputs){ if(!s.stepInputs[inp.key]) return; }
+  const correct = step.check(s.stepInputs);
+  if(!correct) s.anyWrong = true;
+  const valuesText = step.inputs.map(inp=>s.stepInputs[inp.key]).join(', ');
+  const result = {prompt: step.prompt, valuesText, explain: step.explain, correct};
+  const isLastStep = s.stepIndex === steps.length-1;
+  if(isLastStep){
+    s.stepResults.push(result);
+    const problemCorrect = !s.anyWrong;
+    s.answered = true; s.lastCorrect = problemCorrect;
+    if(problemCorrect) registerCorrectAnswer(s, state.game);
+    else registerWrongAnswer(s);
+  } else {
+    s.pendingResult = result;
+    s.answered = true; s.lastCorrect = correct;
+  }
   render();
+}
+
+function nextSeqStep(){
+  const s = state.seqSession;
+  s.stepResults.push(s.pendingResult);
+  s.pendingResult = null;
+  s.stepIndex += 1;
+  s.answered = false; s.lastCorrect = null; s.stepInputs = {};
+  render();
+  focusSeqInput();
 }
 
 function nextSeqQuestion(){
   const s = state.seqSession;
   if(s.mistakes>=MATH_MAX_MISTAKES){ finishSeqPractice(); return; }
   const topic = seqTopicByKey(s.topicKey);
-  s.answered=false; s.lastCorrect=null; s.inputs={};
-  s.current = topic.build();
+  const problem = topic.build();
+  s.problem = problem; s.steps = normalizeSteps(problem);
+  s.stepIndex=0; s.stepInputs={}; s.stepResults=[]; s.anyWrong=false; s.pendingResult=null;
+  s.answered=false; s.lastCorrect=null;
   render();
   focusSeqInput();
 }
@@ -12130,20 +13062,37 @@ function matProblemCramersRule(){
       eq1:`${leadTerm(a,'x')}${signedCoeffTerm(b,'y')} = ${e}`,
       eq2:`${leadTerm(c,'x')}${signedCoeffTerm(d,'y')} = ${f}`,
     }),
-    inputs: [{key:'x',label:'x'},{key:'y',label:'y'}],
-    check(vals){ return Number(vals.x)===x0 && Number(vals.y)===y0; },
-    explain: t('matCramersExplain', {D, Dx, Dy, x0, y0}),
+    steps: [
+      {
+        prompt: t('matCramersStep1Prompt'),
+        inputs: [{key:'D', placeholder:t('algNumericAnswerPlaceholder')}],
+        check(vals){ return Number(vals.D)===D; },
+        explain: t('matCramersStep1Explain', {a, d, b, c, ad:a*d, bc:b*c, D}),
+      },
+      {
+        prompt: t('matCramersStep2Prompt'),
+        inputs: [{key:'Dx',label:'Dx'},{key:'Dy',label:'Dy'}],
+        check(vals){ return Number(vals.Dx)===Dx && Number(vals.Dy)===Dy; },
+        explain: t('matCramersStep2Explain', {e, d, b, f, Dx, a, c, Dy}),
+      },
+      {
+        prompt: t('matCramersStep3Prompt'),
+        inputs: [{key:'x',label:'x'},{key:'y',label:'y'}],
+        check(vals){ return Number(vals.x)===x0 && Number(vals.y)===y0; },
+        explain: t('matCramersStep3Explain', {Dx, D, x0, Dy, y0}),
+      },
+    ],
   };
 }
 function matProblemPower(){
   const a=randInt(-5,5), b=randInt(-5,5), c=randInt(-5,5), d=randInt(-5,5);
   const c11=a*a+b*c, c12=a*b+b*d, c21=c*a+d*c, c22=c*b+d*d;
   return {
-    promptText: t('matPowerPrompt', {A:matrixText([[a,b],[c,d]])}),
+    promptText: t('matPowerPrompt', {A:matrixHTML([[a,b],[c,d]])}),
     inputs: [{key:'c11'},{key:'c12'},{key:'c21'},{key:'c22'}],
     matrixShape: [2,2],
     check(vals){ return Number(vals.c11)===c11 && Number(vals.c12)===c12 && Number(vals.c21)===c21 && Number(vals.c22)===c22; },
-    explain: t('matPowerExplain', {C:matrixText([[c11,c12],[c21,c22]])}),
+    explain: t('matPowerExplain', {C:matrixHTML([[c11,c12],[c21,c22]])}),
   };
 }
 function matProblemRank(){
@@ -12159,7 +13108,7 @@ function matProblemRank(){
     A=[[a,b],[c,d]]; rank=2;
   }
   return {
-    promptText: t('matRankPrompt', {A:matrixText(A)}),
+    promptText: t('matRankPrompt', {A:matrixHTML(A)}),
     inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
     check(vals){ return Number(vals.ans)===rank; },
     explain: t('matRankExplain', {rank}),
@@ -12171,7 +13120,7 @@ function matProblemTrace(){
     const m = Array.from({length:3},()=>Array.from({length:3},()=>randInt(-9,9)));
     const trace = m[0][0]+m[1][1]+m[2][2];
     return {
-      promptText: t('matTracePrompt', {A:matrixText(m)}),
+      promptText: t('matTracePrompt', {A:matrixHTML(m)}),
       inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
       check(vals){ return Number(vals.ans)===trace; },
       explain: t('matTrace3Explain', {d1:m[0][0], d2:m[1][1], d3:m[2][2], answer:trace}),
@@ -12180,7 +13129,7 @@ function matProblemTrace(){
   const a=randInt(-9,9), b=randInt(-9,9), c=randInt(-9,9), d=randInt(-9,9);
   const trace=a+d;
   return {
-    promptText: t('matTracePrompt', {A:matrixText([[a,b],[c,d]])}),
+    promptText: t('matTracePrompt', {A:matrixHTML([[a,b],[c,d]])}),
     inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
     check(vals){ return Number(vals.ans)===trace; },
     explain: t('matTrace2Explain', {a, d, answer:trace}),
@@ -12190,12 +13139,24 @@ function matProblemEigenvalues(){
   const [leg1,leg2,h] = LINALG_TRIPLES[randInt(0,LINALG_TRIPLES.length-1)];
   const m = randInt(-10,10);
   const a = m+leg1, d = m-leg1, b = leg2;
+  const trace = a+d, det = a*d-b*b;
   const lambda1 = m-h, lambda2 = m+h;
   return {
-    promptText: t('matEigenvaluesPrompt', {A:matrixText([[a,b],[b,d]])}),
-    inputs: [{key:'small',label:t('algSmallerRootLabel')},{key:'large',label:t('algLargerRootLabel')}],
-    check(vals){ return Number(vals.small)===lambda1 && Number(vals.large)===lambda2; },
-    explain: t('matEigenvaluesExplain', {trace:a+d, det:a*d-b*b, lambda1, lambda2}),
+    promptText: t('matEigenvaluesPrompt', {A:matrixHTML([[a,b],[b,d]])}),
+    steps: [
+      {
+        prompt: t('matEigenvaluesStep1Prompt'),
+        inputs: [{key:'trace',label:t('matTraceLabel')},{key:'det',label:t('matDetLabel')}],
+        check(vals){ return Number(vals.trace)===trace && Number(vals.det)===det; },
+        explain: t('matEigenvaluesStep1Explain', {a, d, trace, b, det}),
+      },
+      {
+        prompt: t('matEigenvaluesStep2Prompt'),
+        inputs: [{key:'small',label:t('algSmallerRootLabel')},{key:'large',label:t('algLargerRootLabel')}],
+        check(vals){ return Number(vals.small)===lambda1 && Number(vals.large)===lambda2; },
+        explain: t('matEigenvaluesStep2Explain', {trace, det, lambda1, lambda2}),
+      },
+    ],
   };
 }
 function matProblemDetScalarProperty(){
@@ -12225,7 +13186,7 @@ function matProblemHomogeneous(){
   if(trivialOnly){ do{ a=randInt(-6,6); b=randInt(-6,6); c=randInt(-6,6); d=randInt(-6,6); } while(a*d-b*c===0); }
   else { a=randInt(-6,6); b=randInt(-6,6); const k=nonZeroRandInt(-3,3); c=a*k; d=b*k; }
   return {
-    promptText: t('matHomogeneousPrompt', {A:matrixText([[a,b],[c,d]])}),
+    promptText: t('matHomogeneousPrompt', {A:matrixHTML([[a,b],[c,d]])}),
     inputs: [{key:'ans', placeholder:t('discBoolAnswerPlaceholder')}],
     check(vals){ return parseBool(vals.ans)===trivialOnly; },
     explain: t('matHomogeneousExplain', {det:a*d-b*c, answer: trivialOnly?'True':'False'}),
@@ -12236,7 +13197,7 @@ function matProblemFindScalar(){
   const k = nonZeroRandInt(-6,6);
   const B = [[k*a,k*b],[k*c,k*d]];
   return {
-    promptText: t('matFindScalarPrompt', {A:matrixText([[a,b],[c,d]]), B:matrixText(B)}),
+    promptText: t('matFindScalarPrompt', {A:matrixHTML([[a,b],[c,d]]), B:matrixHTML(B)}),
     inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
     check(vals){ return Number(vals.ans)===k; },
     explain: t('matFindScalarExplain', {k}),
@@ -12248,11 +13209,11 @@ function matProblemLinearCombo(){
   const k1=nonZeroRandInt(-4,4), k2=nonZeroRandInt(-4,4);
   const c11=k1*a11+k2*b11, c12=k1*a12+k2*b12, c21=k1*a21+k2*b21, c22=k1*a22+k2*b22;
   return {
-    promptText: t('matLinearComboPrompt', {k1, A:matrixText([[a11,a12],[a21,a22]]), k2, B:matrixText([[b11,b12],[b21,b22]])}),
+    promptText: t('matLinearComboPrompt', {k1, A:matrixHTML([[a11,a12],[a21,a22]]), k2, B:matrixHTML([[b11,b12],[b21,b22]])}),
     inputs: [{key:'c11'},{key:'c12'},{key:'c21'},{key:'c22'}],
     matrixShape:[2,2],
     check(vals){ return Number(vals.c11)===c11 && Number(vals.c12)===c12 && Number(vals.c21)===c21 && Number(vals.c22)===c22; },
-    explain: t('matLinearComboExplain', {C:matrixText([[c11,c12],[c21,c22]])}),
+    explain: t('matLinearComboExplain', {C:matrixHTML([[c11,c12],[c21,c22]])}),
   };
 }
 function matProblemSolveForX(){
@@ -12260,7 +13221,7 @@ function matProblemSolveForX(){
   const x0=randInt(-9,9);
   const D = x0*d - b*c;
   return {
-    promptText: t('matSolveXPrompt', {A:matrixText([['x',b],[c,d]]), D}),
+    promptText: t('matSolveXPrompt', {A:matrixHTML([['x',b],[c,d]]), D}),
     inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
     check(vals){ return Number(vals.ans)===x0; },
     explain: t('matSolveXExplain', {b,c,d,bc:b*c,D,sum:D+b*c,x0}),
@@ -12271,7 +13232,7 @@ function matProblemSymmetricCheck(){
   const a=randInt(-9,9), d=randInt(-9,9), b=randInt(-9,9);
   let c = isSym ? b : b+nonZeroRandInt(-5,5);
   return {
-    promptText: t('matSymmetricPrompt', {A:matrixText([[a,b],[c,d]])}),
+    promptText: t('matSymmetricPrompt', {A:matrixHTML([[a,b],[c,d]])}),
     inputs: [{key:'ans', placeholder:t('discBoolAnswerPlaceholder')}],
     check(vals){ return parseBool(vals.ans)===(b===c); },
     explain: t('matSymmetricExplain', {b, c, answer: (b===c)?'True':'False'}),
@@ -12287,7 +13248,7 @@ function matProblemEqualityCheck(){
     if(idx===0) b11+=delta; else if(idx===1) b12+=delta; else if(idx===2) b21+=delta; else b22+=delta;
   }
   return {
-    promptText: t('matEqualityPrompt', {A:matrixText([[a11,a12],[a21,a22]]), B:matrixText([[b11,b12],[b21,b22]])}),
+    promptText: t('matEqualityPrompt', {A:matrixHTML([[a11,a12],[a21,a22]]), B:matrixHTML([[b11,b12],[b21,b22]])}),
     inputs: [{key:'ans', placeholder:t('discBoolAnswerPlaceholder')}],
     check(vals){ return parseBool(vals.ans)===equal; },
     explain: t('matEqualityExplain', {answer: equal?'True':'False'}),
@@ -12359,11 +13320,12 @@ function renderMatLearn(){
 
 function startMatPractice(topicKey){
   const topic = matTopicByKey(topicKey);
+  const problem = topic.build();
   state.matSession = {
-    topicKey,
-    current: topic.build(),
+    topicKey, problem, steps: normalizeSteps(problem),
+    stepIndex:0, stepInputs:{}, stepResults:[], anyWrong:false, pendingResult:null,
     correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
-    inputs:{}, combo:0, maxCombo:0, newAchievements:[]
+    combo:0, maxCombo:0, newAchievements:[]
   };
   state.screen = 'mat_practice';
   render();
@@ -12373,30 +13335,93 @@ function focusMatInput(){
   setTimeout(()=>{ const el=document.querySelector('.mat-input'); if(el) el.focus(); }, 30);
 }
 
+// Renders a single practice card as a sequence of guided steps: most
+// problems normalize to exactly one step and render identically to a plain
+// one-shot question (no visible change), while problems that define
+// multiple steps (e.g. Cramer's rule: D, then Dx/Dy, then x/y) reveal one
+// step at a time, each with its own Check button and immediate feedback,
+// before the usual XP/hearts feedback bar appears once the whole problem is
+// done. This same rendering shape is reused by every math practice mode.
 function renderMatPractice(){
   const s = state.matSession;
-  const q = s.current;
+  const steps = s.steps;
+  const multiStep = steps.length > 1;
+  const stepIndex = s.stepIndex;
+  const curStep = steps[stepIndex];
+  const isLastStep = stepIndex === steps.length-1;
   const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
 
-  const inputBox = (inp) => `
+  const inputBox = (inp) => {
+    if(inp.fracInput){
+      const numVal = s.stepInputs[inp.key+'_num']||'', denVal = s.stepInputs[inp.key+'_den']||'';
+      return `
+      <div style="flex:1; max-width:110px;">
+        ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px; text-align:center;">${inp.label}</div>` : ''}
+        <div class="frac-input">
+          <input class="mat-input algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${numVal}"
+            oninput="setFracInputPart(state.matSession,'${inp.key}','num',this.value)">
+          <div class="frac-input-bar"></div>
+          <input class="algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${denVal}"
+            oninput="setFracInputPart(state.matSession,'${inp.key}','den',this.value)">
+        </div>
+      </div>`;
+    }
+    return `
     <div style="flex:1;">
       ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
       <input class="mat-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
         placeholder="${inp.placeholder||''}"
         style="text-align:center; font-size:20px; font-family:var(--font-display); font-weight:700; width:100%;"
-        ${s.answered?'disabled':''} value="${(s.inputs[inp.key]||'')}"
-        oninput="state.matSession.inputs['${inp.key}']=this.value">
+        ${s.answered?'disabled':''} value="${(s.stepInputs[inp.key]||'')}"
+        oninput="state.matSession.stepInputs['${inp.key}']=this.value">
     </div>`;
+  };
 
-  const inputsHtml = q.matrixShape
-    ? `<div style="display:grid; grid-template-columns:repeat(${q.matrixShape[1]}, 1fr); gap:10px; max-width:240px; margin:0 auto;">${q.inputs.map(inputBox).join('')}</div>`
-    : `<div style="display:flex; gap:12px; align-items:flex-end;">${q.inputs.map(inputBox).join('')}</div>`;
+  const inputsHtml = curStep.matrixShape
+    ? `<div style="display:grid; grid-template-columns:repeat(${curStep.matrixShape[1]}, 1fr); gap:10px; max-width:240px; margin:0 auto;">${curStep.inputs.map(inputBox).join('')}</div>`
+    : `<div style="display:flex; gap:12px; align-items:flex-end; justify-content:center;">${curStep.inputs.map(inputBox).join('')}</div>`;
 
-  const feedback = s.answered ? `
+  const stepRowHtml = (r) => `
+    <div class="step-row done ${r.correct?'correct':'wrong'}">
+      <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+      <div class="step-values">${enhanceMath(r.valuesText)}</div>
+      <div class="step-explain">${enhanceMath(r.explain)}</div>
+    </div>`;
+  const doneRowsHtml = multiStep ? s.stepResults.map(stepRowHtml).join('') : '';
+
+  let activeStepHtml = '';
+  if(!(s.answered && isLastStep)){
+    if(!s.answered){
+      activeStepHtml = multiStep ? `
+        <div class="step-row active">
+          <div class="step-label">${t('stepLabel',{n:stepIndex+1, total:steps.length})}</div>
+          ${curStep.prompt ? `<div class="step-prompt">${enhanceMath(curStep.prompt)}</div>` : ''}
+          ${inputsHtml}
+          <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="submitMatStep()">${t('checkBtn')}</button>
+        </div>` : `
+        ${inputsHtml}
+        <button class="btn btn-primary btn-block" onclick="submitMatStep()">${t('checkBtn')}</button>`;
+    } else {
+      const r = s.pendingResult;
+      activeStepHtml = `
+        <div class="step-row done ${r.correct?'correct':'wrong'}">
+          <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+          <div class="step-values">${enhanceMath(r.valuesText)}</div>
+          <div class="step-explain">${enhanceMath(r.explain)}</div>
+          <button class="btn btn-light btn-block" style="margin-top:10px;" onclick="nextMatStep()">${t('nextStepBtn')}</button>
+        </div>`;
+    }
+  }
+
+  const feedback = (s.answered && isLastStep) ? `
     <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
       <div class="fb-text">
         <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
-        <div class="fb-sub">${q.explain}</div>
+        ${!multiStep ? `<div class="fb-sub">${enhanceMath(curStep.explain)}</div>` : ''}
       </div>
       <button class="btn btn-light" onclick="nextMatQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
     </div>` : '';
@@ -12411,34 +13436,57 @@ function renderMatPractice(){
     <div class="q-wrap">
       <div class="q-card">
         <div class="q-eyebrow">${t('matTopicTitle_'+s.topicKey)}</div>
-        <div class="q-prompt" style="font-size:20px;">${q.promptText}</div>
+        <div class="q-prompt" style="font-size:20px;">${enhanceMath(s.problem.promptText)}</div>
       </div>
-      ${inputsHtml}
-      ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitMatAnswer()">${t('checkBtn')}</button>` : ''}
+      ${multiStep ? `<div class="step-list">${doneRowsHtml}${activeStepHtml}</div>` : activeStepHtml}
     </div>
   </div>
   ${feedback}
   `;
 }
 
-function submitMatAnswer(){
+function submitMatStep(){
   const s = state.matSession;
   if(!s || s.answered) return;
-  const q = s.current;
-  for(const inp of q.inputs){ if(!s.inputs[inp.key]) return; }
-  const correct = q.check(s.inputs);
-  s.answered = true; s.lastCorrect = correct;
-  if(correct) registerCorrectAnswer(s, state.game);
-  else registerWrongAnswer(s);
+  const steps = s.steps;
+  const step = steps[s.stepIndex];
+  for(const inp of step.inputs){ if(!s.stepInputs[inp.key]) return; }
+  const correct = step.check(s.stepInputs);
+  if(!correct) s.anyWrong = true;
+  const valuesText = step.inputs.map(inp=>s.stepInputs[inp.key]).join(', ');
+  const result = {prompt: step.prompt, valuesText, explain: step.explain, correct};
+  const isLastStep = s.stepIndex === steps.length-1;
+  if(isLastStep){
+    s.stepResults.push(result);
+    const problemCorrect = !s.anyWrong;
+    s.answered = true; s.lastCorrect = problemCorrect;
+    if(problemCorrect) registerCorrectAnswer(s, state.game);
+    else registerWrongAnswer(s);
+  } else {
+    s.pendingResult = result;
+    s.answered = true; s.lastCorrect = correct;
+  }
   render();
+}
+
+function nextMatStep(){
+  const s = state.matSession;
+  s.stepResults.push(s.pendingResult);
+  s.pendingResult = null;
+  s.stepIndex += 1;
+  s.answered = false; s.lastCorrect = null; s.stepInputs = {};
+  render();
+  focusMatInput();
 }
 
 function nextMatQuestion(){
   const s = state.matSession;
   if(s.mistakes>=MATH_MAX_MISTAKES){ finishMatPractice(); return; }
   const topic = matTopicByKey(s.topicKey);
-  s.answered=false; s.lastCorrect=null; s.inputs={};
-  s.current = topic.build();
+  const problem = topic.build();
+  s.problem = problem; s.steps = normalizeSteps(problem);
+  s.stepIndex=0; s.stepInputs={}; s.stepResults=[]; s.anyWrong=false; s.pendingResult=null;
+  s.answered=false; s.lastCorrect=null;
   render();
   focusMatInput();
 }
