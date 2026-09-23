@@ -4434,6 +4434,8 @@ function defaultGame(){
     complex:{}, // topic key -> {best: correct-answer count}
     sequences:{}, // topic key -> {best: correct-answer count}
     matrices:{}, // topic key -> {best: correct-answer count}
+    coordgeom:{}, // topic key -> {best: correct-answer count}
+    numtheory:{}, // topic key -> {best: correct-answer count}
     business:{}, // category key -> {rounds: completed-rounds count}
     conceptExposure:{}, // concept key -> times tested (drives MCQ -> typed progression)
     conceptMastery:{}, // concept key (or "qb_<id>" for Quiz Bank questions) -> {correct, wrong, streak}
@@ -5457,6 +5459,153 @@ const I18N = {
     matLearn_equality_check: "Two matrices are equal only if every corresponding entry matches exactly.\n\nExample: are [[1,2],[3,4]] and [[1,2],[3,5]] equal?\nThe bottom-right entries differ (4 vs 5), so no.",
     matEqualityPrompt: "Are A = {A} and B = {B} equal?",
     matEqualityExplain: "Comparing every entry of A and B shows the answer is {answer}.",
+    coordgeomTitle: "Coordinate Geometry",
+    coordgeomSub: "Month 12: lines and shapes in the coordinate plane — slope, midpoint, intercepts, parallel and perpendicular lines, circles and parabolas. Pick a topic to learn the concept, then practice.",
+    backToCoordGeomMenuBtn: "Back to Coordinate Geometry",
+
+    coordgeomTopicTitle_slope: "Slope", coordgeomTopicDesc_slope: "Find the slope of a line through two points",
+    coordgeomLearn_slope: "The slope of a line through two points measures how steep it is: m = (y₂ − y₁)/(x₂ − x₁).\n\nExample: find the slope through (1, 2) and (3, 8).\nm = (8 − 2)/(3 − 1) = 6/2 = 3.",
+    coordgeomSlopePrompt: "Find the slope of the line through ({x1}, {y1}) and ({x2}, {y2}).",
+    coordgeomSlopeExplain: "m = (y₂ − y₁)/(x₂ − x₁) = ({y2} − {y1})/({x2} − {x1}) = {dy}/{dx} = {m}.",
+
+    coordgeomTopicTitle_midpoint: "Midpoint", coordgeomTopicDesc_midpoint: "Find the midpoint of a segment between two points",
+    coordgeomLearn_midpoint: "The midpoint of a segment is the average of the endpoints' coordinates: ((x₁+x₂)/2, (y₁+y₂)/2).\n\nExample: find the midpoint of (1, 2) and (5, 8).\nMidpoint = ((1+5)/2, (2+8)/2) = (3, 5).",
+    coordgeomMidpointPrompt: "Find the midpoint of the segment from ({x1}, {y1}) to ({x2}, {y2}).",
+    coordgeomMidpointExplain: "Midpoint = ((x₁+x₂)/2, (y₁+y₂)/2) = (({x1}+{x2})/2, ({y1}+{y2})/2) = ({mx}, {my}).",
+
+    coordgeomTopicTitle_slope_intercept_form: "Slope-Intercept Form", coordgeomTopicDesc_slope_intercept_form: "Find b in y = mx + b, given the slope and a point",
+    coordgeomLearn_slope_intercept_form: "A line's slope-intercept form is y = mx + b, where m is the slope and b is the y-intercept. If you know the slope and one point on the line, substitute in and solve for b.\n\nExample: a line has slope 2 and passes through (3, 7). Find b.\n7 = 2(3) + b, so 7 = 6 + b, giving b = 1.",
+    coordgeomSlopeInterceptPrompt: "A line has slope {m} and passes through ({x0}, {y0}). Find b in y = {mExpr} + b.",
+    coordgeomSlopeInterceptExplain: "b = y − mx = {y0} − ({m})({x0}) = {y0} − {mx0} = {b}.",
+
+    coordgeomTopicTitle_point_on_line_check: "Point on a Line", coordgeomTopicDesc_point_on_line_check: "Determine whether a point lies on a given line",
+    coordgeomLearn_point_on_line_check: "A point (x, y) lies on the line y = mx + b only if plugging in its x-value gives back its y-value exactly.\n\nExample: does (2, 5) lie on y = 2x + 1?\n2(2) + 1 = 5, which matches, so yes.",
+    coordgeomPointOnLinePrompt: "Does the point ({x}, {y}) lie on the line y = {mExpr}{bExpr}?",
+    coordgeomPointOnLineExplain: "Plugging in x = {x}: y = {mExpr}{bExpr} = {computedY}. The point's y-value is {y}, so the answer is {answer}.",
+
+    coordgeomTopicTitle_parallel_check: "Parallel Lines", coordgeomTopicDesc_parallel_check: "Determine whether two lines with given slopes are parallel",
+    coordgeomLearn_parallel_check: "Two lines are parallel exactly when they have the same slope.\n\nExample: are lines with slopes 3 and 3 parallel? Yes, since 3 = 3. Are lines with slopes 3 and -2 parallel? No, since 3 ≠ -2.",
+    coordgeomParallelPrompt: "Line 1 has slope {m1}. Line 2 has slope {m2}. Are the lines parallel?",
+    coordgeomParallelExplain: "Two lines are parallel exactly when their slopes are equal: {m1} {compareSymbol} {m2}. So the answer is {answer}.",
+
+    coordgeomTopicTitle_perpendicular_slope: "Perpendicular Slope", coordgeomTopicDesc_perpendicular_slope: "Find the slope of a line perpendicular to a given one",
+    coordgeomLearn_perpendicular_slope: "Perpendicular lines have slopes that are negative reciprocals of each other: if one slope is p/q, the perpendicular slope is -q/p.\n\nExample: a line has slope 2/3. A perpendicular line has slope -3/2.",
+    coordgeomPerpSlopePrompt: "A line has slope {p}/{q}. Find the slope of a line perpendicular to it, as a fraction.",
+    coordgeomPerpSlopeExplain: "The perpendicular slope is the negative reciprocal: flip {p}/{q} and change its sign, giving {numerator}/{denominator}.",
+
+    coordgeomTopicTitle_x_intercept: "x-Intercept", coordgeomTopicDesc_x_intercept: "Find where a line crosses the x-axis",
+    coordgeomLearn_x_intercept: "The x-intercept is where a line crosses the x-axis, where y = 0. Set y = 0 in y = mx + b and solve for x.\n\nExample: find the x-intercept of y = 2x - 6.\n0 = 2x - 6, so 2x = 6, giving x = 3.",
+    coordgeomXInterceptPrompt: "Find the x-intercept of the line y = {mExpr}{bExpr}.",
+    coordgeomXInterceptExplain: "Set y = 0: 0 = {mExpr}{bExpr}, so {m}x = {negB}, giving x = {x0}.",
+
+    coordgeomTopicTitle_y_intercept: "y-Intercept from Two Points", coordgeomTopicDesc_y_intercept: "Find where a line through two points crosses the y-axis",
+    coordgeomLearn_y_intercept: "To find the y-intercept of a line through two points, first find the slope, then use one point to solve for b in y = mx + b.\n\nExample: find the y-intercept of the line through (1, 4) and (3, 8).\nSlope: m = (8-4)/(3-1) = 4/2 = 2. Then b = 4 - 2(1) = 2.",
+    coordgeomYInterceptPrompt: "Find the y-intercept of the line through ({x1}, {y1}) and ({x2}, {y2}).",
+    coordgeomYInterceptStep1Prompt: "Step 1: Find the slope m of the line.",
+    coordgeomYInterceptStep1Explain: "m = (y₂ − y₁)/(x₂ − x₁) = ({y2} − {y1})/({x2} − {x1}) = {dy}/{dx} = {m}.",
+    coordgeomYInterceptStep2Prompt: "Step 2: Use one of the points and b = y − mx to find the y-intercept b.",
+    coordgeomYInterceptStep2Explain: "b = y − mx = {y1} − ({m})({x1}) = {y1} − {mx1} = {b}.",
+
+    coordgeomTopicTitle_line_intersection: "Line Intersection", coordgeomTopicDesc_line_intersection: "Find where two lines meet",
+    coordgeomLearn_line_intersection: "Two non-parallel lines meet at exactly one point. Set their equations equal and solve for x, then substitute back to find y.\n\nExample: where do y = x + 1 and y = -x + 5 meet?\nx + 1 = -x + 5, so 2x = 4, x = 2. Then y = 2 + 1 = 3. They meet at (2, 3).",
+    coordgeomLineIntersectPrompt: "Find where the lines y = {m1Expr}{b1Expr} and y = {m2Expr}{b2Expr} intersect.",
+    coordgeomLineIntersectExplain: "Setting {m1Expr}{b1Expr} = {m2Expr}{b2Expr} and solving gives x = {x0}, then y = {y0}. They meet at ({x0}, {y0}).",
+
+    coordgeomTopicTitle_circle_center_radius: "Circle Center and Radius", coordgeomTopicDesc_circle_center_radius: "Find the center and radius from a circle's equation",
+    coordgeomLearn_circle_center_radius: "A circle's equation (x-h)² + (y-k)² = r² has center (h, k) and radius r.\n\nExample: find the center and radius of (x-2)² + (y+3)² = 25.\nCenter = (2, -3), and r² = 25 so r = 5.",
+    coordgeomCircleCenterPrompt: "Find the center (h, k) and radius r of the circle ({hExpr})² + ({kExpr})² = {rSq}.",
+    coordgeomCircleCenterExplain: "The equation (x-h)² + (y-k)² = r² gives center (h, k) = ({h}, {k}) and r² = {rSq}, so r = {r}.",
+
+    coordgeomTopicTitle_parabola_vertex: "Parabola Vertex", coordgeomTopicDesc_parabola_vertex: "Find the vertex of a parabola y = ax² + bx + c",
+    coordgeomLearn_parabola_vertex: "The vertex of a parabola y = ax² + bx + c has x-coordinate x = -b/(2a). Substitute that x back into the equation to find the y-coordinate.\n\nExample: find the vertex of y = x² - 4x + 1.\nx = -(-4)/(2×1) = 2. y = (2)² - 4(2) + 1 = 4 - 8 + 1 = -3. Vertex = (2, -3).",
+    coordgeomParabolaVertexPrompt: "Find the vertex of the parabola y = {aExpr}{bExpr}{cExpr}.",
+    coordgeomParabolaVertexStep1Prompt: "Step 1: Find the x-coordinate of the vertex, x = -b/(2a).",
+    coordgeomParabolaVertexStep1Explain: "x = -b/(2a) = -({b})/(2×{a}) = -({b})/{twoA} = {x0}.",
+    coordgeomParabolaVertexStep2Prompt: "Step 2: Substitute that x back into the equation to find y.",
+    coordgeomParabolaVertexStep2Explain: "y = ax² + bx + c = ({a})({x0})² + ({b})({x0}) + ({c}) = {y0}.",
+
+    coordgeomTopicTitle_reflection_over_x_axis: "Reflection over the x-axis", coordgeomTopicDesc_reflection_over_x_axis: "Find the image of a point reflected over the x-axis",
+    coordgeomLearn_reflection_over_x_axis: "Reflecting a point over the x-axis keeps x the same and flips the sign of y: (x, y) → (x, -y).\n\nExample: reflect (3, 5) over the x-axis. Image = (3, -5).",
+    coordgeomReflectXPrompt: "Reflect the point ({x}, {y}) over the x-axis. Find the image.",
+    coordgeomReflectXExplain: "Reflecting over the x-axis keeps x and flips the sign of y: ({x}, {y}) → ({x}, {negY}).",
+
+    coordgeomTopicTitle_reflection_over_y_axis: "Reflection over the y-axis", coordgeomTopicDesc_reflection_over_y_axis: "Find the image of a point reflected over the y-axis",
+    coordgeomLearn_reflection_over_y_axis: "Reflecting a point over the y-axis keeps y the same and flips the sign of x: (x, y) → (-x, y).\n\nExample: reflect (3, 5) over the y-axis. Image = (-3, 5).",
+    coordgeomReflectYPrompt: "Reflect the point ({x}, {y}) over the y-axis. Find the image.",
+    coordgeomReflectYExplain: "Reflecting over the y-axis keeps y and flips the sign of x: ({x}, {y}) → ({negX}, {y}).",
+
+    numtheoryTitle: "Number Theory",
+    numtheorySub: "Month 13: primes, divisors and modular arithmetic — going deeper into the numbers themselves. Pick a topic to learn the concept, then practice.",
+    backToNumTheoryMenuBtn: "Back to Number Theory",
+
+    numtheoryTopicTitle_is_prime: "Prime Check", numtheoryTopicDesc_is_prime: "Determine whether a number is prime",
+    numtheoryLearn_is_prime: "A number is prime if it's greater than 1 and has no divisors other than 1 and itself. To check, test divisibility by every integer up to its square root.\n\nExample: is 29 prime?\n√29 ≈ 5.4, and 29 isn't divisible by 2, 3, or 5, so yes, it's prime.",
+    numtheoryIsPrimePrompt: "Is {n} prime?",
+    numtheoryIsPrimeExplain: "Checking divisibility by every integer up to √{n} (≈{sqrtN}) shows the answer is {answer}.",
+
+    numtheoryTopicTitle_smallest_prime_factor: "Smallest Prime Factor", numtheoryTopicDesc_smallest_prime_factor: "Find the smallest prime factor of a composite number",
+    numtheoryLearn_smallest_prime_factor: "The smallest prime factor of a number is the smallest prime that divides it evenly. Test 2, then 3, then 5, and so on, until one divides evenly.\n\nExample: find the smallest prime factor of 21.\n21 isn't even, so 2 doesn't work. 21 ÷ 3 = 7 exactly, so the smallest prime factor is 3.",
+    numtheorySmallestPrimeFactorPrompt: "Find the smallest prime factor of {n}.",
+    numtheorySmallestPrimeFactorExplain: "Testing 2, 3, 5, ... the smallest prime that divides {n} evenly is {f} ({n} ÷ {f} = {quotient}).",
+
+    numtheoryTopicTitle_prime_factor_count: "Number of Distinct Prime Factors", numtheoryTopicDesc_prime_factor_count: "Find how many different primes divide a number",
+    numtheoryLearn_prime_factor_count: "The distinct prime factors of a number are the different primes that appear in its prime factorization, counted once each.\n\nExample: how many distinct prime factors does 60 have?\n60 = 2² × 3 × 5, so it has 3 distinct prime factors (2, 3, and 5).",
+    numtheoryPrimeFactorCountPrompt: "How many distinct prime factors does {n} have?",
+    numtheoryPrimeFactorCountExplain: "{n} = {factors}, so it has {k} distinct prime factors.",
+
+    numtheoryTopicTitle_count_divisors: "Counting Divisors", numtheoryTopicDesc_count_divisors: "Find the number of positive divisors of a number",
+    numtheoryLearn_count_divisors: "If N = p^a × q^b for primes p and q, the number of positive divisors of N is (a+1)(b+1).\n\nExample: how many divisors does 12 = 2² × 3¹ have?\n(2+1)(1+1) = 3×2 = 6. (Check: 1, 2, 3, 4, 6, 12 — six divisors.)",
+    numtheoryCountDivisorsPrompt: "Find the number of positive divisors of {n}.",
+    numtheoryCountDivisorsExplain: "{n} = {p}^{a} × {q}^{b}, so the number of divisors is ({a}+1)({b}+1) = {count}.",
+
+    numtheoryTopicTitle_sum_of_proper_divisors: "Sum of Proper Divisors", numtheoryTopicDesc_sum_of_proper_divisors: "Add up all the divisors of a number smaller than itself",
+    numtheoryLearn_sum_of_proper_divisors: "The proper divisors of a number are all its positive divisors except itself. Add them up.\n\nExample: find the sum of the proper divisors of 12.\nProper divisors: 1, 2, 3, 4, 6. Sum = 1+2+3+4+6 = 16.",
+    numtheorySumProperDivisorsPrompt: "Find the sum of the proper divisors of {n} (all positive divisors except {n} itself).",
+    numtheorySumProperDivisorsExplain: "Adding up every divisor of {n} smaller than itself gives {sum}.",
+
+    numtheoryTopicTitle_is_perfect_number: "Perfect Numbers", numtheoryTopicDesc_is_perfect_number: "Determine whether a number equals the sum of its proper divisors",
+    numtheoryLearn_is_perfect_number: "A perfect number equals the sum of its own proper divisors.\n\nExample: is 6 perfect?\nProper divisors of 6: 1, 2, 3. Sum = 1+2+3 = 6, which equals the number itself, so yes.",
+    numtheoryIsPerfectPrompt: "Is {n} a perfect number (does it equal the sum of its proper divisors)?",
+    numtheoryIsPerfectExplain: "The proper divisors of {n} sum to {sum}, so the answer is {answer}.",
+
+    numtheoryTopicTitle_divisibility_check: "Divisibility Check", numtheoryTopicDesc_divisibility_check: "Determine whether one number divides another evenly",
+    numtheoryLearn_divisibility_check: "A number a is divisible by b if a ÷ b leaves no remainder.\n\nExample: is 84 divisible by 7?\n84 ÷ 7 = 12 exactly, with no remainder, so yes.",
+    numtheoryDivisibilityPrompt: "Is {a} divisible by {b}?",
+    numtheoryDivisibilityExplain: "{a} ÷ {b} leaves a remainder of {remainder}, so the answer is {answer}.",
+
+    numtheoryTopicTitle_digital_root: "Digital Root", numtheoryTopicDesc_digital_root: "Repeatedly sum a number's digits until one digit remains",
+    numtheoryLearn_digital_root: "The digital root of a number is found by summing its digits, then summing the digits of the result, repeating until only one digit remains.\n\nExample: find the digital root of 938.\n9+3+8 = 20, then 2+0 = 2. Digital root = 2.",
+    numtheoryDigitalRootPrompt: "Find the digital root of {n}.",
+    numtheoryDigitalRootExplain: "Repeatedly summing the digits of {n} until one digit remains gives {dr}.",
+
+    numtheoryTopicTitle_coprime_check: "Coprime Numbers", numtheoryTopicDesc_coprime_check: "Determine whether two numbers share no common factor",
+    numtheoryLearn_coprime_check: "Two numbers are coprime (relatively prime) if their greatest common divisor is 1 — they share no common factor besides 1.\n\nExample: are 8 and 15 coprime?\ngcd(8, 15) = 1, so yes.",
+    numtheoryCoprimePrompt: "Are {a} and {b} coprime?",
+    numtheoryCoprimeExplain: "gcd({a}, {b}) = {g}, so the answer is {answer}.",
+
+    numtheoryTopicTitle_euclidean_algorithm: "Euclidean Algorithm", numtheoryTopicDesc_euclidean_algorithm: "Find a gcd step by step using repeated division",
+    numtheoryLearn_euclidean_algorithm: "The Euclidean algorithm finds gcd(a, b) by repeated division: divide a by b to get a quotient and remainder, then repeat with b and that remainder, until the remainder is 0. The last nonzero remainder is the gcd.\n\nExample: find gcd(30, 12).\n30 = 2×12 + 6. Then 12 = 2×6 + 0. The last nonzero remainder is 6, so gcd(30, 12) = 6.",
+    numtheoryEuclideanPrompt: "Use the Euclidean algorithm to find gcd({a}, {b}).",
+    numtheoryEuclideanStep1Prompt: "Step 1: Divide {a} by {b}. Find the quotient q and remainder r.",
+    numtheoryEuclideanStep1Explain: "{a} = {q1}×{b} + {r1}, so q = {q1} and r = {r1}.",
+    numtheoryEuclideanStep2Prompt: "Step 2: Divide {b} by {r1}. Find the quotient q and remainder r.",
+    numtheoryEuclideanStep2Explain: "{b} = {q2}×{r1} + 0, so q = {q2} and r = 0. Since the remainder is 0, the gcd is the last nonzero remainder: {gcdVal}.",
+
+    numtheoryTopicTitle_fibonacci_term: "Fibonacci Numbers", numtheoryTopicDesc_fibonacci_term: "Find a term of the Fibonacci sequence",
+    numtheoryLearn_fibonacci_term: "The Fibonacci sequence starts 1, 1, 2, 3, 5, 8, ... where each term is the sum of the previous two.\n\nExample: find the 6th Fibonacci number.\n1, 1, 2, 3, 5, 8 — the 6th term is 8.",
+    numtheoryFibonacciPrompt: "Find the {n}th Fibonacci number (F₁ = 1, F₂ = 1, and each term after is the sum of the previous two).",
+    numtheoryFibonacciExplain: "Building the sequence up to the {n}th term gives F_{n} = {fn}.",
+
+    numtheoryTopicTitle_triangular_number: "Triangular Numbers", numtheoryTopicDesc_triangular_number: "Find the nth triangular number",
+    numtheoryLearn_triangular_number: "The nth triangular number is the sum of the integers from 1 to n: T(n) = n(n+1)/2.\n\nExample: find the 5th triangular number.\nT(5) = 5×6/2 = 15.",
+    numtheoryTriangularPrompt: "Find the {n}th triangular number, T({n}) = 1 + 2 + ... + {n}.",
+    numtheoryTriangularExplain: "T({n}) = {n}×{np1}/2 = {tn}.",
+
+    numtheoryTopicTitle_power_mod: "Modular Exponentiation", numtheoryTopicDesc_power_mod: "Compute a power of a number modulo n",
+    numtheoryLearn_power_mod: "To compute a^b mod n, raise a to the power b, then find the remainder when dividing by n.\n\nExample: find 3⁴ mod 5.\n3⁴ = 81. 81 ÷ 5 = 16 remainder 1, so 3⁴ mod 5 = 1.",
+    numtheoryPowerModPrompt: "Find {a}^{b} mod {n}.",
+    numtheoryPowerModExplain: "{a}^{b} = {powVal}. {powVal} mod {n} = {result}.",
+
 
     businessTitle: "Business Concepts",
     businessSub: "Finance, economics and the tech companies shaping them. Learn 3 concepts, then get quizzed on one — multiple choice the first time, typed from memory after that.",
@@ -6580,6 +6729,153 @@ const I18N = {
     matLearn_equality_check: "两个矩阵相等，当且仅当它们对应的每个元素都完全相同。\n\n例如：[[1,2],[3,4]] 和 [[1,2],[3,5]] 相等吗？\n右下角的元素不同（4 与 5），所以不相等。",
     matEqualityPrompt: "A = {A} 与 B = {B} 相等吗？",
     matEqualityExplain: "比较 A 与 B 的每个元素，可知答案是 {answer}。",
+    coordgeomTitle: "坐标几何",
+    coordgeomSub: "第十二个月：坐标平面上的直线与图形——斜率、中点、截距、平行线与垂直线、圆与抛物线。选择一个主题学习概念，然后练习。",
+    backToCoordGeomMenuBtn: "返回坐标几何",
+
+    coordgeomTopicTitle_slope: "斜率", coordgeomTopicDesc_slope: "求过两点的直线的斜率",
+    coordgeomLearn_slope: "过两点的直线的斜率衡量它的陡峭程度：m = (y₂ − y₁)/(x₂ − x₁)。\n\n例如：求过 (1, 2) 和 (3, 8) 的直线的斜率。\nm = (8 − 2)/(3 − 1) = 6/2 = 3。",
+    coordgeomSlopePrompt: "求过 ({x1}, {y1}) 和 ({x2}, {y2}) 的直线的斜率。",
+    coordgeomSlopeExplain: "m = (y₂ − y₁)/(x₂ − x₁) = ({y2} − {y1})/({x2} − {x1}) = {dy}/{dx} = {m}。",
+
+    coordgeomTopicTitle_midpoint: "中点", coordgeomTopicDesc_midpoint: "求两点间线段的中点",
+    coordgeomLearn_midpoint: "线段的中点是端点坐标的平均值：((x₁+x₂)/2, (y₁+y₂)/2)。\n\n例如：求 (1, 2) 和 (5, 8) 的中点。\n中点 = ((1+5)/2, (2+8)/2) = (3, 5)。",
+    coordgeomMidpointPrompt: "求从 ({x1}, {y1}) 到 ({x2}, {y2}) 的线段的中点。",
+    coordgeomMidpointExplain: "中点 = ((x₁+x₂)/2, (y₁+y₂)/2) = (({x1}+{x2})/2, ({y1}+{y2})/2) = ({mx}, {my})。",
+
+    coordgeomTopicTitle_slope_intercept_form: "斜截式", coordgeomTopicDesc_slope_intercept_form: "已知斜率和一点，求 y = mx + b 中的 b",
+    coordgeomLearn_slope_intercept_form: "直线的斜截式为 y = mx + b，其中 m 是斜率，b 是 y 轴截距。若已知斜率和直线上一点，代入即可求出 b。\n\n例如：一条直线斜率为 2，经过 (3, 7)。求 b。\n7 = 2(3) + b，所以 7 = 6 + b，得 b = 1。",
+    coordgeomSlopeInterceptPrompt: "一条直线斜率为 {m}，经过 ({x0}, {y0})。求 y = {mExpr} + b 中的 b。",
+    coordgeomSlopeInterceptExplain: "b = y − mx = {y0} − ({m})({x0}) = {y0} − {mx0} = {b}。",
+
+    coordgeomTopicTitle_point_on_line_check: "点是否在直线上", coordgeomTopicDesc_point_on_line_check: "判断一个点是否在给定直线上",
+    coordgeomLearn_point_on_line_check: "点 (x, y) 在直线 y = mx + b 上，当且仅当代入其 x 值能得到其 y 值。\n\n例如：(2, 5) 在 y = 2x + 1 上吗？\n2(2) + 1 = 5，相符，所以在。",
+    coordgeomPointOnLinePrompt: "点 ({x}, {y}) 在直线 y = {mExpr}{bExpr} 上吗？",
+    coordgeomPointOnLineExplain: "代入 x = {x}：y = {mExpr}{bExpr} = {computedY}。该点的 y 值是 {y}，所以答案是 {answer}。",
+
+    coordgeomTopicTitle_parallel_check: "平行线", coordgeomTopicDesc_parallel_check: "判断两条已知斜率的直线是否平行",
+    coordgeomLearn_parallel_check: "两条直线平行当且仅当它们斜率相等。\n\n例如：斜率为 3 和 3 的两条直线平行吗？是的，因为 3 = 3。斜率为 3 和 -2 呢？不平行，因为 3 ≠ -2。",
+    coordgeomParallelPrompt: "直线 1 的斜率为 {m1}。直线 2 的斜率为 {m2}。这两条直线平行吗？",
+    coordgeomParallelExplain: "两条直线平行当且仅当斜率相等：{m1} {compareSymbol} {m2}。所以答案是 {answer}。",
+
+    coordgeomTopicTitle_perpendicular_slope: "垂直斜率", coordgeomTopicDesc_perpendicular_slope: "求与已知直线垂直的直线的斜率",
+    coordgeomLearn_perpendicular_slope: "两条垂直直线的斜率互为负倒数：若一条斜率为 p/q，则垂直线的斜率为 -q/p。\n\n例如：一条直线斜率为 2/3，与它垂直的直线斜率为 -3/2。",
+    coordgeomPerpSlopePrompt: "一条直线斜率为 {p}/{q}。求与它垂直的直线的斜率（以分数表示）。",
+    coordgeomPerpSlopeExplain: "垂直线的斜率是负倒数：将 {p}/{q} 上下颠倒并改变符号，得到 {numerator}/{denominator}。",
+
+    coordgeomTopicTitle_x_intercept: "x 轴截距", coordgeomTopicDesc_x_intercept: "求直线与 x 轴的交点",
+    coordgeomLearn_x_intercept: "x 轴截距是直线与 x 轴的交点，此处 y = 0。在 y = mx + b 中令 y = 0 并解出 x。\n\n例如：求 y = 2x - 6 的 x 轴截距。\n0 = 2x - 6，所以 2x = 6，得 x = 3。",
+    coordgeomXInterceptPrompt: "求直线 y = {mExpr}{bExpr} 的 x 轴截距。",
+    coordgeomXInterceptExplain: "令 y = 0：0 = {mExpr}{bExpr}，所以 {m}x = {negB}，得 x = {x0}。",
+
+    coordgeomTopicTitle_y_intercept: "由两点求 y 轴截距", coordgeomTopicDesc_y_intercept: "求过两点的直线与 y 轴的交点",
+    coordgeomLearn_y_intercept: "求过两点的直线的 y 轴截距时，先求斜率，再用其中一点代入 y = mx + b 解出 b。\n\n例如：求过 (1, 4) 和 (3, 8) 的直线的 y 轴截距。\n斜率：m = (8-4)/(3-1) = 4/2 = 2。再求 b = 4 - 2(1) = 2。",
+    coordgeomYInterceptPrompt: "求过 ({x1}, {y1}) 和 ({x2}, {y2}) 的直线的 y 轴截距。",
+    coordgeomYInterceptStep1Prompt: "第一步：求直线的斜率 m。",
+    coordgeomYInterceptStep1Explain: "m = (y₂ − y₁)/(x₂ − x₁) = ({y2} − {y1})/({x2} − {x1}) = {dy}/{dx} = {m}。",
+    coordgeomYInterceptStep2Prompt: "第二步：用其中一点和 b = y − mx 求出 y 轴截距 b。",
+    coordgeomYInterceptStep2Explain: "b = y − mx = {y1} − ({m})({x1}) = {y1} − {mx1} = {b}。",
+
+    coordgeomTopicTitle_line_intersection: "直线交点", coordgeomTopicDesc_line_intersection: "求两条直线的交点",
+    coordgeomLearn_line_intersection: "两条不平行的直线恰好相交于一点。令两个方程相等，解出 x，再代回求 y。\n\n例如：y = x + 1 和 y = -x + 5 交于何处？\nx + 1 = -x + 5，所以 2x = 4，x = 2。再求 y = 2 + 1 = 3。交点为 (2, 3)。",
+    coordgeomLineIntersectPrompt: "求直线 y = {m1Expr}{b1Expr} 与 y = {m2Expr}{b2Expr} 的交点。",
+    coordgeomLineIntersectExplain: "令 {m1Expr}{b1Expr} = {m2Expr}{b2Expr} 并求解，得 x = {x0}，再求 y = {y0}。交点为 ({x0}, {y0})。",
+
+    coordgeomTopicTitle_circle_center_radius: "圆心与半径", coordgeomTopicDesc_circle_center_radius: "由圆的方程求圆心和半径",
+    coordgeomLearn_circle_center_radius: "圆的方程 (x-h)² + (y-k)² = r² 的圆心为 (h, k)，半径为 r。\n\n例如：求 (x-2)² + (y+3)² = 25 的圆心和半径。\n圆心 = (2, -3)，且 r² = 25，所以 r = 5。",
+    coordgeomCircleCenterPrompt: "求圆 ({hExpr})² + ({kExpr})² = {rSq} 的圆心 (h, k) 和半径 r。",
+    coordgeomCircleCenterExplain: "方程 (x-h)² + (y-k)² = r² 给出圆心 (h, k) = ({h}, {k})，r² = {rSq}，所以 r = {r}。",
+
+    coordgeomTopicTitle_parabola_vertex: "抛物线顶点", coordgeomTopicDesc_parabola_vertex: "求抛物线 y = ax² + bx + c 的顶点",
+    coordgeomLearn_parabola_vertex: "抛物线 y = ax² + bx + c 的顶点的 x 坐标为 x = -b/(2a)。将该 x 代回方程即可求出 y 坐标。\n\n例如：求 y = x² - 4x + 1 的顶点。\nx = -(-4)/(2×1) = 2。y = (2)² - 4(2) + 1 = 4 - 8 + 1 = -3。顶点 = (2, -3)。",
+    coordgeomParabolaVertexPrompt: "求抛物线 y = {aExpr}{bExpr}{cExpr} 的顶点。",
+    coordgeomParabolaVertexStep1Prompt: "第一步：求顶点的 x 坐标，x = -b/(2a)。",
+    coordgeomParabolaVertexStep1Explain: "x = -b/(2a) = -({b})/(2×{a}) = -({b})/{twoA} = {x0}。",
+    coordgeomParabolaVertexStep2Prompt: "第二步：将该 x 代回方程求 y。",
+    coordgeomParabolaVertexStep2Explain: "y = ax² + bx + c = ({a})({x0})² + ({b})({x0}) + ({c}) = {y0}。",
+
+    coordgeomTopicTitle_reflection_over_x_axis: "关于 x 轴的对称", coordgeomTopicDesc_reflection_over_x_axis: "求一点关于 x 轴对称后的像",
+    coordgeomLearn_reflection_over_x_axis: "点关于 x 轴对称时，x 不变，y 变号：(x, y) → (x, -y)。\n\n例如：求 (3, 5) 关于 x 轴的对称点。像 = (3, -5)。",
+    coordgeomReflectXPrompt: "求点 ({x}, {y}) 关于 x 轴对称的像。",
+    coordgeomReflectXExplain: "关于 x 轴对称时 x 不变，y 变号：({x}, {y}) → ({x}, {negY})。",
+
+    coordgeomTopicTitle_reflection_over_y_axis: "关于 y 轴的对称", coordgeomTopicDesc_reflection_over_y_axis: "求一点关于 y 轴对称后的像",
+    coordgeomLearn_reflection_over_y_axis: "点关于 y 轴对称时，y 不变，x 变号：(x, y) → (-x, y)。\n\n例如：求 (3, 5) 关于 y 轴的对称点。像 = (-3, 5)。",
+    coordgeomReflectYPrompt: "求点 ({x}, {y}) 关于 y 轴对称的像。",
+    coordgeomReflectYExplain: "关于 y 轴对称时 y 不变，x 变号：({x}, {y}) → ({negX}, {y})。",
+
+    numtheoryTitle: "数论",
+    numtheorySub: "第十三个月：质数、因数与模运算——更深入地探索数字本身。选择一个主题学习概念，然后练习。",
+    backToNumTheoryMenuBtn: "返回数论",
+
+    numtheoryTopicTitle_is_prime: "质数判断", numtheoryTopicDesc_is_prime: "判断一个数是否为质数",
+    numtheoryLearn_is_prime: "一个数是质数，当且仅当它大于 1 且除了 1 和它本身没有其他因数。检验方法是测试到它平方根为止的每个整数是否能整除它。\n\n例如：29 是质数吗？\n√29 ≈ 5.4，29 不能被 2、3、5 整除，所以是质数。",
+    numtheoryIsPrimePrompt: "{n} 是质数吗？",
+    numtheoryIsPrimeExplain: "检验到 √{n}（≈{sqrtN}）为止的每个整数，可知答案是 {answer}。",
+
+    numtheoryTopicTitle_smallest_prime_factor: "最小质因数", numtheoryTopicDesc_smallest_prime_factor: "求合数的最小质因数",
+    numtheoryLearn_smallest_prime_factor: "一个数的最小质因数是能整除它的最小质数。依次测试 2、3、5……直到找到能整除的为止。\n\n例如：求 21 的最小质因数。\n21 不是偶数，所以 2 不行。21 ÷ 3 = 7，正好整除，所以最小质因数是 3。",
+    numtheorySmallestPrimeFactorPrompt: "求 {n} 的最小质因数。",
+    numtheorySmallestPrimeFactorExplain: "依次测试 2、3、5……能整除 {n} 的最小质数是 {f}（{n} ÷ {f} = {quotient}）。",
+
+    numtheoryTopicTitle_prime_factor_count: "不同质因数的个数", numtheoryTopicDesc_prime_factor_count: "求能整除一个数的不同质数的个数",
+    numtheoryLearn_prime_factor_count: "一个数的不同质因数是出现在其质因数分解中的不同质数，每个只算一次。\n\n例如：60 有多少个不同质因数？\n60 = 2² × 3 × 5，所以有 3 个不同质因数（2、3、5）。",
+    numtheoryPrimeFactorCountPrompt: "{n} 有多少个不同质因数？",
+    numtheoryPrimeFactorCountExplain: "{n} = {factors}，所以有 {k} 个不同质因数。",
+
+    numtheoryTopicTitle_count_divisors: "计算因数个数", numtheoryTopicDesc_count_divisors: "求一个数的正因数个数",
+    numtheoryLearn_count_divisors: "若 N = p^a × q^b（p、q 为质数），则 N 的正因数个数为 (a+1)(b+1)。\n\n例如：12 = 2² × 3¹ 有多少个因数？\n(2+1)(1+1) = 3×2 = 6。（验证：1、2、3、4、6、12——共六个因数。）",
+    numtheoryCountDivisorsPrompt: "求 {n} 的正因数个数。",
+    numtheoryCountDivisorsExplain: "{n} = {p}^{a} × {q}^{b}，所以因数个数为 ({a}+1)({b}+1) = {count}。",
+
+    numtheoryTopicTitle_sum_of_proper_divisors: "真因数之和", numtheoryTopicDesc_sum_of_proper_divisors: "将小于一个数本身的所有因数相加",
+    numtheoryLearn_sum_of_proper_divisors: "一个数的真因数是除它本身以外的所有正因数。把它们加起来。\n\n例如：求 12 的真因数之和。\n真因数：1、2、3、4、6。和 = 1+2+3+4+6 = 16。",
+    numtheorySumProperDivisorsPrompt: "求 {n} 的真因数之和（除 {n} 本身外的所有正因数）。",
+    numtheorySumProperDivisorsExplain: "将小于 {n} 的每个因数相加，得到 {sum}。",
+
+    numtheoryTopicTitle_is_perfect_number: "完全数", numtheoryTopicDesc_is_perfect_number: "判断一个数是否等于其真因数之和",
+    numtheoryLearn_is_perfect_number: "完全数等于它自身真因数之和。\n\n例如：6 是完全数吗？\n6 的真因数：1、2、3。和 = 1+2+3 = 6，等于本身，所以是。",
+    numtheoryIsPerfectPrompt: "{n} 是完全数吗（它是否等于其真因数之和）？",
+    numtheoryIsPerfectExplain: "{n} 的真因数之和为 {sum}，所以答案是 {answer}。",
+
+    numtheoryTopicTitle_divisibility_check: "整除判断", numtheoryTopicDesc_divisibility_check: "判断一个数能否被另一个数整除",
+    numtheoryLearn_divisibility_check: "若 a ÷ b 没有余数，则 a 能被 b 整除。\n\n例如：84 能被 7 整除吗？\n84 ÷ 7 = 12，正好整除，没有余数，所以能。",
+    numtheoryDivisibilityPrompt: "{a} 能被 {b} 整除吗？",
+    numtheoryDivisibilityExplain: "{a} ÷ {b} 的余数为 {remainder}，所以答案是 {answer}。",
+
+    numtheoryTopicTitle_digital_root: "数字根", numtheoryTopicDesc_digital_root: "反复将一个数的各位数字相加，直到只剩一位数",
+    numtheoryLearn_digital_root: "一个数的数字根是将各位数字相加，再将结果的各位数字相加，如此反复，直到只剩一位数。\n\n例如：求 938 的数字根。\n9+3+8 = 20，再 2+0 = 2。数字根 = 2。",
+    numtheoryDigitalRootPrompt: "求 {n} 的数字根。",
+    numtheoryDigitalRootExplain: "反复将 {n} 的各位数字相加直到只剩一位数，得到 {dr}。",
+
+    numtheoryTopicTitle_coprime_check: "互质数", numtheoryTopicDesc_coprime_check: "判断两个数是否没有公因数",
+    numtheoryLearn_coprime_check: "若两个数的最大公约数为 1，则它们互质——除 1 以外没有公因数。\n\n例如：8 和 15 互质吗？\ngcd(8, 15) = 1，所以互质。",
+    numtheoryCoprimePrompt: "{a} 和 {b} 互质吗？",
+    numtheoryCoprimeExplain: "gcd({a}, {b}) = {g}，所以答案是 {answer}。",
+
+    numtheoryTopicTitle_euclidean_algorithm: "欧几里得算法", numtheoryTopicDesc_euclidean_algorithm: "用辗转相除法一步步求最大公约数",
+    numtheoryLearn_euclidean_algorithm: "欧几里得算法通过反复做除法求 gcd(a, b)：用 a 除以 b 得到商和余数，再用 b 和该余数重复此过程，直到余数为 0。最后一个非零余数就是最大公约数。\n\n例如：求 gcd(30, 12)。\n30 = 2×12 + 6。再 12 = 2×6 + 0。最后一个非零余数是 6，所以 gcd(30, 12) = 6。",
+    numtheoryEuclideanPrompt: "用欧几里得算法求 gcd({a}, {b})。",
+    numtheoryEuclideanStep1Prompt: "第一步：用 {a} 除以 {b}，求商 q 和余数 r。",
+    numtheoryEuclideanStep1Explain: "{a} = {q1}×{b} + {r1}，所以 q = {q1}，r = {r1}。",
+    numtheoryEuclideanStep2Prompt: "第二步：用 {b} 除以 {r1}，求商 q 和余数 r。",
+    numtheoryEuclideanStep2Explain: "{b} = {q2}×{r1} + 0，所以 q = {q2}，r = 0。余数为 0，所以最大公约数是最后一个非零余数：{gcdVal}。",
+
+    numtheoryTopicTitle_fibonacci_term: "斐波那契数", numtheoryTopicDesc_fibonacci_term: "求斐波那契数列中的某一项",
+    numtheoryLearn_fibonacci_term: "斐波那契数列以 1, 1, 2, 3, 5, 8, … 开始，每一项都是前两项之和。\n\n例如：求第 6 项斐波那契数。\n1, 1, 2, 3, 5, 8——第 6 项是 8。",
+    numtheoryFibonacciPrompt: "求第 {n} 项斐波那契数（F₁ = 1，F₂ = 1，此后每一项都是前两项之和）。",
+    numtheoryFibonacciExplain: "将数列推算到第 {n} 项，得到 F_{n} = {fn}。",
+
+    numtheoryTopicTitle_triangular_number: "三角形数", numtheoryTopicDesc_triangular_number: "求第 n 个三角形数",
+    numtheoryLearn_triangular_number: "第 n 个三角形数是从 1 到 n 的整数之和：T(n) = n(n+1)/2。\n\n例如：求第 5 个三角形数。\nT(5) = 5×6/2 = 15。",
+    numtheoryTriangularPrompt: "求第 {n} 个三角形数，T({n}) = 1 + 2 + ... + {n}。",
+    numtheoryTriangularExplain: "T({n}) = {n}×{np1}/2 = {tn}。",
+
+    numtheoryTopicTitle_power_mod: "模幂运算", numtheoryTopicDesc_power_mod: "计算一个数的幂对 n 取模",
+    numtheoryLearn_power_mod: "计算 a^b mod n 时，先算出 a 的 b 次方，再求它除以 n 的余数。\n\n例如：求 3⁴ mod 5。\n3⁴ = 81。81 ÷ 5 = 16 余 1，所以 3⁴ mod 5 = 1。",
+    numtheoryPowerModPrompt: "求 {a}^{b} mod {n}。",
+    numtheoryPowerModExplain: "{a}^{b} = {powVal}。{powVal} mod {n} = {result}。",
+
 
     businessTitle: "商业概念",
     businessSub: "金融、经济学，以及塑造它们的科技公司。先学习3个概念，再接受其中一个的测验——第一次是选择题，之后要凭记忆手动输入。",
@@ -7596,6 +7892,153 @@ const I18N = {
     matLearn_equality_check: "ཐིག་ཁྲམ་གཉིས་མཉམ་པ་ནི་མཉམ་གནས་གྲངས་ཚང་མ་གཏན་གཅིག་མཚུངས་སྐབས་ཙམ་ཡིན།\n\nདཔེར་བརྗོད། [[1,2],[3,4]] དང [[1,2],[3,5]] མཉམ་པ་ཡིན་ནམ?\nགཡས་སྨད་ཀྱི་གྲངས་མི་མཚུངས (4 དང 5), དེས་ན་མཉམ་པ་མིན།",
     matEqualityPrompt: "A = {A} དང B = {B} མཉམ་པ་ཡིན་ནམ?",
     matEqualityExplain: "A དང B ཡི་གྲངས་རེ་རེ་བསྡུར་ན, ལན་ནི {answer} ཡིན།",
+    coordgeomTitle: "ས་བཀོད་ཐིག་རྩིས།",
+    coordgeomSub: "ཟླ་བ་བཅུ་གཉིས་པ། ས་བཀོད་ནང་གི་ཐིག་དང་དབྱིབས—ཟུར་ཚད, དཀྱིལ་གནས, ཟིན་ས, མཉམ་འགྲོའི་ཐིག་དང་གྲུ་ཟུར་ཐིག, ཟླུམ་པོ་དང་གུག་ཐིག། བརྗོད་གཞི་ཞིག་འདེམས་ནས་གོ་དོན་སློབ་ཞིང་རྗེས་སུ་སྦྱོང་བརྡར་གྱིས།",
+    backToCoordGeomMenuBtn: "ས་བཀོད་ཐིག་རྩིས་ལ་ལོག",
+
+    coordgeomTopicTitle_slope: "ཟུར་ཚད།", coordgeomTopicDesc_slope: "ས་ཚིགས་གཉིས་བརྒྱུད་པའི་ཐིག་གི་ཟུར་ཚད་འཚོལ",
+    coordgeomLearn_slope: "ས་ཚིགས་གཉིས་བརྒྱུད་པའི་ཐིག་གི་ཟུར་ཚད་ནི་ཇི་ཙམ་གཡོགས་པ་བརྟག་བྱེད: m = (y₂ − y₁)/(x₂ − x₁)།\n\nདཔེར་བརྗོད། (1, 2) དང (3, 8) བརྒྱུད་པའི་ཐིག་གི་ཟུར་ཚད་འཚོལ་ཤིག།\nm = (8 − 2)/(3 − 1) = 6/2 = 3།",
+    coordgeomSlopePrompt: "({x1}, {y1}) དང ({x2}, {y2}) བརྒྱུད་པའི་ཐིག་གི་ཟུར་ཚད་འཚོལ་ཤིག།",
+    coordgeomSlopeExplain: "m = (y₂ − y₁)/(x₂ − x₁) = ({y2} − {y1})/({x2} − {x1}) = {dy}/{dx} = {m}།",
+
+    coordgeomTopicTitle_midpoint: "དཀྱིལ་གནས།", coordgeomTopicDesc_midpoint: "ས་ཚིགས་གཉིས་བར་གྱི་ཐིག་ཕྲེང་གི་དཀྱིལ་གནས་འཚོལ",
+    coordgeomLearn_midpoint: "ཐིག་ཕྲེང་ཞིག་གི་དཀྱིལ་གནས་ནི་མཇུག་ས་ཚིགས་གཉིས་ཀྱི་ཆ་སྙོམས: ((x₁+x₂)/2, (y₁+y₂)/2)།\n\nདཔེར་བརྗོད། (1, 2) དང (5, 8) ཡི་དཀྱིལ་གནས་འཚོལ་ཤིག།\nདཀྱིལ་གནས = ((1+5)/2, (2+8)/2) = (3, 5)།",
+    coordgeomMidpointPrompt: "({x1}, {y1}) ནས ({x2}, {y2}) བར་གྱི་ཐིག་ཕྲེང་གི་དཀྱིལ་གནས་འཚོལ་ཤིག།",
+    coordgeomMidpointExplain: "དཀྱིལ་གནས = ((x₁+x₂)/2, (y₁+y₂)/2) = (({x1}+{x2})/2, ({y1}+{y2})/2) = ({mx}, {my})།",
+
+    coordgeomTopicTitle_slope_intercept_form: "ཟུར་ཚད་ཟིན་ས་རྣམ་གཞག", coordgeomTopicDesc_slope_intercept_form: "ཟུར་ཚད་དང་ས་ཚིགས་ཤིག་ལས y = mx + b ནང་གི b འཚོལ",
+    coordgeomLearn_slope_intercept_form: "ཐིག་ཞིག་གི་ཟུར་ཚད་ཟིན་ས་རྣམ་གཞག་ནི y = mx + b ཡིན་ལ, m ནི་ཟུར་ཚད, b ནི y-ཟིན་ས་ཡིན། ཟུར་ཚད་དང་ཐིག་ཐོག་གི་ས་ཚིགས་ཤིག་ཤེས་ན, ཚབ་བཅུག་ནས b འཚོལ་ཐུབ།\n\nདཔེར་བརྗོད། ཐིག་ཞིག་གི་ཟུར་ཚད 2 ཡིན་ཞིང (3, 7) བརྒྱུད། b འཚོལ་ཤིག།\n7 = 2(3) + b, དེས་ན 7 = 6 + b, b = 1།",
+    coordgeomSlopeInterceptPrompt: "ཐིག་ཞིག་གི་ཟུར་ཚད {m} ཡིན་ཞིང ({x0}, {y0}) བརྒྱུད། y = {mExpr} + b ནང་གི b འཚོལ་ཤིག།",
+    coordgeomSlopeInterceptExplain: "b = y − mx = {y0} − ({m})({x0}) = {y0} − {mx0} = {b}།",
+
+    coordgeomTopicTitle_point_on_line_check: "ས་ཚིགས་ཐིག་ཐོག་ཡིན་མིན།", coordgeomTopicDesc_point_on_line_check: "ས་ཚིགས་ཤིག་ཐིག་ཞིག་གི་ཐོག་ཡོད་མེད་བརྟག",
+    coordgeomLearn_point_on_line_check: "ས་ཚིགས (x, y) ཐིག y = mx + b ཡི་ཐོག་ཡོད་པ་ནི x ཐང་ཚབ་བཅུག་ན y ཐང་དེ་ཉིད་ཐོན་ན་མ་གཏོགས་མེད།\n\nདཔེར་བརྗོད། (2, 5) ཐིག y = 2x + 1 ཡི་ཐོག་ཡོད་དམ?\n2(2) + 1 = 5, མཐུན་པས་ཡོད།",
+    coordgeomPointOnLinePrompt: "ས་ཚིགས ({x}, {y}) ཐིག y = {mExpr}{bExpr} ཡི་ཐོག་ཡོད་དམ?",
+    coordgeomPointOnLineExplain: "x = {x} ཚབ་བཅུག་ན: y = {mExpr}{bExpr} = {computedY}། ས་ཚིགས་ཀྱི y ཐང་ནི {y} ཡིན་སྟབས, ལན་ནི {answer} ཡིན།",
+
+    coordgeomTopicTitle_parallel_check: "མཉམ་འགྲོའི་ཐིག", coordgeomTopicDesc_parallel_check: "ཟུར་ཚད་ཤེས་པའི་ཐིག་གཉིས་མཉམ་འགྲོ་ཡིན་མིན་བརྟག",
+    coordgeomLearn_parallel_check: "ཐིག་གཉིས་མཉམ་འགྲོ་ཡིན་པ་ནི་ཟུར་ཚད་མཚུངས་སྐབས་ཙམ།\n\nདཔེར་བརྗོད། ཟུར་ཚད 3 དང 3 ཡིན་པའི་ཐིག་གཉིས་མཉམ་འགྲོ་ཡིན་ནམ? ཡིན, 3 = 3 སྟབས། ཟུར་ཚད 3 དང -2 ཡིན་ན? མིན, 3 ≠ -2 སྟབས།",
+    coordgeomParallelPrompt: "ཐིག1ཡི་ཟུར་ཚད {m1}, ཐིག2ཡི་ཟུར་ཚད {m2}། ཐིག་གཉིས་མཉམ་འགྲོ་ཡིན་ནམ?",
+    coordgeomParallelExplain: "ཐིག་གཉིས་མཉམ་འགྲོ་ཡིན་པ་ནི་ཟུར་ཚད་མཚུངས་སྐབས་ཙམ: {m1} {compareSymbol} {m2}། དེས་ན་ལན་ནི {answer} ཡིན།",
+
+    coordgeomTopicTitle_perpendicular_slope: "གྲུ་ཟུར་ཟུར་ཚད།", coordgeomTopicDesc_perpendicular_slope: "ཐིག་ཤེས་པ་ཞིག་དང་གྲུ་ཟུར་ཐིག་གི་ཟུར་ཚད་འཚོལ",
+    coordgeomLearn_perpendicular_slope: "གྲུ་ཟུར་ཐིག་གཉིས་ཀྱི་ཟུར་ཚད་ནི་ཕན་ཚུན་ལྡོག་གྲངས་ལ་སྐྱུར་བརྗེས་ཡིན: ཟུར་ཚད p/q ཡིན་ན, གྲུ་ཟུར་ཐིག་གི་ཟུར་ཚད -q/p ཡིན།\n\nདཔེར་བརྗོད། ཐིག་ཞིག་གི་ཟུར་ཚད 2/3 ཡིན་ན, དེ་དང་གྲུ་ཟུར་ཐིག་གི་ཟུར་ཚད -3/2 ཡིན།",
+    coordgeomPerpSlopePrompt: "ཐིག་ཞིག་གི་ཟུར་ཚད {p}/{q} ཡིན། དེ་དང་གྲུ་ཟུར་ཐིག་གི་ཟུར་ཚད (ཆ་གྲངས་སུ) འཚོལ་ཤིག།",
+    coordgeomPerpSlopeExplain: "གྲུ་ཟུར་ཐིག་གི་ཟུར་ཚད་ནི་ལྡོག་གྲངས་སྐྱུར་བརྗེས: {p}/{q} ལྡོག་སྟེ་སྐྱུར་བརྗེས་བྱས་ན {numerator}/{denominator} ཐོན།",
+
+    coordgeomTopicTitle_x_intercept: "x-ཟིན་ས།", coordgeomTopicDesc_x_intercept: "ཐིག x-ཐིག་དང་མཇལ་སའི་ཟིན་ས་འཚོལ",
+    coordgeomLearn_x_intercept: "x-ཟིན་ས་ནི་ཐིག x-ཐིག་དང་མཇལ་ས་ཡིན་ལ, དེར y = 0། y = mx + b ནང y = 0 བཅུག་ནས x འཚོལ།\n\nདཔེར་བརྗོད། y = 2x - 6 ཡི x-ཟིན་ས་འཚོལ་ཤིག།\n0 = 2x - 6, དེས་ན 2x = 6, x = 3།",
+    coordgeomXInterceptPrompt: "ཐིག y = {mExpr}{bExpr} ཡི x-ཟིན་ས་འཚོལ་ཤིག།",
+    coordgeomXInterceptExplain: "y = 0 བཅུག་ན: 0 = {mExpr}{bExpr}, དེས་ན {m}x = {negB}, x = {x0}།",
+
+    coordgeomTopicTitle_y_intercept: "ས་ཚིགས་གཉིས་ལས y-ཟིན་ས།", coordgeomTopicDesc_y_intercept: "ས་ཚིགས་གཉིས་བརྒྱུད་པའི་ཐིག་གི y-ཟིན་ས་འཚོལ",
+    coordgeomLearn_y_intercept: "ས་ཚིགས་གཉིས་བརྒྱུད་པའི་ཐིག་གི y-ཟིན་ས་འཚོལ་སྐབས, དང་པོ་ཟུར་ཚད་འཚོལ, དེ་ནས་ས་ཚིགས་གཅིག y = mx + b ནང་ཚབ་བཅུག་ནས b འཚོལ།\n\nདཔེར་བརྗོད། (1, 4) དང (3, 8) བརྒྱུད་པའི་ཐིག་གི y-ཟིན་ས་འཚོལ་ཤིག།\nཟུར་ཚད: m = (8-4)/(3-1) = 4/2 = 2། དེ་ནས b = 4 - 2(1) = 2།",
+    coordgeomYInterceptPrompt: "({x1}, {y1}) དང ({x2}, {y2}) བརྒྱུད་པའི་ཐིག་གི y-ཟིན་ས་འཚོལ་ཤིག།",
+    coordgeomYInterceptStep1Prompt: "རིམ་པ 1: ཐིག་གི་ཟུར་ཚད m འཚོལ་ཤིག།",
+    coordgeomYInterceptStep1Explain: "m = (y₂ − y₁)/(x₂ − x₁) = ({y2} − {y1})/({x2} − {x1}) = {dy}/{dx} = {m}།",
+    coordgeomYInterceptStep2Prompt: "རིམ་པ 2: ས་ཚིགས་གཅིག་དང b = y − mx བེད་སྤྱོད་ཀྱིས y-ཟིན་ས b འཚོལ་ཤིག།",
+    coordgeomYInterceptStep2Explain: "b = y − mx = {y1} − ({m})({x1}) = {y1} − {mx1} = {b}།",
+
+    coordgeomTopicTitle_line_intersection: "ཐིག་ཟུང་གི་མཇལ་ས།", coordgeomTopicDesc_line_intersection: "ཐིག་གཉིས་མཇལ་སའི་ས་ཚིགས་འཚོལ",
+    coordgeomLearn_line_intersection: "མཉམ་འགྲོ་མིན་པའི་ཐིག་གཉིས་ས་ཚིགས་གཅིག་ཏུ་མཇལ། མཉམ་བཟོས་ནས x འཚོལ, དེ་ནས y འཚོལ།\n\nདཔེར་བརྗོད། y = x + 1 དང y = -x + 5 གང་དུ་མཇལ?\nx + 1 = -x + 5, དེས་ན 2x = 4, x = 2། དེ་ནས y = 2 + 1 = 3། མཇལ་ས (2, 3)།",
+    coordgeomLineIntersectPrompt: "ཐིག y = {m1Expr}{b1Expr} དང y = {m2Expr}{b2Expr} གང་དུ་མཇལ་བ་འཚོལ་ཤིག།",
+    coordgeomLineIntersectExplain: "{m1Expr}{b1Expr} = {m2Expr}{b2Expr} མཉམ་བཟོས་ནས བཤད་ན x = {x0}, དེ་ནས y = {y0}། མཇལ་ས ({x0}, {y0}) ཡིན།",
+
+    coordgeomTopicTitle_circle_center_radius: "ཟླུམ་པོའི་དབུས་དང་དབུས་ཐིག", coordgeomTopicDesc_circle_center_radius: "ཟླུམ་པོའི་འགྲེལ་ཚིག་ལས་དབུས་དང་དབུས་ཐིག་འཚོལ",
+    coordgeomLearn_circle_center_radius: "ཟླུམ་པོའི་འགྲེལ་ཚིག (x-h)² + (y-k)² = r² ཡི་དབུས (h, k) ཡིན་ཞིང་དབུས་ཐིག r ཡིན།\n\nདཔེར་བརྗོད། (x-2)² + (y+3)² = 25 ཡི་དབུས་དང་དབུས་ཐིག་འཚོལ་ཤིག།\nདབུས = (2, -3), r² = 25 སྟབས r = 5།",
+    coordgeomCircleCenterPrompt: "ཟླུམ་པོ ({hExpr})² + ({kExpr})² = {rSq} ཡི་དབུས (h, k) དང་དབུས་ཐིག r འཚོལ་ཤིག།",
+    coordgeomCircleCenterExplain: "འགྲེལ་ཚིག (x-h)² + (y-k)² = r² ལས་དབུས (h, k) = ({h}, {k}), r² = {rSq}, དེས་ན r = {r}།",
+
+    coordgeomTopicTitle_parabola_vertex: "གུག་ཐིག་གི་རྩེ་མོ།", coordgeomTopicDesc_parabola_vertex: "གུག་ཐིག y = ax² + bx + c ཡི་རྩེ་མོ་འཚོལ",
+    coordgeomLearn_parabola_vertex: "གུག་ཐིག y = ax² + bx + c ཡི་རྩེ་མོའི x ཐང་ནི x = -b/(2a)། x དེ་འགྲེལ་ཚིག་ནང་ཚབ་བཅུག་ན y ཐང་ཐོན།\n\nདཔེར་བརྗོད། y = x² - 4x + 1 ཡི་རྩེ་མོ་འཚོལ་ཤིག།\nx = -(-4)/(2×1) = 2། y = (2)² - 4(2) + 1 = 4 - 8 + 1 = -3། རྩེ་མོ = (2, -3)།",
+    coordgeomParabolaVertexPrompt: "གུག་ཐིག y = {aExpr}{bExpr}{cExpr} ཡི་རྩེ་མོ་འཚོལ་ཤིག།",
+    coordgeomParabolaVertexStep1Prompt: "རིམ་པ 1: རྩེ་མོའི x ཐང, x = -b/(2a) འཚོལ་ཤིག།",
+    coordgeomParabolaVertexStep1Explain: "x = -b/(2a) = -({b})/(2×{a}) = -({b})/{twoA} = {x0}།",
+    coordgeomParabolaVertexStep2Prompt: "རིམ་པ 2: x དེ་འགྲེལ་ཚིག་ནང་ཚབ་བཅུག་ནས y འཚོལ་ཤིག།",
+    coordgeomParabolaVertexStep2Explain: "y = ax² + bx + c = ({a})({x0})² + ({b})({x0}) + ({c}) = {y0}།",
+
+    coordgeomTopicTitle_reflection_over_x_axis: "x-ཐིག་ཐོག་གི་བརྙན།", coordgeomTopicDesc_reflection_over_x_axis: "ས་ཚིགས་ཤིག x-ཐིག་ཐོག་བརྙན་བསྐྱེད་པའི་འབྲས་བུ་འཚོལ",
+    coordgeomLearn_reflection_over_x_axis: "ས་ཚིགས x-ཐིག་ཐོག་བརྙན་སྐབས x མི་འགྱུར, y ཡི་སྐྱུར་བརྗེས: (x, y) → (x, -y)།\n\nདཔེར་བརྗོད། (3, 5) x-ཐིག་ཐོག་བརྙན་བསྐྱེད་ཤིག། འབྲས་བུ = (3, -5)།",
+    coordgeomReflectXPrompt: "ས་ཚིགས ({x}, {y}) x-ཐིག་ཐོག་བརྙན་བསྐྱེད་པའི་འབྲས་བུ་འཚོལ་ཤིག།",
+    coordgeomReflectXExplain: "x-ཐིག་ཐོག་བརྙན་སྐབས x མི་འགྱུར, y ཡི་སྐྱུར་བརྗེས: ({x}, {y}) → ({x}, {negY})།",
+
+    coordgeomTopicTitle_reflection_over_y_axis: "y-ཐིག་ཐོག་གི་བརྙན།", coordgeomTopicDesc_reflection_over_y_axis: "ས་ཚིགས་ཤིག y-ཐིག་ཐོག་བརྙན་བསྐྱེད་པའི་འབྲས་བུ་འཚོལ",
+    coordgeomLearn_reflection_over_y_axis: "ས་ཚིགས y-ཐིག་ཐོག་བརྙན་སྐབས y མི་འགྱུར, x ཡི་སྐྱུར་བརྗེས: (x, y) → (-x, y)།\n\nདཔེར་བརྗོད། (3, 5) y-ཐིག་ཐོག་བརྙན་བསྐྱེད་ཤིག། འབྲས་བུ = (-3, 5)།",
+    coordgeomReflectYPrompt: "ས་ཚིགས ({x}, {y}) y-ཐིག་ཐོག་བརྙན་བསྐྱེད་པའི་འབྲས་བུ་འཚོལ་ཤིག།",
+    coordgeomReflectYExplain: "y-ཐིག་ཐོག་བརྙན་སྐབས y མི་འགྱུར, x ཡི་སྐྱུར་བརྗེས: ({x}, {y}) → ({negX}, {y})།",
+
+    numtheoryTitle: "གྲངས་རིག",
+    numtheorySub: "ཟླ་བ་བཅུ་གསུམ་པ། རྩ་གྲངས, ཆ་གྲངས་དང mod རྩིས—གྲངས་ཀ་རང་ཉིད་ཟབ་མོར་སློབ། བརྗོད་གཞི་ཞིག་འདེམས་ནས་གོ་དོན་སློབ་ཞིང་རྗེས་སུ་སྦྱོང་བརྡར་གྱིས།",
+    backToNumTheoryMenuBtn: "གྲངས་རིག་ལ་ལོག",
+
+    numtheoryTopicTitle_is_prime: "རྩ་གྲངས་བརྟག", numtheoryTopicDesc_is_prime: "གྲངས་ཤིག་རྩ་གྲངས་ཡིན་མིན་བརྟག",
+    numtheoryLearn_is_prime: "གྲངས་ཤིག 1 ལས་ཆེ་ཞིང 1 དང་རང་ཉིད་མ་གཏོགས་ཆ་གྲངས་གཞན་མེད་ན་རྩ་གྲངས་ཡིན། བརྟག་ཐབས་ནི་དེའི་ཡིག་ཚད་བར་གྱི་གྲངས་ཆ་ཚང་མས་གོང་འཕར་ཐུབ་མིན་བརྟག་པ།\n\nདཔེར་བརྗོད། 29 རྩ་གྲངས་ཡིན་ནམ?\n√29 ≈ 5.4, 29 2, 3, 5 གང་གིས་ཀྱང་གོང་འཕར་མི་ཐུབ་སྟབས, རྩ་གྲངས་ཡིན།",
+    numtheoryIsPrimePrompt: "{n} རྩ་གྲངས་ཡིན་ནམ?",
+    numtheoryIsPrimeExplain: "√{n} (≈{sqrtN}) བར་གྱི་གྲངས་ཆ་ཚང་མ་བརྟགས་ན ལན་ནི {answer} ཡིན།",
+
+    numtheoryTopicTitle_smallest_prime_factor: "ཆ་གྲངས་རྩ་གྲངས་ཆུང་ཤོས།", numtheoryTopicDesc_smallest_prime_factor: "འདུས་གྲངས་ཤིག་གི་ཆ་གྲངས་རྩ་གྲངས་ཆུང་ཤོས་འཚོལ",
+    numtheoryLearn_smallest_prime_factor: "གྲངས་ཤིག་གི་ཆ་གྲངས་རྩ་གྲངས་ཆུང་ཤོས་ནི་དེ་གོང་འཕར་ཐུབ་པའི་རྩ་གྲངས་ཆུང་ཤོས་ཡིན། 2, 3, 5 སོགས་རིམ་བཞིན་བརྟགས་ནས་གོང་འཕར་ཐུབ་པ་ཞིག་ཐོན་པར་བྱ།\n\nདཔེར་བརྗོད། 21 ཡི་ཆ་གྲངས་རྩ་གྲངས་ཆུང་ཤོས་འཚོལ་ཤིག།\n21 གྲངས་ཆ་མིན་སྟབས 2 མི་འགྲིགས། 21 ÷ 3 = 7 གོང་འཕར, དེས་ན་ཆུང་ཤོས 3 ཡིན།",
+    numtheorySmallestPrimeFactorPrompt: "{n} ཡི་ཆ་གྲངས་རྩ་གྲངས་ཆུང་ཤོས་འཚོལ་ཤིག།",
+    numtheorySmallestPrimeFactorExplain: "2, 3, 5 སོགས་རིམ་བཞིན་བརྟགས་ན {n} གོང་འཕར་ཐུབ་པའི་རྩ་གྲངས་ཆུང་ཤོས་ནི {f} ཡིན ({n} ÷ {f} = {quotient})།",
+
+    numtheoryTopicTitle_prime_factor_count: "ཆ་གྲངས་རྩ་གྲངས་མི་འདྲ་བའི་གྲངས་ཀ", numtheoryTopicDesc_prime_factor_count: "གྲངས་ཤིག་གོང་འཕར་ཐུབ་པའི་རྩ་གྲངས་མི་འདྲ་བའི་གྲངས་ཀ་འཚོལ",
+    numtheoryLearn_prime_factor_count: "གྲངས་ཤིག་གི་ཆ་གྲངས་རྩ་གྲངས་མི་འདྲ་བ་ནི་དེའི་རྩ་གྲངས་བགོ་བཤའི་ནང་འབྱུང་བའི་རྩ་གྲངས་མི་འདྲ་བ་རེ་རེར་བགྲངས་པ།\n\nདཔེར་བརྗོད། 60 ལ་ཆ་གྲངས་རྩ་གྲངས་མི་འདྲ་བ་དུ་ཡོད?\n60 = 2² × 3 × 5, དེས་ན་མི་འདྲ་བ 3 ཡོད (2, 3, 5)།",
+    numtheoryPrimeFactorCountPrompt: "{n} ལ་ཆ་གྲངས་རྩ་གྲངས་མི་འདྲ་བ་དུ་ཡོད?",
+    numtheoryPrimeFactorCountExplain: "{n} = {factors}, དེས་ན་མི་འདྲ་བ {k} ཡོད།",
+
+    numtheoryTopicTitle_count_divisors: "ཆ་གྲངས་ཀྱི་གྲངས་ཀ་རྩིས།", numtheoryTopicDesc_count_divisors: "གྲངས་ཤིག་གི་ཆ་གྲངས་ཡོད་ཚད་ཀྱི་གྲངས་ཀ་འཚོལ",
+    numtheoryLearn_count_divisors: "N = p^a × q^b (p, q རྩ་གྲངས) ཡིན་ན, N ཡི་ཆ་གྲངས་གྲངས་ཀ་ནི (a+1)(b+1) ཡིན།\n\nདཔེར་བརྗོད། 12 = 2² × 3¹ ལ་ཆ་གྲངས་དུ་ཡོད?\n(2+1)(1+1) = 3×2 = 6། (བརྟག: 1, 2, 3, 4, 6, 12—དྲུག)",
+    numtheoryCountDivisorsPrompt: "{n} ཡི་ཆ་གྲངས་ཡོད་ཚད་ཀྱི་གྲངས་ཀ་འཚོལ་ཤིག།",
+    numtheoryCountDivisorsExplain: "{n} = {p}^{a} × {q}^{b}, དེས་ན་ཆ་གྲངས་གྲངས་ཀ་ནི ({a}+1)({b}+1) = {count}།",
+
+    numtheoryTopicTitle_sum_of_proper_divisors: "ཆ་གྲངས་ཚང་མའི་བསྡོམས།", numtheoryTopicDesc_sum_of_proper_divisors: "གྲངས་རང་ཉིད་ལས་ཆུང་བའི་ཆ་གྲངས་ཚང་མ་བསྡོམས",
+    numtheoryLearn_sum_of_proper_divisors: "གྲངས་ཤིག་གི་ཆ་གྲངས་ཐུན་མོང་ནི་རང་ཉིད་མ་གཏོགས་ཆ་གྲངས་ཚང་མ། དེ་དག་བསྡོམས་ཤིག།\n\nདཔེར་བརྗོད། 12 ཡི་ཆ་གྲངས་ཐུན་མོང་བསྡོམས་འཚོལ་ཤིག།\nཆ་གྲངས: 1, 2, 3, 4, 6། བསྡོམས = 1+2+3+4+6 = 16།",
+    numtheorySumProperDivisorsPrompt: "{n} ཡི་ཆ་གྲངས་ཐུན་མོང (རང་ཉིད {n} མ་གཏོགས) བསྡོམས་འཚོལ་ཤིག།",
+    numtheorySumProperDivisorsExplain: "{n} ལས་ཆུང་བའི་ཆ་གྲངས་ཚང་མ་བསྡོམས་ན {sum} ཐོན།",
+
+    numtheoryTopicTitle_is_perfect_number: "གྲངས་ཡོངས་རྫོགས།", numtheoryTopicDesc_is_perfect_number: "གྲངས་ཤིག་རང་ཉིད་ཀྱི་ཆ་གྲངས་ཐུན་མོང་བསྡོམས་དང་མཚུངས་མིན་བརྟག",
+    numtheoryLearn_is_perfect_number: "གྲངས་ཡོངས་རྫོགས་ནི་རང་ཉིད་ཀྱི་ཆ་གྲངས་ཐུན་མོང་བསྡོམས་དང་མཚུངས་པ།\n\nདཔེར་བརྗོད། 6 གྲངས་ཡོངས་རྫོགས་ཡིན་ནམ?\n6 ཡི་ཆ་གྲངས་ཐུན་མོང: 1, 2, 3། བསྡོམས = 1+2+3 = 6, རང་ཉིད་དང་མཚུངས་སྟབས་ཡིན།",
+    numtheoryIsPerfectPrompt: "{n} གྲངས་ཡོངས་རྫོགས་ཡིན་ནམ (རང་ཉིད་ཀྱི་ཆ་གྲངས་ཐུན་མོང་བསྡོམས་དང་མཚུངས་སམ)?",
+    numtheoryIsPerfectExplain: "{n} ཡི་ཆ་གྲངས་ཐུན་མོང་བསྡོམས་ནི {sum} ཡིན་སྟབས, ལན་ནི {answer} ཡིན།",
+
+    numtheoryTopicTitle_divisibility_check: "གོང་འཕར་བརྟག", numtheoryTopicDesc_divisibility_check: "གྲངས་ཤིག་གྲངས་གཞན་གྱིས་གོང་འཕར་ཐུབ་མིན་བརྟག",
+    numtheoryLearn_divisibility_check: "a ÷ b ལ་ལྷག་མ་མེད་ན a ནི b ཡིས་གོང་འཕར་ཐུབ།\n\nདཔེར་བརྗོད། 84 ནི 7 ཡིས་གོང་འཕར་ཐུབ་བམ?\n84 ÷ 7 = 12 གོང་འཕར, ལྷག་མ་མེད་སྟབས་ཐུབ།",
+    numtheoryDivisibilityPrompt: "{a} ནི {b} ཡིས་གོང་འཕར་ཐུབ་བམ?",
+    numtheoryDivisibilityExplain: "{a} ÷ {b} ལ་ལྷག་མ {remainder} ཡོད་སྟབས, ལན་ནི {answer} ཡིན།",
+
+    numtheoryTopicTitle_digital_root: "ཡིག་གྲངས་རྩ་བ།", numtheoryTopicDesc_digital_root: "གྲངས་ཤིག་གི་ཡིག་གྲངས་ཚང་མ་ཡང་བསྐྱར་བསྡོམས་ནས་ཡིག་གྲངས་གཅིག་ཙམ་དུ་བསྒྱུར",
+    numtheoryLearn_digital_root: "གྲངས་ཤིག་གི་ཡིག་གྲངས་རྩ་བ་ནི་དེའི་ཡིག་གྲངས་ཚང་མ་བསྡོམས, འབྲས་བུའི་ཡིག་གྲངས་ཡང་བསྡོམས, ཡིག་གྲངས་གཅིག་ཙམ་མ་ལུས་བར་ཡང་བསྐྱར་བྱེད།\n\nདཔེར་བརྗོད། 938 ཡི་ཡིག་གྲངས་རྩ་བ་འཚོལ་ཤིག།\n9+3+8 = 20, དེ་ནས 2+0 = 2། ཡིག་གྲངས་རྩ་བ = 2།",
+    numtheoryDigitalRootPrompt: "{n} ཡི་ཡིག་གྲངས་རྩ་བ་འཚོལ་ཤིག།",
+    numtheoryDigitalRootExplain: "{n} ཡི་ཡིག་གྲངས་ཡང་བསྐྱར་བསྡོམས་ནས་ཡིག་གྲངས་གཅིག་ཙམ་དུ་བསྒྱུར་ན {dr} ཐོན།",
+
+    numtheoryTopicTitle_coprime_check: "ཆ་གྲངས་ཐུན་མོང་མེད་པ།", numtheoryTopicDesc_coprime_check: "གྲངས་གཉིས་ལ་ཆ་གྲངས་ཐུན་མོང་མེད་མིན་བརྟག",
+    numtheoryLearn_coprime_check: "གྲངས་གཉིས་ཀྱི gcd 1 ཡིན་ན, ཆ་གྲངས་ཐུན་མོང་མེད—1 མ་གཏོགས་ཆ་གྲངས་མཐུན་པ་མེད།\n\nདཔེར་བརྗོད། 8 དང 15 ཆ་གྲངས་ཐུན་མོང་མེད་དམ?\ngcd(8, 15) = 1, དེས་ན་མེད།",
+    numtheoryCoprimePrompt: "{a} དང {b} ཆ་གྲངས་ཐུན་མོང་མེད་དམ?",
+    numtheoryCoprimeExplain: "gcd({a}, {b}) = {g}, དེས་ན་ལན་ནི {answer} ཡིན།",
+
+    numtheoryTopicTitle_euclidean_algorithm: "Euclid ཐབས་ལམ།", numtheoryTopicDesc_euclidean_algorithm: "བགོ་བཤའ་ཡང་བསྐྱར་བྱས་ནས gcd རིམ་པ་བཞིན་འཚོལ",
+    numtheoryLearn_euclidean_algorithm: "Euclid ཐབས་ལམ་གྱིས gcd(a, b) འཚོལ་སྟངས: a ལ b ཡིས་བགོ་ནས་བགོ་ཚད་དང་ལྷག་མ་ཐོབ, དེ་ནས b དང་ལྷག་མ་དེ་ལ་ཡང་བསྐྱར་བགོ, ལྷག་མ 0 ཆགས་བར། ལྷག་མ་མཐའ་མའི 0 མིན་པ་དེ gcd ཡིན།\n\nདཔེར་བརྗོད། gcd(30, 12) འཚོལ་ཤིག།\n30 = 2×12 + 6། དེ་ནས 12 = 2×6 + 0། ལྷག་མ 0 མིན་པ་མཐའ་མ 6 ཡིན་སྟབས gcd(30, 12) = 6།",
+    numtheoryEuclideanPrompt: "Euclid ཐབས་ལམ་བེད་སྤྱོད་ཀྱིས gcd({a}, {b}) འཚོལ་ཤིག།",
+    numtheoryEuclideanStep1Prompt: "རིམ་པ 1: {a} ལ {b} ཡིས་བགོ་ཤིག། བགོ་ཚད q དང་ལྷག་མ r འཚོལ་ཤིག།",
+    numtheoryEuclideanStep1Explain: "{a} = {q1}×{b} + {r1}, དེས་ན q = {q1}, r = {r1}།",
+    numtheoryEuclideanStep2Prompt: "རིམ་པ 2: {b} ལ {r1} ཡིས་བགོ་ཤིག། བགོ་ཚད q དང་ལྷག་མ r འཚོལ་ཤིག།",
+    numtheoryEuclideanStep2Explain: "{b} = {q2}×{r1} + 0, དེས་ན q = {q2}, r = 0། ལྷག་མ 0 ཡིན་སྟབས, gcd ནི་ལྷག་མ 0 མིན་པ་མཐའ་མ: {gcdVal}།",
+
+    numtheoryTopicTitle_fibonacci_term: "Fibonacci གྲངས་ཕྲེང་།", numtheoryTopicDesc_fibonacci_term: "Fibonacci གྲངས་ཕྲེང་ནང་གི་གྲངས་ཤིག་འཚོལ",
+    numtheoryLearn_fibonacci_term: "Fibonacci གྲངས་ཕྲེང 1, 1, 2, 3, 5, 8, … ནས་འགོ་འཛུགས, གྲངས་རེ་རེ་ནི་སྔོན་མའི་གྲངས་གཉིས་ཀྱི་བསྡོམས།\n\nདཔེར་བརྗོད། Fibonacci ཐེངས6པ་འཚོལ་ཤིག།\n1, 1, 2, 3, 5, 8—ཐེངས6པ 8 ཡིན།",
+    numtheoryFibonacciPrompt: "Fibonacci ཐེངས{n}པ་འཚོལ་ཤིག (F₁ = 1, F₂ = 1, དེ་རྗེས་གྲངས་རེ་རེ་སྔོན་མའི་གྲངས་གཉིས་ཀྱི་བསྡོམས་ཡིན)།",
+    numtheoryFibonacciExplain: "གྲངས་ཕྲེང་ཐེངས{n}པ་བར་བརྩིས་ན F_{n} = {fn} ཐོན།",
+
+    numtheoryTopicTitle_triangular_number: "གྲུ་གསུམ་གྲངས།", numtheoryTopicDesc_triangular_number: "ཐེངས n པའི་གྲུ་གསུམ་གྲངས་འཚོལ",
+    numtheoryLearn_triangular_number: "ཐེངས n པའི་གྲུ་གསུམ་གྲངས་ནི 1 ནས n བར་གྱི་གྲངས་ཆ་ཚང་མའི་བསྡོམས: T(n) = n(n+1)/2།\n\nདཔེར་བརྗོད། ཐེངས5པའི་གྲུ་གསུམ་གྲངས་འཚོལ་ཤིག།\nT(5) = 5×6/2 = 15།",
+    numtheoryTriangularPrompt: "ཐེངས{n}པའི་གྲུ་གསུམ་གྲངས, T({n}) = 1 + 2 + ... + {n}, འཚོལ་ཤིག།",
+    numtheoryTriangularExplain: "T({n}) = {n}×{np1}/2 = {tn}།",
+
+    numtheoryTopicTitle_power_mod: "mod ཡི་ཡོན་ཏན་རྩིས།", numtheoryTopicDesc_power_mod: "གྲངས་ཤིག་གི་ཡོན་ཏན mod n རྩིས",
+    numtheoryLearn_power_mod: "a^b mod n རྩིས་སྐབས, དང་པོ a ཡི b ཡོན་ཏན་རྩིས, དེ་ནས n ཡིས་བགོ་བའི་ལྷག་མ་འཚོལ།\n\nདཔེར་བརྗོད། 3⁴ mod 5 འཚོལ་ཤིག།\n3⁴ = 81། 81 ÷ 5 = 16 ལྷག་མ 1, དེས་ན 3⁴ mod 5 = 1།",
+    numtheoryPowerModPrompt: "{a}^{b} mod {n} འཚོལ་ཤིག།",
+    numtheoryPowerModExplain: "{a}^{b} = {powVal}། {powVal} mod {n} = {result}།",
+
 
     businessTitle: "ཚོང་ལས་དོན་ཚན།",
     businessSub: "དངུལ་རྩིས, དཔལ་འབྱོར་རིག་པ, དེ་དག་བཟོ་མཁན་གྱི་ལག་རྩལ་ཚོང་ལས། དོན་ཚན 3 སློབ་ནས་གཅིག་གི་ཐད་ཀར་བརྟག་ཞིབ་བྱེད། ཐོག་མར་གདམ་ཁ་བཞིའི་དྲི་བ, རྗེས་སུ་དྲན་པ་ལས་ཡིག་འབྲི་དགོས།",
@@ -7760,6 +8203,7 @@ document.addEventListener('keydown', function(e){
       geom_practice: ['geomSession','Geom'], trig_practice: ['trigSession','Trig'],
       cplx_practice: ['cplxSession','Cplx'], seq_practice: ['seqSession','Seq'],
       mat_practice: ['matSession','Mat'],
+      coordgeom_practice: ['coordgeomSession','CoordGeom'], numtheory_practice: ['numtheorySession','NumTheory'],
     };
     const mode = modeByScreen[state.screen];
     if(mode){
@@ -7848,6 +8292,14 @@ const screens = {
   mat_learn: renderMatLearn,
   mat_practice: renderMatPractice,
   mat_complete: renderMatComplete,
+  coordgeom_menu: renderCoordGeomMenu,
+  coordgeom_learn: renderCoordGeomLearn,
+  coordgeom_practice: renderCoordGeomPractice,
+  coordgeom_complete: renderCoordGeomComplete,
+  numtheory_menu: renderNumTheoryMenu,
+  numtheory_learn: renderNumTheoryLearn,
+  numtheory_practice: renderNumTheoryPractice,
+  numtheory_complete: renderNumTheoryComplete,
   business_menu: renderBusinessMenu,
   biz_week_menu: renderCategoryWeekMenu,
   business_learn: renderBusinessLearn,
@@ -8137,6 +8589,14 @@ function renderHome(){
       <button class="practice-tile" onclick="state.screen='mat_menu'; render();">
         <div class="glyph">🔲</div>
         <div class="pt-title">${t('matricesTitle')}</div>
+      </button>
+      <button class="practice-tile" onclick="state.screen='coordgeom_menu'; render();">
+        <div class="glyph">📍</div>
+        <div class="pt-title">${t('coordgeomTitle')}</div>
+      </button>
+      <button class="practice-tile" onclick="state.screen='numtheory_menu'; render();">
+        <div class="glyph">🔟</div>
+        <div class="pt-title">${t('numtheoryTitle')}</div>
       </button>
       <button class="practice-tile" onclick="state.screen='business_menu'; render();">
         <div class="glyph">💼</div>
@@ -13525,6 +13985,898 @@ function renderMatComplete(){
 
 function backToMatMenu(){ state.screen='mat_menu'; render(); }
 function exitMatPractice(){ state.screen='mat_menu'; render(); }
+
+// ---- coordinate geometry learning: Month 12, lines and shapes in the
+// coordinate plane — slope, midpoint, intercepts, parallel/perpendicular
+// lines, circles and parabolas. Reuses the same guided step-engine as every
+// other math mode; y_intercept and parabola_vertex are genuinely multi-step.
+function coordgeomProblemSlope(){
+  const dx = randInt(1,4);
+  const m = [-4,-3,-2,-1,1,2,3,4][randInt(0,7)];
+  const x1 = randInt(-8,8), y1 = randInt(-8,8);
+  const x2 = x1+dx, y2 = y1+m*dx;
+  const dy = y2-y1;
+  return {
+    promptText: t('coordgeomSlopePrompt', {x1,y1,x2,y2}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===m; },
+    explain: t('coordgeomSlopeExplain', {y2,y1,x2,x1,dy,dx,m}),
+  };
+}
+function coordgeomProblemMidpoint(){
+  const mx = randInt(-8,8), my = randInt(-8,8);
+  const ox = randInt(1,7), oy = randInt(1,7);
+  const x1 = mx-ox, x2 = mx+ox, y1 = my-oy, y2 = my+oy;
+  return {
+    promptText: t('coordgeomMidpointPrompt', {x1,y1,x2,y2}),
+    inputs: [{key:'mx',label:'x'},{key:'my',label:'y'}],
+    check(vals){ return Number(vals.mx)===mx && Number(vals.my)===my; },
+    explain: t('coordgeomMidpointExplain', {x1,x2,sumX:x1+x2,y1,y2,sumY:y1+y2,mx,my}),
+  };
+}
+function coordgeomProblemSlopeIntercept(){
+  const m = nonZeroRandInt(-5,5);
+  const x0 = randInt(-6,6);
+  const b = randInt(-9,9);
+  const y0 = m*x0+b;
+  const mExpr = leadTerm(m,'x');
+  return {
+    promptText: t('coordgeomSlopeInterceptPrompt', {m,x0,y0,mExpr}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===b; },
+    explain: t('coordgeomSlopeInterceptExplain', {y0,m,x0,mx0:m*x0,b}),
+  };
+}
+function coordgeomProblemPointOnLine(){
+  const m = nonZeroRandInt(-4,4);
+  const b = randInt(-6,6);
+  const isOn = Math.random()<0.5;
+  const x = randInt(-6,6);
+  const computedY = m*x+b;
+  const y = isOn ? computedY : computedY + nonZeroRandInt(-4,4);
+  const mExpr = leadTerm(m,'x');
+  const bExpr = signedCoeffTerm(b,'');
+  const actual = (y===computedY);
+  return {
+    promptText: t('coordgeomPointOnLinePrompt', {x,y,mExpr,bExpr}),
+    inputs: [{key:'ans', placeholder:t('discBoolAnswerPlaceholder')}],
+    check(vals){ return parseBool(vals.ans)===actual; },
+    explain: t('coordgeomPointOnLineExplain', {x,mExpr,bExpr,computedY,y,answer: actual?'True':'False'}),
+  };
+}
+function coordgeomProblemParallelCheck(){
+  const m1 = nonZeroRandInt(-5,5);
+  const isParallel = Math.random()<0.5;
+  let m2;
+  if(isParallel){ m2 = m1; } else { do{ m2 = nonZeroRandInt(-5,5); }while(m2===m1); }
+  return {
+    promptText: t('coordgeomParallelPrompt', {m1,m2}),
+    inputs: [{key:'ans', placeholder:t('discBoolAnswerPlaceholder')}],
+    check(vals){ return parseBool(vals.ans)===isParallel; },
+    explain: t('coordgeomParallelExplain', {m1,m2,compareSymbol:isParallel?'=':'≠',answer:isParallel?'True':'False'}),
+  };
+}
+function coordgeomProblemPerpendicularSlope(){
+  const q = randInt(2,6);
+  let p; do{ p = nonZeroRandInt(-6,6); }while(gcd(Math.abs(p),q)!==1);
+  let numerator, denominator;
+  if(p<0){ numerator=q; denominator=-p; } else { numerator=-q; denominator=p; }
+  return {
+    promptText: t('coordgeomPerpSlopePrompt', {p,q}),
+    inputs: [{key:'ans', placeholder:t('algFractionAnswerPlaceholder'), fracInput:true}],
+    check(vals){ const f=parseFraction(vals.ans); return !!f && f.p===numerator && f.q===denominator; },
+    explain: t('coordgeomPerpSlopeExplain', {p,q,numerator,denominator}),
+  };
+}
+function coordgeomProblemXIntercept(){
+  const m = nonZeroRandInt(-6,6);
+  const x0 = nonZeroRandInt(-6,6);
+  const b = -m*x0;
+  const mExpr = leadTerm(m,'x');
+  const bExpr = signedCoeffTerm(b,'');
+  return {
+    promptText: t('coordgeomXInterceptPrompt', {mExpr,bExpr}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===x0; },
+    explain: t('coordgeomXInterceptExplain', {mExpr,bExpr,m,negB:-b,x0}),
+  };
+}
+function coordgeomProblemYIntercept(){
+  const dx = randInt(1,4);
+  const m = nonZeroRandInt(-4,4);
+  const x1 = randInt(-6,6), y1 = randInt(-6,6);
+  const x2 = x1+dx, y2 = y1+m*dx;
+  const b = y1 - m*x1;
+  const dy = y2-y1;
+  return {
+    promptText: t('coordgeomYInterceptPrompt', {x1,y1,x2,y2}),
+    steps: [
+      {
+        prompt: t('coordgeomYInterceptStep1Prompt'),
+        inputs: [{key:'m', placeholder:t('algNumericAnswerPlaceholder')}],
+        check(vals){ return Number(vals.m)===m; },
+        explain: t('coordgeomYInterceptStep1Explain', {y2,y1,dy,x2,x1,dx,m}),
+      },
+      {
+        prompt: t('coordgeomYInterceptStep2Prompt'),
+        inputs: [{key:'b', placeholder:t('algNumericAnswerPlaceholder')}],
+        check(vals){ return Number(vals.b)===b; },
+        explain: t('coordgeomYInterceptStep2Explain', {y1,m,x1,mx1:m*x1,b}),
+      },
+    ],
+  };
+}
+function coordgeomProblemLineIntersection(){
+  let m1,m2; do{ m1=nonZeroRandInt(-4,4); m2=nonZeroRandInt(-4,4); }while(m1===m2);
+  const x0=randInt(-6,6), y0=randInt(-6,6);
+  const b1=y0-m1*x0, b2=y0-m2*x0;
+  const m1Expr=leadTerm(m1,'x'), b1Expr=signedCoeffTerm(b1,'');
+  const m2Expr=leadTerm(m2,'x'), b2Expr=signedCoeffTerm(b2,'');
+  return {
+    promptText: t('coordgeomLineIntersectPrompt', {m1Expr,b1Expr,m2Expr,b2Expr}),
+    inputs: [{key:'x',label:'x'},{key:'y',label:'y'}],
+    check(vals){ return Number(vals.x)===x0 && Number(vals.y)===y0; },
+    explain: t('coordgeomLineIntersectExplain', {m1Expr,b1Expr,m2Expr,b2Expr,x0,y0}),
+  };
+}
+function coordgeomProblemCircleCenterRadius(){
+  const h=randInt(-6,6), k=randInt(-6,6), r=randInt(2,9);
+  const rSq = r*r;
+  const hExpr = h>=0 ? `x - ${h}` : `x + ${-h}`;
+  const kExpr = k>=0 ? `y - ${k}` : `y + ${-k}`;
+  return {
+    promptText: t('coordgeomCircleCenterPrompt', {hExpr,kExpr,rSq}),
+    inputs: [{key:'h',label:'h'},{key:'k',label:'k'},{key:'r',label:'r'}],
+    check(vals){ return Number(vals.h)===h && Number(vals.k)===k && Number(vals.r)===r; },
+    explain: t('coordgeomCircleCenterExplain', {h,k,rSq,r}),
+  };
+}
+function coordgeomProblemParabolaVertex(){
+  const a = [1,-1,2,-2][randInt(0,3)];
+  const x0 = randInt(-5,5);
+  const b = -2*a*x0;
+  const c = randInt(-6,6);
+  const y0 = a*x0*x0+b*x0+c;
+  const aExpr = leadTerm(a,'x²'), bExpr=signedCoeffTerm(b,'x'), cExpr=signedCoeffTerm(c,'');
+  return {
+    promptText: t('coordgeomParabolaVertexPrompt', {aExpr,bExpr,cExpr}),
+    steps: [
+      {
+        prompt: t('coordgeomParabolaVertexStep1Prompt'),
+        inputs: [{key:'x', placeholder:t('algNumericAnswerPlaceholder')}],
+        check(vals){ return Number(vals.x)===x0; },
+        explain: t('coordgeomParabolaVertexStep1Explain', {b,a,twoA:2*a,x0}),
+      },
+      {
+        prompt: t('coordgeomParabolaVertexStep2Prompt'),
+        inputs: [{key:'y', placeholder:t('algNumericAnswerPlaceholder')}],
+        check(vals){ return Number(vals.y)===y0; },
+        explain: t('coordgeomParabolaVertexStep2Explain', {a,x0,b,c,y0}),
+      },
+    ],
+  };
+}
+function coordgeomProblemReflectX(){
+  const x=randInt(-9,9), y=nonZeroRandInt(-9,9);
+  return {
+    promptText: t('coordgeomReflectXPrompt', {x,y}),
+    inputs: [{key:'x',label:'x'},{key:'y',label:'y'}],
+    check(vals){ return Number(vals.x)===x && Number(vals.y)===-y; },
+    explain: t('coordgeomReflectXExplain', {x,y,negY:-y}),
+  };
+}
+function coordgeomProblemReflectY(){
+  const x=nonZeroRandInt(-9,9), y=randInt(-9,9);
+  return {
+    promptText: t('coordgeomReflectYPrompt', {x,y}),
+    inputs: [{key:'x',label:'x'},{key:'y',label:'y'}],
+    check(vals){ return Number(vals.x)===-x && Number(vals.y)===y; },
+    explain: t('coordgeomReflectYExplain', {x,y,negX:-x}),
+  };
+}
+
+const COORDGEOM_TOPICS = [
+  {key:'slope', build:coordgeomProblemSlope},
+  {key:'midpoint', build:coordgeomProblemMidpoint},
+  {key:'slope_intercept_form', build:coordgeomProblemSlopeIntercept},
+  {key:'point_on_line_check', build:coordgeomProblemPointOnLine},
+  {key:'parallel_check', build:coordgeomProblemParallelCheck},
+  {key:'perpendicular_slope', build:coordgeomProblemPerpendicularSlope},
+  {key:'x_intercept', build:coordgeomProblemXIntercept},
+  {key:'y_intercept', build:coordgeomProblemYIntercept},
+  {key:'line_intersection', build:coordgeomProblemLineIntersection},
+  {key:'circle_center_radius', build:coordgeomProblemCircleCenterRadius},
+  {key:'parabola_vertex', build:coordgeomProblemParabolaVertex},
+  {key:'reflection_over_x_axis', build:coordgeomProblemReflectX},
+  {key:'reflection_over_y_axis', build:coordgeomProblemReflectY},
+];
+function coordgeomTopicByKey(key){ return COORDGEOM_TOPICS.find(x=>x.key===key); }
+
+function renderCoordGeomMenu(){
+  const cards = COORDGEOM_TOPICS.map(topic=>{
+    const best = (state.game.coordgeom && state.game.coordgeom[topic.key]) ? state.game.coordgeom[topic.key].best : 0;
+    return `
+    <button class="track-card" onclick="openCoordGeomTopic('${topic.key}')">
+      <div class="glyph">📍</div>
+      <div>
+        <div class="tc-title">${t('coordgeomTopicTitle_'+topic.key)}</div>
+        <div class="tc-sub">${t('coordgeomTopicDesc_'+topic.key)}</div>
+      </div>
+      <div class="tc-progress">${best ? t('mathBestLabel',{n:best}) : t('startArrow')}</div>
+    </button>`;
+  }).join('');
+
+  return `
+  ${topbar({back:'goHome()'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>${t('coordgeomTitle')}</h1>
+      <div class="sub">${t('coordgeomSub')}</div>
+    </div>
+    <div class="track-grid">${cards}</div>
+  </div>
+  `;
+}
+
+function openCoordGeomTopic(topicKey){
+  state.coordgeomSession = {topicKey};
+  state.screen = 'coordgeom_learn';
+  render();
+}
+
+function renderCoordGeomLearn(){
+  const topicKey = state.coordgeomSession.topicKey;
+  return `
+  ${topbar({back:'state.screen="coordgeom_menu"; render();'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero" style="padding-top:8px;">
+      <h1 style="font-size:26px;">${t('coordgeomTopicTitle_'+topicKey)}</h1>
+    </div>
+    <div class="profile-card" style="text-align:left; line-height:1.6; font-size:14.5px; color:var(--snow-dim); white-space:pre-line;">${t('coordgeomLearn_'+topicKey)}</div>
+    <button class="btn btn-primary btn-block" onclick="startCoordGeomPractice('${topicKey}')">${t('startPracticeBtn')}</button>
+  </div>
+  `;
+}
+
+function startCoordGeomPractice(topicKey){
+  const topic = coordgeomTopicByKey(topicKey);
+  const problem = topic.build();
+  state.coordgeomSession = {
+    topicKey, problem, steps: normalizeSteps(problem),
+    stepIndex:0, stepInputs:{}, stepResults:[], anyWrong:false, pendingResult:null,
+    correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
+    combo:0, maxCombo:0, newAchievements:[]
+  };
+  state.screen = 'coordgeom_practice';
+  render();
+  focusCoordGeomInput();
+}
+function focusCoordGeomInput(){
+  setTimeout(()=>{ const el=document.querySelector('.coordgeom-input'); if(el) el.focus(); }, 30);
+}
+
+function renderCoordGeomPractice(){
+  const s = state.coordgeomSession;
+  const steps = s.steps;
+  const multiStep = steps.length > 1;
+  const stepIndex = s.stepIndex;
+  const curStep = steps[stepIndex];
+  const isLastStep = stepIndex === steps.length-1;
+  const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
+
+  const inputBox = (inp) => {
+    if(inp.fracInput){
+      const numVal = s.stepInputs[inp.key+'_num']||'', denVal = s.stepInputs[inp.key+'_den']||'';
+      return `
+      <div style="flex:1; max-width:110px;">
+        ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px; text-align:center;">${inp.label}</div>` : ''}
+        <div class="frac-input">
+          <input class="coordgeom-input algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${numVal}"
+            oninput="setFracInputPart(state.coordgeomSession,'${inp.key}','num',this.value)">
+          <div class="frac-input-bar"></div>
+          <input class="algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${denVal}"
+            oninput="setFracInputPart(state.coordgeomSession,'${inp.key}','den',this.value)">
+        </div>
+      </div>`;
+    }
+    return `
+    <div style="flex:1;">
+      ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
+      <input class="coordgeom-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
+        placeholder="${inp.placeholder||''}"
+        style="text-align:center; font-size:20px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.stepInputs[inp.key]||'')}"
+        oninput="state.coordgeomSession.stepInputs['${inp.key}']=this.value">
+    </div>`;
+  };
+
+  const inputsHtml = curStep.matrixShape
+    ? `<div style="display:grid; grid-template-columns:repeat(${curStep.matrixShape[1]}, 1fr); gap:10px; max-width:240px; margin:0 auto;">${curStep.inputs.map(inputBox).join('')}</div>`
+    : `<div style="display:flex; gap:12px; align-items:flex-end; justify-content:center;">${curStep.inputs.map(inputBox).join('')}</div>`;
+
+  const stepRowHtml = (r) => `
+    <div class="step-row done ${r.correct?'correct':'wrong'}">
+      <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+      <div class="step-values">${enhanceMath(r.valuesText)}</div>
+      <div class="step-explain">${enhanceMath(r.explain)}</div>
+    </div>`;
+  const doneRowsHtml = multiStep ? s.stepResults.map(stepRowHtml).join('') : '';
+
+  let activeStepHtml = '';
+  if(!(s.answered && isLastStep)){
+    if(!s.answered){
+      activeStepHtml = multiStep ? `
+        <div class="step-row active">
+          <div class="step-label">${t('stepLabel',{n:stepIndex+1, total:steps.length})}</div>
+          ${curStep.prompt ? `<div class="step-prompt">${enhanceMath(curStep.prompt)}</div>` : ''}
+          ${inputsHtml}
+          <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="submitCoordGeomStep()">${t('checkBtn')}</button>
+        </div>` : `
+        ${inputsHtml}
+        <button class="btn btn-primary btn-block" onclick="submitCoordGeomStep()">${t('checkBtn')}</button>`;
+    } else {
+      const r = s.pendingResult;
+      activeStepHtml = `
+        <div class="step-row done ${r.correct?'correct':'wrong'}">
+          <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+          <div class="step-values">${enhanceMath(r.valuesText)}</div>
+          <div class="step-explain">${enhanceMath(r.explain)}</div>
+          <button class="btn btn-light btn-block" style="margin-top:10px;" onclick="nextCoordGeomStep()">${t('nextStepBtn')}</button>
+        </div>`;
+    }
+  }
+
+  const feedback = (s.answered && isLastStep) ? `
+    <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
+      <div class="fb-text">
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
+        ${!multiStep ? `<div class="fb-sub">${enhanceMath(curStep.explain)}</div>` : ''}
+      </div>
+      <button class="btn btn-light" onclick="nextCoordGeomQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
+    </div>` : '';
+
+  return `
+  ${topbar({back:'exitCoordGeomPractice()'})}
+  <div class="lesson">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;">
+      <div class="hearts-row">${Array.from({length:MATH_MAX_MISTAKES}).map((_,i)=>`<span>${i<(MATH_MAX_MISTAKES-s.mistakes)?'❤️':'🩶'}</span>`).join('')}</div>
+      <div style="font-size:12px; color:var(--snow-dim); text-align:right;">${t('correctAnswersLabel')}: ${s.correct}${s.combo>=3?`<br><span style="color:var(--gold);">${comboBadge(s.combo)} ${t('comboLabel',{n:s.combo})}</span>`:''}</div>
+    </div>
+    <div class="q-wrap">
+      <div class="q-card">
+        <div class="q-eyebrow">${t('coordgeomTopicTitle_'+s.topicKey)}</div>
+        <div class="q-prompt" style="font-size:20px;">${enhanceMath(s.problem.promptText)}</div>
+      </div>
+      ${multiStep ? `<div class="step-list">${doneRowsHtml}${activeStepHtml}</div>` : activeStepHtml}
+    </div>
+  </div>
+  ${feedback}
+  `;
+}
+
+function submitCoordGeomStep(){
+  const s = state.coordgeomSession;
+  if(!s || s.answered) return;
+  const steps = s.steps;
+  const step = steps[s.stepIndex];
+  for(const inp of step.inputs){ if(!s.stepInputs[inp.key]) return; }
+  const correct = step.check(s.stepInputs);
+  if(!correct) s.anyWrong = true;
+  const valuesText = step.inputs.map(inp=>s.stepInputs[inp.key]).join(', ');
+  const result = {prompt: step.prompt, valuesText, explain: step.explain, correct};
+  const isLastStep = s.stepIndex === steps.length-1;
+  if(isLastStep){
+    s.stepResults.push(result);
+    const problemCorrect = !s.anyWrong;
+    s.answered = true; s.lastCorrect = problemCorrect;
+    if(problemCorrect) registerCorrectAnswer(s, state.game);
+    else registerWrongAnswer(s);
+  } else {
+    s.pendingResult = result;
+    s.answered = true; s.lastCorrect = correct;
+  }
+  render();
+}
+
+function nextCoordGeomStep(){
+  const s = state.coordgeomSession;
+  s.stepResults.push(s.pendingResult);
+  s.pendingResult = null;
+  s.stepIndex += 1;
+  s.answered = false; s.lastCorrect = null; s.stepInputs = {};
+  render();
+  focusCoordGeomInput();
+}
+
+function nextCoordGeomQuestion(){
+  const s = state.coordgeomSession;
+  if(s.mistakes>=MATH_MAX_MISTAKES){ finishCoordGeomPractice(); return; }
+  const topic = coordgeomTopicByKey(s.topicKey);
+  const problem = topic.build();
+  s.problem = problem; s.steps = normalizeSteps(problem);
+  s.stepIndex=0; s.stepInputs={}; s.stepResults=[]; s.anyWrong=false; s.pendingResult=null;
+  s.answered=false; s.lastCorrect=null;
+  render();
+  focusCoordGeomInput();
+}
+
+function finishCoordGeomPractice(){
+  const s = state.coordgeomSession;
+  if(!state.game.coordgeom) state.game.coordgeom = {};
+  const rec = state.game.coordgeom[s.topicKey] || (state.game.coordgeom[s.topicKey] = {best:0});
+  s.isNewBest = s.correct > rec.best;
+  if(s.isNewBest) rec.best = s.correct;
+  touchStreak();
+  s.newAchievements = checkAchievements(state.game);
+  state.screen='coordgeom_complete';
+  render();
+}
+
+function renderCoordGeomComplete(){
+  const s = state.coordgeomSession;
+  const best = state.game.coordgeom[s.topicKey].best;
+  const lvl = xpLevel(state.game.xp);
+  return `
+  ${topbar()}
+  <div class="complete ${appLangClass()}">
+    <div class="medal">${s.isNewBest ? '🏆' : '🎯'}</div>
+    <h2>${s.isNewBest ? t('newBestReached') : t('checkpointReached')}</h2>
+    <div class="stat-row">
+      <div class="stat-box"><div class="val">${s.correct}</div><div class="lab">${t('correctAnswersLabel')}</div></div>
+      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
+    </div>
+    <div style="color:var(--snow-dim); font-size:13px;">${t('mathBestLabel',{n:best})} · ${t('levelLabel',{n:lvl.level})}</div>
+    ${achievementBannerHtml(s.newAchievements)}
+    <button class="btn btn-primary btn-block" onclick="backToCoordGeomMenu()">${t('backToCoordGeomMenuBtn')}</button>
+  </div>`;
+}
+
+function backToCoordGeomMenu(){ state.screen='coordgeom_menu'; render(); }
+function exitCoordGeomPractice(){ state.screen='coordgeom_menu'; render(); }
+
+// ---- number theory learning: Month 13, primes, divisors and modular
+// arithmetic beyond Discrete Math's basics — the Euclidean algorithm topic
+// is genuinely multi-step, walking the actual division-by-division procedure.
+function numtheoryIsPrime(n){
+  if(n<2) return false;
+  for(let i=2;i*i<=n;i++){ if(n%i===0) return false; }
+  return true;
+}
+function numtheoryProblemIsPrime(){
+  const n = randInt(2,97);
+  const p = numtheoryIsPrime(n);
+  return {
+    promptText: t('numtheoryIsPrimePrompt', {n}),
+    inputs: [{key:'ans', placeholder:t('discBoolAnswerPlaceholder')}],
+    check(vals){ return parseBool(vals.ans)===p; },
+    explain: t('numtheoryIsPrimeExplain', {n, sqrtN: Math.floor(Math.sqrt(n)), answer: p?'True':'False'}),
+  };
+}
+function numtheoryProblemSmallestPrimeFactor(){
+  let n; do{ n = randInt(4,90); } while(numtheoryIsPrime(n));
+  let f=2; while(n%f!==0) f++;
+  return {
+    promptText: t('numtheorySmallestPrimeFactorPrompt', {n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===f; },
+    explain: t('numtheorySmallestPrimeFactorExplain', {n, f, quotient:n/f}),
+  };
+}
+function numtheoryProblemPrimeFactorCount(){
+  const primes=[2,3,5,7,11];
+  const k = randInt(2,3);
+  const chosen = [];
+  while(chosen.length<k){ const pr=primes[randInt(0,primes.length-1)]; if(!chosen.includes(pr)) chosen.push(pr); }
+  let n=1; for(const pr of chosen) n*=pr;
+  return {
+    promptText: t('numtheoryPrimeFactorCountPrompt', {n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===k; },
+    explain: t('numtheoryPrimeFactorCountExplain', {n, factors:chosen.join(' × '), k}),
+  };
+}
+function numtheoryProblemCountDivisors(){
+  const p=[2,3,5][randInt(0,2)]; let q; do{ q=[2,3,5][randInt(0,2)]; }while(q===p);
+  const a=randInt(1,2), b=randInt(1,2);
+  const n = Math.pow(p,a)*Math.pow(q,b);
+  const count=(a+1)*(b+1);
+  return {
+    promptText: t('numtheoryCountDivisorsPrompt', {n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===count; },
+    explain: t('numtheoryCountDivisorsExplain', {n, p,a,q,b,count}),
+  };
+}
+function numtheoryProblemSumProperDivisors(){
+  const n = randInt(6,60);
+  let sum=0; for(let d=1; d<n; d++) if(n%d===0) sum+=d;
+  return {
+    promptText: t('numtheorySumProperDivisorsPrompt', {n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===sum; },
+    explain: t('numtheorySumProperDivisorsExplain', {n, sum}),
+  };
+}
+function numtheoryProblemIsPerfect(){
+  const PERFECT = [6,28];
+  const wantPerfect = Math.random()<0.5;
+  let n;
+  if(wantPerfect){ n = PERFECT[randInt(0,PERFECT.length-1)]; }
+  else { do{ n = randInt(4,40); } while(PERFECT.includes(n)); }
+  let sum=0; for(let d=1; d<n; d++) if(n%d===0) sum+=d;
+  const actual = sum===n;
+  return {
+    promptText: t('numtheoryIsPerfectPrompt', {n}),
+    inputs: [{key:'ans', placeholder:t('discBoolAnswerPlaceholder')}],
+    check(vals){ return parseBool(vals.ans)===actual; },
+    explain: t('numtheoryIsPerfectExplain', {n, sum, answer: actual?'True':'False'}),
+  };
+}
+function numtheoryProblemDivisibilityCheck(){
+  const b = randInt(2,12);
+  const wantDiv = Math.random()<0.5;
+  let a;
+  if(wantDiv){ a = b*randInt(2,10); }
+  else { do{ a = randInt(10,120); } while(a%b===0); }
+  const actual = a%b===0;
+  return {
+    promptText: t('numtheoryDivisibilityPrompt', {a,b}),
+    inputs: [{key:'ans', placeholder:t('discBoolAnswerPlaceholder')}],
+    check(vals){ return parseBool(vals.ans)===actual; },
+    explain: t('numtheoryDivisibilityExplain', {a,b, remainder:a%b, answer: actual?'True':'False'}),
+  };
+}
+function numtheoryProblemDigitalRoot(){
+  const n = randInt(10,9999);
+  let dr = n; while(dr>=10){ dr = String(dr).split('').reduce((s,d)=>s+Number(d),0); }
+  return {
+    promptText: t('numtheoryDigitalRootPrompt', {n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===dr; },
+    explain: t('numtheoryDigitalRootExplain', {n, dr}),
+  };
+}
+function numtheoryProblemCoprimeCheck(){
+  const a = randInt(4,40);
+  let b;
+  const wantCoprime = Math.random()<0.5;
+  if(wantCoprime){ do{ b = randInt(4,40); } while(gcd(a,b)!==1); }
+  else { const commonFactor = nonZeroRandInt(2,6); do{ b = commonFactor*randInt(2,10); }while(gcd(a,b)===1); }
+  const g = gcd(a,b);
+  const actual = g===1;
+  return {
+    promptText: t('numtheoryCoprimePrompt', {a,b}),
+    inputs: [{key:'ans', placeholder:t('discBoolAnswerPlaceholder')}],
+    check(vals){ return parseBool(vals.ans)===actual; },
+    explain: t('numtheoryCoprimeExplain', {a,b,g, answer: actual?'True':'False'}),
+  };
+}
+function numtheoryProblemEuclidean(){
+  const r1 = randInt(2,9);
+  const q2 = randInt(2,5);
+  const b = q2*r1;
+  const q1 = randInt(1,5);
+  const a = q1*b + r1;
+  return {
+    promptText: t('numtheoryEuclideanPrompt', {a,b}),
+    steps: [
+      {
+        prompt: t('numtheoryEuclideanStep1Prompt', {a,b}),
+        inputs: [{key:'q',label:'q'},{key:'r',label:'r'}],
+        check(vals){ return Number(vals.q)===q1 && Number(vals.r)===r1; },
+        explain: t('numtheoryEuclideanStep1Explain', {a,b,q1,r1}),
+      },
+      {
+        prompt: t('numtheoryEuclideanStep2Prompt', {b, r1}),
+        inputs: [{key:'q',label:'q'},{key:'r',label:'r'}],
+        check(vals){ return Number(vals.q)===q2 && Number(vals.r)===0; },
+        explain: t('numtheoryEuclideanStep2Explain', {b,r1,q2,gcdVal:r1}),
+      },
+    ],
+  };
+}
+function numtheoryProblemFibonacci(){
+  const n = randInt(4,12);
+  let a=1,b=1; for(let i=3;i<=n;i++){ const c=a+b; a=b; b=c; }
+  const fn = b;
+  return {
+    promptText: t('numtheoryFibonacciPrompt', {n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===fn; },
+    explain: t('numtheoryFibonacciExplain', {n, fn}),
+  };
+}
+function numtheoryProblemTriangular(){
+  const n = randInt(4,20);
+  const tn = n*(n+1)/2;
+  return {
+    promptText: t('numtheoryTriangularPrompt', {n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===tn; },
+    explain: t('numtheoryTriangularExplain', {n, np1:n+1, tn}),
+  };
+}
+function numtheoryProblemPowerMod(){
+  const a = randInt(2,9);
+  const b = randInt(2,4);
+  const n = randInt(3,11);
+  let result=1; for(let i=0;i<b;i++) result=(result*a)%n;
+  return {
+    promptText: t('numtheoryPowerModPrompt', {a,b,n}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===result; },
+    explain: t('numtheoryPowerModExplain', {a,b,n,powVal:Math.pow(a,b),result}),
+  };
+}
+
+const NUMTHEORY_TOPICS = [
+  {key:'is_prime', build:numtheoryProblemIsPrime},
+  {key:'smallest_prime_factor', build:numtheoryProblemSmallestPrimeFactor},
+  {key:'prime_factor_count', build:numtheoryProblemPrimeFactorCount},
+  {key:'count_divisors', build:numtheoryProblemCountDivisors},
+  {key:'sum_of_proper_divisors', build:numtheoryProblemSumProperDivisors},
+  {key:'is_perfect_number', build:numtheoryProblemIsPerfect},
+  {key:'divisibility_check', build:numtheoryProblemDivisibilityCheck},
+  {key:'digital_root', build:numtheoryProblemDigitalRoot},
+  {key:'coprime_check', build:numtheoryProblemCoprimeCheck},
+  {key:'euclidean_algorithm', build:numtheoryProblemEuclidean},
+  {key:'fibonacci_term', build:numtheoryProblemFibonacci},
+  {key:'triangular_number', build:numtheoryProblemTriangular},
+  {key:'power_mod', build:numtheoryProblemPowerMod},
+];
+function numtheoryTopicByKey(key){ return NUMTHEORY_TOPICS.find(x=>x.key===key); }
+
+function renderNumTheoryMenu(){
+  const cards = NUMTHEORY_TOPICS.map(topic=>{
+    const best = (state.game.numtheory && state.game.numtheory[topic.key]) ? state.game.numtheory[topic.key].best : 0;
+    return `
+    <button class="track-card" onclick="openNumTheoryTopic('${topic.key}')">
+      <div class="glyph">🔟</div>
+      <div>
+        <div class="tc-title">${t('numtheoryTopicTitle_'+topic.key)}</div>
+        <div class="tc-sub">${t('numtheoryTopicDesc_'+topic.key)}</div>
+      </div>
+      <div class="tc-progress">${best ? t('mathBestLabel',{n:best}) : t('startArrow')}</div>
+    </button>`;
+  }).join('');
+
+  return `
+  ${topbar({back:'goHome()'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>${t('numtheoryTitle')}</h1>
+      <div class="sub">${t('numtheorySub')}</div>
+    </div>
+    <div class="track-grid">${cards}</div>
+  </div>
+  `;
+}
+
+function openNumTheoryTopic(topicKey){
+  state.numtheorySession = {topicKey};
+  state.screen = 'numtheory_learn';
+  render();
+}
+
+function renderNumTheoryLearn(){
+  const topicKey = state.numtheorySession.topicKey;
+  return `
+  ${topbar({back:'state.screen="numtheory_menu"; render();'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero" style="padding-top:8px;">
+      <h1 style="font-size:26px;">${t('numtheoryTopicTitle_'+topicKey)}</h1>
+    </div>
+    <div class="profile-card" style="text-align:left; line-height:1.6; font-size:14.5px; color:var(--snow-dim); white-space:pre-line;">${t('numtheoryLearn_'+topicKey)}</div>
+    <button class="btn btn-primary btn-block" onclick="startNumTheoryPractice('${topicKey}')">${t('startPracticeBtn')}</button>
+  </div>
+  `;
+}
+
+function startNumTheoryPractice(topicKey){
+  const topic = numtheoryTopicByKey(topicKey);
+  const problem = topic.build();
+  state.numtheorySession = {
+    topicKey, problem, steps: normalizeSteps(problem),
+    stepIndex:0, stepInputs:{}, stepResults:[], anyWrong:false, pendingResult:null,
+    correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, isNewBest:false,
+    combo:0, maxCombo:0, newAchievements:[]
+  };
+  state.screen = 'numtheory_practice';
+  render();
+  focusNumTheoryInput();
+}
+function focusNumTheoryInput(){
+  setTimeout(()=>{ const el=document.querySelector('.numtheory-input'); if(el) el.focus(); }, 30);
+}
+
+function renderNumTheoryPractice(){
+  const s = state.numtheorySession;
+  const steps = s.steps;
+  const multiStep = steps.length > 1;
+  const stepIndex = s.stepIndex;
+  const curStep = steps[stepIndex];
+  const isLastStep = stepIndex === steps.length-1;
+  const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
+
+  const inputBox = (inp) => {
+    if(inp.fracInput){
+      const numVal = s.stepInputs[inp.key+'_num']||'', denVal = s.stepInputs[inp.key+'_den']||'';
+      return `
+      <div style="flex:1; max-width:110px;">
+        ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px; text-align:center;">${inp.label}</div>` : ''}
+        <div class="frac-input">
+          <input class="numtheory-input algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${numVal}"
+            oninput="setFracInputPart(state.numtheorySession,'${inp.key}','num',this.value)">
+          <div class="frac-input-bar"></div>
+          <input class="algebra-input" type="text" inputmode="numeric" autocomplete="off"
+            style="font-size:20px; font-family:var(--font-display); font-weight:700; text-align:center;"
+            ${s.answered?'disabled':''} value="${denVal}"
+            oninput="setFracInputPart(state.numtheorySession,'${inp.key}','den',this.value)">
+        </div>
+      </div>`;
+    }
+    return `
+    <div style="flex:1;">
+      ${inp.label ? `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:4px;">${inp.label}</div>` : ''}
+      <input class="numtheory-input algebra-input" data-key="${inp.key}" type="text" autocomplete="off"
+        placeholder="${inp.placeholder||''}"
+        style="text-align:center; font-size:20px; font-family:var(--font-display); font-weight:700; width:100%;"
+        ${s.answered?'disabled':''} value="${(s.stepInputs[inp.key]||'')}"
+        oninput="state.numtheorySession.stepInputs['${inp.key}']=this.value">
+    </div>`;
+  };
+
+  const inputsHtml = curStep.matrixShape
+    ? `<div style="display:grid; grid-template-columns:repeat(${curStep.matrixShape[1]}, 1fr); gap:10px; max-width:240px; margin:0 auto;">${curStep.inputs.map(inputBox).join('')}</div>`
+    : `<div style="display:flex; gap:12px; align-items:flex-end; justify-content:center;">${curStep.inputs.map(inputBox).join('')}</div>`;
+
+  const stepRowHtml = (r) => `
+    <div class="step-row done ${r.correct?'correct':'wrong'}">
+      <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+      <div class="step-values">${enhanceMath(r.valuesText)}</div>
+      <div class="step-explain">${enhanceMath(r.explain)}</div>
+    </div>`;
+  const doneRowsHtml = multiStep ? s.stepResults.map(stepRowHtml).join('') : '';
+
+  let activeStepHtml = '';
+  if(!(s.answered && isLastStep)){
+    if(!s.answered){
+      activeStepHtml = multiStep ? `
+        <div class="step-row active">
+          <div class="step-label">${t('stepLabel',{n:stepIndex+1, total:steps.length})}</div>
+          ${curStep.prompt ? `<div class="step-prompt">${enhanceMath(curStep.prompt)}</div>` : ''}
+          ${inputsHtml}
+          <button class="btn btn-primary btn-block" style="margin-top:12px;" onclick="submitNumTheoryStep()">${t('checkBtn')}</button>
+        </div>` : `
+        ${inputsHtml}
+        <button class="btn btn-primary btn-block" onclick="submitNumTheoryStep()">${t('checkBtn')}</button>`;
+    } else {
+      const r = s.pendingResult;
+      activeStepHtml = `
+        <div class="step-row done ${r.correct?'correct':'wrong'}">
+          <div class="step-label"><span class="step-icon">${r.correct?'✅':'❌'}</span>${r.prompt?enhanceMath(r.prompt):''}</div>
+          <div class="step-values">${enhanceMath(r.valuesText)}</div>
+          <div class="step-explain">${enhanceMath(r.explain)}</div>
+          <button class="btn btn-light btn-block" style="margin-top:10px;" onclick="nextNumTheoryStep()">${t('nextStepBtn')}</button>
+        </div>`;
+    }
+  }
+
+  const feedback = (s.answered && isLastStep) ? `
+    <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
+      <div class="fb-text">
+        <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
+        ${!multiStep ? `<div class="fb-sub">${enhanceMath(curStep.explain)}</div>` : ''}
+      </div>
+      <button class="btn btn-light" onclick="nextNumTheoryQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
+    </div>` : '';
+
+  return `
+  ${topbar({back:'exitNumTheoryPractice()'})}
+  <div class="lesson">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;">
+      <div class="hearts-row">${Array.from({length:MATH_MAX_MISTAKES}).map((_,i)=>`<span>${i<(MATH_MAX_MISTAKES-s.mistakes)?'❤️':'🩶'}</span>`).join('')}</div>
+      <div style="font-size:12px; color:var(--snow-dim); text-align:right;">${t('correctAnswersLabel')}: ${s.correct}${s.combo>=3?`<br><span style="color:var(--gold);">${comboBadge(s.combo)} ${t('comboLabel',{n:s.combo})}</span>`:''}</div>
+    </div>
+    <div class="q-wrap">
+      <div class="q-card">
+        <div class="q-eyebrow">${t('numtheoryTopicTitle_'+s.topicKey)}</div>
+        <div class="q-prompt" style="font-size:20px;">${enhanceMath(s.problem.promptText)}</div>
+      </div>
+      ${multiStep ? `<div class="step-list">${doneRowsHtml}${activeStepHtml}</div>` : activeStepHtml}
+    </div>
+  </div>
+  ${feedback}
+  `;
+}
+
+function submitNumTheoryStep(){
+  const s = state.numtheorySession;
+  if(!s || s.answered) return;
+  const steps = s.steps;
+  const step = steps[s.stepIndex];
+  for(const inp of step.inputs){ if(!s.stepInputs[inp.key]) return; }
+  const correct = step.check(s.stepInputs);
+  if(!correct) s.anyWrong = true;
+  const valuesText = step.inputs.map(inp=>s.stepInputs[inp.key]).join(', ');
+  const result = {prompt: step.prompt, valuesText, explain: step.explain, correct};
+  const isLastStep = s.stepIndex === steps.length-1;
+  if(isLastStep){
+    s.stepResults.push(result);
+    const problemCorrect = !s.anyWrong;
+    s.answered = true; s.lastCorrect = problemCorrect;
+    if(problemCorrect) registerCorrectAnswer(s, state.game);
+    else registerWrongAnswer(s);
+  } else {
+    s.pendingResult = result;
+    s.answered = true; s.lastCorrect = correct;
+  }
+  render();
+}
+
+function nextNumTheoryStep(){
+  const s = state.numtheorySession;
+  s.stepResults.push(s.pendingResult);
+  s.pendingResult = null;
+  s.stepIndex += 1;
+  s.answered = false; s.lastCorrect = null; s.stepInputs = {};
+  render();
+  focusNumTheoryInput();
+}
+
+function nextNumTheoryQuestion(){
+  const s = state.numtheorySession;
+  if(s.mistakes>=MATH_MAX_MISTAKES){ finishNumTheoryPractice(); return; }
+  const topic = numtheoryTopicByKey(s.topicKey);
+  const problem = topic.build();
+  s.problem = problem; s.steps = normalizeSteps(problem);
+  s.stepIndex=0; s.stepInputs={}; s.stepResults=[]; s.anyWrong=false; s.pendingResult=null;
+  s.answered=false; s.lastCorrect=null;
+  render();
+  focusNumTheoryInput();
+}
+
+function finishNumTheoryPractice(){
+  const s = state.numtheorySession;
+  if(!state.game.numtheory) state.game.numtheory = {};
+  const rec = state.game.numtheory[s.topicKey] || (state.game.numtheory[s.topicKey] = {best:0});
+  s.isNewBest = s.correct > rec.best;
+  if(s.isNewBest) rec.best = s.correct;
+  touchStreak();
+  s.newAchievements = checkAchievements(state.game);
+  state.screen='numtheory_complete';
+  render();
+}
+
+function renderNumTheoryComplete(){
+  const s = state.numtheorySession;
+  const best = state.game.numtheory[s.topicKey].best;
+  const lvl = xpLevel(state.game.xp);
+  return `
+  ${topbar()}
+  <div class="complete ${appLangClass()}">
+    <div class="medal">${s.isNewBest ? '🏆' : '🎯'}</div>
+    <h2>${s.isNewBest ? t('newBestReached') : t('checkpointReached')}</h2>
+    <div class="stat-row">
+      <div class="stat-box"><div class="val">${s.correct}</div><div class="lab">${t('correctAnswersLabel')}</div></div>
+      <div class="stat-box"><div class="val">+${s.xpEarned}</div><div class="lab">${t('xpEarnedLabel')}</div></div>
+      <div class="stat-box"><div class="val">🔥 ${state.game.streak}</div><div class="lab">${t('dayStreak')}</div></div>
+    </div>
+    <div style="color:var(--snow-dim); font-size:13px;">${t('mathBestLabel',{n:best})} · ${t('levelLabel',{n:lvl.level})}</div>
+    ${achievementBannerHtml(s.newAchievements)}
+    <button class="btn btn-primary btn-block" onclick="backToNumTheoryMenu()">${t('backToNumTheoryMenuBtn')}</button>
+  </div>`;
+}
+
+function backToNumTheoryMenu(){ state.screen='numtheory_menu'; render(); }
+function exitNumTheoryPractice(){ state.screen='numtheory_menu'; render(); }
 
 // ---- business concepts: Finance, Economics and Tech Companies. Different
 // shape from algebra/calculus — these are qualitative concepts, not
