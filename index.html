@@ -332,16 +332,18 @@ const byId = id => WORDBANK.find(w=>w.id===id);
 
 // ---- the 10 modules of Level 1 ("Base Camp") — fully built -----------------
 const LEVEL1_MODULES = [
-  {num:1,  key:'greetings', label:'Greetings & Introductions', icon:'🤝', ids:['hello','thankyou','yes','no','goodbye','sorry']},
-  {num:2,  key:'numbers',   label:'Numbers & Counting',        icon:'🔢', ids:['one','two','three','four','five','six','seven','eight','nine','ten']},
-  {num:3,  key:'family',    label:'Family & People',           icon:'👪', ids:['mother','father','son','daughter','family','friend']},
-  {num:4,  key:'colors',    label:'Colours & Descriptions',    icon:'🎨', ids:['red','blue','green','yellow','white','black']},
-  {num:5,  key:'food',      label:'Food & Drinks',             icon:'🍵', ids:['water','tea','foodw','milk','meat','fruit']},
-  {num:6,  key:'home',      label:'Home & Objects',            icon:'🏠', ids:['house','door','book','window','bed','table']},
-  {num:7,  key:'clothes',   label:'Clothes & Personal Items',  icon:'👕', ids:['clothes','shoes','hat','phone','money','watch']},
-  {num:8,  key:'time',      label:'Time & Dates',              icon:'🕐', ids:['today','tomorrow','yesterday','morning','night','week']},
-  {num:9,  key:'actions',   label:'Everyday Actions',          icon:'🏃', ids:['eat','drink','sleep','go','come','see']},
-  {num:10, key:'questions', label:'Questions & Answers',       icon:'❓', ids:['who','what','where','when','how']},
+  {num:1,  key:'alphabet',  label:'The Alphabet',              icon:'🔤', tracks:['en_bo'], ids:['ltr_a','ltr_b','ltr_c','ltr_d','ltr_e','ltr_f','ltr_g','ltr_h','ltr_i','ltr_j','ltr_k','ltr_l','ltr_m','ltr_n','ltr_o','ltr_p','ltr_q','ltr_r','ltr_s','ltr_t','ltr_u','ltr_v','ltr_w','ltr_x','ltr_y','ltr_z']},
+  {num:2,  key:'firstwords',label:'My First Words',            icon:'🌟', ids:['cat','dogw','birdw','fishw','eggw','ballw','treew','flowerw','starw','moonw']},
+  {num:3,  key:'greetings', label:'Greetings & Introductions', icon:'🤝', ids:['hello','thankyou','yes','no','goodbye','sorry']},
+  {num:4,  key:'numbers',   label:'Numbers & Counting',        icon:'🔢', ids:['one','two','three','four','five','six','seven','eight','nine','ten']},
+  {num:5,  key:'family',    label:'Family & People',           icon:'👪', ids:['mother','father','son','daughter','family','friend']},
+  {num:6,  key:'colors',    label:'Colours & Descriptions',    icon:'🎨', ids:['red','blue','green','yellow','white','black']},
+  {num:7,  key:'food',      label:'Food & Drinks',             icon:'🍵', ids:['water','tea','foodw','milk','meat','fruit']},
+  {num:8,  key:'home',      label:'Home & Objects',            icon:'🏠', ids:['house','door','book','window','bed','table']},
+  {num:9,  key:'clothes',   label:'Clothes & Personal Items',  icon:'👕', ids:['clothes','shoes','hat','phone','money','watch']},
+  {num:10, key:'time',      label:'Time & Dates',              icon:'🕐', ids:['today','tomorrow','yesterday','morning','night','week']},
+  {num:11, key:'actions',   label:'Everyday Actions',          icon:'🏃', ids:['eat','drink','sleep','go','come','see']},
+  {num:12, key:'questions', label:'Questions & Answers',       icon:'❓', ids:['who','what','where','when','how']},
 ];
 
 // ---- the 10 modules of Level 2 ("Camp I") — fully built --------------------
@@ -689,7 +691,7 @@ const FCLIFE_MODULES = [
 //      screen, not the main route.
 const LEVELS = [
   {
-    icon:'🏕️', title:'Base Camp', subtitle:'Survival Beginner', range:'Modules 1–10', built:true,
+    icon:'🏕️', title:'Base Camp', subtitle:'Survival Beginner', range:'Modules 1–12', built:true,
     milestone:'Introduce yourself, name what\u2019s around you, and ask simple questions.',
     modules: LEVEL1_MODULES
   },
@@ -1064,13 +1066,25 @@ function lessonKey(levelIdx, groupKey){ return levelIdx+'-'+groupKey; }
 function isLessonDone(trackId, levelIdx, groupKey){
   return trackProgress(trackId).completed[lessonKey(levelIdx,groupKey)] || 0;
 }
+// A module can opt into a `tracks: [...]` allowlist when its content only
+// makes sense for specific track directions — e.g. English letter names
+// aren't genuine Chinese or Tibetan vocabulary, so the Alphabet module only
+// applies to the en_bo track. Modules without a `tracks` field apply to
+// every track, as before.
+function moduleAppliesToTrack(module, trackId){
+  return !module.tracks || module.tracks.includes(trackId);
+}
+function levelModulesForTrack(lvl, trackId){
+  return lvl.modules.filter(g => moduleAppliesToTrack(g, trackId));
+}
 function levelStats(trackId, levelIdx){
   const lvl = LEVELS[levelIdx];
   if(!lvl.built) return {done:0,total:0};
   const p = trackProgress(trackId);
+  const modules = levelModulesForTrack(lvl, trackId);
   let done=0;
-  lvl.modules.forEach(g=>{ if(p.completed[lessonKey(levelIdx,g.key)]) done++; });
-  return {done, total:lvl.modules.length};
+  modules.forEach(g=>{ if(p.completed[lessonKey(levelIdx,g.key)]) done++; });
+  return {done, total:modules.length};
 }
 function touchStreak(){
   const today = new Date().toDateString();
@@ -1138,7 +1152,7 @@ const I18N = {
     avatarSave: "Save Avatar", avatarSaving: "Saving…",
     avatarPhotoHint: "Upload a photo of yourself — it'll be cropped to a circle.",
     avatarChoosePhoto: "Choose Photo",
-    homeFooter: "All 142 modules — Base Camp through 1,000 more real-life sentences across ten themed routes — are fully playable now. Every level is open to explore any time, no prerequisites.",
+    homeFooter: "All 144 modules — the alphabet and first words through 1,000 more real-life sentences across ten themed routes — are fully playable now. Every level is open to explore any time, no prerequisites.",
     comingSoon: "Coming soon", modulesCount: "{n} modules", modulesWord: "modules",
     lockedBody: "{range}. No exercises here yet — this is the next content drop. Milestone once it's built: {milestone}",
     backToRoute: "Back to the route",
@@ -2444,7 +2458,7 @@ const I18N = {
     avatarSave: "保存头像", avatarSaving: "保存中…",
     avatarPhotoHint: "上传一张你的照片 — 会被裁剪为圆形。",
     avatarChoosePhoto: "选择照片",
-    homeFooter: "全部142个单元 — 从大本营到十条主题路线、超过1000句真实生活用语 — 现已全部开放。任何等级都可随时探索，没有先修要求。",
+    homeFooter: "全部144个单元 — 从字母表和第一批词汇到十条主题路线、超过1000句真实生活用语 — 现已全部开放。任何等级都可随时探索，没有先修要求。",
     comingSoon: "即将推出", modulesCount: "{n} 个单元", modulesWord: "个单元",
     lockedBody: "{range}。此处暂无练习 — 这是下一次内容更新。建成后的里程碑：{milestone}",
     backToRoute: "返回路线",
@@ -3611,7 +3625,7 @@ const I18N = {
     avatarSave: "རང་གཟུགས་ཉར་ཚགས།", avatarSaving: "ཉར་ཚགས་བྱེད་བཞིན་ཡོད…",
     avatarPhotoHint: "ཁྱེད་རང་གི་པར་ཞིག་སྤུས་སྐྲུན་བྱོས — འདི་ཟླུམ་པོར་གཏུབ་ཆོག",
     avatarChoosePhoto: "པར་འདེམས།",
-    homeFooter: "ཚན་པ 142 ཧྲིལ་པོ — རྩ་གནས་སྒར་ནས་བརྗོད་གཞིའི་ལམ་བཅུ་དང་འཚོ་བའི་ཚིག་གྲུབ་1000ལྷག་བར་དུ་ — ད་ལྟ་ཡོངས་སུ་སྐྱོན་ཐུབ། གནས་རིམ་ཚང་མ་ནམ་ཡང་བརྟག་དཔྱད་བྱེད་ཆོག, སྔོན་འགྲོའི་དགོས་མཁོ་མེད།",
+    homeFooter: "ཚན་པ 144 ཧྲིལ་པོ — ཡིག་འབྲུ་ཕྲེང་བ་དང་ཐོག་མའི་ཚིག་ནས་བརྗོད་གཞིའི་ལམ་བཅུ་དང་འཚོ་བའི་ཚིག་གྲུབ་1000ལྷག་བར་དུ་ — ད་ལྟ་ཡོངས་སུ་སྐྱོན་ཐུབ། གནས་རིམ་ཚང་མ་ནམ་ཡང་བརྟག་དཔྱད་བྱེད་ཆོག, སྔོན་འགྲོའི་དགོས་མཁོ་མེད།",
     comingSoon: "མ་འོངས་པར་འབྱོར་འོང་།", modulesCount: "ཚན་པ་{n}།", modulesWord: "ཚན་པ།",
     lockedBody: "{range}། འདིར་ད་དུང་ལག་རྩལ་སྦྱོང་བརྡར་མེད། འདི་ནི་རྗེས་མའི་ནང་དོན་ཡིན། བཟོས་ཟིན་རྗེས་ཀྱི་དོན་ཚན: {milestone}",
     backToRoute: "ལམ་ལ་ལོག",
@@ -13205,13 +13219,14 @@ function renderLessonList(){
   const track = trackById(state.currentTrack);
   const levelIdx = state.currentWorld;
   const lvl = LEVELS[levelIdx];
-  const nodes = lvl.modules.map((g,i)=>{
+  const modules = levelModulesForTrack(lvl, track.id);
+  const nodes = modules.map((g,i)=>{
     const stars = isLessonDone(track.id, levelIdx, g.key);
     const side = i%2===0 ? 'left':'right';
     return `
     <div class="node ${side}">
       <button class="node-btn ${stars? 'done':''}" onclick="startLesson('${g.key}')">${stars? '✓' : g.icon}</button>
-      <div class="node-label">${g.num}. ${g.label}</div>
+      <div class="node-label">${i+1}. ${g.label}</div>
       ${stars ? `<div class="node-stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</div>` : ''}
     </div>`;
   }).join('');
@@ -13221,7 +13236,7 @@ function renderLessonList(){
   <div class="map-wrap">
     <div style="text-align:center; padding:6px 20px 0;">
       <h2 style="font-size:20px;">${lvl.icon} ${lvl.title}</h2>
-      <div style="color:var(--snow-dim); font-size:13px; margin-top:4px;">${lvl.subtitle} · ${lvl.modules.length} ${t('modulesWord')}</div>
+      <div style="color:var(--snow-dim); font-size:13px; margin-top:4px;">${lvl.subtitle} · ${modules.length} ${t('modulesWord')}</div>
     </div>
     <div class="map-scroll"><div class="route">${nodes}</div></div>
   </div>`;
