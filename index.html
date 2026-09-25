@@ -149,12 +149,15 @@
   .q-prompt.long.script-bo{font-size:21px;}
   .q-prompt.long.script-zh{font-size:24px;}
   .q-translit{margin-top:8px; color:var(--gold); font-size:15px; font-style:italic;}
+  .q-emoji{font-size:52px; line-height:1; margin-bottom:8px;}
   .options{display:grid; grid-template-columns:1fr; gap:12px;}
   .opt{
     border:2px solid rgba(255,255,255,.14); background:rgba(255,255,255,.05); color:var(--snow);
     border-radius:14px; padding:15px 16px; font-size:18px; font-weight:600; text-align:left;
     display:flex; flex-direction:column; gap:2px;
   }
+  .opt .opt-row{display:flex; align-items:center; gap:10px;}
+  .opt .opt-emoji{font-size:24px; line-height:1; flex-shrink:0;}
   .opt .opt-sub{font-size:12px; font-weight:400; color:var(--snow-dim);}
   .opt.script-bo{font-family:var(--font-bo);}
   .opt.script-zh{font-family:var(--font-zh);}
@@ -824,13 +827,14 @@ function buildExercises(track, group){
     const word = byId(id);
     const others = shuffled(pool.filter(w=>w.id!==id)).slice(0,3);
     const options = shuffled([word, ...others]).map(w=>({
-      id:w.id, text:wordText(w, track.answerLang), sub:wordSub(w, track.answerLang), correct:w.id===word.id
+      id:w.id, text:wordText(w, track.answerLang), sub:wordSub(w, track.answerLang), correct:w.id===word.id, emoji:w.emoji||null
     }));
     return {
       wordId:word.id,
       prompt:wordText(word, track.promptLang),
       promptSub:wordSub(word, track.promptLang),
       promptLang:track.promptLang,
+      promptEmoji:word.emoji||null,
       options
     };
   });
@@ -13352,7 +13356,10 @@ function renderLesson(){
       else cls+=' disabled reveal';
     }
     return `<button class="${cls}" ${s.answered?'':`onclick="answer('${o.id}')"`}>
-      <span>${o.text}</span>
+      <span class="opt-row">
+        ${o.emoji?`<span class="opt-emoji">${o.emoji}</span>`:''}
+        <span>${o.text}</span>
+      </span>
       ${o.sub?`<span class="opt-sub">${o.sub}</span>`:''}
     </button>`;
   }).join('');
@@ -13377,6 +13384,7 @@ function renderLesson(){
     <div class="q-wrap">
       <div class="q-card">
         <div class="q-eyebrow">${t('translateEyebrow')}</div>
+        ${q.promptEmoji?`<div class="q-emoji">${q.promptEmoji}</div>`:''}
         <div style="display:flex; align-items:center; justify-content:center; gap:10px;">
           <div class="q-prompt ${scriptClass(q.promptLang)} ${q.prompt.length>20?'long':''}">${q.prompt}</div>
           <button class="iconbtn" style="width:32px; height:32px; font-size:15px; flex-shrink:0;" title="${t('playAudio')}" onclick="speakPrompt()">🔊</button>
