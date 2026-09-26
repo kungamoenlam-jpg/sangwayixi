@@ -335,18 +335,21 @@ const byId = id => WORDBANK.find(w=>w.id===id);
 
 // ---- the 10 modules of Level 1 ("Base Camp") — fully built -----------------
 const LEVEL1_MODULES = [
-  {num:1,  key:'alphabet',  label:'The Alphabet',              icon:'🔤', tracks:['en_bo'], ids:['ltr_a','ltr_b','ltr_c','ltr_d','ltr_e','ltr_f','ltr_g','ltr_h','ltr_i','ltr_j','ltr_k','ltr_l','ltr_m','ltr_n','ltr_o','ltr_p','ltr_q','ltr_r','ltr_s','ltr_t','ltr_u','ltr_v','ltr_w','ltr_x','ltr_y','ltr_z']},
-  {num:2,  key:'firstwords',label:'My First Words',            icon:'🌟', ids:['cat','dogw','birdw','fishw','eggw','ballw','treew','flowerw','starw','moonw']},
-  {num:3,  key:'greetings', label:'Greetings & Introductions', icon:'🤝', ids:['hello','thankyou','yes','no','goodbye','sorry']},
-  {num:4,  key:'numbers',   label:'Numbers & Counting',        icon:'🔢', ids:['one','two','three','four','five','six','seven','eight','nine','ten']},
-  {num:5,  key:'family',    label:'Family & People',           icon:'👪', ids:['mother','father','son','daughter','family','friend']},
-  {num:6,  key:'colors',    label:'Colours & Descriptions',    icon:'🎨', ids:['red','blue','green','yellow','white','black']},
-  {num:7,  key:'food',      label:'Food & Drinks',             icon:'🍵', ids:['water','tea','foodw','milk','meat','fruit']},
-  {num:8,  key:'home',      label:'Home & Objects',            icon:'🏠', ids:['house','door','book','window','bed','table']},
-  {num:9,  key:'clothes',   label:'Clothes & Personal Items',  icon:'👕', ids:['clothes','shoes','hat','phone','money','watch']},
-  {num:10, key:'time',      label:'Time & Dates',              icon:'🕐', ids:['today','tomorrow','yesterday','morning','night','week']},
-  {num:11, key:'actions',   label:'Everyday Actions',          icon:'🏃', ids:['eat','drink','sleep','go','come','see']},
-  {num:12, key:'questions', label:'Questions & Answers',       icon:'❓', ids:['who','what','where','when','how']},
+  {num:1,  key:'alphabet',    label:'The Alphabet',              icon:'🔤', tracks:['en_bo'], ids:['ltr_a','ltr_b','ltr_c','ltr_d','ltr_e','ltr_f','ltr_g','ltr_h','ltr_i','ltr_j','ltr_k','ltr_l','ltr_m','ltr_n','ltr_o','ltr_p','ltr_q','ltr_r','ltr_s','ltr_t','ltr_u','ltr_v','ltr_w','ltr_x','ltr_y','ltr_z']},
+  {num:2,  key:'firstwords',  label:'My First Words',            icon:'🌟', ids:['cat','dogw','birdw','fishw','eggw','ballw','treew','flowerw','starw','moonw']},
+  {num:3,  key:'bodyparts',   label:'My Body',                   icon:'🧍', ids:['headw','facew','eyew','earw','nosew','mouthw','handw','footw','hairw']},
+  {num:4,  key:'moreanimals', label:'More Animals',              icon:'🐄', ids:['cow','horse','sheep','goat','yak','chicken','pig','duck']},
+  {num:5,  key:'schoolthings',label:'School Things',             icon:'🎒', ids:['pencil','bagw','chairw','deskw','paperw','ruler']},
+  {num:6,  key:'greetings',   label:'Greetings & Introductions', icon:'🤝', ids:['hello','thankyou','yes','no','goodbye','sorry']},
+  {num:7,  key:'numbers',     label:'Numbers & Counting',        icon:'🔢', ids:['one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty']},
+  {num:8,  key:'family',      label:'Family & People',           icon:'👪', ids:['mother','father','son','daughter','family','friend']},
+  {num:9,  key:'colors',      label:'Colours & Descriptions',    icon:'🎨', ids:['red','blue','green','yellow','white','black']},
+  {num:10, key:'food',        label:'Food & Drinks',             icon:'🍵', ids:['water','tea','foodw','milk','meat','fruit']},
+  {num:11, key:'home',        label:'Home & Objects',            icon:'🏠', ids:['house','door','book','window','bed','table']},
+  {num:12, key:'clothes',     label:'Clothes & Personal Items',  icon:'👕', ids:['clothes','shoes','hat','phone','money','watch']},
+  {num:13, key:'time',        label:'Time & Dates',              icon:'🕐', ids:['today','tomorrow','yesterday','morning','night','week']},
+  {num:14, key:'actions',     label:'Everyday Actions',          icon:'🏃', ids:['eat','drink','sleep','go','come','see']},
+  {num:15, key:'questions',   label:'Questions & Answers',       icon:'❓', ids:['who','what','where','when','how']},
 ];
 
 // ---- the 10 modules of Level 2 ("Camp I") — fully built --------------------
@@ -694,7 +697,7 @@ const FCLIFE_MODULES = [
 //      screen, not the main route.
 const LEVELS = [
   {
-    icon:'🏕️', title:'Base Camp', subtitle:'Survival Beginner', range:'Modules 1–12', built:true,
+    icon:'🏕️', title:'Base Camp', subtitle:'Survival Beginner', range:'Modules 1–15', built:true,
     milestone:'Introduce yourself, name what\u2019s around you, and ask simple questions.',
     modules: LEVEL1_MODULES
   },
@@ -1156,7 +1159,7 @@ const I18N = {
     avatarSave: "Save Avatar", avatarSaving: "Saving…",
     avatarPhotoHint: "Upload a photo of yourself — it'll be cropped to a circle.",
     avatarChoosePhoto: "Choose Photo",
-    homeFooter: "All 144 modules — the alphabet and first words through 1,000 more real-life sentences across ten themed routes — are fully playable now. Every level is open to explore any time, no prerequisites.",
+    homeFooter: "All 147 modules — the alphabet and first words through 1,000 more real-life sentences across ten themed routes — are fully playable now. Every level is open to explore any time, no prerequisites.",
     comingSoon: "Coming soon", modulesCount: "{n} modules", modulesWord: "modules",
     lockedBody: "{range}. No exercises here yet — this is the next content drop. Milestone once it's built: {milestone}",
     backToRoute: "Back to the route",
@@ -2462,7 +2465,7 @@ const I18N = {
     avatarSave: "保存头像", avatarSaving: "保存中…",
     avatarPhotoHint: "上传一张你的照片 — 会被裁剪为圆形。",
     avatarChoosePhoto: "选择照片",
-    homeFooter: "全部144个单元 — 从字母表和第一批词汇到十条主题路线、超过1000句真实生活用语 — 现已全部开放。任何等级都可随时探索，没有先修要求。",
+    homeFooter: "全部147个单元 — 从字母表和第一批词汇到十条主题路线、超过1000句真实生活用语 — 现已全部开放。任何等级都可随时探索，没有先修要求。",
     comingSoon: "即将推出", modulesCount: "{n} 个单元", modulesWord: "个单元",
     lockedBody: "{range}。此处暂无练习 — 这是下一次内容更新。建成后的里程碑：{milestone}",
     backToRoute: "返回路线",
@@ -3629,7 +3632,7 @@ const I18N = {
     avatarSave: "རང་གཟུགས་ཉར་ཚགས།", avatarSaving: "ཉར་ཚགས་བྱེད་བཞིན་ཡོད…",
     avatarPhotoHint: "ཁྱེད་རང་གི་པར་ཞིག་སྤུས་སྐྲུན་བྱོས — འདི་ཟླུམ་པོར་གཏུབ་ཆོག",
     avatarChoosePhoto: "པར་འདེམས།",
-    homeFooter: "ཚན་པ 144 ཧྲིལ་པོ — ཡིག་འབྲུ་ཕྲེང་བ་དང་ཐོག་མའི་ཚིག་ནས་བརྗོད་གཞིའི་ལམ་བཅུ་དང་འཚོ་བའི་ཚིག་གྲུབ་1000ལྷག་བར་དུ་ — ད་ལྟ་ཡོངས་སུ་སྐྱོན་ཐུབ། གནས་རིམ་ཚང་མ་ནམ་ཡང་བརྟག་དཔྱད་བྱེད་ཆོག, སྔོན་འགྲོའི་དགོས་མཁོ་མེད།",
+    homeFooter: "ཚན་པ 147 ཧྲིལ་པོ — ཡིག་འབྲུ་ཕྲེང་བ་དང་ཐོག་མའི་ཚིག་ནས་བརྗོད་གཞིའི་ལམ་བཅུ་དང་འཚོ་བའི་ཚིག་གྲུབ་1000ལྷག་བར་དུ་ — ད་ལྟ་ཡོངས་སུ་སྐྱོན་ཐུབ། གནས་རིམ་ཚང་མ་ནམ་ཡང་བརྟག་དཔྱད་བྱེད་ཆོག, སྔོན་འགྲོའི་དགོས་མཁོ་མེད།",
     comingSoon: "མ་འོངས་པར་འབྱོར་འོང་།", modulesCount: "ཚན་པ་{n}།", modulesWord: "ཚན་པ།",
     lockedBody: "{range}། འདིར་ད་དུང་ལག་རྩལ་སྦྱོང་བརྡར་མེད། འདི་ནི་རྗེས་མའི་ནང་དོན་ཡིན། བཟོས་ཟིན་རྗེས་ཀྱི་དོན་ཚན: {milestone}",
     backToRoute: "ལམ་ལ་ལོག",
