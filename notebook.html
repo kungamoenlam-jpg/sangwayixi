@@ -1,0 +1,1045 @@
+<title>Kunga's Notebook</title>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Pacifico&family=Ma+Shan+Zheng&family=Caveat&family=Dancing+Script&family=Playfair+Display&display=swap" rel="stylesheet">
+<style>
+:root{
+  --desk:#ffd6e8;--paper:#fffafd;--line:#ffc9e0;--margin:#ff8fbf;--soft:#c2578f;
+  --btn:#ff2d95;--btntext:#fff;--ink:#3a1a33;
+  --c0:#ff2d95;--c1:#ff5fae;--c2:#ff7a00;--c3:#d99a00;--c4:#0fa05f;--c5:#1a7fff;--c6:#8b4dff;--c7:#e0209d;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){color-scheme:dark;--desk:#2a0e26;--paper:#3b1837;--line:#5b2955;--margin:#a8437f;--soft:#ff9fd0;
+    --btn:#ff5fae;--btntext:#2a0e26;--ink:#ffe9f5;--c0:#ff5fae;--c1:#ff8cc6;--c2:#ffa03a;--c3:#ffd23f;--c4:#4be08f;--c5:#5cb0ff;--c6:#b48aff;--c7:#ff6fc4}
+}
+:root[data-theme="dark"]{color-scheme:dark;--desk:#2a0e26;--paper:#3b1837;--line:#5b2955;--margin:#a8437f;--soft:#ff9fd0;
+  --btn:#ff5fae;--btntext:#2a0e26;--ink:#ffe9f5;--c0:#ff5fae;--c1:#ff8cc6;--c2:#ffa03a;--c3:#ffd23f;--c4:#4be08f;--c5:#5cb0ff;--c6:#b48aff;--c7:#ff6fc4}
+*{box-sizing:border-box}
+body{margin:0;background:var(--desk);font-family:"Kalam","Comic Sans MS",cursive;color:var(--soft);min-height:100vh}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-family:"Pacifico","Brush Script MT",cursive;font-weight:400;font-size:clamp(28px,6vw,42px);margin:0;line-height:1.2}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{font:inherit;font-weight:700;font-size:16px;background:var(--btn);color:var(--btntext);border:0;border-radius:999px;padding:9px 18px;cursor:pointer}
+button:hover{filter:brightness(1.08)}
+button:disabled{opacity:.4;cursor:default;filter:none}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--c6);outline-offset:3px}
+#status{min-width:7ch;font-size:15px}
+#sync{font-size:13px;opacity:.9}
+.bar{display:flex;gap:10px 14px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+#ink{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+body[data-mode=type] #ink{display:none}
+.seg{display:inline-flex;flex-wrap:wrap;gap:2px;padding:3px;background:var(--paper);border-radius:22px;box-shadow:0 2px 0 var(--line)}
+.seg button{background:transparent;color:var(--soft);padding:6px 14px;font-size:15px}
+.seg button[aria-pressed=true]{background:var(--btn);color:var(--btntext)}
+.plain{background:var(--paper);color:var(--soft);font-size:15px;padding:7px 14px;box-shadow:0 2px 0 var(--line)}
+#zval{min-width:5.5ch;text-align:center;padding:6px 8px}
+[data-st="0"]{--dot:var(--line)}[data-st="1"]{--dot:var(--c3)}[data-st="2"]{--dot:var(--c5)}[data-st="3"]{--dot:var(--c4)}
+#weeks button{padding:5px 10px;font-size:14px}
+#weeks button:not([data-st="0"])::after{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:5px;vertical-align:middle;background:var(--dot)}
+#weeks button[aria-pressed=true]::after{box-shadow:0 0 0 2px var(--btntext)}
+.pagebar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+#topic{flex:1;min-width:180px;font:inherit;font-size:16px;padding:7px 14px;border:1px solid var(--margin);border-radius:999px;background:var(--paper);color:var(--soft)}
+#topic::placeholder{color:var(--margin)}
+#pstatus{font:inherit;font-size:15px;padding:7px 10px;border-radius:999px;border:1px solid var(--margin);background:var(--paper);color:var(--soft)}
+.paper{position:relative;background:var(--paper);border-radius:6px 18px 18px 6px;padding:0 0 0 78px;
+  box-shadow:0 10px 0 -4px var(--line),0 18px 30px rgba(160,40,110,.25);overflow:hidden}
+.rings{position:absolute;left:14px;top:0;bottom:0;width:34px;
+  background:radial-gradient(circle at 17px 17px,var(--desk) 0 7px,var(--margin) 8px 10px,transparent 11px) 0 0/34px 44px repeat-y}
+.paper::before{content:"";position:absolute;left:62px;top:0;bottom:0;width:2px;background:var(--margin);opacity:.7}
+.lines{position:relative;display:grid;min-height:70vh;--z:1;--fs:calc(25px * var(--z));--lh:calc(38px * var(--z));--pad:8px 22px 8px 6px;--ls:.2px;
+  background-image:repeating-linear-gradient(to bottom,transparent 0 calc(var(--lh) - 1px),var(--line) calc(var(--lh) - 1px) var(--lh));background-position:0 8px}
+.lines[data-grid=math]{--fs:calc(22px * var(--z));--lh:calc(30px * var(--z));--pad:0 2px;--ls:0;
+  background-image:linear-gradient(var(--margin) 1px,transparent 1px),linear-gradient(90deg,var(--margin) 1px,transparent 1px),linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:calc(var(--lh) * 5) calc(var(--lh) * 5),calc(var(--lh) * 5) calc(var(--lh) * 5),var(--lh) var(--lh),var(--lh) var(--lh);background-position:0 0}
+.lines[data-grid=cn]{--fs:calc(30px * var(--z));--lh:calc(44px * var(--z));--pad:0;--ls:calc(14px * var(--z));border-right:1px solid #ff5fae;border-bottom:1px solid #ff5fae;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Cpath d='M0 .5H44M.5 0V44' stroke='%23ff5fae' stroke-opacity='.8' fill='none'/%3E%3Cpath d='M22 0V44M0 22H44' stroke='%23ff8fbf' stroke-dasharray='4 3' fill='none'/%3E%3C/svg%3E");
+  background-size:var(--lh) var(--lh);background-position:0 0}
+#c{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+body[data-mode=type] #c{pointer-events:none}
+body[data-mode=draw] #doc{pointer-events:none}
+.k0{color:var(--c0)}.k1{color:var(--c1)}.k2{color:var(--c2)}.k3{color:var(--c3)}
+.k4{color:var(--c4)}.k5{color:var(--c5)}.k6{color:var(--c6)}.k7{color:var(--c7)}
+.sp{position:fixed;pointer-events:none;z-index:20;font-style:normal;line-height:1;animation:burst .9s ease-out forwards}
+@keyframes burst{from{opacity:1;transform:translate(0,0) scale(.6)}to{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1.4) rotate(120deg)}}
+.gl{position:fixed;pointer-events:none;z-index:15;background:currentColor;opacity:0;
+  clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);
+  animation:tw var(--d) ease-in-out infinite;animation-delay:var(--dl)}
+@keyframes tw{0%,100%{opacity:0;transform:scale(.3) rotate(0)}50%{opacity:.85;transform:scale(1) rotate(90deg)}}
+@media (max-width:560px){.paper{padding-left:52px}.paper::before{left:40px}.rings{left:2px}}
+@media (prefers-reduced-motion:reduce){.sp{display:none}.gl{animation:none;opacity:.5}}
+#tools{background:var(--paper);border-radius:14px;padding:6px 14px 14px;margin-bottom:16px;box-shadow:0 2px 0 var(--line);max-height:62vh;overflow:auto}
+#tools h3{margin:14px 0 4px;font-size:18px;color:var(--c0)}
+#tools details.more>summary{cursor:pointer;font-weight:700;margin:10px 0 4px}
+.fx{display:block;width:100%;text-align:left;background:transparent;color:var(--soft);border-radius:10px;padding:6px 10px;font-size:15px;font-weight:400}
+.fx:hover{background:var(--line)}.fx b{color:var(--c0)}
+#tk details{margin:6px 0;padding:6px 10px;border-radius:10px;background:var(--desk)}
+#tk summary{cursor:pointer;font-weight:700}
+#tk label{display:block;font-size:14px;margin:8px 0 2px}
+#tk input,#tk textarea{font:inherit;width:100%;padding:6px 10px;border:1px solid var(--margin);border-radius:10px;background:var(--paper);color:var(--soft)}
+#tk textarea{min-height:84px;resize:vertical;font-family:"Courier New",monospace;font-size:15px}
+#tk .plain{margin:8px 6px 0 0}
+.res{margin:8px 0 0;white-space:pre-wrap;font-size:15px;overflow-x:auto}
+.res .eq{display:inline-block;color:var(--c6);vertical-align:middle;margin:2px 0}
+.hint{font-size:14px;margin:6px 0 0}
+[hidden]{display:none!important}
+.fmt{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:var(--paper);border-radius:14px;padding:8px 10px;margin-bottom:10px;box-shadow:0 2px 0 var(--line)}
+.fmt select{font:inherit;font-size:15px;padding:5px 8px;border-radius:10px;border:1px solid var(--margin);background:var(--desk);color:var(--soft)}
+.fmt button{font-size:15px;padding:5px 11px;background-color:var(--desk);color:var(--soft);font-weight:700}
+.fmt button:hover{background-color:var(--line)}
+.fmt button.hl{background:var(--btn);color:var(--btntext)}
+.fmt .grp{display:inline-flex;gap:3px;flex-wrap:wrap}
+#eqp{background:var(--paper);border-radius:14px;padding:10px 12px;margin-bottom:10px;box-shadow:0 2px 0 var(--line)}
+.eqrow{display:flex;gap:8px;flex-wrap:wrap}
+#eqin{flex:1;min-width:200px;font:inherit;padding:8px 12px;border:1px solid var(--margin);border-radius:12px;background:var(--desk);color:var(--soft)}
+#eqprev{min-height:48px;padding:8px 4px;color:var(--c6);font-size:1.25em;overflow-x:auto}
+#eqsym{display:flex;flex-wrap:wrap;gap:6px}
+.eq math{font-size:1.15em;math-style:normal}
+.fcbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+#fcCard{margin-top:10px;background:var(--desk);border-radius:14px;padding:12px 14px}
+.fcmeta{font-size:13px}
+.fcq,.fca{font-size:20px;color:var(--ink);margin-top:6px;overflow-x:auto}
+.fca{border-top:2px dashed var(--margin);padding-top:6px}
+.fcq .eq,.fca .eq{color:var(--c6);display:inline-block;vertical-align:middle}
+#trk .tw{overflow-x:auto}
+#trk table{border-collapse:separate;border-spacing:3px;font-size:13px}
+#trk th{font-weight:700;padding:0 4px;text-align:left;white-space:nowrap}
+#trk thead th{text-align:center}
+#trk td button{display:block;width:24px;height:24px;padding:0;border-radius:7px;background:var(--dot);border:2px solid transparent}
+#trk td button.has{border-color:var(--margin)}
+#trk td button.now{outline:2px solid var(--c6);outline-offset:1px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;margin-top:6px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:4px;background:var(--dot);margin-right:5px;vertical-align:-1px}
+.filebtn{display:inline-block;cursor:pointer;border-radius:999px;font-weight:700}
+#bk .plain{margin:8px 6px 0 0}
+</style>
+<style id="docstyle">
+#doc{position:relative;outline:none;font:400 var(--fs)/var(--lh) "Kalam","Ma Shan Zheng","KaiTi","STKaiti","Noto Sans SC","Comic Sans MS",cursive;
+  padding:var(--pad);letter-spacing:var(--ls);white-space:pre-wrap;overflow-wrap:break-word;tab-size:4;caret-color:var(--c0);
+  color:var(--c0);-webkit-text-fill-color:transparent;-webkit-background-clip:text;background-clip:text;
+  background-image:linear-gradient(90deg,var(--c0),var(--c2),var(--c3),var(--c4),var(--c5),var(--c6),var(--c7),var(--c0));background-size:480px 100%}
+#doc ::selection{background:rgba(255,45,149,.28);-webkit-text-fill-color:currentColor}
+#doc.empty::before{content:attr(data-ph);position:absolute;left:0;top:0;padding:var(--pad);color:var(--margin);-webkit-text-fill-color:var(--margin);pointer-events:none}
+#doc div,#doc p,#doc h1,#doc h2,#doc li{margin:0}
+#doc h1{font-size:1.5em;font-weight:700;line-height:calc(var(--lh) * 2)}#doc h2{font-size:1.2em;font-weight:700}
+#doc ul,#doc ol{margin:0;padding-left:1.6em}
+#doc blockquote{margin:0 0 0 2em}
+[class^=ink-]{-webkit-text-fill-color:transparent;-webkit-background-clip:text;background-clip:text}
+.ink-rainbow{color:var(--c0);background-image:linear-gradient(90deg,var(--c0),var(--c2),var(--c3),var(--c4),var(--c5),var(--c6),var(--c7),var(--c0));background-size:480px 100%}
+.ink-gold{color:#d4a017;background-image:linear-gradient(100deg,#9a6b00,#ffd700 25%,#fff4b0 40%,#ffd700 55%,#b8860b 80%,#ffd700);background-size:220% 100%;animation:shine 4s ease-in-out infinite alternate}
+.ink-purple{color:#a855f7;background-image:linear-gradient(100deg,#5b21b6,#a855f7 30%,#f5d0fe 45%,#a855f7 60%,#6d28d9);background-size:220% 100%;animation:shine 3s ease-in-out infinite alternate;filter:drop-shadow(0 0 3px #c084fc)}
+.ink-aqua{color:#22d3ee;background-image:linear-gradient(100deg,#0891b2,#22d3ee 35%,#a5f3fc 50%,#2dd4bf 70%,#0e7490);background-size:220% 100%;animation:shine 5s ease-in-out infinite alternate}
+.ink-pink{background:none;color:var(--c0);-webkit-text-fill-color:var(--c0)}
+.ink-plain{background:none;color:var(--ink);-webkit-text-fill-color:var(--ink)}
+@keyframes shine{to{background-position:100% 0}}
+@media (prefers-reduced-motion:reduce){[class^=ink-]{animation:none}}
+#doc table{border-collapse:collapse;margin:6px 0}
+#doc td,#doc th{border:1.5px solid var(--margin);padding:2px 10px;min-width:64px;vertical-align:top}
+#doc th{background:var(--line);text-align:center}
+#doc .num{text-align:right}
+#doc .tot{border-bottom:double 5px var(--margin)}
+#doc table.tacc td,#doc table.tacc th{border:0;min-width:110px}
+#doc table.tacc th{border-bottom:2.5px solid var(--margin);background:none}
+#doc table.tacc td:first-child{border-right:2.5px solid var(--margin)}
+#doc .eq{display:inline-block;padding:0 4px;border-radius:6px;cursor:pointer;color:var(--c6);-webkit-text-fill-color:currentColor;vertical-align:middle;line-height:1.2}
+#doc .eq:hover{background:var(--line)}
+</style>
+<div class="wrap">
+  <header>
+    <h1 id="title" aria-label="Kunga's Notebook"></h1>
+    <div class="actions">
+      <span id="sync" aria-live="polite">Saved on this device</span>
+      <span id="status" role="status" aria-live="polite"></span>
+      <span id="saveBtns" hidden>
+        <button id="saveTxt" type="button">Save as text</button>
+        <button id="saveHtml" type="button">Save as pretty page</button>
+      </span>
+    </div>
+  </header>
+  <div class="bar">
+    <div class="seg" id="subjects" role="group" aria-label="Subject"></div>
+  </div>
+  <div class="bar">
+    <div class="seg" id="weeks" role="group" aria-label="Week"></div>
+  </div>
+  <div class="pagebar">
+    <input id="topic" autocomplete="off" aria-label="Lecture topic" placeholder="Lecture topic, e.g. Eigenvalues and eigenvectors">
+    <select id="pstatus" aria-label="How well do you know this week?">
+      <option value="0">Not started</option><option value="1">Notes written</option><option value="2">Practised</option><option value="3">Mastered</option>
+    </select>
+  </div>
+  <div class="bar">
+    <div class="seg" id="grids" role="group" aria-label="Page style">
+      <button type="button" data-g="lined">Lined</button>
+      <button type="button" data-g="math">Math grid</button>
+      <button type="button" data-g="cn">Chinese squares</button>
+    </div>
+    <div class="seg" id="modes" role="group" aria-label="Input mode">
+      <button type="button" data-m="type">Type</button>
+      <button type="button" data-m="draw">Handwrite</button>
+    </div>
+    <div class="seg" id="zoom" role="group" aria-label="Text size">
+      <button type="button" data-z="-1" title="Smaller text (Ctrl + Shift + ,)" aria-label="Smaller text">A−</button>
+      <button type="button" data-z="0" id="zval" title="Reset text size">100%</button>
+      <button type="button" data-z="1" title="Bigger text (Ctrl + Shift + .)" aria-label="Bigger text">A+</button>
+    </div>
+    <div id="ink">
+      <div class="seg" id="pens" role="group" aria-label="Pen">
+        <button type="button" data-k="rainbow">Rainbow pen</button>
+        <button type="button" data-k="pink">Pink pen</button>
+        <button type="button" data-k="erase">Eraser</button>
+      </div>
+      <button class="plain" id="undo" type="button">Undo</button>
+      <button class="plain" id="clear" type="button">Clear drawing</button>
+    </div>
+    <button class="plain" id="toolsBtn" type="button" aria-expanded="false">Study tools</button>
+  </div>
+  <section id="tools" hidden>
+    <h3>Flashcards</h3>
+    <div id="fc">
+      <p class="hint">Anywhere in your notes, write <b>Q:</b> and a question on one line, then <b>A:</b> and the answer on the next. They show up here as flashcards.</p>
+      <div class="fcbar"><button type="button" class="plain" id="fcWeek">Quiz me on this week</button><button type="button" class="plain" id="fcUnit">Quiz me on the whole unit</button></div>
+      <div id="fcCard" hidden>
+        <div class="fcmeta" id="fcMeta"></div>
+        <div class="fcq" id="fcQ"></div>
+        <div class="fca" id="fcA" hidden></div>
+        <div class="fcbar"><button type="button" id="fcShow">Show answer</button><button type="button" class="plain" id="fcGot" hidden>Got it</button><button type="button" class="plain" id="fcAgain" hidden>Study again</button></div>
+      </div>
+      <div class="res" id="fcMsg"></div>
+    </div>
+    <h3>Progress tracker</h3>
+    <p class="hint">Set each week's status with the box next to the lecture topic. Tap a square to jump to that week.</p>
+    <div id="trk"></div>
+    <h3 id="fxh">Formulas</h3><div id="tf"></div>
+    <h3>Calculators</h3><div id="tk"></div>
+    <h3>Backup</h3>
+    <div id="bk">
+      <p class="hint" id="bkHint">Your notes save on this device. Keep a backup file so you never lose a semester of work.</p>
+      <button type="button" class="plain" id="bkSave" hidden>Download backup</button>
+      <label class="plain filebtn" for="bkFile">Restore from backup</label><input type="file" id="bkFile" accept=".json,application/json" hidden>
+      <div class="res" id="bkMsg"></div>
+    </div>
+  </section>
+  <div class="fmt" id="fmt" role="toolbar" aria-label="Formatting">
+    <button type="button" data-act="tpl" class="hl" title="Add headings for this week's lecture">Lecture template</button>
+    <button type="button" data-act="qa" title="Add a flashcard question and answer">+ Q&amp;A</button>
+    <select id="ffont" aria-label="Font"><option value="" selected>Font</option><option>Kalam</option><option>Caveat</option><option>Dancing Script</option><option>Pacifico</option><option>Playfair Display</option><option value="Ma Shan Zheng">Ma Shan Zheng</option><option>Arial</option><option>Times New Roman</option><option>Courier New</option></select>
+    <select id="fsize" aria-label="Font size of selected text"><option value="" selected>Size</option><option>14</option><option>16</option><option>18</option><option>20</option><option>24</option><option>28</option><option>32</option><option>40</option><option>48</option></select>
+    <select id="fblock" aria-label="Paragraph style"><option value="" selected>Style</option><option value="div">Normal</option><option value="h1">Heading 1</option><option value="h2">Heading 2</option></select>
+    <span class="grp" id="inks" role="group" aria-label="Text colour and sparkle">
+      <button type="button" data-ink="rainbow" class="ink-rainbow">Rainbow</button><button type="button" data-ink="pink" class="ink-pink">Pink</button><button type="button" data-ink="gold" class="ink-gold">Gold</button><button type="button" data-ink="purple" class="ink-purple">Sparkly purple</button><button type="button" data-ink="aqua" class="ink-aqua">Aqua</button><button type="button" data-ink="plain" class="ink-plain">Plain</button>
+    </span>
+    <span class="grp"><button type="button" data-cmd="bold" title="Bold (Ctrl+B)"><b>B</b></button><button type="button" data-cmd="italic" title="Italic (Ctrl+I)"><i>I</i></button><button type="button" data-cmd="underline" title="Underline (Ctrl+U)"><u>U</u></button><button type="button" data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button><button type="button" data-cmd="subscript" title="Subscript">x₂</button><button type="button" data-cmd="superscript" title="Superscript">x²</button></span>
+    <span class="grp"><button type="button" data-cmd="justifyLeft">Left</button><button type="button" data-cmd="justifyCenter">Centre</button><button type="button" data-cmd="justifyRight">Right</button><button type="button" data-cmd="justifyFull">Justify</button></span>
+    <span class="grp"><button type="button" data-cmd="insertUnorderedList">• List</button><button type="button" data-cmd="insertOrderedList">1. List</button><button type="button" data-cmd="outdent">Outdent</button><button type="button" data-cmd="indent">Indent</button><button type="button" data-cmd="undo" title="Undo typing">↶</button><button type="button" data-cmd="redo" title="Redo typing">↷</button></span>
+    <select id="ftable" aria-label="Insert table"><option value="" selected>Insert table</option><option value="jrnl">Journal entry</option><option value="tacc">T-account</option><option value="trial">Trial balance</option><option value="budget">Budget vs actual</option><option value="blank">Blank table</option></select>
+    <button type="button" id="feq" title="Equation (Alt + =)">Σ Equation</button>
+  </div>
+  <div class="fmt" id="tblbar" role="toolbar" aria-label="Table tools" hidden>
+    <button type="button" data-t="row">Add row</button><button type="button" data-t="col">Add column</button><button type="button" data-t="delrow">Delete row</button><button type="button" data-t="delcol">Delete column</button><button type="button" data-t="tot">Total line</button><button type="button" data-t="num">Right-align</button><button type="button" data-t="deltbl">Delete table</button>
+  </div>
+  <div id="eqp" hidden>
+    <div class="eqrow"><input id="eqin" autocomplete="off" spellcheck="false" aria-label="Equation" placeholder="det(A - lambda I) = 0"><button type="button" id="eqok">Insert equation</button><button type="button" class="plain" id="eqx">Cancel</button></div>
+    <div id="eqprev" class="eq" aria-live="polite"></div>
+    <div id="eqsym"></div>
+    <p class="hint">Press Enter to insert. Use / for fractions, ^ for powers, _ for subscripts, sqrt(x), int_a^b, sum_(i=1)^n and names like lambda, theta, pi. Matrices: [[1,2],[3,4]]. Vectors: vec(v). Derivatives: (dy)/(dx) or y'. Tap an equation on the page to edit it.</p>
+  </div>
+  <main class="paper" id="paper">
+    <div class="rings" aria-hidden="true"></div>
+    <div class="lines" id="lines" data-grid="lined">
+      <div id="doc" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" aria-label="Notebook page" data-ph="Start writing."></div>
+      <canvas id="c" aria-label="Handwriting area"></canvas>
+    </div>
+  </main>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+document.body.dataset.mode='type';
+const root=document.documentElement;
+const doc=$('doc'),c=$('c'),lines=$('lines'),paper=$('paper'),ctx=c.getContext('2d'),status=$('status');
+const SEQ=[0,1,7,2,1,3,0,4,1,5,7,6];
+const CELL={lined:0,math:30,cn:44};
+const GLY=['✦','✧','♥','✿','✨','⋆'];
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const cssVar=n=>getComputedStyle(root).getPropertyValue(n).trim();
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const LS='kunga-notebook-v3';
+
+const SUBJ={
+  mxb105:{name:'MXB105',long:'Calculus and Differential Equations'},
+  mxb106:{name:'MXB106',long:'Linear Algebra'},
+  acct:{name:'ACCT1102',long:'Management Accounting'},
+  finm:{name:'FINM2415',long:'Corporate Finance'},
+  free:{name:'Free notes',long:'Anything else'}};
+const WEEKS=['gen',...Array.from({length:13},(_,i)=>'w'+(i+1)),'rev'];
+const WLAB=w=>w==='gen'?'Overview':w==='rev'?'Revision':'Wk '+w.slice(1);
+const WLONG=w=>w==='gen'?'Unit overview':w==='rev'?'Exam revision':'Week '+w.slice(1);
+const STAT=['Not started','Notes written','Practised','Mastered'];
+const state={mode:'type',grid:'lined',ink:'rainbow',strokes:[],subj:'',wk:{},z:1};
+const wkOf=s=>state.wk[s]||(s==='free'?'gen':'w1');
+const key=()=>state.subj+'_'+wkOf(state.subj);
+
+function paint(el,text){
+  const f=document.createDocumentFragment();let i=0;
+  for(const ch of text){
+    if(/\s/.test(ch)){f.append(ch);continue;}
+    const s=document.createElement('span');s.className='k'+SEQ[i%SEQ.length];s.textContent=ch;f.append(s);i++;
+  }
+  el.replaceChildren(f);
+}
+paint($('title'),"Kunga's Notebook");
+
+const toHtml=s=>s.split('\n').map(l=>'<div>'+(l.replace(/&/g,'&amp;').replace(/</g,'&lt;')||'<br>')+'</div>').join('');
+const plainOf=h=>(h||'').replace(/<[^>]*>|&nbsp;|​/g,'').trim();
+function render(){doc.classList.toggle('empty',!doc.textContent.replace(/​/g,'').trim()&&!doc.querySelector('table,.eq'));}
+
+function burst(x,y,n){
+  if(reduce) return;
+  for(let k=0;k<n;k++){
+    const e=document.createElement('i');e.className='sp';
+    e.textContent=GLY[Math.random()*GLY.length|0];
+    e.style.cssText=`left:${x}px;top:${y}px;color:var(--c${Math.random()*8|0});font-size:${10+Math.random()*14}px;--dx:${(Math.random()-.5)*90}px;--dy:${-10-Math.random()*70}px`;
+    e.addEventListener('animationend',()=>e.remove());
+    document.body.append(e);
+  }
+}
+for(let k=0;k<46;k++){
+  const g=document.createElement('i'),s=4+Math.random()*7;g.className='gl';
+  g.style.cssText=`left:${Math.random()*100}vw;top:${Math.random()*100}vh;width:${s}px;height:${s}px;color:var(--c${k%8});--d:${1.6+Math.random()*2.4}s;--dl:${-Math.random()*4}s`;
+  document.body.append(g);
+}
+
+/* editor */
+let lastRange=null,wantSize=0,eqEdit=null;
+const selEl=()=>{const n=lastRange&&lastRange.startContainer;const el=n&&(n.nodeType===3?n.parentElement:n);return el&&doc.contains(el)?el:null;};
+const curCell=()=>{const e=selEl();return e?e.closest('td,th'):null;};
+const tblState=()=>{$('tblbar').hidden=!curCell();};
+document.addEventListener('selectionchange',()=>{const s=getSelection();if(s.rangeCount&&doc.contains(s.anchorNode)){lastRange=s.getRangeAt(0).cloneRange();tblState();}});
+function focusDoc(){
+  if(state.mode!=='type')setMode('type');
+  doc.focus();const s=getSelection();
+  if(lastRange&&doc.contains(lastRange.startContainer)){s.removeAllRanges();s.addRange(lastRange);}
+  else{const r=document.createRange();r.selectNodeContents(doc);r.collapse(false);s.removeAllRanges();s.addRange(r);}
+}
+function cmd(c,v){focusDoc();document.execCommand('styleWithCSS',false,true);document.execCommand(c,false,v);fixSizes();render();persist();}
+function fixSizes(){if(!wantSize)return;doc.querySelectorAll('span[style*="xxx-large"],font[size="7"]').forEach(n=>{n.removeAttribute('size');n.style.fontSize=wantSize+'px';});}
+function applyInk(k){
+  focusDoc();const s=getSelection(),r=s.getRangeAt(0),sp=document.createElement('span');sp.className='ink-'+k;
+  const nr=document.createRange();
+  if(r.collapsed){sp.textContent='​';r.insertNode(sp);nr.setStart(sp.firstChild,1);nr.collapse(true);}
+  else{sp.append(r.extractContents());sp.querySelectorAll('[class^=ink-]').forEach(n=>n.removeAttribute('class'));r.insertNode(sp);nr.selectNodeContents(sp);}
+  s.removeAllRanges();s.addRange(nr);render();persist();
+}
+doc.addEventListener('input',()=>{
+  fixSizes();render();
+  const s=getSelection();
+  if(s.rangeCount){const rr=s.getRangeAt(0),r=rr.getClientRects()[0]||rr.getBoundingClientRect();if(r&&(r.top||r.left))burst(r.left,r.top+r.height/2,4);}
+  persist();
+});
+function textOf(html){
+  const q=document.createElement('div');q.innerHTML=html;q.style.cssText='position:absolute;left:-9999px;top:0;width:600px;white-space:pre-wrap';
+  q.querySelectorAll('.eq').forEach(e=>e.replaceWith('['+e.dataset.src+']'));
+  document.body.append(q);const s=q.innerText.replace(/​/g,'');q.remove();return s;
+}
+const txt=()=>textOf(doc.innerHTML);
+function insertHtml(h){focusDoc();document.execCommand('insertHTML',false,h);render();persist();}
+
+/* templates */
+function template(){
+  const s=state.subj,w=wkOf(s),t=$('topic').value.trim();
+  const H=x=>`<h2>${x}</h2>`,B='<div><br></div>';
+  if(w==='gen')return `<h1>${SUBJ[s].name} ${SUBJ[s].long}</h1>${H('Assessment and due dates')}<ul><li><br></li></ul>${H('Topics by week')}${B}${H('Lecturer, tutors and consultation times')}${B}${H('My study plan')}${B}`;
+  if(w==='rev')return `<h1>${SUBJ[s].name} exam revision</h1>${H('Topics to review')}<ul><li><br></li></ul>${H('Formulas to memorise')}${B}${H('Practice and past exam questions')}${B}${H('Mistakes I keep making')}${B}${H('Self-test')}<div>Q: </div><div>A: </div>${B}`;
+  return `<h1>${WLONG(w)}${t?': '+esc(t):''}</h1><div><b>Big idea:</b> </div>${H('Key definitions')}<ul><li><br></li></ul>${H('Theorems and formulas')}${B}${H('Worked examples')}${B}${H('Where I got stuck')}${B}${H('Self-test')}<div>Q: </div><div>A: </div>${B}${H('Summary in my own words')}${B}`;
+}
+function addTemplate(){
+  if(!doc.textContent.replace(/​/g,'').trim()&&!doc.querySelector('table,.eq')){
+    doc.innerHTML=template();render();persist();
+    const first=doc.querySelector('div');const r=document.createRange();r.selectNodeContents(first);r.collapse(false);
+    doc.focus();const sl=getSelection();sl.removeAllRanges();sl.addRange(r);
+  }else insertHtml(template());
+}
+
+/* toolbar */
+['fmt','tblbar','zoom'].forEach(id=>$(id).addEventListener('mousedown',e=>{if(e.target.closest('button'))e.preventDefault();}));
+$('fmt').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.cmd)cmd(b.dataset.cmd);
+  else if(b.dataset.ink)applyInk(b.dataset.ink);
+  else if(b.dataset.act==='tpl')addTemplate();
+  else if(b.dataset.act==='qa')insertHtml('<div>Q: </div><div>A: </div>');
+});
+$('ffont').onchange=e=>{const v=e.target.value;e.target.value='';if(v)cmd('fontName',v);};
+$('fblock').onchange=e=>{const v=e.target.value;e.target.value='';if(v)cmd('formatBlock','<'+v+'>');};
+$('fsize').onchange=e=>{const v=e.target.value;e.target.value='';if(v){wantSize=+v;cmd('fontSize','7');}};
+
+/* tab to indent, Alt+= for equations */
+function addRow(tr){
+  const n=tr.cloneNode(true);
+  [...n.children].forEach(c=>{const d=document.createElement('td');d.className=c.className.replace('tot','').trim();d.innerHTML='<br>';c.replaceWith(d);});
+  tr.after(n);
+}
+function moveCell(cell,back){
+  const tb=cell.closest('table');let cs=[...tb.querySelectorAll('td,th')];const i=cs.indexOf(cell)+(back?-1:1);
+  if(i>=cs.length){addRow(cell.closest('tr'));cs=[...tb.querySelectorAll('td,th')];}
+  if(i<0)return;
+  const r=document.createRange();r.selectNodeContents(cs[i]);r.collapse(false);const s=getSelection();s.removeAllRanges();s.addRange(r);
+}
+doc.addEventListener('keydown',e=>{
+  if(e.altKey&&e.code==='Equal'){e.preventDefault();openEq();return;}
+  if(e.key!=='Tab')return;
+  e.preventDefault();
+  const s=getSelection(),n=s.anchorNode,el=n&&(n.nodeType===3?n.parentElement:n),cell=el&&el.closest('td,th');
+  if(cell)moveCell(cell,e.shiftKey);
+  else if(el&&el.closest('li'))document.execCommand(e.shiftKey?'outdent':'indent');
+  else if(e.shiftKey){if(s.isCollapsed){s.modify('extend','backward','character');if(s.toString()==='\t')document.execCommand('delete');else s.collapseToEnd();}}
+  else document.execCommand('insertText',false,'\t');
+});
+
+/* accounting tables */
+const row=(tag,a,cls)=>'<tr>'+a.map((x,i)=>`<${tag}${cls&&cls[i]?` class="${cls[i]}"`:''}>${x||'<br>'}</${tag}>`).join('')+'</tr>';
+const blanks=(n,cls)=>Array.from({length:n},()=>row('td',cls.map(()=>''),cls)).join('');
+const TABLES={
+  jrnl:()=>'<table>'+row('th',['Date','Account','Debit','Credit'])+blanks(4,['','','num','num'])+'</table>',
+  tacc:()=>'<table class="tacc"><tr><th colspan="2">Account name</th></tr>'+blanks(4,['',''])+'</table>',
+  trial:()=>'<table>'+row('th',['Account','Debit','Credit'])+blanks(4,['','num','num'])+row('td',['Total','','' ],['','num tot','num tot'])+'</table>',
+  budget:()=>'<table>'+row('th',['Item','Budget','Actual','Variance','F / U'])+blanks(3,['','num','num','num',''])+row('td',['Total','','','',''],['','num tot','num tot','num tot',''])+'</table>',
+  blank:()=>'<table>'+blanks(3,['','',''])+'</table>'
+};
+$('ftable').onchange=e=>{const k=e.target.value;e.target.value='';if(!k)return;insertHtml(TABLES[k]()+'<div><br></div>');};
+$('tblbar').onclick=e=>{
+  const b=e.target.closest('button'),c=curCell();if(!b||!c)return;
+  const tr=c.parentElement,tb=c.closest('table'),ix=c.cellIndex,k=b.dataset.t;
+  if(k==='row')addRow(tr);
+  else if(k==='col')tb.querySelectorAll('tr').forEach(r=>{const ref=r.cells[ix];if(!ref)return;const n=document.createElement(ref.tagName);n.className=ref.className.replace('tot','').trim();n.innerHTML='<br>';ref.after(n);});
+  else if(k==='delrow'){tr.remove();if(!tb.rows.length)tb.remove();}
+  else if(k==='delcol'){tb.querySelectorAll('tr').forEach(r=>r.cells[ix]&&r.cells[ix].remove());if(!tb.rows[0]||!tb.rows[0].cells.length)tb.remove();}
+  else if(k==='tot')c.classList.toggle('tot');
+  else if(k==='num')c.classList.toggle('num');
+  else if(k==='deltbl')tb.remove();
+  render();persist();tblState();
+};
+
+/* equations */
+const GREEK={alpha:'α',beta:'β',gamma:'γ',delta:'δ',epsilon:'ε',theta:'θ',lambda:'λ',mu:'μ',pi:'π',rho:'ρ',sigma:'σ',tau:'τ',phi:'φ',omega:'ω',Delta:'Δ',Sigma:'Σ',Omega:'Ω',Pi:'Π',Lambda:'Λ',infty:'∞',inf:'∞'};
+const WORDOP={cdot:'⋅',times:'×',in:'∈',notin:'∉',partial:'∂',nabla:'∇',forall:'∀',exists:'∃',perp:'⊥',approx:'≈',to:'→',implies:'⇒',iff:'⇔',subset:'⊆',cup:'∪',cap:'∩',pm:'±'};
+const SETS={RR:'ℝ',CC:'ℂ',ZZ:'ℤ',NN:'ℕ',QQ:'ℚ'};
+const ACC={vec:'→',hat:'^',bar:'¯'};
+const BIG={sum:'∑',prod:'∏',int:'∫',lim:'lim'};
+const OPS={'*':'×','-':'−','<=':'≤','>=':'≥','!=':'≠','+-':'±','->':'→','~=':'≈',"'":'′'};
+function tex2ml(src){
+  const T=[],re=/\s*(\d+(?:\.\d+)?|\\?[A-Za-z]+|"[^"]*"|\+-|<=|>=|!=|~=|->|\S)/gy;let m;
+  while((m=re.exec(src)))T.push(m[1]);
+  let p=0;const peek=()=>T[p],next=()=>T[p++];
+  const x=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  function rowOf(...stop){const o=[];while(p<T.length&&!stop.includes(peek()))o.push(item().ml);return o.join('');}
+  function item(){let a=script();while(peek()==='/'){next();const b=script(),ml=`<mfrac><mrow>${a.inner}</mrow><mrow>${b.inner}</mrow></mfrac>`;a={ml,inner:ml};}return a;}
+  function script(){
+    let a=atom(),lo,hi;
+    while(peek()==='_'||peek()==='^'){const k=next(),b=atom().inner;if(k==='_')lo=b;else hi=b;}
+    if(lo||hi){const g=lo&&hi?'msubsup':lo?'msub':'msup';a={ml:`<${g}>${a.ml}${lo||''}${hi||''}</${g}>`};}
+    a.inner=a.inner||a.ml;return a;
+  }
+  function matrix(){
+    const rows=[];
+    while(peek()==='['){
+      next();const cells=[];
+      for(;;){cells.push(rowOf(',',']'));if(peek()===','){next();continue;}break;}
+      if(peek()===']')next();rows.push(cells);
+      if(peek()===',')next();
+    }
+    if(peek()===']')next();
+    const t=`<mtable>${rows.map(r=>'<mtr>'+r.map(c=>`<mtd>${c}</mtd>`).join('')+'</mtr>').join('')}</mtable>`;
+    return{ml:`<mrow><mo>[</mo>${t}<mo>]</mo></mrow>`};
+  }
+  function atom(){
+    const k=next();
+    if(k===undefined)return{ml:''};
+    if(/^\d/.test(k))return{ml:`<mn>${k}</mn>`};
+    if(k==='('){const i=rowOf(')');if(peek()===')')next();return{ml:`<mrow><mo>(</mo>${i}<mo>)</mo></mrow>`,inner:`<mrow>${i}</mrow>`};}
+    if(k==='['){
+      if(peek()==='[')return matrix();
+      const i=rowOf(']');if(peek()===']')next();return{ml:`<mrow><mo>[</mo>${i}<mo>]</mo></mrow>`};
+    }
+    if(k==='{'){const i=rowOf('}');if(peek()==='}')next();return{ml:`<mrow><mo>{</mo>${i}<mo>}</mo></mrow>`,inner:`<mrow>${i}</mrow>`};}
+    if(k[0]==='"')return{ml:`<mtext>${x(k.slice(1,-1))}</mtext>`};
+    if(/^\\?[A-Za-z]/.test(k)){
+      const w=k.replace('\\','');
+      if(w==='sqrt')return{ml:`<msqrt>${atom().inner}</msqrt>`};
+      if(ACC[w])return{ml:`<mover accent="true"><mrow>${atom().inner}</mrow><mo>${ACC[w]}</mo></mover>`};
+      if(WORDOP[w])return{ml:`<mo>${WORDOP[w]}</mo>`};
+      if(SETS[w])return{ml:`<mi mathvariant="normal">${SETS[w]}</mi>`};
+      if(BIG[w]){
+        let lo,hi;if(peek()==='_'){next();lo=atom().inner;}if(peek()==='^'){next();hi=atom().inner;}
+        const op=`<mo largeop="true" movablelimits="true">${BIG[w]}</mo>`,sd=w==='int';
+        const g=lo&&hi?(sd?'msubsup':'munderover'):lo?(sd?'msub':'munder'):hi?(sd?'msup':'mover'):'';
+        return{ml:g?`<${g}>${op}${lo||''}${hi||''}</${g}>`:op};
+      }
+      return{ml:`<mi>${GREEK[w]||w}</mi>`};
+    }
+    return{ml:`<mo>${x(OPS[k]||k)}</mo>`};
+  }
+  return '<math>'+rowOf()+'</math>';
+}
+const eqSpan=src=>`<span class="eq" contenteditable="false" data-src="${esc(src)}">${tex2ml(src)}</span>`;
+const SYM=[['a/b','()/()',4],['xⁿ','^()',1],['xₙ','_()',1],['√','sqrt()',1],['dy/dx','(dy)/(dx) ',0],['y′',"y' ",0],['∂','partial ',0],['∫','int_a^b ',0],['∑','sum_(i=1)^n ',0],['lim','lim_(x->0) ',0],
+  ['Matrix','[[1,0],[0,1]] ',0],['Vector','[[x],[y],[z]] ',0],['v⃗','vec()',1],['λ','lambda ',0],['θ','theta ',0],['π','pi ',0],['∞','infty ',0],['∈','in ',0],['ℝ','RR ',0],['⋅','cdot ',0],['→','-> ',0],
+  ['β','beta ',0],['σ','sigma ',0],['ρ','rho ',0],['μ','mu ',0],['Δ','Delta ',0],['≤','<= ',0],['≥','>= ',0],['≠','!= ',0],['±','+- ',0],['×','* ',0]];
+$('eqsym').innerHTML=SYM.map((s,i)=>`<button type="button" class="plain" data-i="${i}">${s[0]}</button>`).join('');
+$('eqsym').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const [,s,back]=SYM[b.dataset.i],i=$('eqin');
+  i.setRangeText(s,i.selectionStart,i.selectionEnd,'end');const q=i.selectionStart-back;i.setSelectionRange(q,q);i.focus();eqPrev();
+};
+function eqPrev(){const v=$('eqin').value;$('eqprev').innerHTML=v.trim()?tex2ml(v):'<span class="hint">Your equation will show here.</span>';}
+function openEq(node){eqEdit=node||null;$('eqp').hidden=false;$('eqin').value=node?node.dataset.src:'';eqPrev();$('eqin').focus();}
+function closeEq(){$('eqp').hidden=true;eqEdit=null;focusDoc();}
+function insEq(){
+  const src=$('eqin').value.trim();if(!src){closeEq();return;}
+  const html=eqSpan(src)+(eqEdit?'':'&nbsp;');
+  focusDoc();
+  if(eqEdit){const r=document.createRange();r.selectNode(eqEdit);const s=getSelection();s.removeAllRanges();s.addRange(r);}
+  document.execCommand('insertHTML',false,html);
+  $('eqp').hidden=true;eqEdit=null;render();persist();
+}
+$('eqin').oninput=eqPrev;
+$('eqin').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();insEq();}else if(e.key==='Escape')closeEq();};
+$('eqok').onclick=insEq;$('eqx').onclick=closeEq;$('feq').onclick=()=>openEq();
+doc.addEventListener('click',e=>{const q=e.target.closest('.eq');if(q&&doc.contains(q))openEq(q);});
+
+/* layout, grids, text size */
+function fit(){
+  const cell=CELL[state.grid]*state.z;
+  if(!cell){lines.style.width='';return;}
+  const avail=paper.clientWidth-parseFloat(getComputedStyle(paper).paddingLeft);
+  const cols=Math.max(4,Math.floor(avail/cell));
+  lines.style.width=(cols*cell+(state.grid==='cn'?1:0))+'px';
+}
+addEventListener('resize',fit);
+const ZOOMS=[.7,.8,.9,1,1.15,1.3,1.5,1.75,2];
+function setZoom(z){
+  state.z=z;lines.style.setProperty('--z',z);
+  $('zval').textContent=Math.round(z*100)+'%';
+  $('zoom').querySelector('[data-z="-1"]').disabled=z<=ZOOMS[0];
+  $('zoom').querySelector('[data-z="1"]').disabled=z>=ZOOMS[ZOOMS.length-1];
+  fit();saveLocal();
+}
+function stepZoom(d){
+  if(!d){setZoom(1);return;}
+  let i=ZOOMS.indexOf(state.z);if(i<0)i=ZOOMS.indexOf(1);
+  setZoom(ZOOMS[Math.min(ZOOMS.length-1,Math.max(0,i+d))]);
+}
+$('zoom').onclick=e=>{const b=e.target.closest('button');if(b)stepZoom(+b.dataset.z);};
+addEventListener('keydown',e=>{
+  if(!(e.ctrlKey||e.metaKey)||!e.shiftKey)return;
+  if(e.code==='Period'){e.preventDefault();stepZoom(1);}
+  else if(e.code==='Comma'){e.preventDefault();stepZoom(-1);}
+});
+
+function press(box,attr,val){box.querySelectorAll('button[data-'+attr+']').forEach(b=>b.setAttribute('aria-pressed',b.dataset[attr]===val));}
+function setGrid(g){state.grid=g;lines.dataset.grid=g;press($('grids'),'g',g);fit();persist();}
+function setMode(md){state.mode=md;document.body.dataset.mode=md;press($('modes'),'m',md);if(md==='type')doc.focus();saveLocal();}
+function setInk(k){state.ink=k;press($('pens'),'k',k);}
+$('grids').onclick=e=>{const g=e.target.dataset.g;if(g)setGrid(g);};
+$('modes').onclick=e=>{const v=e.target.dataset.m;if(v)setMode(v);};
+$('pens').onclick=e=>{const k=e.target.dataset.k;if(k)setInk(k);};
+
+/* handwriting */
+let strokesChanged=false;
+function seg(s,i){
+  const a=s.p[i-1],b=s.p[i];
+  ctx.save();ctx.lineCap=ctx.lineJoin='round';ctx.lineWidth=s.w;
+  if(s.k==='erase'){ctx.globalCompositeOperation='destination-out';ctx.strokeStyle='#000';}
+  else ctx.strokeStyle=s.k==='pink'?'#ff2d95':`hsl(${(320+b[2]*.8)%360} 95% 58%)`;
+  ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.restore();
+}
+function redraw(){
+  ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,c.width,c.height);ctx.restore();
+  state.strokes.forEach(s=>{for(let i=1;i<s.p.length;i++)seg(s,i);});
+}
+function sizeCanvas(){
+  const d=devicePixelRatio||1;
+  c.width=lines.clientWidth*d;c.height=lines.clientHeight*d;
+  ctx.setTransform(d,0,0,d,0,0);redraw();
+}
+new ResizeObserver(sizeCanvas).observe(lines);
+let cur=null,lastSp=0;
+const pos=e=>{const r=c.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top];};
+c.addEventListener('pointerdown',e=>{
+  if(state.mode!=='draw')return;
+  c.setPointerCapture(e.pointerId);
+  const [x,y]=pos(e);
+  cur={k:state.ink,w:state.ink==='erase'?26:4,p:[[x,y,0]]};
+  state.strokes.push(cur);
+});
+c.addEventListener('pointermove',e=>{
+  if(!cur)return;
+  const [x,y]=pos(e),q=cur.p[cur.p.length-1],d=Math.hypot(x-q[0],y-q[1]);
+  if(d<1.5)return;
+  cur.p.push([x,y,q[2]+d]);seg(cur,cur.p.length-1);
+  if(y>lines.clientHeight-90) lines.style.minHeight=(lines.clientHeight+320)+'px';
+  if(cur.k!=='erase'&&e.timeStamp-lastSp>45){lastSp=e.timeStamp;burst(e.clientX,e.clientY,1);}
+});
+const end=()=>{
+  if(!cur)return;
+  if(cur.p.length===1){cur.p.push(cur.p[0].slice());seg(cur,1);}
+  cur=null;strokesChanged=true;persist();
+};
+c.addEventListener('pointerup',end);c.addEventListener('pointercancel',end);
+$('undo').onclick=()=>{state.strokes.pop();redraw();strokesChanged=true;persist();};
+$('clear').onclick=function(){
+  if(this.dataset.armed){state.strokes=[];redraw();strokesChanged=true;persist();this.textContent='Clear drawing';delete this.dataset.armed;return;}
+  this.dataset.armed=1;this.textContent='Tap again to clear';
+  setTimeout(()=>{this.textContent='Clear drawing';delete this.dataset.armed;},3000);
+};
+
+const FX=[
+['mxb105','Chain rule','d/dx f(g(x)) = f′(g(x)) · g′(x)'],
+['mxb105','Product and quotient rules','(uv)′ = u′v + uv′;  (u/v)′ = (u′v − uv′) / v²'],
+['mxb105','Integration by parts','∫ u dv = uv − ∫ v du'],
+['mxb105','Substitution','∫ f(g(x)) g′(x) dx = ∫ f(u) du, with u = g(x)'],
+['mxb105','Fundamental theorem of calculus','∫ₐᵇ f(x) dx = F(b) − F(a), where F′ = f'],
+['mxb105','Partial derivatives and gradient','∇f = (∂f/∂x, ∂f/∂y); directional derivative D_u f = ∇f · u'],
+['mxb105','Taylor series','f(x) = Σ f⁽ⁿ⁾(a) (x − a)ⁿ / n!'],
+['mxb105','Separable ODE','dy/dx = f(x) g(y)  →  ∫ dy / g(y) = ∫ f(x) dx'],
+['mxb105','First-order linear ODE','y′ + P(x) y = Q(x); integrating factor μ = e^(∫P dx); y = (1/μ) ∫ μ Q dx'],
+['mxb105','Exponential growth and decay','dy/dt = k y  →  y = y₀ e^(kt)'],
+['mxb105','Newton\'s law of cooling','dT/dt = −k (T − T_env)  →  T = T_env + (T₀ − T_env) e^(−kt)'],
+['mxb105','Second-order constant coefficients','a y″ + b y′ + c y = 0; characteristic equation a r² + b r + c = 0'],
+['mxb105','Three cases for the roots','Real r₁ ≠ r₂: C₁e^(r₁x) + C₂e^(r₂x). Repeated r: (C₁ + C₂x)e^(rx). Complex α ± βi: e^(αx)(C₁cos βx + C₂sin βx)'],
+['mxb105','Undetermined coefficients','Guess y_p like the right side (polynomial, e^(kx), sin/cos); multiply by x if it repeats a homogeneous solution'],
+['mxb105','General solution','y = y_h + y_p (homogeneous + particular)'],
+['mxb105','Euler\'s method','y_(n+1) = y_n + h · f(x_n, y_n)'],
+['mxb106','Dot product','u · v = Σ uᵢvᵢ = |u||v| cos θ; orthogonal when u · v = 0'],
+['mxb106','Cross product (ℝ³)','u × v = (u₂v₃ − u₃v₂, u₃v₁ − u₁v₃, u₁v₂ − u₂v₁); |u × v| = area of parallelogram'],
+['mxb106','Projection','proj_v u = (u · v / v · v) v'],
+['mxb106','Matrix product','(AB)ᵢⱼ = Σₖ aᵢₖ bₖⱼ; AB ≠ BA in general'],
+['mxb106','2 × 2 inverse','[[a,b],[c,d]]⁻¹ = 1/(ad − bc) · [[d,−b],[−c,a]]'],
+['mxb106','Determinant facts','det(AB) = det A det B; det(Aᵀ) = det A; A invertible ⇔ det A ≠ 0; row swap flips the sign'],
+['mxb106','Invertible matrix theorem','A invertible ⇔ det A ≠ 0 ⇔ Ax = 0 only has x = 0 ⇔ rank A = n ⇔ columns are a basis of ℝⁿ'],
+['mxb106','Subspace test','Contains 0, closed under addition, closed under scalar multiplication'],
+['mxb106','Span, basis, dimension','Basis = linearly independent spanning set; dimension = number of vectors in a basis'],
+['mxb106','Rank–nullity','rank A + nullity A = number of columns'],
+['mxb106','Column and null space','Col A = span of pivot columns of A; Null A = solutions of Ax = 0'],
+['mxb106','Eigenvalues and eigenvectors','Av = λv, v ≠ 0; solve det(A − λI) = 0, then (A − λI)v = 0'],
+['mxb106','Diagonalisation','A = PDP⁻¹ (P = eigenvectors, D = eigenvalues); needs n independent eigenvectors; Aᵏ = PDᵏP⁻¹'],
+['mxb106','Trace and determinant check','Sum of eigenvalues = trace A; product of eigenvalues = det A'],
+['mxb106','Gram–Schmidt','v₁ = x₁; vₖ = xₖ − Σ proj_(vᵢ) xₖ; then normalise'],
+['mxb106','Least squares','Aᵀ A x̂ = Aᵀ b'],
+['mxb106','Change of basis','[x]_B = P_B⁻¹ x, where the columns of P_B are the basis vectors'],
+['acct','Contribution margin','CM = Selling price - Variable cost (per unit); CM ratio = CM ÷ Sales'],
+['acct','Break-even (units)','Fixed costs ÷ CM per unit'],
+['acct','Break-even (sales $)','Fixed costs ÷ CM ratio'],
+['acct','Target profit (units)','(Fixed costs + Target profit) ÷ CM per unit'],
+['acct','Margin of safety','Budgeted sales - Break-even sales'],
+['acct','Degree of operating leverage','Contribution margin ÷ Net operating income'],
+['acct','Predetermined overhead rate','Estimated total overhead ÷ Estimated total allocation base'],
+['acct','Material price variance','(Actual price - Standard price) × Actual quantity'],
+['acct','Material quantity variance','(Actual quantity - Standard quantity allowed) × Standard price'],
+['acct','Labour rate variance','(Actual rate - Standard rate) × Actual hours'],
+['acct','Labour efficiency variance','(Actual hours - Standard hours allowed) × Standard rate'],
+['acct','Reading cost variances','Actual above standard = unfavourable (U); below = favourable (F)'],
+['acct','ROI','Net operating income ÷ Average operating assets'],
+['acct','Residual income','Net operating income - (Minimum required return × Average operating assets)'],
+['finm','Future value','FV = PV × (1 + r)^n'],
+['finm','Present value','PV = FV ÷ (1 + r)^n'],
+['finm','PV of annuity','C × [1 - (1 + r)^-n] ÷ r'],
+['finm','PV of perpetuity','C ÷ r'],
+['finm','Growing perpetuity','C1 ÷ (r - g)'],
+['finm','Effective annual rate','EAR = (1 + APR ÷ m)^m - 1'],
+['finm','NPV','Σ CFt ÷ (1 + r)^t for t = 0 to n (CF0 is the initial outlay, negative)'],
+['finm','IRR','The r that makes NPV = 0'],
+['finm','Profitability index','PV of future cash flows ÷ Initial investment'],
+['finm','CAPM','E(Ri) = Rf + βi × (E(Rm) - Rf)'],
+['finm','WACC','E/V × Re + D/V × Rd × (1 - Tc)'],
+['finm','Portfolio return','Σ wi × E(Ri)'],
+['finm','Two-asset variance','w1²σ1² + w2²σ2² + 2 × w1 × w2 × ρ × σ1 × σ2'],
+['finm','Dividend growth model','P0 = D1 ÷ (r - g)'],
+['finm','Bond price','Coupon × annuity factor + Face value ÷ (1 + y)^n']];
+const fxList=k=>FX.map((x,i)=>x[0]===k?`<button type="button" class="fx" data-i="${i}"><b>${x[1]}</b> ${esc(x[2])}</button>`:'').join('');
+function renderFx(){
+  const s=state.subj,others=Object.keys(SUBJ).filter(k=>k!=='free'&&k!==s);
+  $('fxh').textContent=s==='free'?'Formulas':`Formulas for ${SUBJ[s].name} (tap one to add it to your page)`;
+  $('tf').innerHTML=(s==='free'?'':fxList(s))+
+    `<details class="more"${s==='free'?' open':''}><summary>Other subjects</summary>`+others.map(k=>`<h3>${SUBJ[k].name} ${SUBJ[k].long}</h3>`+fxList(k)).join('')+'</details>';
+}
+
+/* pages, saving and syncing */
+let pages={},loading=true,PAGES=null,flushing=false,flushT=0,lsT=0;
+const dirty=new Set();
+const blank=()=>({html:'',grid:'lined',minH:'',strokes:[],topic:'',status:0});
+function snap(){return{html:doc.innerHTML,grid:state.grid,minH:lines.style.minHeight,topic:$('topic').value,status:+$('pstatus').value,
+  strokes:state.strokes.map(s=>({k:s.k,w:s.w,p:s.p.map(a=>a.map(Math.round))}))};}
+function syncNote(m){$('sync').textContent=m;}
+function saveLocal(){
+  clearTimeout(lsT);
+  lsT=setTimeout(()=>{try{localStorage.setItem(LS,JSON.stringify({subj:state.subj,wk:state.wk,mode:state.mode,z:state.z,pages}));}catch(e){}},300);
+}
+function persist(){
+  if(loading)return;
+  const k=key(),s=snap(),p=pages[k];
+  const same=p&&!strokesChanged&&p.html===s.html&&p.grid===s.grid&&(p.minH||'')===s.minH&&(p.topic||'')===s.topic&&(p.status||0)===s.status;
+  strokesChanged=false;
+  if(!same){s.t=Date.now();pages[k]=s;dirty.add(k);scheduleFlush(1500);}
+  saveLocal();
+}
+function scheduleFlush(ms){
+  clearTimeout(flushT);
+  if(PAGES){syncNote('Saving…');flushT=setTimeout(flush,ms);}
+}
+async function flush(){
+  if(!PAGES||flushing||!dirty.size)return;
+  flushing=true;let big=false,retry=0;
+  for(const k of [...dirty]){
+    const p=pages[k];dirty.delete(k);if(!p)continue;
+    const body={html:p.html||'',grid:p.grid||'lined',minH:p.minH||'',strokes:p.strokes||[],topic:p.topic||'',status:p.status||0,t:p.t||Date.now()};
+    if(JSON.stringify(body).length>250000){big=true;continue;}
+    try{await PAGES.doc(k).set(body);}
+    catch(e){
+      dirty.add(k);
+      if(e&&(e.code==='invalid_argument'||e.code==='revoked'||e.code==='not_granted')){PAGES=null;syncNote('Saved on this device');flushing=false;return;}
+      retry=10000;break;
+    }
+  }
+  flushing=false;
+  if(retry){syncNote('Offline. Saved on this device, will retry');scheduleFlush(retry);return;}
+  if(dirty.size){scheduleFlush(500);return;}
+  syncNote(big?'One page has too much handwriting to back up online':'Saved to your account');
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden){persist();flush();}});
+
+function openPage(s,w,skipSave){
+  if(!loading&&!skipSave)persist();
+  loading=true;
+  state.subj=s;state.wk[s]=w;
+  const p=pages[key()]||blank();
+  doc.innerHTML=p.html!==undefined?p.html:toHtml(p.text||'');
+  state.strokes=(p.strokes||[]).map(x=>({...x,p:x.p.map(a=>a.slice())}));
+  lines.style.minHeight=p.minH||'';
+  $('topic').value=p.topic||'';$('pstatus').value=String(p.status||0);
+  doc.dataset.ph=`${SUBJ[s].name} · ${WLONG(w)}. `+(w==='gen'?'Unit outline, assessment dates, topics by week.':w==='rev'?'Topics to review, practice questions, mistakes to fix.':'Tap "Lecture template" to set up this lecture, or just start writing.');
+  press($('subjects'),'s',s);
+  setGrid(p.grid||'lined');render();redraw();drawWeeks();renderFx();
+  if(!$('tools').hidden)drawTracker();
+  loading=false;saveLocal();
+}
+$('subjects').innerHTML=Object.entries(SUBJ).map(([k,v])=>`<button type="button" data-s="${k}" title="${v.long}">${v.name}</button>`).join('');
+$('weeks').innerHTML=WEEKS.map(w=>`<button type="button" data-w="${w}" data-st="0" title="${WLONG(w)}">${WLAB(w)}</button>`).join('');
+function drawWeeks(){
+  $('weeks').querySelectorAll('button').forEach(b=>{
+    const p=pages[state.subj+'_'+b.dataset.w];b.dataset.st=p?p.status||0:0;
+    b.setAttribute('aria-pressed',b.dataset.w===wkOf(state.subj));
+    b.title=`${WLONG(b.dataset.w)}${p&&p.topic?': '+p.topic:''} (${STAT[p?p.status||0:0]})`;
+  });
+}
+$('subjects').onclick=e=>{const k=e.target.dataset.s;if(k&&k!==state.subj)openPage(k,wkOf(k));};
+$('weeks').onclick=e=>{const b=e.target.closest('button');if(b&&b.dataset.w!==wkOf(state.subj))openPage(state.subj,b.dataset.w);};
+$('topic').addEventListener('input',()=>{persist();drawWeeks();});
+$('pstatus').addEventListener('change',()=>{persist();drawWeeks();if(!$('tools').hidden)drawTracker();});
+
+try{
+  const s=JSON.parse(localStorage.getItem(LS)||'null');
+  if(s){pages=s.pages||{};state.subj=s.subj;state.wk=s.wk||{};state.mode=s.mode||'type';if(ZOOMS.includes(s.z))state.z=s.z;}
+  else{
+    const v2=JSON.parse(localStorage.getItem('kunga-notebook-v2')||'null');
+    const old=JSON.parse(localStorage.getItem('kunga-notebook')||'null');
+    if(v2){
+      for(const k in v2.pages||{}){const p=v2.pages[k];pages[k+'_gen']={...p,html:p.html!==undefined?p.html:toHtml(p.text||''),t:1};delete pages[k+'_gen'].text;dirty.add(k+'_gen');}
+      state.subj=v2.subj;state.mode=v2.mode||'type';for(const k in v2.pages||{})state.wk[k]='gen';if(ZOOMS.includes(v2.z))state.z=v2.z;
+    }else if(old){pages.free_gen={html:toHtml(old.text||''),grid:old.grid||'lined',minH:old.minH||'',strokes:old.strokes||[],t:1};dirty.add('free_gen');state.subj='free';state.wk.free='gen';state.mode=old.mode||'type';}
+  }
+}catch(e){}
+if(!SUBJ[state.subj])state.subj='mxb105';
+setInk('rainbow');setMode(state.mode);setZoom(state.z);openPage(state.subj,wkOf(state.subj));
+
+(async()=>{
+  try{
+    const [db,user]=await Promise.all([claude.use('db'),claude.use('user')]);
+    if(!db||!user)return;
+    const uid=await user.id();if(!uid)return;
+    const col=db.doc('data/users/'+uid+'/notebook').collection('pages');
+    syncNote('Loading your notes…');
+    const snapq=await col.limit(1000).get();
+    const remote={};let reopen=false;
+    snapq.docs.forEach(d=>{
+      const r=d.data();remote[d.id]=r.t||0;const l=pages[d.id];
+      if(!l||(r.t||0)>(l.t||0)){pages[d.id]=JSON.parse(JSON.stringify(r));if(d.id===key())reopen=true;}
+    });
+    for(const k in pages)if(!(k in remote)||(pages[k].t||0)>remote[k])dirty.add(k);
+    PAGES=col;
+    $('bkHint').textContent='Your notes save to your Claude account automatically, so they follow you to any device. You can also keep your own backup file.';
+    if(reopen)openPage(state.subj,wkOf(state.subj),true);else{drawWeeks();if(!$('tools').hidden)drawTracker();}
+    saveLocal();
+    if(dirty.size)scheduleFlush(200);else syncNote('Saved to your account');
+  }catch(e){syncNote('Saved on this device');}
+})();
+
+/* study tools */
+$('toolsBtn').onclick=function(){const h=$('tools').hidden=!$('tools').hidden;this.setAttribute('aria-expanded',!h);if(!h)drawTracker();};
+
+$('tf').onclick=e=>{const b=e.target.closest('.fx');if(b){const x=FX[b.dataset.i];insertHtml(`<div><b>${esc(x[1])}:</b> ${esc(x[2])}</div>`);}};
+
+/* flashcards */
+function stripPrefix(el,re){const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT);let n;while((n=w.nextNode())){if(n.nodeValue.trim()){n.nodeValue=n.nodeValue.replace(re,'');break;}}return el.innerHTML;}
+function cardsFrom(html,label){
+  const box=document.createElement('div');box.innerHTML=html;
+  let grp=null;[...box.childNodes].forEach(n=>{
+    const block=n.nodeType===1&&/^(DIV|P|H1|H2|UL|OL|TABLE|BLOCKQUOTE|LI)$/.test(n.tagName);
+    if(block){grp=null;return;}
+    if(n.nodeName==='BR'){grp=null;n.remove();return;}
+    if(!grp){grp=document.createElement('div');n.before(grp);}grp.append(n);
+  });
+  const out=[];
+  box.querySelectorAll('div,p,li').forEach(el=>{
+    if(el.querySelector('div,p,li')||!/^\s*Q\s*[:.]/i.test(el.textContent))return;
+    let a=el.nextElementSibling;while(a&&!a.textContent.trim()&&!a.querySelector('.eq'))a=a.nextElementSibling;
+    if(!a||!/^\s*A\s*[:.]/i.test(a.textContent))return;
+    const q=stripPrefix(el.cloneNode(true),/^\s*Q\s*[:.]\s*/i),an=stripPrefix(a.cloneNode(true),/^\s*A\s*[:.]\s*/i);
+    if(plainOf(q)||/class="eq"/.test(q))if(plainOf(an)||/class="eq"/.test(an))out.push({q,a:an,label});
+  });
+  return out;
+}
+let deck=[],firstTry=0,total=0,missed=new Set();
+function startCards(all){
+  persist();
+  const s=state.subj,ws=all?WEEKS:[wkOf(s)];
+  deck=ws.flatMap(w=>{const p=pages[s+'_'+w];return p&&p.html?cardsFrom(p.html,`${SUBJ[s].name} ${WLONG(w)}${p.topic?' · '+p.topic:''}`):[];});
+  for(let i=deck.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[deck[i],deck[j]]=[deck[j],deck[i]];}
+  total=deck.length;firstTry=0;missed=new Set();
+  if(!total){$('fcCard').hidden=true;$('fcMsg').textContent=all?`No flashcards in ${SUBJ[s].name} yet. Add a Q: line with an A: line under it in your notes.`:'No flashcards on this page yet. Tap "+ Q&A" in the toolbar to add one.';return;}
+  $('fcMsg').textContent='';showCard();
+}
+function showCard(){
+  if(!deck.length){$('fcCard').hidden=true;$('fcMsg').textContent=`Done! ${firstTry} of ${total} right on the first try.${firstTry<total?' Go over the ones you missed, then quiz yourself again.':' Nice work.'}`;return;}
+  const cd=deck[0];$('fcCard').hidden=false;
+  $('fcMeta').textContent=`${cd.label} · ${deck.length} to go`;
+  $('fcQ').innerHTML=cd.q;$('fcA').innerHTML=cd.a;$('fcA').hidden=true;
+  $('fcShow').hidden=false;$('fcGot').hidden=$('fcAgain').hidden=true;
+}
+$('fcWeek').onclick=()=>startCards(false);$('fcUnit').onclick=()=>startCards(true);
+$('fcShow').onclick=()=>{$('fcA').hidden=false;$('fcShow').hidden=true;$('fcGot').hidden=$('fcAgain').hidden=false;$('fcGot').focus();};
+$('fcGot').onclick=()=>{const cd=deck.shift();if(!missed.has(cd))firstTry++;showCard();};
+$('fcAgain').onclick=()=>{const cd=deck.shift();missed.add(cd);deck.push(cd);showCard();};
+
+/* progress tracker */
+function drawTracker(){
+  const S=Object.keys(SUBJ).filter(k=>k!=='free');
+  $('trk').innerHTML='<div class="tw"><table><thead><tr><th></th>'+WEEKS.map(w=>`<th title="${WLONG(w)}">${w==='gen'?'O':w==='rev'?'R':w.slice(1)}</th>`).join('')+'</tr></thead><tbody>'+
+    S.map(s=>`<tr><th title="${SUBJ[s].long}">${SUBJ[s].name}</th>`+WEEKS.map(w=>{
+      const p=pages[s+'_'+w],st=p?p.status||0:0,has=p&&(plainOf(p.html)||(p.strokes||[]).length);
+      const lab=`${SUBJ[s].name} ${WLONG(w)}${p&&p.topic?', '+p.topic:''}: ${STAT[st]}${has?'':', no notes yet'}`;
+      return `<td><button type="button" data-s="${s}" data-w="${w}" data-st="${st}" class="${has?'has':''}${s===state.subj&&w===wkOf(s)?' now':''}" title="${esc(lab)}" aria-label="${esc(lab)}"></button></td>`;
+    }).join('')+'</tr>').join('')+'</tbody></table></div><div class="legend">'+STAT.map((x,i)=>`<span><i data-st="${i}"></i>${x}</span>`).join('')+'<span>O = overview, R = revision, outlined = has notes</span></div>';
+}
+$('trk').onclick=e=>{const b=e.target.closest('button');if(b)openPage(b.dataset.s,b.dataset.w);};
+
+/* calculators */
+const f2=x=>Number.isFinite(x)?x.toLocaleString(undefined,{maximumFractionDigits:2}):'n/a';
+const N=x=>parseFloat(x)||0;
+const npvAt=(r,c)=>c.reduce((a,x,i)=>a+x/Math.pow(1+r,i),0);
+const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b];}return a||1;};
+const F=(n,d=1)=>{if(d<0){n=-n;d=-d;}if(n===0)return{n:0,d:1};const g=gcd(n,d);return{n:n/g,d:d/g};};
+const fadd=(a,b)=>F(a.n*b.d+b.n*a.d,a.d*b.d),fsub=(a,b)=>F(a.n*b.d-b.n*a.d,a.d*b.d),fmul=(a,b)=>F(a.n*b.n,a.d*b.d),fdiv=(a,b)=>F(a.n*b.d,a.d*b.n);
+const fs=f=>f.d===1?String(f.n):f.n+'/'+f.d;
+const fval=f=>f.n/f.d;
+function parseF(s){
+  s=s.trim();if(!s)return null;
+  if(s.includes('/')){const [a,b]=s.split('/').map(parseF);if(!a||!b||b.n===0)return null;return fdiv(a,b);}
+  if(!/^[-+]?(\d+\.?\d*|\.\d+)$/.test(s))return null;
+  const k=(s.split('.')[1]||'').length;return F(Math.round(parseFloat(s)*10**k),10**k);
+}
+function parseMatrix(t){
+  const rows=t.trim().split(/\s*[;\n]\s*/).filter(Boolean).map(r=>r.split(/[\s,]+/).filter(Boolean).map(parseF));
+  if(!rows.length||rows.some(r=>r.some(x=>!x)))return{err:'Use numbers or fractions like 1/2. Put spaces between numbers and start a new line (or use ;) for each row.'};
+  if(rows.some(r=>r.length!==rows[0].length))return{err:'Every row needs the same number of entries.'};
+  return{A:rows};
+}
+const msrc=A=>'['+A.map(r=>'['+r.map(fs).join(',')+']').join(',')+']';
+function rref(M){
+  const A=M.map(r=>r.slice()),m=A.length,n=A[0].length,piv=[];let r=0;
+  for(let c=0;c<n&&r<m;c++){
+    let p=r;while(p<m&&A[p][c].n===0)p++;if(p===m)continue;
+    [A[r],A[p]]=[A[p],A[r]];const pv=A[r][c];A[r]=A[r].map(x=>fdiv(x,pv));
+    for(let i=0;i<m;i++)if(i!==r&&A[i][c].n!==0){const f=A[i][c];A[i]=A[i].map((x,j)=>fsub(x,fmul(f,A[r][j])));}
+    piv.push(c);r++;
+  }
+  return{A,rank:r,piv};
+}
+function det(M){
+  const A=M.map(r=>r.slice()),n=A.length;let d=F(1);
+  for(let c=0;c<n;c++){
+    let p=c;while(p<n&&A[p][c].n===0)p++;if(p===n)return F(0);
+    if(p!==c){[A[c],A[p]]=[A[p],A[c]];d=F(-d.n,d.d);}
+    d=fmul(d,A[c][c]);
+    for(let i=c+1;i<n;i++){const f=fdiv(A[i][c],A[c][c]);A[i]=A[i].map((x,j)=>fsub(x,fmul(f,A[c][j])));}
+  }
+  return d;
+}
+function nullBasis(M){
+  const {A,piv}=rref(M),n=M[0].length,free=[...Array(n).keys()].filter(j=>!piv.includes(j));
+  return free.map(f=>{const v=Array(n).fill(F(0));v[f]=F(1);piv.forEach((pc,i)=>{v[pc]=F(-A[i][f].n,A[i][f].d);});
+    const L=v.reduce((l,x)=>l*x.d/gcd(l,x.d),1);return v.map(x=>F(x.n*L/x.d));});
+}
+const matMul=(A,B)=>A.map(r=>B[0].map((_,j)=>r.reduce((s,x,k)=>fadd(s,fmul(x,B[k][j])),F(0))));
+function charPoly(A){
+  const n=A.length,I=A.map((r,i)=>r.map((_,j)=>F(i===j?1:0)));let M=A.map(r=>r.map(()=>F(0)));const co=[F(1)];
+  for(let k=1;k<=n;k++){
+    M=matMul(A,M).map((r,i)=>r.map((x,j)=>i===j?fadd(x,co[k-1]):x));
+    const AM=matMul(A,M);let tr=F(0);for(let i=0;i<n;i++)tr=fadd(tr,AM[i][i]);
+    co.push(F(-tr.n,tr.d*k));
+  }
+  return co;
+}
+function polySrc(co){
+  const n=co.length-1;let s='';
+  co.forEach((c,i)=>{if(c.n===0)return;const p=n-i,neg=c.n<0,a=F(Math.abs(c.n),c.d);
+    let t=(a.n===1&&a.d===1&&p>0)?'':fs(a);t+=p>1?'lambda^'+p:p===1?'lambda':'';
+    s+=(s?(neg?' - ':' + '):(neg?'-':''))+t;});
+  return s||'0';
+}
+function roots(co){
+  const n=co.length-1,a=co.map(fval);
+  const C=(re,im=0)=>[re,im],mul=(x,y)=>[x[0]*y[0]-x[1]*y[1],x[0]*y[1]+x[1]*y[0]],sub=(x,y)=>[x[0]-y[0],x[1]-y[1]];
+  const div=(x,y)=>{const d=y[0]*y[0]+y[1]*y[1]||1e-300;return[(x[0]*y[0]+x[1]*y[1])/d,(x[1]*y[0]-x[0]*y[1])/d];};
+  const ev=z=>a.reduce((acc,ci)=>[acc[0]*z[0]-acc[1]*z[1]+ci,acc[0]*z[1]+acc[1]*z[0]],C(0));
+  let z=Array.from({length:n},(_,i)=>{let t=C(1);const b=C(.4,.9);for(let k=0;k<i;k++)t=mul(t,b);return t;});
+  for(let it=0;it<800;it++)z=z.map((zi,i)=>{let d=C(1);z.forEach((zj,j)=>{if(j!==i)d=mul(d,sub(zi,zj));});return sub(zi,div(ev(zi),d));});
+  return z;
+}
+function exactRoot(co,x){
+  for(let q=1;q<=24;q++){const r=F(Math.round(x*q),q);let v=F(0);co.forEach(c=>{v=fadd(fmul(v,r),c);});if(v.n===0)return r;}
+  return null;
+}
+const nn=x=>{const r=Math.round(x*10000)/10000;return Object.is(r,-0)?0:r;};
+function matrixTool(v){
+  const P=parseMatrix(v.A||'');if(P.err)return[P.err];
+  const A=P.A,m=A.length,n=A[0].length,o=[{t:'A =',eq:'A = '+msrc(A)}];
+  const R=rref(A);
+  o.push({t:'Reduced row echelon form:',eq:'"rref"(A) = '+msrc(R.A)});
+  o.push(`Rank: ${R.rank}.  Nullity: ${n-R.rank}.  Pivot columns: ${R.piv.map(j=>j+1).join(', ')||'none'}`);
+  const nb=nullBasis(A);
+  if(nb.length)o.push({t:'Basis for Null A:',eq:nb.map(x=>msrc(x.map(e=>[e]))).join(' , ')});
+  if(m!==n){o.push('Determinant, inverse and eigenvalues need a square matrix.');return o;}
+  const d=det(A);o.push({t:'Determinant:',eq:'det(A) = '+fs(d)});
+  let tr=F(0);for(let i=0;i<n;i++)tr=fadd(tr,A[i][i]);o.push(`Trace: ${fs(tr)}`);
+  if(d.n!==0){
+    const aug=A.map((r,i)=>[...r,...A.map((_,j)=>F(i===j?1:0))]),RI=rref(aug).A.map(r=>r.slice(n));
+    o.push({t:'Inverse:',eq:'A^(-1) = '+msrc(RI)});
+  }else o.push('Not invertible, because det A = 0.');
+  if(n>6){o.push('Eigenvalues are only worked out for matrices up to 6 × 6.');return o;}
+  const co=charPoly(A);
+  o.push({t:'Characteristic polynomial:',eq:'det(lambda I - A) = '+polySrc(co)});
+  const seen=[];
+  roots(co).forEach(z=>{
+    const re=nn(z[0]),im=nn(z[1]);
+    if(Math.abs(im)>1e-6){if(!seen.some(s=>Math.abs(s[0]-re)<1e-6&&Math.abs(s[1]-Math.abs(im))<1e-6)){seen.push([re,Math.abs(im)]);o.push({t:'Complex eigenvalues:',eq:`lambda = ${re} +- ${Math.abs(im)} i`});}return;}
+    if(seen.some(s=>s[1]===0&&Math.abs(s[0]-re)<1e-5))return;seen.push([re,0]);
+    const ex=exactRoot(co,re);
+    if(ex){
+      const B=A.map((r,i)=>r.map((x,j)=>i===j?fsub(x,ex):x)),vs=nullBasis(B);
+      o.push({t:`Eigenvalue ${fs(ex)}, eigenvectors:`,eq:`lambda = ${fs(ex)} : `+vs.map(x=>msrc(x.map(e=>[e]))).join(' , ')});
+    }else o.push({t:'Eigenvalue (rounded):',eq:`lambda ~= ${re}`});
+  });
+  return o;
+}
+function odeTool(v){
+  const a=N(v.a),b=N(v.b),cc=N(v.c);
+  const num=x=>{const r=nn(x);return String(r);};
+  const term=(k,x)=>k===0?'':k===1?x:k===-1?'-'+x:num(k)+' '+x;
+  if(a===0&&b===0)return['Enter at least a or b.'];
+  if(a===0){const k=-cc/b;return[{t:'First order, so:',eq:k===0?'y = C':`y = C e^(${term(k,'x')})`}];}
+  const D=b*b-4*a*cc,out=[{t:'Characteristic equation:',eq:`${term(a,'r^2')} ${b<0?'-':'+'} ${term(Math.abs(b),'r')||'0'} ${cc<0?'-':'+'} ${num(Math.abs(cc))} = 0`}];
+  if(D>1e-12){
+    const r1=(-b+Math.sqrt(D))/(2*a),r2=(-b-Math.sqrt(D))/(2*a);
+    out.push(`Two real roots: r₁ = ${num(r1)}, r₂ = ${num(r2)}`);
+    out.push({t:'General solution:',eq:`y = C_1 ${r1?`e^(${term(r1,'x')})`:''} + C_2 ${r2?`e^(${term(r2,'x')})`:''}`});
+  }else if(Math.abs(D)<=1e-12){
+    const r=-b/(2*a);out.push(`Repeated root: r = ${num(r)}`);
+    out.push({t:'General solution:',eq:`y = (C_1 + C_2 x) ${r?`e^(${term(r,'x')})`:''}`});
+  }else{
+    const al=-b/(2*a),be=Math.sqrt(-D)/(2*a);out.push(`Complex roots: r = ${num(al)} ± ${num(Math.abs(be))}i`);
+    const bx=term(Math.abs(be),'x');
+    out.push({t:'General solution:',eq:`y = ${al?`e^(${term(al,'x')}) `:''}(C_1 cos(${bx}) + C_2 sin(${bx}))`});
+  }
+  return out;
+}
+const CALCS=[
+{s:['mxb106'],n:'Matrix solver (RREF, rank, det, inverse, eigenvalues)',f:[['A','Matrix: one row per line, e.g.\n2 0 0\n1 3 0\n4 -1 5','area','2 1\n1 2']],run:matrixTool},
+{s:['mxb105'],n:'Second-order ODE solver: a y″ + b y′ + c y = 0',f:[['a','a (coefficient of y″)','','1'],['b','b (coefficient of y′)','','-1'],['c','c (coefficient of y)','','-6']],run:odeTool},
+{s:['acct'],n:'Break-even (CVP)',f:[['price','Selling price per unit'],['vc','Variable cost per unit'],['fc','Total fixed costs'],['tp','Target profit (optional)']],
+ run:v=>{const p=N(v.price),cm=p-N(v.vc),fc=N(v.fc),tp=N(v.tp);
+  if(!(cm>0))return['Selling price must be above variable cost.'];
+  const o=[`Contribution margin: ${f2(cm)} per unit (${f2(cm/p*100)}% of sales)`,`Break-even: ${f2(fc/cm)} units = ${f2(fc/cm*p)} in sales`];
+  if(tp)o.push(`Units for a profit of ${f2(tp)}: ${f2((fc+tp)/cm)}`);return o;}},
+{s:['finm'],n:'NPV and IRR',f:[['rate','Discount rate (%)'],['cfs','Cash flows from year 0, separated by commas (e.g. -1000, 300, 400, 500)']],
+ run:v=>{const r=N(v.rate)/100,c=(v.cfs||'').split(/[,\s]+/).filter(Boolean).map(Number);
+  if(c.length<2||c.some(isNaN))return['Enter at least two cash flows, e.g. -1000, 300, 400, 500.'];
+  const n=npvAt(r,c),o=[`NPV at ${f2(r*100)}%: ${f2(n)} (${n>0?'accept':n<0?'reject':'break-even'})`];
+  let lo=-.99,hi=10;
+  if(npvAt(lo,c)*npvAt(hi,c)>0)o.push('IRR: none found');
+  else{for(let i=0;i<200;i++){const mid=(lo+hi)/2;(npvAt(lo,c)*npvAt(mid,c)<=0)?hi=mid:lo=mid;}o.push(`IRR: ${f2((lo+hi)/2*100)}%`);}
+  return o;}},
+{s:['finm'],n:'Time value of money',f:[['pv','Present value (lump sum)'],['r','Rate per period (%)'],['n','Number of periods'],['pmt','Payment per period (optional)']],
+ run:v=>{const r=N(v.r)/100,n=N(v.n),pv=N(v.pv),pmt=N(v.pmt),g=Math.pow(1+r,n);
+  const o=[`Future value of ${f2(pv)}: ${f2(pv*g)}`];
+  if(pmt){o.push(`PV of annuity of ${f2(pmt)} (paid at period end): ${f2(r?pmt*(1-1/g)/r:pmt*n)}`);o.push(`FV of that annuity: ${f2(r?pmt*(g-1)/r:pmt*n)}`);}
+  return o;}}];
+const outHtml=(o,page)=>o.map(x=>typeof x==='string'?`<div>${esc(x)}</div>`:`<div>${esc(x.t)} ${page?eqSpan(x.eq):`<span class="eq">${tex2ml(x.eq)}</span>`}</div>`).join('');
+CALCS.forEach((cc,ci)=>{
+  const d=document.createElement('details');d.dataset.s=cc.s.join(' ');
+  d.innerHTML=`<summary>${esc(cc.n)}</summary>`+cc.f.map(([k,l,t,ex])=>{const id=`calc${ci}_${k}`;return `<label for="${id}">${esc(l).replace(/\n/g,'<br>')}</label>`+(t==='area'?`<textarea id="${id}" data-k="${k}" spellcheck="false">${esc(ex||'')}</textarea>`:`<input id="${id}" data-k="${k}" autocomplete="off" value="${esc(ex||'')}">`);}).join('')+
+    `<button type="button" class="plain go">Work it out</button><button type="button" class="plain add" hidden>Add to notebook</button><div class="res" aria-live="polite"></div>`;
+  $('tk').append(d);
+  let out=[];
+  d.querySelector('.go').onclick=()=>{
+    const v={};d.querySelectorAll('input,textarea').forEach(i=>v[i.dataset.k]=i.value);
+    try{out=cc.run(v);}catch(e){out=['Something in the input could not be worked out. Check the numbers and try again.'];}
+    d.querySelector('.res').innerHTML=outHtml(out,false);d.querySelector('.add').hidden=false;
+  };
+  d.querySelector('.add').onclick=()=>insertHtml(`<div><b>${esc(cc.n)}</b></div>`+outHtml(out,true)+'<div><br></div>');
+});
+
+/* backup and save */
+function note(msg){status.textContent=msg;clearTimeout(note.t);note.t=setTimeout(()=>status.textContent='',2500);}
+const stamp=()=>new Date().toISOString().slice(0,10);
+$('bkFile').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{
+    const data=JSON.parse(await f.text());if(!data||typeof data.pages!=='object')throw 0;
+    persist();let n=0;
+    for(const k in data.pages){const [s,w]=k.split('_');if(!SUBJ[s]||!WEEKS.includes(w))continue;const r=data.pages[k],l=pages[k];
+      if(!l||(r.t||0)>(l.t||0)){pages[k]={...r,t:r.t||Date.now()};dirty.add(k);n++;}}
+    openPage(state.subj,wkOf(state.subj),true);saveLocal();scheduleFlush(200);
+    $('bkMsg').textContent=n?`Restored ${n} page${n>1?'s':''}. Pages that were newer here were kept.`:'Nothing to restore. Every page here is already the same or newer.';
+  }catch(err){$('bkMsg').textContent="That file isn't a notebook backup. Choose a file you downloaded with Download backup.";}
+};
+function prettyHtml(){
+  const cs=getComputedStyle(lines);
+  const V=['--c0','--c1','--c2','--c3','--c4','--c5','--c6','--c7','--ink','--soft','--margin','--line','--paper','--desk'].map(k=>k+':'+cssVar(k)).join(';');
+  const G=['--z','--fs','--lh','--ls','--pad'].map(k=>k+':'+cs.getPropertyValue(k)).join(';');
+  const w=lines.clientWidth,h=lines.clientHeight;
+  const img=state.strokes.length?`<img alt="" src="${c.toDataURL()}" style="position:absolute;left:0;top:0;width:${w}px;height:${h}px">`:'';
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Kunga's Notebook</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="${document.querySelector('link[rel=stylesheet]').href}" rel="stylesheet">
+<style>:root{${V}}body{margin:0;padding:24px 12px;background:var(--desk)}
+.p{${G};position:relative;width:${w}px;min-height:${h}px;margin:auto;border-radius:8px;box-shadow:0 12px 30px rgba(160,40,110,.25);
+background-color:var(--paper);background-image:${cs.backgroundImage};background-size:${cs.backgroundSize};background-position:${cs.backgroundPosition};
+border-right:${cs.borderRight};border-bottom:${cs.borderBottom}}
+${$('docstyle').textContent}</style></head>
+<body><div class="p"><div id="doc">${doc.innerHTML}</div>${img}</div></body></html>`;
+}
+(async()=>{
+  let dl=null;
+  try{dl=await claude.use('downloads');}catch(e){}
+  if(!dl) return;
+  $('saveBtns').hidden=false;$('bkSave').hidden=false;
+  async function save(name,ok,data,msgEl){
+    if(!ok()){note('Write something first.');return;}
+    try{await dl.save({filename:name,data:data()});(msgEl?m=>msgEl.textContent=m:note)('Saved');}
+    catch(e){if(!e||e.code!=='declined') note("Couldn't save. Try again.");}
+  }
+  const base=()=>'kunga-'+SUBJ[state.subj].name.toLowerCase().replace(/\s+/g,'-')+'-'+wkOf(state.subj);
+  $('saveTxt').onclick=()=>save(base()+'-'+stamp()+'.txt',()=>txt().trim(),txt);
+  $('saveHtml').onclick=()=>save(base()+'-pretty-'+stamp()+'.html',()=>txt().trim()||state.strokes.length||doc.querySelector("table,.eq"),prettyHtml);
+  $('bkSave').onclick=()=>{persist();save('kunga-notebook-backup-'+stamp()+'.json',()=>Object.keys(pages).length,()=>JSON.stringify({app:'kunga-notebook',v:3,saved:new Date().toISOString(),pages}),$('bkMsg'));};
+})();
+</script>

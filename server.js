@@ -936,6 +936,14 @@ function createApp(overrides = {}) {
     return res.sendFile(path.join(__dirname, 'record.html'));
   });
 
+  app.get('/notebook', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'notebook.html'));
+  });
+
+  app.get('/notebook.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'notebook.html'));
+  });
+
   // ---- text-to-speech proxy (Azure AI Speech): English + Chinese only ---------
   // Tibetan has no usable TTS voice on any provider, so it is not handled here —
   // see the /api/admin/audio routes below for the real-recording approach.

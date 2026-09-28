@@ -708,104 +708,82 @@ const FCLIFE_MODULES = [
   {num:48, key:'fcfutureaspirations48', label:'Future & Aspirations', icon:'🌟', ids:['fc491','fc492','fc493','fc494','fc495','fc496','fc497','fc498','fc499','fc500']},
 ];
 
-// ---- the 15 levels on the route: words → sentences → conversations → ideas →
-//      idioms/slang, then ten themed levels of natural sentences — every
-//      level is open from the start, no prerequisites. Topic packs (like
-//      Corporate Finance, Economics, Science & Technology) live in the same
-//      LEVELS array with topic:true and are reached via the separate Topics
-//      screen, not the main route.
+// ---- the route is built from the same 147 words-through-sentences modules
+//      as before, just regrouped 3-modules-per-level instead of ~10 —
+//      shorter levels mean more frequent level-ups and character unlocks.
+//      The original 15 hand-authored groups (LEVEL1_MODULES..LEVEL15_MODULES)
+//      stay as the single source of truth for module content/order; they're
+//      concatenated then chunked into 3s below. Topic packs (Corporate
+//      Finance, Economics, Science & Technology, Farming & City Life) are
+//      untouched -- they're reached via the separate Topics screen, not the
+//      main route, so "3 modules per level" doesn't apply to them. ---------
+const LANGUAGE_MODULE_GROUPS = [
+  LEVEL1_MODULES, LEVEL2_MODULES, LEVEL3_MODULES, LEVEL4_MODULES, LEVEL5_MODULES,
+  LEVEL6_MODULES, LEVEL7_MODULES, LEVEL8_MODULES, LEVEL9_MODULES, LEVEL10_MODULES,
+  LEVEL11_MODULES, LEVEL12_MODULES, LEVEL13_MODULES, LEVEL14_MODULES, LEVEL15_MODULES,
+];
+// LEVEL14_MODULES/LEVEL15_MODULES (indices 13,14) were the paywalled portion
+// of the old 15-level route; any new 3-module level containing at least one
+// of their modules stays paywalled.
+const PAID_ORIGINAL_GROUP_INDEXES = [13, 14];
+const LANGUAGE_MODULE_ICONS = ['🏕️','⛺','🥾','🏔️','🎁','🏘️','👨‍👩‍👧‍👦','🧭','⛅','💻','🛒','💬','📈','🔬','🏆'];
+
+const ALL_LANGUAGE_MODULES = [];
+const ALL_MODULE_IS_PAID = [];
+LANGUAGE_MODULE_GROUPS.forEach((group, gi) => {
+  group.forEach(m => {
+    ALL_LANGUAGE_MODULES.push(Object.assign({}, m, {icon: m.icon || LANGUAGE_MODULE_ICONS[gi]}));
+    ALL_MODULE_IS_PAID.push(PAID_ORIGINAL_GROUP_INDEXES.includes(gi));
+  });
+});
+
+// 49 named, hand-picked-portrait characters (Levels 1-49); Levels 50-100 use
+// a generic placeholder until that far content exists.
+const CHARACTER_ROSTER = [
+  'Tenzin','Yangchen','Norbu','Dolma','Karma','Pema','Sonam','Tashi','Lhamo','Jigme',
+  'Choden','Yeshe','Rinchen','Nyima','Gyaltsen','Tsering','Migmar','Passang','Dawa','Lobsang',
+  'Ngawang','Kelsang','Chodron','Drolma','Tsomo','Wangmo','Dechen','Sangye','Thupten','Gyatso',
+  'Palden','Tsultrim','Jampa','Gyurme','Namgyal','Tsephel','Yudron','Zangmo','Dorje','Phuntsok',
+  'Rigzin','Lhundup','Tenpa','Chime','Samten','Ozer','Kalsang','Metok','Diki',
+].map((name, i) => ({name, image:'characters/level'+(i+1)+'.jpg'}));
+
+function chunkArray(arr, size){
+  const out = [];
+  for(let i=0; i<arr.length; i+=size) out.push(arr.slice(i, i+size));
+  return out;
+}
+
+const BUILT_LEVELS = chunkArray(ALL_LANGUAGE_MODULES, 3).map((mods, i) => {
+  const paidChunks = chunkArray(ALL_MODULE_IS_PAID, 3);
+  const isPaid = paidChunks[i].some(Boolean);
+  const startNum = i*3 + 1;
+  const endNum = startNum + mods.length - 1;
+  return Object.assign({
+    icon: mods[0].icon, title: 'Level '+(i+1), subtitle: mods.map(m=>m.label).join(' · '),
+    range: 'Modules '+startNum+'–'+endNum, built:true,
+    milestone: 'Learn: '+mods.map(m=>m.label).join(', ')+'.',
+    character: CHARACTER_ROSTER[i] || {name:'Character '+(i+1), image:'characters/level'+(i+1)+'.png'},
+    modules: mods,
+  }, isPaid ? {paid:true} : {});
+});
+
+// Levels beyond the built ones are locked "coming soon" placeholders so the
+// road ahead is visible from the start -- see renderWorldLocked. No
+// roadmap/character content is invented for these, just a generic slot.
+const COMING_SOON_LEVELS = [];
+for(let i=BUILT_LEVELS.length+1; i<=100; i++){
+  COMING_SOON_LEVELS.push({
+    icon:'🔒', title:'Level '+i, subtitle:'Coming Soon', range:'Coming Soon', built:false,
+    milestone:'New lessons are being added — check back soon!',
+    roadmap:[],
+    character:{name:'Character '+i, image:'characters/level'+i+'.png'},
+  });
+}
+
 const LEVELS = [
+  ...BUILT_LEVELS,
+  ...COMING_SOON_LEVELS,
   {
-    icon:'🏕️', title:'Level 1', subtitle:'Survival Beginner', range:'Modules 1–15', built:true,
-    milestone:'Introduce yourself, name what\u2019s around you, and ask simple questions.',
-    character:{name:'Tenzin', image:'characters/level1.jpg'},
-    modules: LEVEL1_MODULES
-  },
-  {
-    icon:'⛺', title:'Level 2', subtitle:'Building Sentences', range:'Modules 11–20', built:true,
-    milestone:'Recognise the building-block words sentences are made of.',
-    character:{name:'Yangchen', image:'characters/level2.jpg'},
-    modules: LEVEL2_MODULES
-  },
-  {
-    icon:'🥾', title:'Level 3', subtitle:'Everyday Conversation', range:'Modules 21–30', built:true,
-    milestone:'Recognise full everyday sentences, not just isolated words.',
-    character:{name:'Norbu', image:'characters/level3.jpg'},
-    modules: LEVEL3_MODULES
-  },
-  {
-    icon:'🏔️', title:'Level 4', subtitle:'Levelling Up', range:'Modules 31–40', built:true,
-    milestone:'Share opinions, tell stories, and talk about ideas.',
-    character:{name:'Dolma', image:'characters/level4.jpg'},
-    modules: LEVEL4_MODULES
-  },
-  {
-    icon:'🎁', title:'Level 5', subtitle:'Idioms & Slang', range:'Modules 41–42', built:true,
-    milestone:'Recognise common sayings and casual everyday expressions.',
-    character:{name:'Karma', image:'characters/level5.jpg'},
-    modules: LEVEL5_MODULES
-  },
-{
-    icon:'🏘️', title:'Level 6', subtitle:'Everyday Routines', range:'Modules 43–52', built:true,
-    milestone:'Describe your daily routine — waking, dressing, eating, and the small things around you.',
-    character:{name:'Pema', image:'characters/level6.jpg'},
-    modules: LEVEL6_MODULES
-  },
-  {
-    icon:'👨‍👩‍👧‍👦', title:'Level 7', subtitle:'Family & Friends', range:'Modules 53–62', built:true,
-    milestone:'Talk about family, friends, teachers, and the people in your life.',
-    character:{name:'Sonam', image:'characters/level7.jpg'},
-    modules: LEVEL7_MODULES
-  },
-  {
-    icon:'🧭', title:'Level 8', subtitle:'Places & Travel', range:'Modules 63–72', built:true,
-    milestone:'Navigate markets, cities, and journeys — and give simple directions.',
-    character:{name:'Tashi', image:'characters/level8.jpg'},
-    modules: LEVEL8_MODULES
-  },
-  {
-    icon:'⛅', title:'Level 9', subtitle:'Weather, Time & Nature', range:'Modules 73–82', built:true,
-    milestone:'Discuss weather, time, seasons, and the natural world.',
-    character:{name:'Lhamo', image:'characters/level9.jpg'},
-    modules: LEVEL9_MODULES
-  },
-  {
-    icon:'💻', title:'Level 10', subtitle:'School & Technology', range:'Modules 83–92', built:true,
-    milestone:'Talk about school, learning, computers, and technology.',
-    character:{name:'Jigme', image:'characters/level10.jpg'},
-    modules: LEVEL10_MODULES
-  },
-  {
-    icon:'🛒', title:'Level 11', subtitle:'Food & Daily Chores', range:'Modules 93–102', built:true,
-    milestone:'Handle food, shopping, money, and everyday chores.',
-    character:{name:'Choden', image:'characters/level11.jpg'},
-    modules: LEVEL11_MODULES
-  },
-  {
-    icon:'💬', title:'Level 12', subtitle:'Feelings & Communication', range:'Modules 103–112', built:true,
-    milestone:'Express feelings, share opinions, and communicate clearly.',
-    character:{name:'Yeshe', image:'characters/level12.jpg'},
-    modules: LEVEL12_MODULES
-  },
-  {
-    icon:'📈', title:'Level 13', subtitle:'Society, Economics & Business', range:'Modules 113–122', built:true,
-    milestone:'Discuss economics, business, and working life.',
-    character:{name:'Rinchen', image:'characters/level13.jpg'},
-    modules: LEVEL13_MODULES
-  },
-  {
-    icon:'🔬', title:'Level 14', subtitle:'Science & Modern Life', range:'Modules 123–132', built:true, paid:true,
-    milestone:'Talk about science, data, and modern technology.',
-    character:{name:'Nyima', image:'characters/level14.jpg'},
-    modules: LEVEL14_MODULES
-  },
-  {
-    icon:'🏆', title:'Level 15', subtitle:'Advanced Natural Speech', range:'Modules 133–142', built:true, paid:true,
-    milestone:'Handle complex, natural sentences — conditions, reasons, and reflection.',
-    character:{name:'Gyaltsen', image:'characters/level15.jpg'},
-    modules: LEVEL15_MODULES
-  },
-{
     icon:'💼', title:'Corporate Finance', subtitle:'Business & Money Vocabulary', range:'39 Units', built:true, topic:true,
     milestone:'Learn the language of corporate finance — capital, cash flow, valuation, risk, and financial decision-making.',
     modules: CORPFIN_MODULES
@@ -826,19 +804,6 @@ const LEVELS = [
     modules: FCLIFE_MODULES
   }
 ];
-
-// ---- Levels 16–100: locked "coming soon" placeholders so the road ahead is
-//      visible from the start, even though only Levels 1–15 have lessons
-//      built yet. Opening one just shows a "more is coming" message (see
-//      renderWorldLocked) — no roadmap/character content is invented here. ---
-for(let i=16; i<=100; i++){
-  LEVELS.splice(i-1, 0, {
-    icon:'🔒', title:'Level '+i, subtitle:'Coming Soon', range:'Coming Soon', built:false,
-    milestone:'New lessons are being added — check back soon!',
-    roadmap:[],
-    character:{name:'Character '+i, image:'characters/level'+i+'.png'},
-  });
-}
 
 // ---- the four courses, generated from one word bank -------------------------
 const TRACKS = [
@@ -1181,6 +1146,7 @@ function touchStreak(){
 const I18N = {
   en: {
     heroSub: "Create an account to save your progress across devices.",
+    ctaStartLearning: "🎓 Start Learning English", ctaOpenNotebook: "📝 Open Notebook — free, no account needed",
     appLanguageLabel: "App Language",
     tabLogin: "Log In", tabSignup: "Sign Up",
     labelUsername: "Username", usernamePlaceholder: "e.g. tenzin_k",
@@ -2492,6 +2458,7 @@ const I18N = {
   },
   zh: {
     heroSub: "创建账户，在所有设备上保存你的学习进度。",
+    ctaStartLearning: "🎓 开始学英语", ctaOpenNotebook: "📝 打开笔记本 — 免费，无需账户",
     appLanguageLabel: "应用语言",
     tabLogin: "登录", tabSignup: "注册",
     labelUsername: "用户名", usernamePlaceholder: "例如 tenzin_k",
@@ -3664,6 +3631,7 @@ const I18N = {
   },
   bo: {
     heroSub: "འཕྲུལ་ཆས་སོ་སོའི་ཐོག་ཁྱེད་ཀྱི་ཡར་རྒྱས་ཉར་ཚགས་བྱེད་ཆེད་རྩིས་ཐོ་ཞིག་གསར་སྐྲུན་གྱིས།",
+    ctaStartLearning: "🎓 དབྱིན་ཇི་སློབ་སྦྱོང་འགོ་འཛུགས།", ctaOpenNotebook: "📝 ཟིན་བྲིས་ཕྱེ། — རིན་མེད, རྩིས་ཐོ་མི་དགོས།",
     appLanguageLabel: "འཕྲུལ་ཆས་ཀྱི་སྐད་ཡིག",
     tabLogin: "ནང་འཛུལ", tabSignup: "ཐོ་འགོད",
     labelUsername: "སྤྱོད་མིང་", usernamePlaceholder: "དཔེར་ན tenzin_k",
@@ -4995,6 +4963,10 @@ function renderAuth(){
     <div class="hero">
       <h1>ཡེ་ཤེས་ <span style="color:var(--gold)">Yeshe</span></h1>
       <div class="sub">${t('heroSub')}</div>
+    </div>
+    <div style="padding:0 20px; margin-bottom:20px; display:flex; flex-direction:column; gap:10px;">
+      <button class="btn btn-primary btn-block" onclick="setAuthMode('signup'); document.getElementById('auth_username')?.scrollIntoView({behavior:'smooth', block:'center'});">${t('ctaStartLearning')}</button>
+      <button class="btn btn-ghost btn-block" onclick="window.location.href='/notebook'">${t('ctaOpenNotebook')}</button>
     </div>
     <div style="padding:0 20px; margin-bottom:16px;">
       <div style="font-size:12px; color:var(--snow-dim); font-weight:600; margin-bottom:8px;">${t('appLanguageLabel')}</div>
