@@ -936,6 +936,19 @@ function createApp(overrides = {}) {
     return res.json({ avatar });
   });
 
+  // Shared by the manual photo upload and the AI-generated avatar below —
+  // both just end up as image bytes that need to land in the same Storage
+  // bucket/path and flip the user's avatar to type 'photo'.
+  async function uploadAvatarBuffer(user, buffer) {
+    const { error } = await supabaseAdmin.storage
+      .from(AVATAR_BUCKET)
+      .upload(user.username.toLowerCase() + '.jpg', buffer, { contentType: 'image/jpeg', upsert: true });
+    if (error) return { error };
+    const avatar = { type: 'photo', mascot: null, updatedAt: new Date().toISOString() };
+    await updateUserAvatar(user.id, avatar);
+    return { avatar };
+  }
+
   app.post('/api/avatar/photo/:username', express.raw({ type: 'image/*', limit: '5mb' }), async (req, res) => {
     const username = req.params.username;
     if (!isSafeUsername(username)) return res.status(400).json({ error: 'Invalid username.' });
@@ -946,14 +959,69 @@ function createApp(overrides = {}) {
       return res.status(400).json({ error: 'No image data received.' });
     }
 
-    const { error } = await supabaseAdmin.storage
-      .from(AVATAR_BUCKET)
-      .upload(username.toLowerCase() + '.jpg', req.body, { contentType: 'image/jpeg', upsert: true });
-    if (error) return res.status(502).json({ error: 'Upload to storage failed.', details: error.message });
+    const result = await uploadAvatarBuffer(user, req.body);
+    if (result.error) return res.status(502).json({ error: 'Upload to storage failed.', details: result.error.message });
+    return res.json({ avatar: result.avatar });
+  });
 
-    const avatar = { type: 'photo', mascot: null, updatedAt: new Date().toISOString() };
-    await updateUserAvatar(user.id, avatar);
-    return res.json({ avatar });
+  // ---- AI avatars (Pollinations AI): deliberately picker-only, no free-text
+  // prompt field, so nothing a visitor types is ever forwarded to a
+  // third-party image generator — see AVATAR_AI_OPTIONS/AVATAR_AI_STYLE in
+  // index.html, which this mirrors exactly so the client-side live preview
+  // (a plain <img> pointed straight at Pollinations) matches what actually
+  // gets generated and stored here. ------------------------------------------
+  const AVATAR_AI_STYLE = 'anime style character portrait avatar, Tibetan inspired design, traditional chuba clothing, {hair} hair, {expression} expression, {role} archetype, single person, head and shoulders, clean simple background, digital painting';
+  const AVATAR_AI_OPTIONS = {
+    hair: { black: 'black', brown: 'brown', silver: 'silver-white', auburn: 'auburn red-brown', blue: 'blue-tinted black' },
+    expression: { happy: 'happy smiling', determined: 'determined focused', calm: 'calm serene', playful: 'playful grinning', brave: 'brave confident' },
+    role: { herder: 'yak herder', scholar: 'scholar monk', traveler: 'mountain traveler', artist: 'thangka painter artist', warrior: 'warrior archer' },
+  };
+  async function fetchAvatarImage(url) {
+    let lastError;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      // Pollinations' free tier allows only one queued request per IP at a
+      // time (HTTP 429 "Queue full" otherwise) — a short gap before retrying
+      // lets that slot clear instead of colliding with the failed attempt.
+      if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, 3000));
+      try {
+        const genRes = await fetch(url, { signal: AbortSignal.timeout(45000) });
+        if (!genRes.ok) throw new Error('Pollinations request failed: ' + genRes.status);
+        const buffer = Buffer.from(await genRes.arrayBuffer());
+        if (buffer.length < 2000) throw new Error('Generated image looked invalid.');
+        return buffer;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw lastError;
+  }
+  app.post('/api/avatar/generate', async (req, res) => {
+    const { username, hair, expression, role, seed } = req.body || {};
+    if (!isSafeUsername(username)) return res.status(400).json({ error: 'Invalid username.' });
+    if (!supabaseAdmin) return res.status(503).json({ error: 'Avatar storage is not configured on this server yet.' });
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+
+    const hairPhrase = AVATAR_AI_OPTIONS.hair[hair] || AVATAR_AI_OPTIONS.hair.black;
+    const expressionPhrase = AVATAR_AI_OPTIONS.expression[expression] || AVATAR_AI_OPTIONS.expression.happy;
+    const rolePhrase = AVATAR_AI_OPTIONS.role[role] || AVATAR_AI_OPTIONS.role.traveler;
+    const prompt = AVATAR_AI_STYLE.replace('{hair}', hairPhrase).replace('{expression}', expressionPhrase).replace('{role}', rolePhrase);
+    const safeSeed = Number.isFinite(Number(seed)) ? Math.floor(Number(seed)) % 1e9 : Math.floor(Math.random() * 1e9);
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&nologo=true&seed=${safeSeed}`;
+
+    // Pollinations' latency is uneven (seconds to well over 30s) and it
+    // occasionally returns a short error body instead of an image, so this
+    // retries once with a fresh request before giving up on the user.
+    let buffer;
+    try {
+      buffer = await fetchAvatarImage(url);
+    } catch (error) {
+      return res.status(502).json({ error: 'Avatar generation failed. Try again.', details: error.message });
+    }
+
+    const result = await uploadAvatarBuffer(user, buffer);
+    if (result.error) return res.status(502).json({ error: 'Upload to storage failed.', details: result.error.message });
+    return res.json({ avatar: result.avatar });
   });
 
   app.get('/api/admin/users', async (req, res) => {

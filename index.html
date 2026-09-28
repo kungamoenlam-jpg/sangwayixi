@@ -240,6 +240,9 @@
   .avatar-tabs{display:flex; gap:8px; background:rgba(255,255,255,.06); border-radius:12px; padding:4px; margin-bottom:16px;}
   .avatar-tab{flex:1; border:none; background:transparent; color:var(--snow-dim); font-family:var(--font-display); font-weight:700; font-size:13px; padding:9px 0; border-radius:9px;}
   .avatar-tab.active{background:var(--gold); color:#241704;}
+  .ai-pill-row{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;}
+  .ai-pill{border:2px solid rgba(255,255,255,.14); background:rgba(255,255,255,.05); color:var(--snow); border-radius:999px; padding:7px 14px; font-size:13px; font-weight:600;}
+  .ai-pill.selected{border-color:var(--gold); background:rgba(232,163,61,.15); color:var(--gold);}
 
   .footer-note{text-align:center; font-size:11px; color:rgba(245,248,252,.4); padding:10px 30px 26px;}
 
@@ -916,6 +919,33 @@ const AVATAAAR_CATEGORIES = [
   {key:'clothesColor', labelKey:'avatarClothingColor', kind:'color'},
   {key:'backgroundColor', labelKey:'avatarBackground', kind:'color'},
 ];
+
+// ---- AI avatars: no free-text prompt (kept fully picker-based, like the
+// mascot editor above) to avoid sending arbitrary user text to a third-party
+// image generator. Client and server build the exact same descriptive
+// string from these fixed option->phrase maps plus a shared seed, so the
+// live client-side preview (a direct <img> pointed at Pollinations) matches
+// what the server re-generates and stores when the user saves it. ---------
+const AVATAR_AI_STYLE = 'anime style character portrait avatar, Tibetan inspired design, traditional chuba clothing, {hair} hair, {expression} expression, {role} archetype, single person, head and shoulders, clean simple background, digital painting';
+const AVATAR_AI_OPTIONS = {
+  hair: {black:'black', brown:'brown', silver:'silver-white', auburn:'auburn red-brown', blue:'blue-tinted black'},
+  expression: {happy:'happy smiling', determined:'determined focused', calm:'calm serene', playful:'playful grinning', brave:'brave confident'},
+  role: {herder:'yak herder', scholar:'scholar monk', traveler:'mountain traveler', artist:'thangka painter artist', warrior:'warrior archer'},
+};
+const AVATAR_AI_CATEGORIES = [
+  {key:'hair', labelKey:'avatarAiHairLabel'},
+  {key:'expression', labelKey:'avatarAiExpressionLabel'},
+  {key:'role', labelKey:'avatarAiRoleLabel'},
+];
+function avatarAiPrompt(d){
+  return AVATAR_AI_STYLE
+    .replace('{hair}', AVATAR_AI_OPTIONS.hair[d.hair] || AVATAR_AI_OPTIONS.hair.black)
+    .replace('{expression}', AVATAR_AI_OPTIONS.expression[d.expression] || AVATAR_AI_OPTIONS.expression.happy)
+    .replace('{role}', AVATAR_AI_OPTIONS.role[d.role] || AVATAR_AI_OPTIONS.role.traveler);
+}
+function avatarAiPreviewUrl(d){
+  return 'https://image.pollinations.ai/prompt/' + encodeURIComponent(avatarAiPrompt(d)) + '?width=512&height=512&nologo=true&seed=' + d.seed;
+}
 function humanizeAvatarOption(str){
   if(str==='none') return '—';
   return str.replace(/([a-z])([A-Z])/g,'$1 $2').replace(/(\d+)/g,' $1').replace(/^./, c=>c.toUpperCase()).trim();
@@ -1011,6 +1041,7 @@ function defaultAppState(){
     avatar: {type:null, options:null, updatedAt:null},
     avatarTab: 'character',
     avatarDraft: Object.assign({}, AVATAAAR_DEFAULTS),
+    avatarAi: {hair:'black', expression:'happy', role:'traveler', seed: Math.floor(Math.random()*1e9)},
     avatarSaving: false,
     avatarError: '',
   };
@@ -1194,7 +1225,13 @@ const I18N = {
     checkoutCancelBanner: "Checkout was cancelled — no charge was made.",
     avatarEditLink: "Customize avatar →",
     avatarEditorTitle: "Customize Your Avatar",
-    avatarTabMascot: "Character", avatarTabPhoto: "Photo",
+    avatarTabMascot: "Character", avatarTabPhoto: "Photo", avatarTabAi: "AI Avatar",
+    avatarAiHint: "Pick a look, then tap a photo below to try another. Nothing you type is sent anywhere — just these choices.",
+    avatarAiTryAnother: "🎲 Try another", avatarAiUse: "Use this avatar", avatarAiGenerating: "Generating… (can take up to a minute)",
+    avatarAiHairLabel: "Hair", avatarAiExpressionLabel: "Expression", avatarAiRoleLabel: "Style",
+    avatarAiOption_hair_black: "Black", avatarAiOption_hair_brown: "Brown", avatarAiOption_hair_silver: "Silver", avatarAiOption_hair_auburn: "Auburn", avatarAiOption_hair_blue: "Blue-black",
+    avatarAiOption_expression_happy: "Happy", avatarAiOption_expression_determined: "Determined", avatarAiOption_expression_calm: "Calm", avatarAiOption_expression_playful: "Playful", avatarAiOption_expression_brave: "Brave",
+    avatarAiOption_role_herder: "Herder", avatarAiOption_role_scholar: "Scholar", avatarAiOption_role_traveler: "Traveler", avatarAiOption_role_artist: "Artist", avatarAiOption_role_warrior: "Warrior",
     avatarHair: "Hair Style", avatarHairColor: "Hair Color", avatarSkinTone: "Skin Tone",
     avatarEyes: "Eyes", avatarEyebrows: "Eyebrows", avatarMouth: "Mouth",
     avatarFacialHair: "Facial Hair", avatarGlasses: "Glasses",
@@ -2506,7 +2543,13 @@ const I18N = {
     checkoutCancelBanner: "结账已取消 — 未产生任何扣款。",
     avatarEditLink: "自定义头像 →",
     avatarEditorTitle: "自定义你的头像",
-    avatarTabMascot: "卡通形象", avatarTabPhoto: "照片",
+    avatarTabMascot: "卡通形象", avatarTabPhoto: "照片", avatarTabAi: "AI头像",
+    avatarAiHint: "选择你喜欢的样子，然后点下面的头像换一张。你不需要输入任何文字 — 只有这些选项会被使用。",
+    avatarAiTryAnother: "🎲 换一张", avatarAiUse: "使用这个头像", avatarAiGenerating: "生成中…（最多可能需要一分钟）",
+    avatarAiHairLabel: "发色", avatarAiExpressionLabel: "表情", avatarAiRoleLabel: "风格",
+    avatarAiOption_hair_black: "黑色", avatarAiOption_hair_brown: "棕色", avatarAiOption_hair_silver: "银色", avatarAiOption_hair_auburn: "红棕色", avatarAiOption_hair_blue: "蓝黑色",
+    avatarAiOption_expression_happy: "开心", avatarAiOption_expression_determined: "坚定", avatarAiOption_expression_calm: "平静", avatarAiOption_expression_playful: "俏皮", avatarAiOption_expression_brave: "勇敢",
+    avatarAiOption_role_herder: "牧民", avatarAiOption_role_scholar: "学者", avatarAiOption_role_traveler: "旅行者", avatarAiOption_role_artist: "艺术家", avatarAiOption_role_warrior: "武士",
     avatarHair: "发型", avatarHairColor: "发色", avatarSkinTone: "肤色",
     avatarEyes: "眼睛", avatarEyebrows: "眉毛", avatarMouth: "嘴巴",
     avatarFacialHair: "胡子", avatarGlasses: "眼镜",
@@ -3679,7 +3722,13 @@ const I18N = {
     checkoutCancelBanner: "འཇལ་སྒྲིག་ཕྱིར་འཐེན་བྱས། དངུལ་གང་ཡང་བསྡུས་མེད།",
     avatarEditLink: "རང་གཟུགས་བཟོ་བཅོས་ →",
     avatarEditorTitle: "ཁྱེད་ཀྱི་རང་གཟུགས་སྒྱུར་བཅོས་བྱེད།",
-    avatarTabMascot: "རྣམ་པ།", avatarTabPhoto: "པར།",
+    avatarTabMascot: "རྣམ་པ།", avatarTabPhoto: "པར།", avatarTabAi: "AI རང་གཟུགས།",
+    avatarAiHint: "རང་འདོད་འདེམས་ནས་འོག་གི་པར་ལ་མནན་ཏེ་གཞན་ཞིག་ཏག་གིས། ཡིག་གང་ཡང་མི་དགོས — འདེམས་གཞིའི་འདི་དག་གཅིག་པུ་བེད་སྤྱོད།",
+    avatarAiTryAnother: "🎲 གཞན་ཞིག", avatarAiUse: "རང་གཟུགས་འདི་བེད་སྤྱོད།", avatarAiGenerating: "བཟོ་བཞིན་ཡོད… (སྐར་མ་གཅིག་བར་དུ་སོང་སྲིད།)",
+    avatarAiHairLabel: "སྐྲའི་མདོག", avatarAiExpressionLabel: "ངོ་གདོང་།", avatarAiRoleLabel: "བཟོ་ལྟ།",
+    avatarAiOption_hair_black: "ནག་པོ།", avatarAiOption_hair_brown: "སྨུག་པོ།", avatarAiOption_hair_silver: "དངུལ་མདོག", avatarAiOption_hair_auburn: "དམར་སྨུག", avatarAiOption_hair_blue: "སྔོ་ནག",
+    avatarAiOption_expression_happy: "སྐྱིད་པོ།", avatarAiOption_expression_determined: "བརྟན་པོ།", avatarAiOption_expression_calm: "ཞི་བདེ།", avatarAiOption_expression_playful: "རྩེད་མོ།", avatarAiOption_expression_brave: "སྙིང་སྟོབས།",
+    avatarAiOption_role_herder: "འབྲོག་པ།", avatarAiOption_role_scholar: "མཁས་པ།", avatarAiOption_role_traveler: "འགྲུལ་པ།", avatarAiOption_role_artist: "རི་མོ་མཁན།", avatarAiOption_role_warrior: "དཔའ་བོ།",
     avatarHair: "སྐྲ་བཟོ།", avatarHairColor: "སྐྲ་མདོག།", avatarSkinTone: "པགས་མདོག།",
     avatarEyes: "མིག", avatarEyebrows: "སྨིན་མ།", avatarMouth: "ཁ།",
     avatarFacialHair: "ཁ་སྤུ།", avatarGlasses: "མིག་ཤེལ།",
@@ -13626,6 +13675,27 @@ function openAvatarEditor(){
 }
 function setAvatarTab(tab){ state.avatarTab = tab; state.avatarError=''; render(); }
 function setAvatarDraftPart(part, value){ state.avatarDraft[part] = value; render(); }
+function setAvatarAiPart(part, value){ state.avatarAi[part] = value; state.avatarAi.seed = Math.floor(Math.random()*1e9); render(); }
+function rerollAvatarAi(){ state.avatarAi.seed = Math.floor(Math.random()*1e9); render(); }
+async function saveAiAvatar(){
+  state.avatarSaving = true; state.avatarError=''; render();
+  try{
+    const res = await fetch('/api/avatar/generate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username: state.currentUser, hair: state.avatarAi.hair, expression: state.avatarAi.expression, role: state.avatarAi.role, seed: state.avatarAi.seed})
+    });
+    const data = await res.json();
+    if(!res.ok){ state.avatarError = data.error || t('errConnection'); state.avatarSaving=false; render(); return; }
+    state.avatar = data.avatar;
+    state.avatarSaving = false;
+    state.screen = 'profile';
+    render();
+  } catch(e){
+    state.avatarSaving = false;
+    state.avatarError = t('errConnection') + e.message;
+    render();
+  }
+}
 
 function renderAvatarEditor(){
   const d = state.avatarDraft;
@@ -13657,6 +13727,23 @@ function renderAvatarEditor(){
     ${state.avatarError ? `<div style="color:#ff8080; font-size:13px; margin-top:10px; text-align:center;">${state.avatarError}</div>` : ''}
   `;
 
+  const aiRows = AVATAR_AI_CATEGORIES.map(cat => {
+    const items = Object.keys(AVATAR_AI_OPTIONS[cat.key]).map(v =>
+      `<button type="button" class="ai-pill ${state.avatarAi[cat.key]===v?'selected':''}" onclick="setAvatarAiPart('${cat.key}','${v}')">${t('avatarAiOption_'+cat.key+'_'+v)}</button>`
+    ).join('');
+    return `<div style="font-size:12px; color:var(--snow-dim); margin-bottom:6px;">${t(cat.labelKey)}</div><div class="ai-pill-row">${items}</div>`;
+  }).join('');
+  const aiPanel = `
+    <div style="text-align:center; margin-bottom:14px;">
+      <img src="${avatarAiPreviewUrl(state.avatarAi)}" alt="" style="width:150px; height:150px; border-radius:50%; object-fit:cover; border:3px solid var(--gold);">
+    </div>
+    <div style="font-size:13px; color:var(--snow-dim); margin-bottom:14px; text-align:center;">${t('avatarAiHint')}</div>
+    ${aiRows}
+    <button class="btn btn-ghost btn-block" style="margin-bottom:10px;" onclick="rerollAvatarAi()">${t('avatarAiTryAnother')}</button>
+    ${state.avatarError ? `<div style="color:#ff8080; font-size:13px; margin-bottom:10px; text-align:center;">${state.avatarError}</div>` : ''}
+    <button class="btn btn-primary btn-block" ${state.avatarSaving?'disabled':''} onclick="saveAiAvatar()">${state.avatarSaving?t('avatarAiGenerating'):t('avatarAiUse')}</button>
+  `;
+
   return `
   ${topbar({back:'goProfile()'})}
   <div class="profile ${appLangClass()}">
@@ -13665,8 +13752,9 @@ function renderAvatarEditor(){
       <div class="avatar-tabs">
         <button class="avatar-tab ${state.avatarTab==='character'?'active':''}" onclick="setAvatarTab('character')">${t('avatarTabMascot')}</button>
         <button class="avatar-tab ${state.avatarTab==='photo'?'active':''}" onclick="setAvatarTab('photo')">${t('avatarTabPhoto')}</button>
+        <button class="avatar-tab ${state.avatarTab==='ai'?'active':''}" onclick="setAvatarTab('ai')">${t('avatarTabAi')}</button>
       </div>
-      ${state.avatarTab==='character' ? characterPanel : photoPanel}
+      ${state.avatarTab==='character' ? characterPanel : state.avatarTab==='photo' ? photoPanel : aiPanel}
     </div>
   </div>`;
 }
