@@ -385,7 +385,8 @@ function createApp(overrides = {}) {
         add column if not exists subscription_status text,
         add column if not exists subscription_plan text,
         add column if not exists subscription_period_end timestamptz,
-        add column if not exists avatar jsonb;
+        add column if not exists avatar jsonb,
+        add column if not exists notebook jsonb;
     `);
     databaseReady = true;
     return { connected: true, mode: 'supabase', url: SUPABASE_URL };
@@ -514,6 +515,25 @@ function createApp(overrides = {}) {
     writeUsers(users);
   }
 
+  // The notebook column is a single jsonb blob: { "<subject>_<week>": {html,
+  // grid, minH, topic, status, strokes, t}, ... } — the same shape the
+  // notebook page already keeps in its own localStorage, just mirrored here
+  // so it follows the user across devices. Whole-blob read/write (not a
+  // per-page table) keeps this simple; notebook.html merges by each page's
+  // own `t` timestamp so this never has to reason about partial updates.
+  async function updateUserNotebook(userId, notebook) {
+    const client = await getDbClient();
+    if (client) {
+      await client.query('update public.users set notebook = $2 where id = $1', [userId, JSON.stringify(notebook)]);
+      return;
+    }
+    const users = readUsers();
+    const idx = users.findIndex((u) => u.id === userId);
+    if (idx === -1) return;
+    users[idx].notebook = notebook;
+    writeUsers(users);
+  }
+
   async function listUsersFromDb() {
     const client = await getDbClient();
     if (!client) return readUsers().map(sanitizeUser);
@@ -600,7 +620,10 @@ function createApp(overrides = {}) {
     }
   });
 
-  app.use(express.json({ limit: '1mb' }));
+  // Notebook pages (typed text + handwriting stroke coordinates) can run
+  // larger than the other JSON payloads this server handles, so the limit
+  // here is a bit more generous than a pure API body would need.
+  app.use(express.json({ limit: '3mb' }));
   // Recorded audio lives in Supabase Storage now (see the incident note above),
   // not on local disk — this just redirects to the bucket's public URL so
   // existing client code (<audio src="/audio/<lang>/<id>.webm">) keeps working.
@@ -878,6 +901,29 @@ function createApp(overrides = {}) {
       return res.status(404).json({ error: 'User not found.' });
     }
     return res.json({ subscription: sanitizeSubscription(user), avatar: sanitizeAvatar(user) });
+  });
+
+  // ---- notebook (kunga-notebook.html / /notebook): free-form notes, synced
+  //      to the account when the visitor is logged in on the main site (same
+  //      username-trust model as the rest of this file — no session token,
+  //      the client just states who it is). Guests stay on localStorage only,
+  //      which notebook.html already handles on its own. -------------------
+  app.get('/api/notebook', async (req, res) => {
+    const username = String(req.query.username || '');
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    return res.json({ pages: user.notebook || {} });
+  });
+
+  app.post('/api/notebook', async (req, res) => {
+    const { username, pages } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    if (!pages || typeof pages !== 'object' || Array.isArray(pages)) {
+      return res.status(400).json({ error: 'Invalid notebook data.' });
+    }
+    await updateUserNotebook(user.id, pages);
+    return res.json({ ok: true });
   });
 
   // ---- avatars: mascot (JSON config) or photo (uploaded image) ---------------

@@ -663,7 +663,7 @@ function renderFx(){
 }
 
 /* pages, saving and syncing */
-let pages={},loading=true,PAGES=null,flushing=false,flushT=0,lsT=0;
+let pages={},loading=true,CLOUD_USER=null,flushing=false,flushT=0,lsT=0;
 const dirty=new Set();
 const blank=()=>({html:'',grid:'lined',minH:'',strokes:[],topic:'',status:0});
 function snap(){return{html:doc.innerHTML,grid:state.grid,minH:lines.style.minHeight,topic:$('topic').value,status:+$('pstatus').value,
@@ -683,26 +683,28 @@ function persist(){
 }
 function scheduleFlush(ms){
   clearTimeout(flushT);
-  if(PAGES){syncNote('Saving…');flushT=setTimeout(flush,ms);}
+  if(CLOUD_USER){syncNote('Saving…');flushT=setTimeout(flush,ms);}
 }
+// Syncs the whole pages object in one request (this account's notebook is a
+// single JSON column server-side, not a per-page table) rather than the
+// per-doc writes a Firestore-style backend would use.
 async function flush(){
-  if(!PAGES||flushing||!dirty.size)return;
-  flushing=true;let big=false,retry=0;
-  for(const k of [...dirty]){
-    const p=pages[k];dirty.delete(k);if(!p)continue;
-    const body={html:p.html||'',grid:p.grid||'lined',minH:p.minH||'',strokes:p.strokes||[],topic:p.topic||'',status:p.status||0,t:p.t||Date.now()};
-    if(JSON.stringify(body).length>250000){big=true;continue;}
-    try{await PAGES.doc(k).set(body);}
-    catch(e){
-      dirty.add(k);
-      if(e&&(e.code==='invalid_argument'||e.code==='revoked'||e.code==='not_granted')){PAGES=null;syncNote('Saved on this device');flushing=false;return;}
-      retry=10000;break;
+  if(!CLOUD_USER||flushing||!dirty.size)return;
+  flushing=true;
+  try{
+    const res=await fetch('/api/notebook',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:CLOUD_USER,pages})});
+    if(!res.ok){
+      flushing=false;
+      if(res.status===404){CLOUD_USER=null;syncNote('Saved on this device');return;}
+      if(res.status===413||res.status===400){syncNote('Too much to back up online — saved on this device. Try a backup file instead.');return;}
+      throw new Error('save failed: '+res.status);
     }
+    dirty.clear();flushing=false;syncNote('Saved to your account');
+  }catch(e){
+    flushing=false;
+    syncNote('Offline. Saved on this device, will retry');
+    scheduleFlush(10000);
   }
-  flushing=false;
-  if(retry){syncNote('Offline. Saved on this device, will retry');scheduleFlush(retry);return;}
-  if(dirty.size){scheduleFlush(500);return;}
-  syncNote(big?'One page has too much handwriting to back up online':'Saved to your account');
 }
 document.addEventListener('visibilitychange',()=>{if(document.hidden){persist();flush();}});
 
@@ -750,22 +752,36 @@ try{
 if(!SUBJ[state.subj])state.subj='mxb105';
 setInk('rainbow');setMode(state.mode);setZoom(state.z);openPage(state.subj,wkOf(state.subj));
 
-(async()=>{
+// Notebook sync piggybacks on the same login as the rest of kunga.me: if
+// this browser has an active Yeshe session (shared localStorage, same
+// origin), pull that account's saved pages and start syncing to it. Guests
+// (no session) just keep the localStorage-only behaviour above -- nothing
+// to fetch, notes stay on this device only.
+function yesheUsername(){
   try{
-    const [db,user]=await Promise.all([claude.use('db'),claude.use('user')]);
-    if(!db||!user)return;
-    const uid=await user.id();if(!uid)return;
-    const col=db.doc('data/users/'+uid+'/notebook').collection('pages');
+    const s=JSON.parse(localStorage.getItem('sangwa_session_v1')||'null');
+    return s&&s.currentUser?String(s.currentUser):null;
+  }catch(e){return null;}
+}
+(async()=>{
+  const uname=yesheUsername();
+  if(!uname){
+    $('bkHint').innerHTML='Your notes save on this device. <a href="/">Log in or create a free account</a> to also save them to kunga.me and pick up your notes on any device. Keep a backup file too, just in case.';
+    return;
+  }
+  try{
     syncNote('Loading your notes…');
-    const snapq=await col.limit(1000).get();
-    const remote={};let reopen=false;
-    snapq.docs.forEach(d=>{
-      const r=d.data();remote[d.id]=r.t||0;const l=pages[d.id];
-      if(!l||(r.t||0)>(l.t||0)){pages[d.id]=JSON.parse(JSON.stringify(r));if(d.id===key())reopen=true;}
-    });
-    for(const k in pages)if(!(k in remote)||(pages[k].t||0)>remote[k])dirty.add(k);
-    PAGES=col;
-    $('bkHint').textContent='Your notes save to your Claude account automatically, so they follow you to any device. You can also keep your own backup file.';
+    const res=await fetch('/api/notebook?username='+encodeURIComponent(uname));
+    if(!res.ok){syncNote('Saved on this device');return;}
+    const data=await res.json(),remote=data.pages||{};
+    let reopen=false;
+    for(const k in remote){
+      const r=remote[k],l=pages[k];
+      if(!l||(r.t||0)>(l.t||0)){pages[k]=r;if(k===key())reopen=true;}
+    }
+    for(const k in pages)if(!(k in remote)||(pages[k].t||0)>((remote[k]&&remote[k].t)||0))dirty.add(k);
+    CLOUD_USER=uname;
+    $('bkHint').textContent='Your notes save to your kunga.me account automatically, so they follow you to any device. You can also keep your own backup file.';
     if(reopen)openPage(state.subj,wkOf(state.subj),true);else{drawWeeks();if(!$('tools').hidden)drawTracker();}
     saveLocal();
     if(dirty.size)scheduleFlush(200);else syncNote('Saved to your account');
@@ -1027,19 +1043,24 @@ border-right:${cs.borderRight};border-bottom:${cs.borderBottom}}
 ${$('docstyle').textContent}</style></head>
 <body><div class="p"><div id="doc">${doc.innerHTML}</div>${img}</div></body></html>`;
 }
-(async()=>{
-  let dl=null;
-  try{dl=await claude.use('downloads');}catch(e){}
-  if(!dl) return;
-  $('saveBtns').hidden=false;$('bkSave').hidden=false;
-  async function save(name,ok,data,msgEl){
-    if(!ok()){note('Write something first.');return;}
-    try{await dl.save({filename:name,data:data()});(msgEl?m=>msgEl.textContent=m:note)('Saved');}
-    catch(e){if(!e||e.code!=='declined') note("Couldn't save. Try again.");}
-  }
-  const base=()=>'kunga-'+SUBJ[state.subj].name.toLowerCase().replace(/\s+/g,'-')+'-'+wkOf(state.subj);
-  $('saveTxt').onclick=()=>save(base()+'-'+stamp()+'.txt',()=>txt().trim(),txt);
-  $('saveHtml').onclick=()=>save(base()+'-pretty-'+stamp()+'.html',()=>txt().trim()||state.strokes.length||doc.querySelector("table,.eq"),prettyHtml);
-  $('bkSave').onclick=()=>{persist();save('kunga-notebook-backup-'+stamp()+'.json',()=>Object.keys(pages).length,()=>JSON.stringify({app:'kunga-notebook',v:3,saved:new Date().toISOString(),pages}),$('bkMsg'));};
-})();
+// Plain browser download -- works everywhere, no capability negotiation
+// needed, unlike the artifact-sandbox `claude.use('downloads')` API this
+// page can't rely on when served standalone from kunga.me.
+function downloadBlob(filename,content,mime){
+  const blob=new Blob([content],{type:mime});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+$('saveBtns').hidden=false;$('bkSave').hidden=false;
+function save(name,ok,data,mime,msgEl){
+  if(!ok()){note('Write something first.');return;}
+  try{downloadBlob(name,data(),mime);(msgEl?m=>msgEl.textContent=m:note)('Saved');}
+  catch(e){note("Couldn't save. Try again.");}
+}
+const base=()=>'kunga-'+SUBJ[state.subj].name.toLowerCase().replace(/\s+/g,'-')+'-'+wkOf(state.subj);
+$('saveTxt').onclick=()=>save(base()+'-'+stamp()+'.txt',()=>txt().trim(),txt,'text/plain');
+$('saveHtml').onclick=()=>save(base()+'-pretty-'+stamp()+'.html',()=>txt().trim()||state.strokes.length||doc.querySelector("table,.eq"),prettyHtml,'text/html');
+$('bkSave').onclick=()=>{persist();save('kunga-notebook-backup-'+stamp()+'.json',()=>Object.keys(pages).length,()=>JSON.stringify({app:'kunga-notebook',v:3,saved:new Date().toISOString(),pages}),'application/json',$('bkMsg'));};
 </script>
