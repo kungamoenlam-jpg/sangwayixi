@@ -107,6 +107,17 @@
   .practice-tile:active{transform:scale(.97);}
   .practice-tile .glyph{font-size:24px; width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:rgba(232,163,61,.15);}
   .practice-tile .pt-title{font-family:var(--font-display); font-weight:700; font-size:12.5px; line-height:1.25;}
+  .char-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; padding:0 20px 20px;}
+  .char-card{display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center;}
+  .char-thumb{
+    width:100%; aspect-ratio:1; border-radius:50%; overflow:hidden;
+    background:linear-gradient(160deg, rgba(244,201,93,.22), rgba(124,199,255,.12));
+    border:2px solid var(--gold); display:flex; align-items:center; justify-content:center; font-size:28px;
+  }
+  .char-card.locked .char-thumb{border-color:rgba(255,255,255,.15); background:rgba(255,255,255,.05); filter:grayscale(1);}
+  .char-thumb img{width:100%; height:100%; object-fit:cover;}
+  .char-name{font-size:11px; font-weight:700; margin-top:4px;}
+  .char-sub{font-size:10px; color:var(--snow-dim);}
 
   .map-wrap{flex:1; display:flex; flex-direction:column;}
   .map-scroll{flex:1; padding:20px 10px 50px; position:relative;}
@@ -236,12 +247,20 @@
   .auth-tab{flex:1; border:none; background:transparent; color:var(--snow-dim); font-family:var(--font-display); font-weight:700; font-size:14px; padding:10px 0; border-radius:9px;}
   .auth-tab.active{background:var(--gold); color:#241704;}
   .field{display:flex; flex-direction:column; gap:6px;}
-  .field label{font-size:12.5px; color:var(--snow-dim); font-weight:600;}
+  .field label{font-size:13px; color:var(--snow-dim); font-weight:600;}
   .field input{
     background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.14); border-radius:12px;
-    padding:12px 14px; color:var(--snow); font-size:15px; font-family:var(--font-body);
+    padding:13px 14px; color:var(--snow); font-size:16px; font-family:var(--font-body);
   }
   .field input:focus{outline:2px solid var(--gold); outline-offset:1px;}
+  .password-field-wrap{position:relative; display:flex;}
+  .password-field-wrap input{flex:1; padding-right:52px;}
+  .password-toggle-btn{
+    position:absolute; right:4px; top:4px; bottom:4px; width:44px;
+    background:none; border:none; color:var(--snow-dim); font-size:19px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .field-hint{font-size:12px; color:var(--snow-dim);}
   .algebra-input{
     background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.14); border-radius:12px;
     padding:12px 14px; color:var(--snow); font-family:var(--font-display);
@@ -697,78 +716,93 @@ const FCLIFE_MODULES = [
 //      screen, not the main route.
 const LEVELS = [
   {
-    icon:'🏕️', title:'Base Camp', subtitle:'Survival Beginner', range:'Modules 1–15', built:true,
+    icon:'🏕️', title:'Level 1', subtitle:'Survival Beginner', range:'Modules 1–15', built:true,
     milestone:'Introduce yourself, name what\u2019s around you, and ask simple questions.',
+    character:{name:'Character 1', image:'characters/level1.png'},
     modules: LEVEL1_MODULES
   },
   {
-    icon:'⛺', title:'Camp I', subtitle:'Building Sentences', range:'Modules 11–20', built:true,
+    icon:'⛺', title:'Level 2', subtitle:'Building Sentences', range:'Modules 11–20', built:true,
     milestone:'Recognise the building-block words sentences are made of.',
+    character:{name:'Character 2', image:'characters/level2.png'},
     modules: LEVEL2_MODULES
   },
   {
-    icon:'🥾', title:'Camp II', subtitle:'Everyday Conversation', range:'Modules 21–30', built:true,
+    icon:'🥾', title:'Level 3', subtitle:'Everyday Conversation', range:'Modules 21–30', built:true,
     milestone:'Recognise full everyday sentences, not just isolated words.',
+    character:{name:'Character 3', image:'characters/level3.png'},
     modules: LEVEL3_MODULES
   },
   {
-    icon:'🏔️', title:'Summit Push', subtitle:'Levelling Up', range:'Modules 31–40', built:true,
+    icon:'🏔️', title:'Level 4', subtitle:'Levelling Up', range:'Modules 31–40', built:true,
     milestone:'Share opinions, tell stories, and talk about ideas.',
+    character:{name:'Character 4', image:'characters/level4.png'},
     modules: LEVEL4_MODULES
   },
   {
-    icon:'🎁', title:'Bonus Round', subtitle:'Idioms & Slang', range:'Modules 41–42', built:true,
+    icon:'🎁', title:'Level 5', subtitle:'Idioms & Slang', range:'Modules 41–42', built:true,
     milestone:'Recognise common sayings and casual everyday expressions.',
+    character:{name:'Character 5', image:'characters/level5.png'},
     modules: LEVEL5_MODULES
   },
 {
-    icon:'🏘️', title:'Daily Life Trail', subtitle:'Everyday Routines', range:'Modules 43–52', built:true,
+    icon:'🏘️', title:'Level 6', subtitle:'Everyday Routines', range:'Modules 43–52', built:true,
     milestone:'Describe your daily routine — waking, dressing, eating, and the small things around you.',
+    character:{name:'Character 6', image:'characters/level6.png'},
     modules: LEVEL6_MODULES
   },
   {
-    icon:'👨‍👩‍👧‍👦', title:'Kinship Path', subtitle:'Family & Friends', range:'Modules 53–62', built:true,
+    icon:'👨‍👩‍👧‍👦', title:'Level 7', subtitle:'Family & Friends', range:'Modules 53–62', built:true,
     milestone:'Talk about family, friends, teachers, and the people in your life.',
+    character:{name:'Character 7', image:'characters/level7.png'},
     modules: LEVEL7_MODULES
   },
   {
-    icon:'🧭', title:'Wayfarer\'s Route', subtitle:'Places & Travel', range:'Modules 63–72', built:true,
+    icon:'🧭', title:'Level 8', subtitle:'Places & Travel', range:'Modules 63–72', built:true,
     milestone:'Navigate markets, cities, and journeys — and give simple directions.',
+    character:{name:'Character 8', image:'characters/level8.png'},
     modules: LEVEL8_MODULES
   },
   {
-    icon:'⛅', title:'Sky & Seasons', subtitle:'Weather, Time & Nature', range:'Modules 73–82', built:true,
+    icon:'⛅', title:'Level 9', subtitle:'Weather, Time & Nature', range:'Modules 73–82', built:true,
     milestone:'Discuss weather, time, seasons, and the natural world.',
+    character:{name:'Character 9', image:'characters/level9.png'},
     modules: LEVEL9_MODULES
   },
   {
-    icon:'💻', title:'Digital Ascent', subtitle:'School & Technology', range:'Modules 83–92', built:true,
+    icon:'💻', title:'Level 10', subtitle:'School & Technology', range:'Modules 83–92', built:true,
     milestone:'Talk about school, learning, computers, and technology.',
+    character:{name:'Character 10', image:'characters/level10.png'},
     modules: LEVEL10_MODULES
   },
   {
-    icon:'🛒', title:'Market Trail', subtitle:'Food & Daily Chores', range:'Modules 93–102', built:true,
+    icon:'🛒', title:'Level 11', subtitle:'Food & Daily Chores', range:'Modules 93–102', built:true,
     milestone:'Handle food, shopping, money, and everyday chores.',
+    character:{name:'Character 11', image:'characters/level11.png'},
     modules: LEVEL11_MODULES
   },
   {
-    icon:'💬', title:'Heart\'s Voice', subtitle:'Feelings & Communication', range:'Modules 103–112', built:true,
+    icon:'💬', title:'Level 12', subtitle:'Feelings & Communication', range:'Modules 103–112', built:true,
     milestone:'Express feelings, share opinions, and communicate clearly.',
+    character:{name:'Character 12', image:'characters/level12.png'},
     modules: LEVEL12_MODULES
   },
   {
-    icon:'📈', title:'Trade Winds', subtitle:'Society, Economics & Business', range:'Modules 113–122', built:true,
+    icon:'📈', title:'Level 13', subtitle:'Society, Economics & Business', range:'Modules 113–122', built:true,
     milestone:'Discuss economics, business, and working life.',
+    character:{name:'Character 13', image:'characters/level13.png'},
     modules: LEVEL13_MODULES
   },
   {
-    icon:'🔬', title:'Frontier of Science', subtitle:'Science & Modern Life', range:'Modules 123–132', built:true, paid:true,
+    icon:'🔬', title:'Level 14', subtitle:'Science & Modern Life', range:'Modules 123–132', built:true, paid:true,
     milestone:'Talk about science, data, and modern technology.',
+    character:{name:'Character 14', image:'characters/level14.png'},
     modules: LEVEL14_MODULES
   },
   {
-    icon:'🏆', title:'Summit of Fluency', subtitle:'Advanced Natural Speech', range:'Modules 133–142', built:true, paid:true,
+    icon:'🏆', title:'Level 15', subtitle:'Advanced Natural Speech', range:'Modules 133–142', built:true, paid:true,
     milestone:'Handle complex, natural sentences — conditions, reasons, and reflection.',
+    character:{name:'Character 15', image:'characters/level15.png'},
     modules: LEVEL15_MODULES
   },
 {
@@ -792,6 +826,19 @@ const LEVELS = [
     modules: FCLIFE_MODULES
   }
 ];
+
+// ---- Levels 16–100: locked "coming soon" placeholders so the road ahead is
+//      visible from the start, even though only Levels 1–15 have lessons
+//      built yet. Opening one just shows a "more is coming" message (see
+//      renderWorldLocked) — no roadmap/character content is invented here. ---
+for(let i=16; i<=100; i++){
+  LEVELS.splice(i-1, 0, {
+    icon:'🔒', title:'Level '+i, subtitle:'Coming Soon', range:'Coming Soon', built:false,
+    milestone:'New lessons are being added — check back soon!',
+    roadmap:[],
+    character:{name:'Character '+i, image:'characters/level'+i+'.png'},
+  });
+}
 
 // ---- the four courses, generated from one word bank -------------------------
 const TRACKS = [
@@ -958,7 +1005,8 @@ function defaultGame(){
     business:{}, // category key -> {rounds: completed-rounds count}
     conceptExposure:{}, // concept key -> times tested (drives MCQ -> typed progression)
     conceptMastery:{}, // concept key (or "qb_<id>" for Quiz Bank questions) -> {correct, wrong, streak}
-    totalCorrect:0, bestCombo:0, achievements:[] // shared across all practice modes
+    totalCorrect:0, bestCombo:0, achievements:[], // shared across all practice modes
+    unlockedCharacters:[] // level indices (into LEVELS) whose character has been unlocked, any track
   };
 }
 function loadGame(username){
@@ -1093,6 +1141,30 @@ function levelStats(trackId, levelIdx){
   modules.forEach(g=>{ if(p.completed[lessonKey(levelIdx,g.key)]) done++; });
   return {done, total:modules.length};
 }
+// A level is "mastered" (unlocks its character) once every module in it has
+// been 3-starred on at least one track — stricter than levelStats' "done"
+// count, which counts any completion (1+ stars).
+function levelMastered(trackId, levelIdx){
+  const lvl = LEVELS[levelIdx];
+  if(!lvl.built || lvl.topic) return false;
+  const p = trackProgress(trackId);
+  const modules = levelModulesForTrack(lvl, trackId);
+  if(modules.length===0) return false;
+  return modules.every(g => p.completed[lessonKey(levelIdx,g.key)]===3);
+}
+// Call after a lesson finishes; unlocks + persists the level's character the
+// first time it's mastered (any track), returning it so the caller can show
+// a celebration screen. Returns null if nothing new was unlocked.
+function checkAndUnlockCharacter(trackId, levelIdx){
+  const lvl = LEVELS[levelIdx];
+  if(!lvl || !lvl.character) return null;
+  state.game.unlockedCharacters = state.game.unlockedCharacters || [];
+  if(state.game.unlockedCharacters.includes(levelIdx)) return null;
+  if(!levelMastered(trackId, levelIdx)) return null;
+  state.game.unlockedCharacters.push(levelIdx);
+  saveGame();
+  return lvl.character;
+}
 function touchStreak(){
   const today = new Date().toDateString();
   if(state.game.lastActive===today) return;
@@ -1114,13 +1186,13 @@ const I18N = {
     labelUsername: "Username", usernamePlaceholder: "e.g. tenzin_k",
     labelEmail: "Email", optional: "(optional)", emailPlaceholder: "you@example.com",
     labelPassword: "Password", passwordPlaceholder: "At least 4 characters",
-    labelConfirmPassword: "Confirm Password",
+    passwordHint: "At least 4 characters. Tap 👁️ to check what you typed.",
+    showPasswordLabel: "Show password",
     btnCreateAccount: "Create account", btnLogIn: "Log in",
     footerNoteAuth: "Your account is saved securely. Lesson progress is saved on this device.",
     errUsernameLength: "Username must be at least 3 characters.",
     errUsernameChars: "Username can only use letters, numbers, _ . -",
     errPasswordLength: "Password must be at least 4 characters.",
-    errPasswordMismatch: "Passwords do not match.",
     errSignupFailed: "Signup failed", errLoginFailed: "Login failed",
     errEnterCreds: "Enter your username and password.",
     errConnection: "Connection error: ",
@@ -1137,6 +1209,11 @@ const I18N = {
     homeSub: "Four routes up the same mountain — choose the language you already speak, and climb a 40-module path toward the one you're learning: words → sentences → conversations → ideas.",
     modulesDone: "{n} modules done", startArrow: "Start →",
     myProgress: "⛺ My progress",
+    charactersLabel: "Characters", viewCharacters: "View",
+    charactersTitle: "🧑 Characters", charactersSub: "Master a level to unlock its character. Collect them all!",
+    lockedCharacterLabel: "Locked",
+    characterUnlockedEyebrow: "Character Unlocked!",
+    characterUnlockedBody: "You mastered this level — 3 stars on every part. This character is now yours.",
     sectionLanguagesLabel: "Languages", sectionPracticeLabel: "Math Practice",
     studyTopicBtn: "📚 Study a Topic",
     topicsTitle: "Study a Topic", topicsSub: "Pick a subject and learn its vocabulary in depth — no need to climb the main route first.",
@@ -2420,13 +2497,13 @@ const I18N = {
     labelUsername: "用户名", usernamePlaceholder: "例如 tenzin_k",
     labelEmail: "邮箱", optional: "(选填)", emailPlaceholder: "you@example.com",
     labelPassword: "密码", passwordPlaceholder: "至少4个字符",
-    labelConfirmPassword: "确认密码",
+    passwordHint: "至少4个字符。点击 👁️ 可查看你输入的内容。",
+    showPasswordLabel: "显示密码",
     btnCreateAccount: "创建账户", btnLogIn: "登录",
     footerNoteAuth: "你的账户已安全保存。学习进度保存在本设备上。",
     errUsernameLength: "用户名至少需要3个字符。",
     errUsernameChars: "用户名只能使用字母、数字、_ . -",
     errPasswordLength: "密码至少需要4个字符。",
-    errPasswordMismatch: "两次输入的密码不一致。",
     errSignupFailed: "注册失败", errLoginFailed: "登录失败",
     errEnterCreds: "请输入用户名和密码。",
     errConnection: "连接错误：",
@@ -2443,6 +2520,11 @@ const I18N = {
     homeSub: "同一座山，四条路线 — 选择你已经会说的语言，沿着40个单元攀登，学习一门新语言：单词 → 句子 → 对话 → 思想。",
     modulesDone: "已完成 {n} 个单元", startArrow: "开始 →",
     myProgress: "⛺ 我的进度",
+    charactersLabel: "角色", viewCharacters: "查看",
+    charactersTitle: "🧑 角色", charactersSub: "闯关成功即可解锁角色，集齐所有角色！",
+    lockedCharacterLabel: "未解锁",
+    characterUnlockedEyebrow: "解锁新角色！",
+    characterUnlockedBody: "你已闯关成功 — 每个部分都获得了3颗星。这个角色现在是你的了。",
     sectionLanguagesLabel: "语言", sectionPracticeLabel: "数学练习",
     studyTopicBtn: "📚 学习一个主题",
     topicsTitle: "学习一个主题", topicsSub: "选择一个主题，深入学习相关词汇 — 不需要先完成主线路线。",
@@ -3587,13 +3669,13 @@ const I18N = {
     labelUsername: "སྤྱོད་མིང་", usernamePlaceholder: "དཔེར་ན tenzin_k",
     labelEmail: "གློག་འཕྲིན་", optional: "(དགོས་མཁོ་མེད)", emailPlaceholder: "you@example.com",
     labelPassword: "གསང་ཚིག", passwordPlaceholder: "ཡིག་འབྲུ་4ལས་མི་ཉུང་བ",
-    labelConfirmPassword: "གསང་ཚིག་ཡང་བསྐྱར་འཇུག",
+    passwordHint: "ཡིག་འབྲུ་4ལས་མི་ཉུང་བ། ཁྱེད་ཀྱིས་གང་བྲིས་པ་ལྟ་རྟོག་བྱེད་ན 👁️ ལ་མནན།",
+    showPasswordLabel: "གསང་ཚིག་སྟོན།",
     btnCreateAccount: "རྩིས་ཐོ་གསར་སྐྲུན", btnLogIn: "ནང་འཛུལ",
     footerNoteAuth: "ཁྱེད་ཀྱི་རྩིས་ཐོ་བདེ་འཇགས་ངང་ཉར་ཡོད། སློབ་ཚན་གྱི་ཡར་རྒྱས་ནི་འཕྲུལ་ཆས་འདིའི་ཐོག་ཉར་ཡོད།",
     errUsernameLength: "སྤྱོད་མིང་ལ་ཡིག་འབྲུ་3ལས་མི་ཉུང་བ་དགོས།",
     errUsernameChars: "སྤྱོད་མིང་ལ་ཡིག་འབྲུ་(a-z), ཨང་ཀི, _ . - འདི་དག་གཅིག་པུ་བེད་སྤྱོད་ཆོག",
     errPasswordLength: "གསང་ཚིག་ལ་ཡིག་འབྲུ་4ལས་མི་ཉུང་བ་དགོས།",
-    errPasswordMismatch: "གསང་ཚིག་གཉིས་མི་མཐུན།",
     errSignupFailed: "ཐོ་འགོད་མ་གྲུབ།", errLoginFailed: "ནང་འཛུལ་མ་གྲུབ།",
     errEnterCreds: "སྤྱོད་མིང་དང་གསང་ཚིག་འཇུག་རོགས།",
     errConnection: "མཐུད་ལམ་ནོར་འཁྲུལ། ",
@@ -3610,6 +3692,11 @@ const I18N = {
     homeSub: "རི་བོ་གཅིག་ལ་ལམ་བཞི། ད་ལྟ་ཤེས་པའི་སྐད་ཡིག་འདེམས་ནས་, ཚན་པ་40ཡི་ལམ་ནས་སྐད་ཡིག་གསར་པ་ཞིག་སློབ་སྦྱོང་གྱིས: ཚིག → ཚིག་གྲུབ → གླེང་མོལ → བསམ་ཚུལ།",
     modulesDone: "ཚན་པ་{n}གྲུབ་ཟིན།", startArrow: "འགོ་འཛུགས →",
     myProgress: "⛺ ངའི་ཡར་རྒྱས།",
+    charactersLabel: "སྐྱེས་བུ།", viewCharacters: "བལྟ།",
+    charactersTitle: "🧑 སྐྱེས་བུ་ཚོ།", charactersSub: "གནས་རིམ་ཞིག་ལེགས་གྲུབ་བྱས་ན་སྐྱེས་བུ་ཞིག་ཁ་ཕྱེ་ཐུབ། ཚང་མ་བསྡུས་ཐོབ།",
+    lockedCharacterLabel: "ཁ་རྒྱག་ཡོད།",
+    characterUnlockedEyebrow: "སྐྱེས་བུ་གསར་པ་ཁ་ཕྱེས་སོང་།",
+    characterUnlockedBody: "ཁྱེད་ཀྱིས་གནས་རིམ་འདི་ལེགས་གྲུབ་བྱས་ཟིན — ཆ་ཤས་རེ་རེར་སྐར་མ 3 ཐོབ་ཡོད། ད་ཐེངས་སྐྱེས་བུ་འདི་ཁྱེད་ཀྱི་རེད།",
     sectionLanguagesLabel: "སྐད་ཡིག", sectionPracticeLabel: "རྩིས་རིག་སྦྱོང་བརྡར།",
     studyTopicBtn: "📚 བརྗོད་གཞིག་སློབ་སྦྱོང་།",
     topicsTitle: "བརྗོད་གཞིག་སློབ་སྦྱོང་།", topicsSub: "བརྗོད་གཞི་ཞིག་འདེམས་ནས་དེའི་ཟུར་ཚིག་ཟབ་མོར་སློབ་སྦྱོང་གྱིས — ཐོག་མར་གཞུང་ལམ་མཇུག་སྐྱོང་མི་དགོས།",
@@ -4820,6 +4907,8 @@ const screens = {
   world_locked: renderWorldLocked,
   lesson: renderLesson,
   complete: renderComplete,
+  character_unlocked: renderCharacterUnlocked,
+  characters: renderCharacters,
   outofhearts: renderOutOfHearts,
   math_menu: renderMathMenu,
   math_practice: renderMathPractice,
@@ -4930,13 +5019,12 @@ function renderAuth(){
     </div>` : ''}
     <div class="field">
       <label>${t('labelPassword')}</label>
-      <input id="auth_password" type="password" autocomplete="${mode==='signup'?'new-password':'current-password'}" placeholder="${t('passwordPlaceholder')}">
+      <div class="password-field-wrap">
+        <input id="auth_password" type="password" autocomplete="${mode==='signup'?'new-password':'current-password'}" placeholder="${t('passwordPlaceholder')}">
+        <button type="button" class="password-toggle-btn" onclick="togglePasswordVisible()" title="${t('showPasswordLabel')}">👁️</button>
+      </div>
+      ${mode==='signup' ? `<div class="field-hint">${t('passwordHint')}</div>` : ''}
     </div>
-    ${mode==='signup' ? `
-    <div class="field">
-      <label>${t('labelConfirmPassword')}</label>
-      <input id="auth_password2" type="password">
-    </div>` : ''}
     ${state.authError ? `<div class="auth-error">${state.authError}</div>` : ''}
     <button class="btn btn-primary btn-block" onclick="${mode==='signup'?'doSignup()':'doLogin()'}">${mode==='signup'?t('btnCreateAccount'):t('btnLogIn')}</button>
   </div>
@@ -4946,15 +5034,19 @@ function renderAuth(){
 
 function readVal(id){ const el = document.getElementById(id); return el ? el.value.trim() : ''; }
 
+function togglePasswordVisible(){
+  const el = document.getElementById('auth_password');
+  if(!el) return;
+  el.type = el.type==='password' ? 'text' : 'password';
+}
+
 async function doSignup(){
   const username = readVal('auth_username');
   const email = readVal('auth_email');
   const password = readVal('auth_password');
-  const password2 = readVal('auth_password2');
   if(!username || username.length<3){ state.authError=t('errUsernameLength'); render(); return; }
   if(!/^[a-zA-Z0-9_.-]+$/.test(username)){ state.authError=t('errUsernameChars'); render(); return; }
   if(!password || password.length<4){ state.authError=t('errPasswordLength'); render(); return; }
-  if(password!==password2){ state.authError=t('errPasswordMismatch'); render(); return; }
 
   try {
     const res = await fetch('/api/signup', {
@@ -5118,6 +5210,15 @@ function renderHome(){
       <div class="see-more">${t('myProgress')} →</div>
     </button>`;
 
+  const unlockedCount = (state.game.unlockedCharacters||[]).length;
+  const charactersBanner = `
+    <button class="stats-strip" style="margin-top:10px;" onclick="state.screen='characters'; render();">
+      <div class="stat-chips">
+        <div class="stat-chip"><div class="v">🧑 ${unlockedCount}/${LEVELS.filter(l=>l.character).length}</div><div class="l">${t('charactersLabel')}</div></div>
+      </div>
+      <div class="see-more">${t('viewCharacters')} →</div>
+    </button>`;
+
   const practiceGrid = `
     <div class="practice-grid">
       <button class="practice-tile" onclick="state.screen='math_menu'; render();">
@@ -5191,12 +5292,43 @@ function renderHome(){
       <div class="sub">${t('homeSub')}</div>
     </div>
     ${statsStrip}
+    ${charactersBanner}
     <div class="section-heading">${t('sectionLanguagesLabel')}</div>
     <div class="track-grid">${cards}</div>
     <div class="section-heading">${t('sectionPracticeLabel')}</div>
     ${practiceGrid}
   </div>
   <div class="footer-note">${t('homeFooter')}</div>
+  `;
+}
+
+function renderCharacters(){
+  const levelsWithChar = LEVELS.map((lvl, idx)=>({lvl, idx})).filter(x=>x.lvl.character);
+  const unlocked = new Set(state.game.unlockedCharacters||[]);
+  const cards = levelsWithChar.map(({lvl, idx})=>{
+    const isUnlocked = unlocked.has(idx);
+    return `
+    <div class="char-card ${isUnlocked?'':'locked'}">
+      <div class="char-thumb">
+        ${isUnlocked ? `
+          <img src="${lvl.character.image}" alt="${lvl.character.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <span style="display:none;">🧑</span>
+        ` : `<span>🔒</span>`}
+      </div>
+      <div class="char-name">${isUnlocked ? lvl.character.name : t('lockedCharacterLabel')}</div>
+      <div class="char-sub">${lvl.title}</div>
+    </div>`;
+  }).join('');
+
+  return `
+  ${topbar({back:'goHome()'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>${t('charactersTitle')}</h1>
+      <div class="sub">${t('charactersSub')}</div>
+    </div>
+    <div class="char-grid">${cards}</div>
+  </div>
   `;
 }
 
@@ -13436,8 +13568,29 @@ function finishLesson(){
   p.completed[key] = Math.max(p.completed[key]||0, stars);
   if(stars===3) { state.game.xp += 20; s.xpEarned += 20; }
   touchStreak();
-  state.screen='complete';
+  const unlocked = checkAndUnlockCharacter(s.trackId, s.worldIdx);
+  if(unlocked){
+    state.screen = 'character_unlocked';
+    state.justUnlockedCharacter = unlocked;
+  } else {
+    state.screen='complete';
+  }
   render();
+}
+
+function renderCharacterUnlocked(){
+  const c = state.justUnlockedCharacter;
+  return `
+  <div class="complete ${appLangClass()}" style="justify-content:center; align-items:center; text-align:center;">
+    <div style="font-size:13px; text-transform:uppercase; letter-spacing:.14em; color:var(--gold); font-weight:700; margin-bottom:10px;">${t('characterUnlockedEyebrow')}</div>
+    <div class="char-portrait" style="width:160px; height:160px; border-radius:50%; background:linear-gradient(160deg, rgba(244,201,93,.25), rgba(124,199,255,.15)); border:3px solid var(--gold); display:flex; align-items:center; justify-content:center; font-size:64px; margin:0 auto 18px;">
+      <img src="${c.image}" alt="${c.name}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      <span style="display:none; width:100%; height:100%; align-items:center; justify-content:center;">🧑</span>
+    </div>
+    <h2 style="margin-bottom:6px;">${c.name}</h2>
+    <div style="color:var(--snow-dim); font-size:14px; margin-bottom:26px;">${t('characterUnlockedBody')}</div>
+    <button class="btn btn-primary btn-block" onclick="state.justUnlockedCharacter=null; state.screen='complete'; render();">${t('continueBtn')}</button>
+  </div>`;
 }
 
 function renderComplete(){
