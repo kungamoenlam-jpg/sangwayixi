@@ -1207,6 +1207,7 @@ const I18N = {
     modulesDone: "{n} modules done", startArrow: "Start →",
     myProgress: "⛺ My progress",
     charactersLabel: "Characters", viewCharacters: "View",
+    noCharactersYet: "Master a level to unlock your first character.",
     charactersTitle: "🧑 Characters", charactersSub: "Master a level to unlock its character. Collect them all!",
     lockedCharacterLabel: "Locked",
     characterUnlockedEyebrow: "Character Unlocked!",
@@ -2525,6 +2526,7 @@ const I18N = {
     modulesDone: "已完成 {n} 个单元", startArrow: "开始 →",
     myProgress: "⛺ 我的进度",
     charactersLabel: "角色", viewCharacters: "查看",
+    noCharactersYet: "闯关成功即可解锁你的第一个角色。",
     charactersTitle: "🧑 角色", charactersSub: "闯关成功即可解锁角色，集齐所有角色！",
     lockedCharacterLabel: "未解锁",
     characterUnlockedEyebrow: "解锁新角色！",
@@ -3704,6 +3706,7 @@ const I18N = {
     modulesDone: "ཚན་པ་{n}གྲུབ་ཟིན།", startArrow: "འགོ་འཛུགས →",
     myProgress: "⛺ ངའི་ཡར་རྒྱས།",
     charactersLabel: "སྐྱེས་བུ།", viewCharacters: "བལྟ།",
+    noCharactersYet: "གནས་རིམ་ཞིག་ལེགས་གྲུབ་བྱས་ན་ཁྱེད་ཀྱི་སྐྱེས་བུ་དང་པོ་ཁ་ཕྱེ་ཐུབ།",
     charactersTitle: "🧑 སྐྱེས་བུ་ཚོ།", charactersSub: "གནས་རིམ་ཞིག་ལེགས་གྲུབ་བྱས་ན་སྐྱེས་བུ་ཞིག་ཁ་ཕྱེ་ཐུབ། ཚང་མ་བསྡུས་ཐོབ།",
     lockedCharacterLabel: "ཁ་རྒྱག་ཡོད།",
     characterUnlockedEyebrow: "སྐྱེས་བུ་གསར་པ་ཁ་ཕྱེས་སོང་།",
@@ -13830,6 +13833,25 @@ function renderProfile(){
     const on = unlockedSet.has(a.key);
     return `<div title="${t(a.titleKey)} — ${t(a.descKey)}" style="width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; background:rgba(255,255,255,${on?'.1':'.04'}); border:1px solid rgba(255,255,255,${on?'.18':'.08'}); opacity:${on?'1':'.35'}; filter:${on?'none':'grayscale(1)'};">${a.icon}</div>`;
   }).join('');
+
+  const unlockedCharIdx = state.game.unlockedCharacters||[];
+  const totalCharSlots = LEVELS.filter(l=>l.character).length;
+  const charThumbs = unlockedCharIdx.slice(0,10).map(idx=>{
+    const c = LEVELS[idx] && LEVELS[idx].character; if(!c) return '';
+    return `<div class="char-thumb" style="width:44px; height:44px; flex-shrink:0;" title="${c.name}">
+      <img src="${c.image}" alt="${c.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      <span style="display:none;">🧑</span>
+    </div>`;
+  }).join('');
+  const charactersCard = `
+    <div class="profile-card" style="cursor:pointer;" onclick="state.screen='characters'; render();">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div style="font-weight:600;">${t('charactersLabel')} (${unlockedCharIdx.length}/${totalCharSlots})</div>
+        <div style="font-size:12px; color:var(--gold); font-weight:600;">${t('viewCharacters')} →</div>
+      </div>
+      ${charThumbs ? `<div style="display:flex; flex-wrap:wrap; gap:8px;">${charThumbs}</div>` : `<div style="font-size:12px; color:var(--snow-dim);">${t('noCharactersYet')}</div>`}
+    </div>`;
+
   return `
   ${topbar({back:'goHome()'})}
   <div class="profile ${appLangClass()}">
@@ -13858,6 +13880,7 @@ function renderProfile(){
       <div style="font-weight:600; margin-bottom:12px;">${t('achievementsLabel')} (${unlockedSet.size}/${ACHIEVEMENTS.length})</div>
       <div style="display:flex; flex-wrap:wrap; gap:8px;">${badgeRow}</div>
     </div>
+    ${charactersCard}
     <div class="profile-card">
       <div style="font-weight:600; margin-bottom:12px;">${t('voiceSettings')}</div>
       <div style="font-size:12px; color:var(--snow-dim); margin-bottom:6px;">${t('englishVoice')}</div>
