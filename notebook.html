@@ -121,7 +121,20 @@ body[data-mode=draw] #doc{pointer-events:none}
 #doc{position:relative;outline:none;font:400 var(--fs)/var(--lh) "Kalam","Ma Shan Zheng","KaiTi","STKaiti","Noto Sans SC","Comic Sans MS",cursive;
   padding:var(--pad);letter-spacing:var(--ls);white-space:pre-wrap;overflow-wrap:break-word;tab-size:4;caret-color:var(--c0);
   color:var(--c0);-webkit-text-fill-color:transparent;-webkit-background-clip:text;background-clip:text;
-  background-image:linear-gradient(90deg,var(--c0),var(--c2),var(--c3),var(--c4),var(--c5),var(--c6),var(--c7),var(--c0));background-size:480px 100%}
+  background-image:linear-gradient(90deg,var(--c0),var(--c2),var(--c3),var(--c4),var(--c5),var(--c6),var(--c7),var(--c0));background-size:480px 100%;
+  min-width:0;max-width:100%;box-sizing:border-box}
+/* #doc is a CSS grid item (.lines is display:grid); a grid item's default
+   min-width:auto means one unbreakable run of content (an inline style from
+   pasted text, a wide table/equation, ...) can force the whole grid wider
+   than the page instead of wrapping -- min-width:0 here is what actually
+   stops that "grid blowout", not .paper's overflow:hidden, which only hides
+   the result rather than preventing it. Belt-and-braces on every descendant
+   too, since paste can inject arbitrary inline widths/white-space. */
+/* !important here is deliberate: pasted HTML can carry an inline
+   style="white-space:nowrap" (common from PDFs/slides), which otherwise
+   always wins over any stylesheet rule regardless of selector specificity
+   -- this is the one place that actually has to override it. */
+#doc *{max-width:100%!important;overflow-wrap:break-word!important;white-space:pre-wrap!important}
 #doc ::selection{background:rgba(255,45,149,.28);-webkit-text-fill-color:currentColor}
 #doc.empty::before{content:attr(data-ph);position:absolute;left:0;top:0;padding:var(--pad);color:var(--margin);-webkit-text-fill-color:var(--margin);pointer-events:none}
 #doc div,#doc p,#doc h1,#doc h2,#doc li{margin:0}
