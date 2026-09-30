@@ -72,6 +72,19 @@ body[data-mode=draw] #doc{pointer-events:none}
 @keyframes tw{0%,100%{opacity:0;transform:scale(.3) rotate(0)}50%{opacity:.85;transform:scale(1) rotate(90deg)}}
 @media (max-width:560px){.paper{padding-left:70px}.paper::before{left:46px}.rings{left:2px}.lines{--pad:8px 16px 8px 16px}}
 @media (prefers-reduced-motion:reduce){.sp{display:none}.gl{animation:none;opacity:.5}}
+/* "Save as PDF" is window.print() with the browser's own "Save as PDF"
+   destination -- no server render step needed, and since it's literally the
+   live page, it matches what's on screen (pink paper, ruled lines, coloured
+   ink) exactly, unlike the plain-text export. visibility:hidden (not
+   display:none) on everything but #paper keeps that subtree's own layout
+   intact; #paper is then pulled out of flow to page (0,0) since its
+   siblings still occupy their normal-flow space despite being invisible. */
+@media print{
+  body *{visibility:hidden}
+  #paper,#paper *{visibility:visible}
+  #paper{position:absolute;top:0;left:0;width:100%;box-shadow:none}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+}
 #tools{background:var(--paper);border-radius:14px;padding:6px 14px 14px;margin-bottom:16px;box-shadow:0 2px 0 var(--line);max-height:62vh;overflow:auto}
 #tools h3{margin:14px 0 4px;font-size:18px;color:var(--c0)}
 #tools details.more>summary{cursor:pointer;font-weight:700;margin:10px 0 4px}
@@ -174,6 +187,7 @@ body[data-mode=draw] #doc{pointer-events:none}
       <span id="saveBtns" hidden>
         <button id="saveTxt" type="button">Save as text</button>
         <button id="saveHtml" type="button">Save as pretty page</button>
+        <button id="savePdf" type="button">Save as PDF</button>
       </span>
     </div>
   </header>
@@ -1131,4 +1145,12 @@ const base=()=>'kunga-'+SUBJ[state.subj].name.toLowerCase().replace(/\s+/g,'-')+
 $('saveTxt').onclick=()=>save(base()+'-'+stamp()+'.txt',()=>txt().trim(),txt,'text/plain');
 $('saveHtml').onclick=()=>save(base()+'-pretty-'+stamp()+'.html',()=>txt().trim()||state.strokes.length||doc.querySelector("table,.eq"),prettyHtml,'text/html');
 $('bkSave').onclick=()=>{persist();save('kunga-notebook-backup-'+stamp()+'.json',()=>Object.keys(pages).length,()=>JSON.stringify({app:'kunga-notebook',v:3,saved:new Date().toISOString(),pages}),'application/json',$('bkMsg'));};
+$('savePdf').onclick=()=>{
+  if(!(txt().trim()||state.strokes.length||doc.querySelector('table,.eq'))){note('Write something first.');return;}
+  persist();
+  const oldTitle=document.title;
+  document.title=base()+'-'+stamp();
+  print();
+  document.title=oldTitle;
+};
 </script>
