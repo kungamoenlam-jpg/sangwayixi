@@ -387,6 +387,36 @@ doc.addEventListener('input',()=>{
   if(s.rangeCount){const rr=s.getRangeAt(0),r=rr.getClientRects()[0]||rr.getBoundingClientRect();if(r&&(r.top||r.left))burst(r.left,r.top+r.height/2,4);}
   persist();drawPageNav();
 });
+// Pasted images (a screenshot, a copied photo, "copy image" from a
+// webpage/PDF) come through clipboardData as a File, not HTML -- the
+// browser has no default handling for that in a contenteditable, so
+// without this a paste like that would just silently do nothing. Downscaled
+// to the page's own text width before embedding as a data URL: a full-res
+// photo can be several MB, which would blow past both localStorage's quota
+// and the notebook's sync payload limit; a few hundred KB won't.
+doc.addEventListener('paste',e=>{
+  const items=(e.clipboardData&&e.clipboardData.items)||[];
+  const item=[...items].find(it=>it.kind==='file'&&it.type.startsWith('image/'));
+  if(!item)return; // no image on the clipboard -- let normal text/HTML paste happen
+  e.preventDefault();
+  const file=item.getAsFile();if(!file)return;
+  const img=new Image(),reader=new FileReader();
+  reader.onload=()=>{
+    img.onload=()=>{
+      const maxW=680,scale=Math.min(1,maxW/img.width);
+      const w=Math.max(1,Math.round(img.width*scale)),h=Math.max(1,Math.round(img.height*scale));
+      const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      const dataUrl=canvas.toDataURL('image/jpeg',.82);
+      insertHtml(`<img src="${dataUrl}" alt="pasted image" style="display:block;border-radius:8px;margin:6px 0;">`);
+      if(dataUrl.length>800000)note('That image is large -- the page may be slow to sync to your account.');
+    };
+    img.onerror=()=>note("Couldn't read that image. Try again.");
+    img.src=reader.result;
+  };
+  reader.onerror=()=>note("Couldn't read that image. Try again.");
+  reader.readAsDataURL(file);
+});
 function textOf(html){
   const q=document.createElement('div');q.innerHTML=html;q.style.cssText='position:absolute;left:-9999px;top:0;width:600px;white-space:pre-wrap';
   q.querySelectorAll('.eq').forEach(e=>e.replaceWith('['+e.dataset.src+']'));
