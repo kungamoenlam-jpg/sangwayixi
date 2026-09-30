@@ -29,6 +29,8 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 body[data-mode=type] #ink{display:none}
 .seg{display:inline-flex;flex-wrap:wrap;gap:2px;padding:3px;background:var(--paper);border-radius:22px;box-shadow:0 2px 0 var(--line)}
 .seg button{background:transparent;color:var(--soft);padding:6px 14px;font-size:15px}
+#pens button{display:inline-flex;align-items:center;gap:6px}
+.pen-dot{display:inline-block;width:12px;height:12px;border-radius:50%;border:1px solid rgba(0,0,0,.15);flex-shrink:0}
 .seg button[aria-pressed=true]{background:var(--btn);color:var(--btntext)}
 .plain{background:var(--paper);color:var(--soft);font-size:15px;padding:7px 14px;box-shadow:0 2px 0 var(--line)}
 #zval{min-width:5.5ch;text-align:center;padding:6px 8px}
@@ -37,15 +39,19 @@ body[data-mode=type] #ink{display:none}
 #weeks button:not([data-st="0"])::after{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:5px;vertical-align:middle;background:var(--dot)}
 #weeks button[aria-pressed=true]::after{box-shadow:0 0 0 2px var(--btntext)}
 .pagebar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+#pagenav{margin-top:-6px}
+#pagenav button{background:var(--paper);color:var(--soft);font-size:14px;padding:6px 12px;box-shadow:0 2px 0 var(--line);font-weight:700}
+#pagenav button:disabled{opacity:.35}
+#pagenav .pg-label{font-size:13px;color:var(--soft);font-weight:700}
 #topic{flex:1;min-width:180px;font:inherit;font-size:16px;padding:7px 14px;border:1px solid var(--margin);border-radius:999px;background:var(--paper);color:var(--soft)}
 #topic::placeholder{color:var(--margin)}
 #pstatus{font:inherit;font-size:15px;padding:7px 10px;border-radius:999px;border:1px solid var(--margin);background:var(--paper);color:var(--soft)}
-.paper{position:relative;background:var(--paper);border-radius:6px 18px 18px 6px;padding:0 0 0 78px;
+.paper{position:relative;background:var(--paper);border-radius:6px 18px 18px 6px;padding:0 0 0 96px;
   box-shadow:0 10px 0 -4px var(--line),0 18px 30px rgba(160,40,110,.25);overflow:hidden}
 .rings{position:absolute;left:14px;top:0;bottom:0;width:34px;
   background:radial-gradient(circle at 17px 17px,var(--desk) 0 7px,var(--margin) 8px 10px,transparent 11px) 0 0/34px 44px repeat-y}
-.paper::before{content:"";position:absolute;left:62px;top:0;bottom:0;width:2px;background:var(--margin);opacity:.7}
-.lines{position:relative;display:grid;min-height:70vh;--z:1;--fs:calc(25px * var(--z));--lh:calc(38px * var(--z));--pad:8px 22px 8px 6px;--ls:.2px;
+.paper::before{content:"";position:absolute;left:66px;top:0;bottom:0;width:2.5px;background:var(--margin);opacity:.85}
+.lines{position:relative;display:grid;min-height:70vh;--z:1;--fs:calc(25px * var(--z));--lh:calc(38px * var(--z));--pad:8px 22px 8px 22px;--ls:.2px;
   background-image:repeating-linear-gradient(to bottom,transparent 0 calc(var(--lh) - 1px),var(--line) calc(var(--lh) - 1px) var(--lh));background-position:0 8px}
 .lines[data-grid=math]{--fs:calc(22px * var(--z));--lh:calc(30px * var(--z));--pad:0 2px;--ls:0;
   background-image:linear-gradient(var(--margin) 1px,transparent 1px),linear-gradient(90deg,var(--margin) 1px,transparent 1px),linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
@@ -64,7 +70,7 @@ body[data-mode=draw] #doc{pointer-events:none}
   clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);
   animation:tw var(--d) ease-in-out infinite;animation-delay:var(--dl)}
 @keyframes tw{0%,100%{opacity:0;transform:scale(.3) rotate(0)}50%{opacity:.85;transform:scale(1) rotate(90deg)}}
-@media (max-width:560px){.paper{padding-left:52px}.paper::before{left:40px}.rings{left:2px}}
+@media (max-width:560px){.paper{padding-left:70px}.paper::before{left:46px}.rings{left:2px}.lines{--pad:8px 16px 8px 16px}}
 @media (prefers-reduced-motion:reduce){.sp{display:none}.gl{animation:none;opacity:.5}}
 #tools{background:var(--paper);border-radius:14px;padding:6px 14px 14px;margin-bottom:16px;box-shadow:0 2px 0 var(--line);max-height:62vh;overflow:auto}
 #tools h3{margin:14px 0 4px;font-size:18px;color:var(--c0)}
@@ -166,6 +172,7 @@ body[data-mode=draw] #doc{pointer-events:none}
       <option value="0">Not started</option><option value="1">Notes written</option><option value="2">Practised</option><option value="3">Mastered</option>
     </select>
   </div>
+  <div class="pagebar" id="pagenav" role="group" aria-label="Page"></div>
   <div class="bar">
     <div class="seg" id="grids" role="group" aria-label="Page style">
       <button type="button" data-g="lined">Lined</button>
@@ -183,8 +190,14 @@ body[data-mode=draw] #doc{pointer-events:none}
     </div>
     <div id="ink">
       <div class="seg" id="pens" role="group" aria-label="Pen">
-        <button type="button" data-k="rainbow">Rainbow pen</button>
-        <button type="button" data-k="pink">Pink pen</button>
+        <button type="button" data-k="rainbow"><i class="pen-dot" style="background:linear-gradient(90deg,#ff2d95,#ff7a00,#0fa05f,#1a7fff,#8b4dff)"></i>Rainbow</button>
+        <button type="button" data-k="black"><i class="pen-dot" style="background:#2b2b2b"></i>Black</button>
+        <button type="button" data-k="blue"><i class="pen-dot" style="background:#1a7fff"></i>Blue</button>
+        <button type="button" data-k="red"><i class="pen-dot" style="background:#e1453a"></i>Red</button>
+        <button type="button" data-k="green"><i class="pen-dot" style="background:#1fa05f"></i>Green</button>
+        <button type="button" data-k="orange"><i class="pen-dot" style="background:#ff7a00"></i>Orange</button>
+        <button type="button" data-k="purple"><i class="pen-dot" style="background:#8b4dff"></i>Purple</button>
+        <button type="button" data-k="pink"><i class="pen-dot" style="background:#ff2d95"></i>Pink</button>
         <button type="button" data-k="erase">Eraser</button>
       </div>
       <button class="plain" id="undo" type="button">Undo</button>
@@ -273,9 +286,18 @@ const WEEKS=['gen',...Array.from({length:13},(_,i)=>'w'+(i+1)),'rev'];
 const WLAB=w=>w==='gen'?'Overview':w==='rev'?'Revision':'Wk '+w.slice(1);
 const WLONG=w=>w==='gen'?'Unit overview':w==='rev'?'Exam revision':'Week '+w.slice(1);
 const STAT=['Not started','Notes written','Practised','Mastered'];
-const state={mode:'type',grid:'lined',ink:'rainbow',strokes:[],subj:'',wk:{},z:1};
+const state={mode:'type',grid:'lined',ink:'rainbow',strokes:[],subj:'',wk:{},z:1,pageIdx:1};
 const wkOf=s=>state.wk[s]||(s==='free'?'gen':'w1');
-const key=()=>state.subj+'_'+wkOf(state.subj);
+// A lecture page can outgrow one page; extra ones are "subj_week_p2",
+// "_p3", etc. so existing single-page saves (no suffix) keep working
+// unchanged as page 1.
+const pageKey=(s,w,idx)=>s+'_'+w+((idx||1)>1?'_p'+(idx||1):'');
+function pageCount(s,w){
+  let n=1;
+  while(pages[pageKey(s,w,n+1)]) n++;
+  return n;
+}
+const key=()=>pageKey(state.subj, wkOf(state.subj), state.pageIdx);
 
 function paint(el,text){
   const f=document.createDocumentFragment();let i=0;
@@ -332,7 +354,7 @@ doc.addEventListener('input',()=>{
   fixSizes();render();
   const s=getSelection();
   if(s.rangeCount){const rr=s.getRangeAt(0),r=rr.getClientRects()[0]||rr.getBoundingClientRect();if(r&&(r.top||r.left))burst(r.left,r.top+r.height/2,4);}
-  persist();
+  persist();drawPageNav();
 });
 function textOf(html){
   const q=document.createElement('div');q.innerHTML=html;q.style.cssText='position:absolute;left:-9999px;top:0;width:600px;white-space:pre-wrap';
@@ -540,15 +562,17 @@ function setMode(md){state.mode=md;document.body.dataset.mode=md;press($('modes'
 function setInk(k){state.ink=k;press($('pens'),'k',k);}
 $('grids').onclick=e=>{const g=e.target.dataset.g;if(g)setGrid(g);};
 $('modes').onclick=e=>{const v=e.target.dataset.m;if(v)setMode(v);};
-$('pens').onclick=e=>{const k=e.target.dataset.k;if(k)setInk(k);};
+$('pens').onclick=e=>{const b=e.target.closest('button');const k=b&&b.dataset.k;if(k)setInk(k);};
 
 /* handwriting */
 let strokesChanged=false;
+const PEN_COLORS={black:'#2b2b2b',blue:'#1a7fff',red:'#e1453a',green:'#1fa05f',orange:'#ff7a00',purple:'#8b4dff',pink:'#ff2d95'};
 function seg(s,i){
   const a=s.p[i-1],b=s.p[i];
   ctx.save();ctx.lineCap=ctx.lineJoin='round';ctx.lineWidth=s.w;
   if(s.k==='erase'){ctx.globalCompositeOperation='destination-out';ctx.strokeStyle='#000';}
-  else ctx.strokeStyle=s.k==='pink'?'#ff2d95':`hsl(${(320+b[2]*.8)%360} 95% 58%)`;
+  else if(s.k==='rainbow') ctx.strokeStyle=`hsl(${(320+b[2]*.8)%360} 95% 58%)`;
+  else ctx.strokeStyle=PEN_COLORS[s.k]||'#2b2b2b';
   ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.restore();
 }
 function redraw(){
@@ -581,10 +605,10 @@ c.addEventListener('pointermove',e=>{
 const end=()=>{
   if(!cur)return;
   if(cur.p.length===1){cur.p.push(cur.p[0].slice());seg(cur,1);}
-  cur=null;strokesChanged=true;persist();
+  cur=null;strokesChanged=true;persist();drawPageNav();
 };
 c.addEventListener('pointerup',end);c.addEventListener('pointercancel',end);
-$('undo').onclick=()=>{state.strokes.pop();redraw();strokesChanged=true;persist();};
+$('undo').onclick=()=>{state.strokes.pop();redraw();strokesChanged=true;persist();drawPageNav();};
 $('clear').onclick=function(){
   if(this.dataset.armed){state.strokes=[];redraw();strokesChanged=true;persist();this.textContent='Clear drawing';delete this.dataset.armed;return;}
   this.dataset.armed=1;this.textContent='Tap again to clear';
@@ -708,18 +732,18 @@ async function flush(){
 }
 document.addEventListener('visibilitychange',()=>{if(document.hidden){persist();flush();}});
 
-function openPage(s,w,skipSave){
+function openPage(s,w,skipSave,pageIdx){
   if(!loading&&!skipSave)persist();
   loading=true;
-  state.subj=s;state.wk[s]=w;
+  state.subj=s;state.wk[s]=w;state.pageIdx=pageIdx||1;
   const p=pages[key()]||blank();
   doc.innerHTML=p.html!==undefined?p.html:toHtml(p.text||'');
   state.strokes=(p.strokes||[]).map(x=>({...x,p:x.p.map(a=>a.slice())}));
   lines.style.minHeight=p.minH||'';
   $('topic').value=p.topic||'';$('pstatus').value=String(p.status||0);
-  doc.dataset.ph=`${SUBJ[s].name} · ${WLONG(w)}. `+(w==='gen'?'Unit outline, assessment dates, topics by week.':w==='rev'?'Topics to review, practice questions, mistakes to fix.':'Tap "Lecture template" to set up this lecture, or just start writing.');
+  doc.dataset.ph=`${SUBJ[s].name} · ${WLONG(w)}${state.pageIdx>1?' · Page '+state.pageIdx:''}. `+(w==='gen'?'Unit outline, assessment dates, topics by week.':w==='rev'?'Topics to review, practice questions, mistakes to fix.':'Tap "Lecture template" to set up this lecture, or just start writing.');
   press($('subjects'),'s',s);
-  setGrid(p.grid||'lined');render();redraw();drawWeeks();renderFx();
+  setGrid(p.grid||'lined');render();redraw();drawWeeks();drawPageNav();renderFx();
   if(!$('tools').hidden)drawTracker();
   loading=false;saveLocal();
 }
@@ -727,15 +751,33 @@ $('subjects').innerHTML=Object.entries(SUBJ).map(([k,v])=>`<button type="button"
 $('weeks').innerHTML=WEEKS.map(w=>`<button type="button" data-w="${w}" data-st="0" title="${WLONG(w)}">${WLAB(w)}</button>`).join('');
 function drawWeeks(){
   $('weeks').querySelectorAll('button').forEach(b=>{
-    const p=pages[state.subj+'_'+b.dataset.w];b.dataset.st=p?p.status||0:0;
+    const p=pages[pageKey(state.subj,b.dataset.w,1)];b.dataset.st=p?p.status||0:0;
     b.setAttribute('aria-pressed',b.dataset.w===wkOf(state.subj));
     b.title=`${WLONG(b.dataset.w)}${p&&p.topic?': '+p.topic:''} (${STAT[p?p.status||0:0]})`;
   });
 }
+// Extra pages exist only where a lecture outgrows one page, so the nav only
+// shows itself (prev/next + count) once there is more than one; otherwise
+// just the "+ New page" button, keeping the common case uncluttered.
+function drawPageNav(){
+  const s=state.subj,w=wkOf(s),n=pageCount(s,w),i=state.pageIdx;
+  const nav=$('pagenav');
+  nav.innerHTML=(n>1?`
+    <button type="button" ${i<=1?'disabled':''} title="Previous page" aria-label="Previous page">‹</button>
+    <span class="pg-label">Page ${i}/${n}</span>
+    <button type="button" ${i>=n?'disabled':''} title="Next page" aria-label="Next page">›</button>
+  `:'')+`<button type="button" id="pgAdd">+ New page</button>`;
+  const btns=nav.querySelectorAll('button');
+  if(n>1){
+    btns[0].onclick=()=>openPage(s,w,false,i-1);
+    btns[1].onclick=()=>openPage(s,w,false,i+1);
+  }
+  $('pgAdd').onclick=()=>openPage(s,w,false,n+1);
+}
 $('subjects').onclick=e=>{const k=e.target.dataset.s;if(k&&k!==state.subj)openPage(k,wkOf(k));};
 $('weeks').onclick=e=>{const b=e.target.closest('button');if(b&&b.dataset.w!==wkOf(state.subj))openPage(state.subj,b.dataset.w);};
-$('topic').addEventListener('input',()=>{persist();drawWeeks();});
-$('pstatus').addEventListener('change',()=>{persist();drawWeeks();if(!$('tools').hidden)drawTracker();});
+$('topic').addEventListener('input',()=>{persist();drawWeeks();drawPageNav();});
+$('pstatus').addEventListener('change',()=>{persist();drawWeeks();drawPageNav();if(!$('tools').hidden)drawTracker();});
 
 try{
   const s=JSON.parse(localStorage.getItem(LS)||'null');
@@ -817,7 +859,14 @@ let deck=[],firstTry=0,total=0,missed=new Set();
 function startCards(all){
   persist();
   const s=state.subj,ws=all?WEEKS:[wkOf(s)];
-  deck=ws.flatMap(w=>{const p=pages[s+'_'+w];return p&&p.html?cardsFrom(p.html,`${SUBJ[s].name} ${WLONG(w)}${p.topic?' · '+p.topic:''}`):[];});
+  deck=ws.flatMap(w=>{
+    const n=pageCount(s,w),cards=[];
+    for(let i=1;i<=n;i++){
+      const p=pages[pageKey(s,w,i)];
+      if(p&&p.html) cards.push(...cardsFrom(p.html,`${SUBJ[s].name} ${WLONG(w)}${n>1?' · Page '+i:''}${p.topic?' · '+p.topic:''}`));
+    }
+    return cards;
+  });
   for(let i=deck.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[deck[i],deck[j]]=[deck[j],deck[i]];}
   total=deck.length;firstTry=0;missed=new Set();
   if(!total){$('fcCard').hidden=true;$('fcMsg').textContent=all?`No flashcards in ${SUBJ[s].name} yet. Add a Q: line with an A: line under it in your notes.`:'No flashcards on this page yet. Tap "+ Q&A" in the toolbar to add one.';return;}
@@ -840,7 +889,9 @@ function drawTracker(){
   const S=Object.keys(SUBJ).filter(k=>k!=='free');
   $('trk').innerHTML='<div class="tw"><table><thead><tr><th></th>'+WEEKS.map(w=>`<th title="${WLONG(w)}">${w==='gen'?'O':w==='rev'?'R':w.slice(1)}</th>`).join('')+'</tr></thead><tbody>'+
     S.map(s=>`<tr><th title="${SUBJ[s].long}">${SUBJ[s].name}</th>`+WEEKS.map(w=>{
-      const p=pages[s+'_'+w],st=p?p.status||0:0,has=p&&(plainOf(p.html)||(p.strokes||[]).length);
+      const p=pages[pageKey(s,w,1)],st=p?p.status||0:0;
+      let has=p&&(plainOf(p.html)||(p.strokes||[]).length);
+      if(!has){for(let i=2;i<=pageCount(s,w);i++){const q=pages[pageKey(s,w,i)];if(q&&(plainOf(q.html)||(q.strokes||[]).length)){has=true;break;}}}
       const lab=`${SUBJ[s].name} ${WLONG(w)}${p&&p.topic?', '+p.topic:''}: ${STAT[st]}${has?'':', no notes yet'}`;
       return `<td><button type="button" data-s="${s}" data-w="${w}" data-st="${st}" class="${has?'has':''}${s===state.subj&&w===wkOf(s)?' now':''}" title="${esc(lab)}" aria-label="${esc(lab)}"></button></td>`;
     }).join('')+'</tr>').join('')+'</tbody></table></div><div class="legend">'+STAT.map((x,i)=>`<span><i data-st="${i}"></i>${x}</span>`).join('')+'<span>O = overview, R = revision, outlined = has notes</span></div>';
