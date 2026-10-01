@@ -52,7 +52,7 @@ body[data-mode=type] #ink{display:none}
 .rings{position:absolute;left:14px;top:0;bottom:0;width:34px;
   background:radial-gradient(circle at 17px 17px,var(--desk) 0 7px,var(--margin) 8px 10px,transparent 11px) 0 0/34px 44px repeat-y}
 .paper::before{content:"";position:absolute;left:66px;top:0;bottom:0;width:2.5px;background:var(--margin);opacity:.85}
-.lines{position:relative;display:grid;min-height:70vh;--z:1;--fs:calc(25px * var(--z));--lh:calc(38px * var(--z));--pad:8px 22px 8px 22px;--ls:.2px;
+.lines{position:relative;display:grid;min-height:70vh;--z:1;--sp:1;--fs:calc(25px * var(--z));--lh:calc(38px * var(--z) * var(--sp));--pad:8px 22px 8px 22px;--ls:.2px;
   background-image:repeating-linear-gradient(to bottom,transparent 0 calc(var(--lh) - 1px),var(--line) calc(var(--lh) - 1px) var(--lh));background-position:0 8px}
 .lines[data-grid=math]{--fs:calc(22px * var(--z));--lh:calc(30px * var(--z));--pad:0 2px;--ls:0;
   background-image:linear-gradient(var(--margin) 1px,transparent 1px),linear-gradient(90deg,var(--margin) 1px,transparent 1px),linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
@@ -211,6 +211,11 @@ body[data-mode=draw] #doc{pointer-events:none}
       <button type="button" data-g="math">Math grid</button>
       <button type="button" data-g="cn">Chinese squares</button>
     </div>
+    <div class="seg" id="spacing" role="group" aria-label="Line spacing">
+      <button type="button" data-sp="1">Single</button>
+      <button type="button" data-sp="1.5">1.5×</button>
+      <button type="button" data-sp="2">Double</button>
+    </div>
     <div class="seg" id="modes" role="group" aria-label="Input mode">
       <button type="button" data-m="type">Type</button>
       <button type="button" data-m="draw">Handwrite</button>
@@ -325,7 +330,7 @@ const WEEKS=['gen',...Array.from({length:13},(_,i)=>'w'+(i+1)),'rev'];
 const WLAB=w=>w==='gen'?'Overview':w==='rev'?'Revision':'Wk '+w.slice(1);
 const WLONG=w=>w==='gen'?'Unit overview':w==='rev'?'Exam revision':'Week '+w.slice(1);
 const STAT=['Not started','Notes written','Practised','Mastered'];
-const state={mode:'type',grid:'lined',ink:'rainbow',strokes:[],subj:'',wk:{},z:1,pageIdx:1,penWidth:4,pencilOnly:false};
+const state={mode:'type',grid:'lined',ink:'rainbow',strokes:[],subj:'',wk:{},z:1,pageIdx:1,penWidth:4,pencilOnly:false,spacing:1};
 const wkOf=s=>state.wk[s]||(s==='free'?'gen':'w1');
 // A lecture page can outgrow one page; extra ones are "subj_week_p2",
 // "_p3", etc. so existing single-page saves (no suffix) keep working
@@ -627,12 +632,19 @@ addEventListener('keydown',e=>{
 
 function press(box,attr,val){box.querySelectorAll('button[data-'+attr+']').forEach(b=>b.setAttribute('aria-pressed',b.dataset[attr]===val));}
 function setGrid(g){state.grid=g;lines.dataset.grid=g;press($('grids'),'g',g);fit();persist();}
+// Only the ruled "Lined" page's --lh formula multiplies by --sp (see its
+// CSS rule) -- the math/Chinese-square grids are fixed square cells for a
+// different purpose and would distort into rectangles if stretched the
+// same way, so this setting is a no-op there by design, not a bug.
+function setSpacing(sp){state.spacing=Number(sp);lines.style.setProperty('--sp',sp);press($('spacing'),'sp',String(sp));saveLocal();}
 function setMode(md){state.mode=md;document.body.dataset.mode=md;press($('modes'),'m',md);if(md==='type')doc.focus();saveLocal();}
 function setInk(k){state.ink=k;press($('pens'),'k',k);}
 const PEN_WIDTHS=[2,4,7,12];
+const SPACINGS=[1,1.5,2];
 function setPenWidth(w){state.penWidth=Number(w);press($('thickness'),'pw',String(state.penWidth));saveLocal();}
 function togglePencilOnly(){state.pencilOnly=!state.pencilOnly;$('pencilOnly').setAttribute('aria-pressed',String(state.pencilOnly));saveLocal();}
 $('grids').onclick=e=>{const g=e.target.dataset.g;if(g)setGrid(g);};
+$('spacing').onclick=e=>{const sp=e.target.dataset.sp;if(sp)setSpacing(sp);};
 $('modes').onclick=e=>{const v=e.target.dataset.m;if(v)setMode(v);};
 $('pens').onclick=e=>{const b=e.target.closest('button');const k=b&&b.dataset.k;if(k)setInk(k);};
 $('thickness').onclick=e=>{const b=e.target.closest('button');const w=b&&b.dataset.pw;if(w)setPenWidth(w);};
@@ -775,7 +787,7 @@ function snap(){return{html:doc.innerHTML,grid:state.grid,minH:lines.style.minHe
 function syncNote(m){$('sync').textContent=m;}
 function saveLocal(){
   clearTimeout(lsT);
-  lsT=setTimeout(()=>{try{localStorage.setItem(LS,JSON.stringify({subj:state.subj,wk:state.wk,mode:state.mode,z:state.z,penWidth:state.penWidth,pencilOnly:state.pencilOnly,pages}));}catch(e){}},300);
+  lsT=setTimeout(()=>{try{localStorage.setItem(LS,JSON.stringify({subj:state.subj,wk:state.wk,mode:state.mode,z:state.z,penWidth:state.penWidth,pencilOnly:state.pencilOnly,spacing:state.spacing,pages}));}catch(e){}},300);
 }
 function persist(){
   if(loading)return;
@@ -862,7 +874,8 @@ $('pstatus').addEventListener('change',()=>{persist();drawWeeks();drawPageNav();
 try{
   const s=JSON.parse(localStorage.getItem(LS)||'null');
   if(s){pages=s.pages||{};state.subj=s.subj;state.wk=s.wk||{};state.mode=s.mode||'type';if(ZOOMS.includes(s.z))state.z=s.z;
-    if(PEN_WIDTHS.includes(s.penWidth))state.penWidth=s.penWidth;state.pencilOnly=!!s.pencilOnly;}
+    if(PEN_WIDTHS.includes(s.penWidth))state.penWidth=s.penWidth;state.pencilOnly=!!s.pencilOnly;
+    if(SPACINGS.includes(s.spacing))state.spacing=s.spacing;}
   else{
     const v2=JSON.parse(localStorage.getItem('kunga-notebook-v2')||'null');
     const old=JSON.parse(localStorage.getItem('kunga-notebook')||'null');
@@ -873,7 +886,7 @@ try{
   }
 }catch(e){}
 if(!SUBJ[state.subj])state.subj='mxb105';
-setInk('rainbow');setMode(state.mode);setZoom(state.z);setPenWidth(state.penWidth);$('pencilOnly').setAttribute('aria-pressed',String(state.pencilOnly));openPage(state.subj,wkOf(state.subj));
+setInk('rainbow');setMode(state.mode);setZoom(state.z);setPenWidth(state.penWidth);setSpacing(state.spacing);$('pencilOnly').setAttribute('aria-pressed',String(state.pencilOnly));openPage(state.subj,wkOf(state.subj));
 
 // Notebook sync piggybacks on the same login as the rest of kunga.me: if
 // this browser has an active Yeshe session (shared localStorage, same
