@@ -28,6 +28,8 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 #ink{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 body[data-mode=type] #ink{display:none}
 .seg{display:inline-flex;flex-wrap:wrap;gap:2px;padding:3px;background:var(--paper);border-radius:22px;box-shadow:0 2px 0 var(--line)}
+#spacing{align-items:center;padding-right:12px;color:var(--soft)}
+#spacingSlider{accent-color:var(--btn);cursor:pointer}
 .seg button{background:transparent;color:var(--soft);padding:6px 14px;font-size:15px}
 #pens button{display:inline-flex;align-items:center;gap:6px}
 .pen-dot{display:inline-block;width:12px;height:12px;border-radius:50%;border:1px solid rgba(0,0,0,.15);flex-shrink:0}
@@ -212,9 +214,9 @@ body[data-mode=draw] #doc{pointer-events:none}
       <button type="button" data-g="cn">Chinese squares</button>
     </div>
     <div class="seg" id="spacing" role="group" aria-label="Line spacing">
-      <button type="button" data-sp="1">Single</button>
-      <button type="button" data-sp="1.5">1.5×</button>
-      <button type="button" data-sp="2">Double</button>
+      <span style="padding:0 2px 0 12px; font-size:13px;">Spacing</span>
+      <input type="range" id="spacingSlider" min="1" max="2.5" step="0.1" value="1" aria-label="Line spacing" style="width:110px; margin:0 8px;">
+      <span id="spacingVal" style="font-size:13px; min-width:3ch; display:inline-block;">1.0×</span>
     </div>
     <div class="seg" id="modes" role="group" aria-label="Input mode">
       <button type="button" data-m="type">Type</button>
@@ -636,15 +638,19 @@ function setGrid(g){state.grid=g;lines.dataset.grid=g;press($('grids'),'g',g);fi
 // CSS rule) -- the math/Chinese-square grids are fixed square cells for a
 // different purpose and would distort into rectangles if stretched the
 // same way, so this setting is a no-op there by design, not a bug.
-function setSpacing(sp){state.spacing=Number(sp);lines.style.setProperty('--sp',sp);press($('spacing'),'sp',String(sp));saveLocal();}
+function setSpacing(sp){
+  state.spacing=Number(sp);lines.style.setProperty('--sp',state.spacing);
+  $('spacingSlider').value=state.spacing;$('spacingVal').textContent=state.spacing.toFixed(1)+'×';
+  saveLocal();
+}
 function setMode(md){state.mode=md;document.body.dataset.mode=md;press($('modes'),'m',md);if(md==='type')doc.focus();saveLocal();}
 function setInk(k){state.ink=k;press($('pens'),'k',k);}
 const PEN_WIDTHS=[2,4,7,12];
-const SPACINGS=[1,1.5,2];
+const SPACING_RANGE=[1,2.5];
 function setPenWidth(w){state.penWidth=Number(w);press($('thickness'),'pw',String(state.penWidth));saveLocal();}
 function togglePencilOnly(){state.pencilOnly=!state.pencilOnly;$('pencilOnly').setAttribute('aria-pressed',String(state.pencilOnly));saveLocal();}
 $('grids').onclick=e=>{const g=e.target.dataset.g;if(g)setGrid(g);};
-$('spacing').onclick=e=>{const sp=e.target.dataset.sp;if(sp)setSpacing(sp);};
+$('spacingSlider').addEventListener('input',e=>setSpacing(e.target.value));
 $('modes').onclick=e=>{const v=e.target.dataset.m;if(v)setMode(v);};
 $('pens').onclick=e=>{const b=e.target.closest('button');const k=b&&b.dataset.k;if(k)setInk(k);};
 $('thickness').onclick=e=>{const b=e.target.closest('button');const w=b&&b.dataset.pw;if(w)setPenWidth(w);};
@@ -875,7 +881,7 @@ try{
   const s=JSON.parse(localStorage.getItem(LS)||'null');
   if(s){pages=s.pages||{};state.subj=s.subj;state.wk=s.wk||{};state.mode=s.mode||'type';if(ZOOMS.includes(s.z))state.z=s.z;
     if(PEN_WIDTHS.includes(s.penWidth))state.penWidth=s.penWidth;state.pencilOnly=!!s.pencilOnly;
-    if(SPACINGS.includes(s.spacing))state.spacing=s.spacing;}
+    if(typeof s.spacing==='number'&&s.spacing>=SPACING_RANGE[0]&&s.spacing<=SPACING_RANGE[1])state.spacing=s.spacing;}
   else{
     const v2=JSON.parse(localStorage.getItem('kunga-notebook-v2')||'null');
     const old=JSON.parse(localStorage.getItem('kunga-notebook')||'null');
