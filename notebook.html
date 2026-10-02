@@ -382,7 +382,7 @@ for(let k=0;k<46;k++){
 
 /* editor */
 let lastRange=null,wantSize=0,eqEdit=null,eqScale=1;
-const EQ_SCALES=[.6,.7,.8,.9,1,1.15,1.3,1.5,1.75,2,2.5,3];
+const EQ_SCALES=[.3,.4,.5,.6,.7,.8,.9,1,1.15,1.3,1.5,1.75,2,2.5,3];
 const selEl=()=>{const n=lastRange&&lastRange.startContainer;const el=n&&(n.nodeType===3?n.parentElement:n);return el&&doc.contains(el)?el:null;};
 const curCell=()=>{const e=selEl();return e?e.closest('td,th'):null;};
 const tblState=()=>{$('tblbar').hidden=!curCell();};
