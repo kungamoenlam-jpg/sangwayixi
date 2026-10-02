@@ -524,9 +524,16 @@ const ACC={vec:'→',hat:'^',bar:'¯'};
 const BIG={sum:'∑',prod:'∏',int:'∫',lim:'lim'};
 const OPS={'*':'×','-':'−','<=':'≤','>=':'≥','!=':'≠','+-':'±','->':'→','~=':'≈',"'":'′'};
 function tex2ml(src){
-  const T=[],re=/\s*(\d+(?:\.\d+)?|\\?[A-Za-z]+|"[^"]*"|\+-|<=|>=|!=|~=|->|\S)/gy;let m;
-  while((m=re.exec(src)))T.push(m[1]);
-  let p=0;const peek=()=>T[p],next=()=>T[p++];
+  // SP[i] records whether token i had whitespace before it in the source --
+  // needed so a typed phrase like "Total budgeted cost" keeps its spaces.
+  // MathML has no default space between adjacent <mi> identifiers (that's
+  // deliberate, so "xy" reads as a single term rather than "x y"), which is
+  // exactly backwards for someone writing an English phrase inside an
+  // equation rather than a product of variables -- preserved below via an
+  // explicit <mspace> wherever the author actually typed one.
+  const T=[],SP=[],re=/(\s*)(\d+(?:\.\d+)?|\\?[A-Za-z]+|"[^"]*"|\+-|<=|>=|!=|~=|->|\S)/gy;let m;
+  while((m=re.exec(src))){T.push(m[2]);SP.push(m[1].length>0);}
+  let p=0,lastHadSpace=false;const peek=()=>T[p],next=()=>{lastHadSpace=SP[p];return T[p++];};
   const x=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
   function rowOf(...stop){const o=[];while(p<T.length&&!stop.includes(peek()))o.push(item().ml);return o.join('');}
   function item(){let a=script();while(peek()==='/'){next();const b=script(),ml=`<mfrac><mrow>${a.inner}</mrow><mrow>${b.inner}</mrow></mfrac>`;a={ml,inner:ml};}return a;}
@@ -550,6 +557,7 @@ function tex2ml(src){
   }
   function atom(){
     const k=next();
+    const spaceBefore=lastHadSpace&&p>1?'<mspace width="0.3em"/>':'';
     if(k===undefined)return{ml:''};
     if(/^\d/.test(k))return{ml:`<mn>${k}</mn>`};
     if(k==='('){const i=rowOf(')');if(peek()===')')next();return{ml:`<mrow><mo>(</mo>${i}<mo>)</mo></mrow>`,inner:`<mrow>${i}</mrow>`};}
@@ -571,7 +579,7 @@ function tex2ml(src){
         const g=lo&&hi?(sd?'msubsup':'munderover'):lo?(sd?'msub':'munder'):hi?(sd?'msup':'mover'):'';
         return{ml:g?`<${g}>${op}${lo||''}${hi||''}</${g}>`:op};
       }
-      return{ml:`<mi>${GREEK[w]||w}</mi>`};
+      return{ml:spaceBefore+`<mi>${GREEK[w]||w}</mi>`};
     }
     return{ml:`<mo>${x(OPS[k]||k)}</mo>`};
   }
