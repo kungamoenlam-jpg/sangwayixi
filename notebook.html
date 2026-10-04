@@ -69,6 +69,22 @@ body[data-mode=type] #ink{display:none}
   background-size:var(--lh) var(--lh);background-position:0 0}
 #c{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
 body[data-mode=type] #c{pointer-events:none}
+.pagegrid{display:block}
+/* Booklet view needs real room for two pages side by side, so the whole
+   page widens past the normal single-column reading width while it's on --
+   the toolbars above just wrap more loosely at that width, nothing breaks. */
+body.booklet .wrap{max-width:1500px}
+body.booklet .pagegrid{display:flex;align-items:flex-start;gap:20px}
+body.booklet #paper,body.booklet #bookwrap{flex:1 1 0;min-width:0}
+@media (max-width:1150px){body.booklet .pagegrid{flex-direction:column}}
+#bookwrap{cursor:pointer}
+#bookwrap #bookDoc{pointer-events:none}
+#bookCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.bookclick{position:absolute;inset:0;width:100%;height:100%;background:transparent;border:0;border-radius:inherit;padding:0;cursor:pointer}
+.bookclick:hover{background:rgba(0,0,0,.04)}
+.bookclick span{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--btn);color:var(--btntext);
+  font-weight:700;font-size:13px;padding:5px 14px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,.2)}
+#bookwrap.empty .bookclick span{opacity:.92}
 body[data-mode=draw] #doc{pointer-events:none}
 .k0{color:var(--c0)}.k1{color:var(--c1)}.k2{color:var(--c2)}.k3{color:var(--c3)}
 .k4{color:var(--c4)}.k5{color:var(--c5)}.k6{color:var(--c6)}.k7{color:var(--c7)}
@@ -169,9 +185,18 @@ body[data-mode=draw] #doc{pointer-events:none}
    and silently eating clicks meant for drawing -- it becomes a bottom bar
    instead, which only ever covers the edge of the current viewport. */
 @media (max-width:1440px){#planPanel{top:auto;bottom:16px;left:16px;right:16px;width:auto;max-height:55vh}}
+/* Booklet view widens .wrap up to 1500px for the two-page spread, which
+   can reach right under the planner's normal fixed sidebar position even
+   on screens wide enough that it would otherwise sit safely beside a
+   single page -- force the same non-overlapping bottom-bar layout
+   unconditionally while booklet view is on, regardless of viewport width. */
+body.booklet #planPanel{top:auto;bottom:16px;left:16px;right:16px;width:auto;max-height:40vh}
 </style>
 <style id="docstyle">
-#doc{position:relative;outline:none;font:400 var(--fs)/var(--lh) "Kalam","Ma Shan Zheng","KaiTi","STKaiti","Noto Sans SC","Comic Sans MS",cursive;
+/* .pagedoc (not #doc) so these rules equally style the booklet-view
+   preview pane's content, which mirrors a page's saved HTML for display
+   without being the live contenteditable #doc itself. */
+.pagedoc{position:relative;outline:none;font:400 var(--fs)/var(--lh) "Kalam","Ma Shan Zheng","KaiTi","STKaiti","Noto Sans SC","Comic Sans MS",cursive;
   padding:var(--pad);letter-spacing:var(--ls);white-space:pre-wrap;overflow-wrap:break-word;tab-size:4;caret-color:var(--c0);
   color:var(--c0);-webkit-text-fill-color:transparent;-webkit-background-clip:text;background-clip:text;
   background-image:linear-gradient(90deg,var(--c0),var(--c2),var(--c3),var(--c4),var(--c5),var(--c6),var(--c7),var(--c0));background-size:480px 100%;
@@ -193,13 +218,13 @@ body[data-mode=draw] #doc{pointer-events:none}
    style="white-space:nowrap" (common from PDFs/slides), which otherwise
    always wins over any stylesheet rule regardless of selector specificity
    -- this is the one place that actually has to override it. */
-#doc *{max-width:100%!important;overflow-wrap:break-word!important;white-space:pre-wrap!important}
-#doc ::selection{background:rgba(255,45,149,.28);-webkit-text-fill-color:currentColor}
-#doc.empty::before{content:attr(data-ph);position:absolute;left:0;top:0;padding:var(--pad);color:var(--margin);-webkit-text-fill-color:var(--margin);pointer-events:none}
-#doc div,#doc p,#doc h1,#doc h2,#doc li{margin:0}
-#doc h1{font-size:1.5em;font-weight:700;line-height:calc(var(--lh) * 2)}#doc h2{font-size:1.2em;font-weight:700}
-#doc ul,#doc ol{margin:0;padding-left:1.6em}
-#doc blockquote{margin:0 0 0 2em}
+.pagedoc *{max-width:100%!important;overflow-wrap:break-word!important;white-space:pre-wrap!important}
+.pagedoc ::selection{background:rgba(255,45,149,.28);-webkit-text-fill-color:currentColor}
+.pagedoc.empty::before{content:attr(data-ph);position:absolute;left:0;top:0;padding:var(--pad);color:var(--margin);-webkit-text-fill-color:var(--margin);pointer-events:none}
+.pagedoc div,.pagedoc p,.pagedoc h1,.pagedoc h2,.pagedoc li{margin:0}
+.pagedoc h1{font-size:1.5em;font-weight:700;line-height:calc(var(--lh) * 2)}.pagedoc h2{font-size:1.2em;font-weight:700}
+.pagedoc ul,.pagedoc ol{margin:0;padding-left:1.6em}
+.pagedoc blockquote{margin:0 0 0 2em}
 [class^=ink-]{-webkit-text-fill-color:transparent;-webkit-background-clip:text;background-clip:text}
 .ink-rainbow{color:var(--c0);background-image:linear-gradient(90deg,var(--c0),var(--c2),var(--c3),var(--c4),var(--c5),var(--c6),var(--c7),var(--c0));background-size:480px 100%}
 .ink-gold{color:#d4a017;background-image:linear-gradient(100deg,#9a6b00,#ffd700 25%,#fff4b0 40%,#ffd700 55%,#b8860b 80%,#ffd700);background-size:220% 100%;animation:shine 4s ease-in-out infinite alternate}
@@ -213,7 +238,7 @@ body[data-mode=draw] #doc{pointer-events:none}
 .ink-plain{background:none;color:var(--ink);-webkit-text-fill-color:var(--ink)}
 @keyframes shine{to{background-position:100% 0}}
 @media (prefers-reduced-motion:reduce){[class^=ink-]{animation:none}}
-#doc table{border-collapse:collapse;margin:6px 0}
+.pagedoc table{border-collapse:collapse;margin:6px 0}
 /* A table from the toolbar comes wrapped in .tblwrap with a dedicated
    .tblnotes column beside it -- an explicit two-column row, not text
    reflowing around a float. A float's wrap only lasts as many lines as the
@@ -226,15 +251,15 @@ body[data-mode=draw] #doc{pointer-events:none}
 .tblwrap table{margin:0;flex:0 0 auto}
 .tblnotes{position:relative;flex:1 1 140px;min-width:120px;min-height:1.4em;border-left:1.5px dashed var(--margin);padding-left:14px}
 .tblnotes.empty::before{content:attr(data-ph);position:absolute;left:14px;top:0;color:var(--margin);-webkit-text-fill-color:var(--margin);pointer-events:none}
-#doc td,#doc th{border:1.5px solid var(--margin);padding:2px 10px;min-width:64px;vertical-align:top}
-#doc th{background:var(--line);text-align:center}
-#doc .num{text-align:right}
-#doc .tot{border-bottom:double 5px var(--margin)}
-#doc table.tacc td,#doc table.tacc th{border:0;min-width:110px}
-#doc table.tacc th{border-bottom:2.5px solid var(--margin);background:none}
-#doc table.tacc td:first-child{border-right:2.5px solid var(--margin)}
-#doc .eq{display:inline-block;padding:0 4px;border-radius:6px;cursor:pointer;color:var(--c6);-webkit-text-fill-color:currentColor;vertical-align:middle;line-height:1.2}
-#doc .eq:hover{background:var(--line)}
+.pagedoc td,.pagedoc th{border:1.5px solid var(--margin);padding:2px 10px;min-width:64px;vertical-align:top}
+.pagedoc th{background:var(--line);text-align:center}
+.pagedoc .num{text-align:right}
+.pagedoc .tot{border-bottom:double 5px var(--margin)}
+.pagedoc table.tacc td,.pagedoc table.tacc th{border:0;min-width:110px}
+.pagedoc table.tacc th{border-bottom:2.5px solid var(--margin);background:none}
+.pagedoc table.tacc td:first-child{border-right:2.5px solid var(--margin)}
+.pagedoc .eq{display:inline-block;padding:0 4px;border-radius:6px;cursor:pointer;color:var(--c6);-webkit-text-fill-color:currentColor;vertical-align:middle;line-height:1.2}
+.pagedoc .eq:hover{background:var(--line)}
 </style>
 <div class="wrap">
   <header>
@@ -284,6 +309,7 @@ body[data-mode=draw] #doc{pointer-events:none}
       <button type="button" data-z="0" id="zval" title="Reset text size">100%</button>
       <button type="button" data-z="1" title="Bigger text (Ctrl + Shift + .)" aria-label="Bigger text">A+</button>
     </div>
+    <button class="plain" id="bookletToggle" type="button" aria-pressed="false" title="Show this page and the next one side by side">📖 Booklet view</button>
     <div id="ink">
       <div class="seg" id="pens" role="group" aria-label="Pen">
         <button type="button" data-k="rainbow"><i class="pen-dot" style="background:linear-gradient(90deg,#ff2d95,#ff7a00,#0fa05f,#1a7fff,#8b4dff)"></i>Rainbow</button>
@@ -370,13 +396,23 @@ body[data-mode=draw] #doc{pointer-events:none}
     <div id="eqsym"></div>
     <p class="hint">Press Enter to insert. Use / for fractions, ^ for powers, _ for subscripts, sqrt(x), int_a^b, sum_(i=1)^n and names like lambda, theta, pi. Matrices: [[1,2],[3,4]]. Vectors: vec(v). Derivatives: (dy)/(dx) or y'. Tap an equation on the page to edit it.</p>
   </div>
-  <main class="paper" id="paper">
-    <div class="rings" aria-hidden="true"></div>
-    <div class="lines" id="lines" data-grid="lined">
-      <div id="doc" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" aria-label="Notebook page" data-ph="Start writing."></div>
-      <canvas id="c" aria-label="Handwriting area"></canvas>
-    </div>
-  </main>
+  <div class="pagegrid" id="pagegrid">
+    <main class="paper" id="paper">
+      <div class="rings" aria-hidden="true"></div>
+      <div class="lines" id="lines" data-grid="lined">
+        <div id="doc" class="pagedoc" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" aria-label="Notebook page" data-ph="Start writing."></div>
+        <canvas id="c" aria-label="Handwriting area"></canvas>
+      </div>
+    </main>
+    <aside class="paper bookprev" id="bookwrap" hidden aria-label="Next page preview">
+      <div class="rings" aria-hidden="true"></div>
+      <div class="lines" id="bookLines" data-grid="lined">
+        <div id="bookDoc" class="pagedoc"></div>
+        <canvas id="bookCanvas" aria-hidden="true"></canvas>
+      </div>
+      <button type="button" id="bookOpenBtn" class="bookclick"><span id="bookPrevLabel"></span></button>
+    </aside>
+  </div>
 </div>
 <div id="planPanel" hidden role="complementary" aria-label="Study planner">
   <div class="pp-head">
@@ -458,7 +494,7 @@ const WEEKS=['gen',...Array.from({length:13},(_,i)=>'w'+(i+1)),'rev'];
 const WLAB=w=>w==='gen'?'Overview':w==='rev'?'Revision':'Wk '+w.slice(1);
 const WLONG=w=>w==='gen'?'Unit overview':w==='rev'?'Exam revision':'Week '+w.slice(1);
 const STAT=['Not started','Notes written','Practised','Mastered'];
-const state={mode:'type',grid:'lined',ink:'rainbow',strokes:[],subj:'',wk:{},z:1,pageIdx:1,penWidth:4,pencilOnly:false,spacing:1,tool:'free'};
+const state={mode:'type',grid:'lined',ink:'rainbow',strokes:[],subj:'',wk:{},z:1,pageIdx:1,penWidth:4,pencilOnly:false,spacing:1,tool:'free',booklet:false};
 const wkOf=s=>state.wk[s]||(s==='free'?'gen':'w1');
 // A lecture page can outgrow one page; extra ones are "subj_week_p2",
 // "_p3", etc. so existing single-page saves (no suffix) keep working
@@ -857,22 +893,28 @@ const PEN_COLORS={blue:'#1a7fff',red:'#e1453a',green:'#1fa05f',orange:'#ff7a00',
 // in dark mode -- it needs to flip to a light grey there, same as the
 // matching toolbar button/dot.
 const penColor=k=>k==='black'?(cssVar('--pen-black')||'#2b2b2b'):(PEN_COLORS[k]||'#2b2b2b');
-function seg(s,i){
+// Both take an optional explicit canvas context (cx) so the same stroke
+// rendering can also paint the read-only booklet-view preview canvas, not
+// just the live #c -- defaulting to the live canvas keeps every existing
+// call site unchanged.
+function seg(s,i,cx){
+  cx=cx||ctx;
   const a=s.p[i-1],b=s.p[i];
-  ctx.save();ctx.lineCap=ctx.lineJoin='round';ctx.lineWidth=s.w;
-  ctx.setLineDash(s.dash?[s.w*2.2,s.w*1.6]:[]);
-  if(s.k==='erase'){ctx.globalCompositeOperation='destination-out';ctx.strokeStyle='#000';}
-  else if(s.k==='rainbow') ctx.strokeStyle=`hsl(${(320+b[2]*.8)%360} 95% 58%)`;
-  else ctx.strokeStyle=penColor(s.k);
-  ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.restore();
+  cx.save();cx.lineCap=cx.lineJoin='round';cx.lineWidth=s.w;
+  cx.setLineDash(s.dash?[s.w*2.2,s.w*1.6]:[]);
+  if(s.k==='erase'){cx.globalCompositeOperation='destination-out';cx.strokeStyle='#000';}
+  else if(s.k==='rainbow') cx.strokeStyle=`hsl(${(320+b[2]*.8)%360} 95% 58%)`;
+  else cx.strokeStyle=penColor(s.k);
+  cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke();cx.restore();
 }
 const labelFont=s=>`700 ${s.size}px Kalam, "Comic Sans MS", cursive`;
-function drawLabel(s){
-  ctx.save();
-  ctx.fillStyle=s.k==='rainbow'?'hsl(320 95% 58%)':penColor(s.k);
-  ctx.font=labelFont(s);ctx.textBaseline='middle';
-  ctx.fillText(s.text,s.x,s.y);
-  ctx.restore();
+function drawLabel(s,cx){
+  cx=cx||ctx;
+  cx.save();
+  cx.fillStyle=s.k==='rainbow'?'hsl(320 95% 58%)':penColor(s.k);
+  cx.font=labelFont(s);cx.textBaseline='middle';
+  cx.fillText(s.text,s.x,s.y);
+  cx.restore();
 }
 // A generous hit box (padded a few px beyond the glyphs) so tapping near a
 // label with a fingertip or Pencil reliably catches it for editing.
@@ -1087,7 +1129,7 @@ function snap(){return{html:doc.innerHTML,grid:state.grid,minH:lines.style.minHe
 function syncNote(m){$('sync').textContent=m;}
 function saveLocal(){
   clearTimeout(lsT);
-  lsT=setTimeout(()=>{try{localStorage.setItem(LS,JSON.stringify({subj:state.subj,wk:state.wk,mode:state.mode,z:state.z,penWidth:state.penWidth,pencilOnly:state.pencilOnly,spacing:state.spacing,pages}));}catch(e){}},300);
+  lsT=setTimeout(()=>{try{localStorage.setItem(LS,JSON.stringify({subj:state.subj,wk:state.wk,mode:state.mode,z:state.z,penWidth:state.penWidth,pencilOnly:state.pencilOnly,spacing:state.spacing,booklet:state.booklet,pages}));}catch(e){}},300);
 }
 function persist(){
   if(loading)return;
@@ -1135,7 +1177,7 @@ function openPage(s,w,skipSave,pageIdx){
   $('topic').value=p.topic||'';$('pstatus').value=String(p.status||0);
   doc.dataset.ph=`${SUBJ[s].name} · ${WLONG(w)}${state.pageIdx>1?' · Page '+state.pageIdx:''}. `+(w==='gen'?'Unit outline, assessment dates, topics by week.':w==='rev'?'Topics to review, practice questions, mistakes to fix.':'Tap "Lecture template" to set up this lecture, or just start writing.');
   press($('subjects'),'s',s);
-  setGrid(p.grid||'lined');render();redraw();drawWeeks();drawPageNav();renderFx();
+  setGrid(p.grid||'lined');render();redraw();drawWeeks();drawPageNav();renderFx();renderBookletPreview();
   if(!$('tools').hidden)drawTracker();
   loading=false;saveLocal();
 }
@@ -1166,6 +1208,49 @@ function drawPageNav(){
   }
   $('pgAdd').onclick=()=>openPage(s,w,false,n+1);
 }
+/* booklet view: shows the page after the current one as a read-only
+   mirror beside it (reusing .pagedoc's CSS so it looks identical to the
+   live page, including tables/equations/handwriting), and clicking it
+   just calls the existing openPage() to make THAT page the live one --
+   reusing openPage()/persist() unchanged like this, rather than building
+   a second fully-independent editor, is what keeps every other feature
+   (equations, tables-with-notes, flashcards, auto-fractions...) working
+   on both pages for free instead of needing its own parallel copy. */
+function sizeBookCanvas(){
+  if(!state.booklet)return;
+  const d=devicePixelRatio||1,bc=$('bookCanvas'),bl=$('bookLines');
+  bc.width=bl.clientWidth*d;bc.height=bl.clientHeight*d;
+  const bctx=bc.getContext('2d');bctx.setTransform(d,0,0,d,0,0);
+  const s=state.subj,w=wkOf(s),p=pages[pageKey(s,w,state.pageIdx+1)];
+  (p&&p.strokes||[]).forEach(st=>{if(st.t==='label')drawLabel(st,bctx);else for(let j=1;j<st.p.length;j++)seg(st,j,bctx);});
+}
+new ResizeObserver(sizeBookCanvas).observe($('bookLines'));
+function renderBookletPreview(){
+  if(!state.booklet)return;
+  const s=state.subj,w=wkOf(s),i=state.pageIdx+1,p=pages[pageKey(s,w,i)];
+  const exists=!!p;
+  $('bookwrap').classList.toggle('empty',!exists);
+  $('bookPrevLabel').textContent=exists?`Page ${i} · tap to open →`:'+ New page '+i;
+  $('bookLines').dataset.grid=(p&&p.grid)||'lined';
+  const bd=$('bookDoc');
+  bd.innerHTML=p&&p.html!==undefined?p.html:'';
+  bd.dataset.ph=`${SUBJ[s].name} · ${WLONG(w)} · Page ${i}. Tap to start writing here.`;
+  bd.classList.toggle('empty',!bd.textContent.replace(/​/g,'').trim()&&!bd.querySelector('table,.eq'));
+  sizeBookCanvas();
+}
+function setBooklet(on){
+  state.booklet=on;
+  $('bookletToggle').setAttribute('aria-pressed',String(on));
+  document.body.classList.toggle('booklet',on);
+  $('bookwrap').hidden=!on;
+  if(on)renderBookletPreview();
+  saveLocal();
+}
+$('bookletToggle').onclick=()=>setBooklet(!state.booklet);
+$('bookOpenBtn').onclick=()=>{
+  openPage(state.subj,wkOf(state.subj),false,state.pageIdx+1);
+  if(state.mode==='type')doc.focus();
+};
 $('subjects').onclick=e=>{const k=e.target.dataset.s;if(k&&k!==state.subj)openPage(k,wkOf(k));};
 $('weeks').onclick=e=>{const b=e.target.closest('button');if(b&&b.dataset.w!==wkOf(state.subj))openPage(state.subj,b.dataset.w);};
 $('topic').addEventListener('input',()=>{persist();drawWeeks();drawPageNav();});
@@ -1175,7 +1260,8 @@ try{
   const s=JSON.parse(localStorage.getItem(LS)||'null');
   if(s){pages=s.pages||{};state.subj=s.subj;state.wk=s.wk||{};state.mode=s.mode||'type';if(ZOOMS.includes(s.z))state.z=s.z;
     if(PEN_WIDTHS.includes(s.penWidth))state.penWidth=s.penWidth;state.pencilOnly=!!s.pencilOnly;
-    if(typeof s.spacing==='number'&&s.spacing>=SPACING_RANGE[0]&&s.spacing<=SPACING_RANGE[1])state.spacing=s.spacing;}
+    if(typeof s.spacing==='number'&&s.spacing>=SPACING_RANGE[0]&&s.spacing<=SPACING_RANGE[1])state.spacing=s.spacing;
+    state.booklet=!!s.booklet;}
   else{
     const v2=JSON.parse(localStorage.getItem('kunga-notebook-v2')||'null');
     const old=JSON.parse(localStorage.getItem('kunga-notebook')||'null');
@@ -1186,7 +1272,7 @@ try{
   }
 }catch(e){}
 if(!SUBJ[state.subj])state.subj='mxb105';
-setInk('rainbow');setTool('free');setMode(state.mode);setZoom(state.z);setPenWidth(state.penWidth);setSpacing(state.spacing);$('pencilOnly').setAttribute('aria-pressed',String(state.pencilOnly));openPage(state.subj,wkOf(state.subj));
+setInk('rainbow');setTool('free');setMode(state.mode);setZoom(state.z);setPenWidth(state.penWidth);setSpacing(state.spacing);$('pencilOnly').setAttribute('aria-pressed',String(state.pencilOnly));setBooklet(state.booklet);openPage(state.subj,wkOf(state.subj));
 
 // Notebook sync piggybacks on the same login as the rest of kunga.me: if
 // this browser has an active Yeshe session (shared localStorage, same
