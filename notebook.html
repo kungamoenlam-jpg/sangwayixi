@@ -170,7 +170,7 @@ body[data-mode=draw] #doc{pointer-events:none}
 .ink-plain{background:none;color:var(--ink);-webkit-text-fill-color:var(--ink)}
 @keyframes shine{to{background-position:100% 0}}
 @media (prefers-reduced-motion:reduce){[class^=ink-]{animation:none}}
-#doc table{border-collapse:collapse;margin:6px 0}
+#doc table{display:inline-table;vertical-align:top;border-collapse:collapse;margin:6px 10px 6px 0}
 #doc td,#doc th{border:1.5px solid var(--margin);padding:2px 10px;min-width:64px;vertical-align:top}
 #doc th{background:var(--line);text-align:center}
 #doc .num{text-align:right}
@@ -245,6 +245,12 @@ body[data-mode=draw] #doc{pointer-events:none}
         <button type="button" data-pw="7">Thick</button>
         <button type="button" data-pw="12">Bold</button>
       </div>
+      <div class="seg" id="shapetool" role="group" aria-label="Draw tool">
+        <button type="button" data-tool="free" aria-pressed="true">✏️ Freehand</button>
+        <button type="button" data-tool="line">╱ Straight line</button>
+        <button type="button" data-tool="dash">┄ Dashed line</button>
+      </div>
+      <button class="plain" id="axes" type="button" title="Insert a pair of graph axes">+ Axes</button>
       <button class="plain" id="pencilOnly" type="button" aria-pressed="false">✏️ Pencil only</button>
       <button class="plain" id="undo" type="button">Undo</button>
       <button class="plain" id="clear" type="button">Clear drawing</button>
@@ -337,7 +343,7 @@ const WEEKS=['gen',...Array.from({length:13},(_,i)=>'w'+(i+1)),'rev'];
 const WLAB=w=>w==='gen'?'Overview':w==='rev'?'Revision':'Wk '+w.slice(1);
 const WLONG=w=>w==='gen'?'Unit overview':w==='rev'?'Exam revision':'Week '+w.slice(1);
 const STAT=['Not started','Notes written','Practised','Mastered'];
-const state={mode:'type',grid:'lined',ink:'rainbow',strokes:[],subj:'',wk:{},z:1,pageIdx:1,penWidth:4,pencilOnly:false,spacing:1};
+const state={mode:'type',grid:'lined',ink:'rainbow',strokes:[],subj:'',wk:{},z:1,pageIdx:1,penWidth:4,pencilOnly:false,spacing:1,tool:'free'};
 const wkOf=s=>state.wk[s]||(s==='free'?'gen':'w1');
 // A lecture page can outgrow one page; extra ones are "subj_week_p2",
 // "_p3", etc. so existing single-page saves (no suffix) keep working
@@ -683,11 +689,13 @@ const PEN_WIDTHS=[2,4,7,12];
 const SPACING_RANGE=[1,2.5];
 function setPenWidth(w){state.penWidth=Number(w);press($('thickness'),'pw',String(state.penWidth));saveLocal();}
 function togglePencilOnly(){state.pencilOnly=!state.pencilOnly;$('pencilOnly').setAttribute('aria-pressed',String(state.pencilOnly));saveLocal();}
+function setTool(t){state.tool=t;press($('shapetool'),'tool',t);}
 $('grids').onclick=e=>{const g=e.target.dataset.g;if(g)setGrid(g);};
 $('spacingSlider').addEventListener('input',e=>setSpacing(e.target.value));
 $('modes').onclick=e=>{const v=e.target.dataset.m;if(v)setMode(v);};
 $('pens').onclick=e=>{const b=e.target.closest('button');const k=b&&b.dataset.k;if(k)setInk(k);};
 $('thickness').onclick=e=>{const b=e.target.closest('button');const w=b&&b.dataset.pw;if(w)setPenWidth(w);};
+$('shapetool').onclick=e=>{const b=e.target.closest('button');const t=b&&b.dataset.tool;if(t)setTool(t);};
 $('pencilOnly').onclick=togglePencilOnly;
 
 /* handwriting */
@@ -696,6 +704,7 @@ const PEN_COLORS={black:'#2b2b2b',blue:'#1a7fff',red:'#e1453a',green:'#1fa05f',o
 function seg(s,i){
   const a=s.p[i-1],b=s.p[i];
   ctx.save();ctx.lineCap=ctx.lineJoin='round';ctx.lineWidth=s.w;
+  ctx.setLineDash(s.dash?[s.w*2.2,s.w*1.6]:[]);
   if(s.k==='erase'){ctx.globalCompositeOperation='destination-out';ctx.strokeStyle='#000';}
   else if(s.k==='rainbow') ctx.strokeStyle=`hsl(${(320+b[2]*.8)%360} 95% 58%)`;
   else ctx.strokeStyle=PEN_COLORS[s.k]||'#2b2b2b';
@@ -711,8 +720,21 @@ function sizeCanvas(){
   ctx.setTransform(d,0,0,d,0,0);redraw();
 }
 new ResizeObserver(sizeCanvas).observe(lines);
-let cur=null,lastSp=0;
+let cur=null,lastSp=0,curTool='free',startPt=null;
 const pos=e=>{const r=c.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top];};
+// The straight-line tools snap the loose end to the nearest 45° increment
+// once the drag is a few px long -- makes it easy to get a dead-straight
+// horizontal/vertical axis or diagonal without needing pixel-perfect aim.
+function angDiff(a,b){const d=Math.abs(a-b)%360;return d>180?360-d:d;}
+const SNAP_ANGLES=[0,45,90,135,180,225,270,315];
+function snapEnd(x0,y0,x,y){
+  const dx=x-x0,dy=y-y0,dist=Math.hypot(dx,dy);
+  if(dist<6)return[x,y];
+  let ang=Math.atan2(dy,dx)*180/Math.PI;if(ang<0)ang+=360;
+  for(const s of SNAP_ANGLES){if(angDiff(ang,s)<=6){ang=s;break;}}
+  const r=ang*Math.PI/180;
+  return[x0+dist*Math.cos(r),y0+dist*Math.sin(r)];
+}
 c.addEventListener('pointerdown',e=>{
   if(state.mode!=='draw')return;
   // "Pencil only" exists for palm rejection: an iPad resting palm/thumb
@@ -723,23 +745,52 @@ c.addEventListener('pointerdown',e=>{
   if(state.pencilOnly&&e.pointerType==='touch')return;
   c.setPointerCapture(e.pointerId);
   const [x,y]=pos(e);
-  cur={k:state.ink,w:state.ink==='erase'?26:state.penWidth,p:[[x,y,0]]};
+  curTool=state.ink==='erase'?'free':state.tool;
+  cur={k:state.ink,w:state.ink==='erase'?26:state.penWidth,dash:curTool==='dash',p:[[x,y,0]]};
+  startPt=[x,y];
   state.strokes.push(cur);
 });
 c.addEventListener('pointermove',e=>{
   if(!cur)return;
-  const [x,y]=pos(e),q=cur.p[cur.p.length-1],d=Math.hypot(x-q[0],y-q[1]);
-  if(d<1.5)return;
-  cur.p.push([x,y,q[2]+d]);seg(cur,cur.p.length-1);
-  if(y>lines.clientHeight-90) lines.style.minHeight=(lines.clientHeight+320)+'px';
+  const [mx,my]=pos(e);
+  if(curTool==='free'){
+    const q=cur.p[cur.p.length-1],d=Math.hypot(mx-q[0],my-q[1]);
+    if(d<1.5)return;
+    cur.p.push([mx,my,q[2]+d]);seg(cur,cur.p.length-1);
+    if(my>lines.clientHeight-90) lines.style.minHeight=(lines.clientHeight+320)+'px';
+  }else{
+    // A straight line's end point moves every frame, so (unlike freehand,
+    // which only ever appends) the whole canvas has to be redrawn each move
+    // to erase the previous preview position, not just stroke a new segment.
+    const [x,y]=snapEnd(startPt[0],startPt[1],mx,my);
+    cur.p=[[startPt[0],startPt[1],0],[x,y,Math.hypot(x-startPt[0],y-startPt[1])]];
+    redraw();
+    if(y>lines.clientHeight-90) lines.style.minHeight=(lines.clientHeight+320)+'px';
+  }
   if(cur.k!=='erase'&&e.timeStamp-lastSp>45){lastSp=e.timeStamp;burst(e.clientX,e.clientY,1);}
 });
 const end=()=>{
   if(!cur)return;
   if(cur.p.length===1){cur.p.push(cur.p[0].slice());seg(cur,1);}
-  cur=null;strokesChanged=true;persist();drawPageNav();
+  cur=null;startPt=null;strokesChanged=true;persist();drawPageNav();
 };
 c.addEventListener('pointerup',end);c.addEventListener('pointercancel',end);
+function addLine(x0,y0,x1,y1){
+  const s={k:state.ink==='erase'?'black':state.ink,w:state.penWidth,dash:false,p:[[x0,y0,0],[x1,y1,Math.hypot(x1-x0,y1-y0)]]};
+  state.strokes.push(s);seg(s,1);
+}
+function insertAxes(){
+  const r=lines.getBoundingClientRect();
+  const top=Math.max(0,-r.top),bot=Math.min(r.height,innerHeight-r.top);
+  const cy=bot>top?(top+bot)/2:r.height/2;
+  const w=lines.clientWidth,size=Math.max(160,Math.min(w*.7,340)),xm=w/2,x0=xm-size/2,x1=xm+size/2,y0=cy-size/2,y1=cy+size/2;
+  addLine(x0,cy,x1,cy); // x-axis
+  addLine(xm,y0,xm,y1); // y-axis
+  addLine(x1-14,cy-7,x1,cy);addLine(x1-14,cy+7,x1,cy); // x-axis arrowhead
+  addLine(xm-7,y0+14,xm,y0);addLine(xm+7,y0+14,xm,y0); // y-axis arrowhead
+  strokesChanged=true;persist();drawPageNav();
+}
+$('axes').onclick=insertAxes;
 $('undo').onclick=()=>{state.strokes.pop();redraw();strokesChanged=true;persist();drawPageNav();};
 $('clear').onclick=function(){
   if(this.dataset.armed){state.strokes=[];redraw();strokesChanged=true;persist();this.textContent='Clear drawing';delete this.dataset.armed;return;}
@@ -926,7 +977,7 @@ try{
   }
 }catch(e){}
 if(!SUBJ[state.subj])state.subj='mxb105';
-setInk('rainbow');setMode(state.mode);setZoom(state.z);setPenWidth(state.penWidth);setSpacing(state.spacing);$('pencilOnly').setAttribute('aria-pressed',String(state.pencilOnly));openPage(state.subj,wkOf(state.subj));
+setInk('rainbow');setTool('free');setMode(state.mode);setZoom(state.z);setPenWidth(state.penWidth);setSpacing(state.spacing);$('pencilOnly').setAttribute('aria-pressed',String(state.pencilOnly));openPage(state.subj,wkOf(state.subj));
 
 // Notebook sync piggybacks on the same login as the rest of kunga.me: if
 // this browser has an active Yeshe session (shared localStorage, same
