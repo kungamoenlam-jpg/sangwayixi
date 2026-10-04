@@ -409,10 +409,31 @@ function applyInk(k){
   else{sp.append(r.extractContents());sp.querySelectorAll('[class^=ink-]').forEach(n=>n.removeAttribute('class'));r.insertNode(sp);nr.selectNodeContents(sp);}
   s.removeAllRanges();s.addRange(nr);render();persist();
 }
+// Typing a plain numeric fraction like "3/4 " straight into a sentence
+// turns it into a proper stacked fraction automatically, the moment the
+// word after it is finished (space/punctuation) -- no need to open the
+// equation editor just for a simple a/b. Restricted to digits on both
+// sides (not e.g. "and/or" or "km/h") so it only fires for things that are
+// actually fractions.
+function maybeAutoFraction(){
+  const s=getSelection();
+  if(!s.rangeCount||!s.isCollapsed)return;
+  const node=s.anchorNode;
+  if(!node||node.nodeType!==3||!doc.contains(node))return;
+  const offset=s.anchorOffset,before=node.textContent.slice(0,offset);
+  const m=before.match(/(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)([ .,;:)])$/);
+  if(!m)return;
+  const r=document.createRange();
+  r.setStart(node,offset-m[0].length);r.setEnd(node,offset);
+  s.removeAllRanges();s.addRange(r);
+  document.execCommand('insertHTML',false,eqSpan(m[1]+'/'+m[2])+m[3]);
+  render();persist();
+}
 doc.addEventListener('input',()=>{
   fixSizes();render();
   const s=getSelection();
   if(s.rangeCount){const rr=s.getRangeAt(0),r=rr.getClientRects()[0]||rr.getBoundingClientRect();if(r&&(r.top||r.left))burst(r.left,r.top+r.height/2,4);}
+  maybeAutoFraction();
   persist();drawPageNav();
 });
 // Pasted images (a screenshot, a copied photo, "copy image" from a
