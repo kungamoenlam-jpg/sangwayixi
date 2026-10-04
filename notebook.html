@@ -76,15 +76,28 @@ body[data-mode=type] #c{pointer-events:none}
 body.booklet .wrap{max-width:1500px}
 body.booklet .pagegrid{display:flex;align-items:flex-start;gap:20px}
 body.booklet #paper,body.booklet #bookwrap{flex:1 1 0;min-width:0}
-@media (max-width:1150px){body.booklet .pagegrid{flex-direction:column}}
-#bookwrap{cursor:pointer}
-#bookwrap #bookDoc{pointer-events:none}
-#bookCanvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.bookclick{position:absolute;inset:0;width:100%;height:100%;background:transparent;border:0;border-radius:inherit;padding:0;cursor:pointer}
-.bookclick:hover{background:rgba(0,0,0,.04)}
-.bookclick span{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--btn);color:var(--btntext);
-  font-weight:700;font-size:13px;padding:5px 14px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,.2)}
-#bookwrap.empty .bookclick span{opacity:.92}
+/* align-items:flex-start on .pagegrid (set above) means each page's cross-
+   axis size follows its own content instead of being forced equal -- fine
+   side by side (rows just differ in height, which is normal), but in this
+   stacked column layout the cross axis is width, so without overriding to
+   stretch here, whichever page has intrinsically wider content (a table, a
+   long equation...) would end up visibly wider than the other instead of
+   both filling the same column width. */
+@media (max-width:1150px){body.booklet .pagegrid{flex-direction:column;align-items:stretch}}
+/* The right page in booklet view is a real second editor (typing and
+   drawing both work directly, no "open" step needed) -- #bookCanvas only
+   intercepts pointer events in draw mode, exactly like the primary #c,
+   so typing isn't blocked by an invisible canvas sitting on top of it. */
+#bookCanvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+body[data-mode=type] #bookCanvas{pointer-events:none}
+body[data-mode=draw] #bookDoc{pointer-events:none}
+/* The "open as main page" pill is a small, self-sized button pinned to
+   the top rather than a full-page overlay, so it doesn't swallow clicks
+   meant for typing/drawing everywhere else on the page. */
+.bookclick{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:5;
+  background:var(--btn);color:var(--btntext);border:0;font:inherit;font-weight:700;font-size:13px;
+  padding:5px 14px;border-radius:999px;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,.2);cursor:pointer}
+.bookclick:hover{filter:brightness(1.08)}
 body[data-mode=draw] #doc{pointer-events:none}
 .k0{color:var(--c0)}.k1{color:var(--c1)}.k2{color:var(--c2)}.k3{color:var(--c3)}
 .k4{color:var(--c4)}.k5{color:var(--c5)}.k6{color:var(--c6)}.k7{color:var(--c7)}
@@ -409,7 +422,7 @@ body.booklet #planPanel{top:auto;bottom:16px;left:16px;right:16px;width:auto;max
     <aside class="paper bookprev" id="bookwrap" hidden aria-label="Next page preview">
       <div class="rings" aria-hidden="true"></div>
       <div class="lines" id="bookLines" data-grid="lined">
-        <div id="bookDoc" class="pagedoc"></div>
+        <div id="bookDoc" class="pagedoc" contenteditable="true" spellcheck="true" role="textbox" aria-multiline="true" aria-label="Next page"></div>
         <canvas id="bookCanvas" aria-hidden="true"></canvas>
       </div>
       <button type="button" id="bookOpenBtn" class="bookclick"><span id="bookPrevLabel"></span></button>
@@ -670,8 +683,10 @@ function moveCell(cell,back){
   if(i<0)return;
   const r=document.createRange();r.selectNodeContents(cs[i]);r.collapse(false);const s=getSelection();s.removeAllRanges();s.addRange(r);
 }
-doc.addEventListener('keydown',e=>{
-  if(e.altKey&&e.code==='Equal'){e.preventDefault();openEq();return;}
+// Shared with #bookDoc (the booklet-view right page) below -- Tab-to-indent
+// and table-cell navigation only ever touch whatever currently has focus
+// and selection, so the same handler works for either page unchanged.
+function handleTabKey(e){
   if(e.key!=='Tab')return;
   e.preventDefault();
   const s=getSelection(),n=s.anchorNode,el=n&&(n.nodeType===3?n.parentElement:n),cell=el&&el.closest('td,th');
@@ -679,6 +694,10 @@ doc.addEventListener('keydown',e=>{
   else if(el&&el.closest('li'))document.execCommand(e.shiftKey?'outdent':'indent');
   else if(e.shiftKey){if(s.isCollapsed){s.modify('extend','backward','character');if(s.toString()==='\t')document.execCommand('delete');else s.collapseToEnd();}}
   else document.execCommand('insertText',false,'\t');
+}
+doc.addEventListener('keydown',e=>{
+  if(e.altKey&&e.code==='Equal'){e.preventDefault();openEq();return;}
+  handleTabKey(e);
 });
 
 /* accounting tables */
@@ -833,21 +852,26 @@ $('eqok').onclick=insEq;$('eqx').onclick=closeEq;$('feq').onclick=()=>openEq();
 doc.addEventListener('click',e=>{const q=e.target.closest('.eq');if(q&&doc.contains(q))openEq(q);});
 
 /* layout, grids, text size */
-function fit(){
-  const cell=CELL[state.grid]*state.z;
-  if(!cell){lines.style.width='';return;}
-  const avail=paper.clientWidth-parseFloat(getComputedStyle(paper).paddingLeft);
+// Shared by both pages (the booklet view's right page uses the exact same
+// grid-cell-width snapping as the primary, via bookFit() below) so neither
+// one looks a different size from the other for the same grid/zoom.
+function fitOne(linesEl,paperEl,grid){
+  const cell=CELL[grid]*state.z;
+  if(!cell){linesEl.style.width='';return;}
+  const avail=paperEl.clientWidth-parseFloat(getComputedStyle(paperEl).paddingLeft);
   const cols=Math.max(4,Math.floor(avail/cell));
-  lines.style.width=(cols*cell+(state.grid==='cn'?1:0))+'px';
+  linesEl.style.width=(cols*cell+(grid==='cn'?1:0))+'px';
 }
-addEventListener('resize',fit);
+function fit(){fitOne(lines,paper,state.grid);}
+function bookFit(){if(state.booklet)fitOne($('bookLines'),$('bookwrap'),$('bookLines').dataset.grid);}
+addEventListener('resize',()=>{fit();bookFit();});
 const ZOOMS=[.7,.8,.9,1,1.15,1.3,1.5,1.75,2];
 function setZoom(z){
-  state.z=z;lines.style.setProperty('--z',z);
+  state.z=z;lines.style.setProperty('--z',z);$('bookLines').style.setProperty('--z',z);
   $('zval').textContent=Math.round(z*100)+'%';
   $('zoom').querySelector('[data-z="-1"]').disabled=z<=ZOOMS[0];
   $('zoom').querySelector('[data-z="1"]').disabled=z>=ZOOMS[ZOOMS.length-1];
-  fit();saveLocal();
+  fit();bookFit();saveLocal();
 }
 function stepZoom(d){
   if(!d){setZoom(1);return;}
@@ -868,7 +892,7 @@ function setGrid(g){state.grid=g;lines.dataset.grid=g;press($('grids'),'g',g);fi
 // different purpose and would distort into rectangles if stretched the
 // same way, so this setting is a no-op there by design, not a bug.
 function setSpacing(sp){
-  state.spacing=Number(sp);lines.style.setProperty('--sp',state.spacing);
+  state.spacing=Number(sp);lines.style.setProperty('--sp',state.spacing);$('bookLines').style.setProperty('--sp',state.spacing);
   $('spacingSlider').value=state.spacing;$('spacingVal').textContent=state.spacing.toFixed(1)+'×';
   saveLocal();
 }
@@ -934,8 +958,9 @@ function drawLabel(s,cx){
 }
 // A generous hit box (padded a few px beyond the glyphs) so tapping near a
 // label with a fingertip or Pencil reliably catches it for editing.
-function labelBox(s){
-  ctx.save();ctx.font=labelFont(s);const w=ctx.measureText(s.text).width;ctx.restore();
+function labelBox(s,cx){
+  cx=cx||ctx;
+  cx.save();cx.font=labelFont(s);const w=cx.measureText(s.text).width;cx.restore();
   return{x0:s.x-5,y0:s.y-s.size/2-5,x1:s.x+w+5,y1:s.y+s.size/2+5};
 }
 function findLabelAt(x,y){
@@ -1057,9 +1082,19 @@ function insertAxes(){
   strokesChanged=true;persist();drawPageNav();redraw();
 }
 $('axes').onclick=insertAxes;
-$('undo').onclick=()=>{state.strokes.pop();redraw();strokesChanged=true;persist();drawPageNav();};
+// Undo/Clear are shared, global buttons (not duplicated per page), so in
+// booklet view they act on whichever page's canvas was drawn on last --
+// tracked via lastDrawSurface, set on pointerdown/focus in either one.
+$('undo').onclick=()=>{
+  if(lastDrawSurface==='b'&&state.booklet){bookStrokes.pop();redrawBook();bookPersist();return;}
+  state.strokes.pop();redraw();strokesChanged=true;persist();drawPageNav();
+};
 $('clear').onclick=function(){
-  if(this.dataset.armed){state.strokes=[];redraw();strokesChanged=true;persist();this.textContent='Clear drawing';delete this.dataset.armed;return;}
+  if(this.dataset.armed){
+    if(lastDrawSurface==='b'&&state.booklet){bookStrokes=[];redrawBook();bookPersist();}
+    else{state.strokes=[];redraw();strokesChanged=true;persist();}
+    this.textContent='Clear drawing';delete this.dataset.armed;return;
+  }
   this.dataset.armed=1;this.textContent='Tap again to clear';
   setTimeout(()=>{this.textContent='Clear drawing';delete this.dataset.armed;},3000);
 };
@@ -1224,35 +1259,62 @@ function drawPageNav(){
   }
   $('pgAdd').onclick=()=>openPage(s,w,false,n+1);
 }
-/* booklet view: shows the page after the current one as a read-only
-   mirror beside it (reusing .pagedoc's CSS so it looks identical to the
-   live page, including tables/equations/handwriting), and clicking it
-   just calls the existing openPage() to make THAT page the live one --
-   reusing openPage()/persist() unchanged like this, rather than building
-   a second fully-independent editor, is what keeps every other feature
-   (equations, tables-with-notes, flashcards, auto-fractions...) working
-   on both pages for free instead of needing its own parallel copy. */
+/* booklet view: the page after the current one is shown beside it, and is
+   directly editable (typing and drawing) in its own right, not just a
+   read-only mirror you have to "open" first. It keeps its own in-memory
+   content (bookStrokes + #bookDoc's innerHTML) and persists straight to
+   its own page key via bookPersist(), independently of the primary
+   page's persist(). The small "⇄ Open as main page" pill still promotes
+   it via the existing openPage() for the handful of things that are only
+   wired to the primary editor specifically -- equations, inserting a new
+   table, flashcard Q/A parsing, auto-fractions -- rather than duplicating
+   all of that too. */
+let bookStrokes=[],lastDrawSurface='a';
+const bookCtx=()=>$('bookCanvas').getContext('2d');
+function bookKey(){return pageKey(state.subj,wkOf(state.subj),state.pageIdx+1);}
+function redrawBook(){
+  const bc=$('bookCanvas'),cx=bookCtx();
+  cx.save();cx.setTransform(1,0,0,1,0,0);cx.clearRect(0,0,bc.width,bc.height);cx.restore();
+  bookStrokes.forEach(s=>{if(s.t==='label')drawLabel(s,cx);else for(let j=1;j<s.p.length;j++)seg(s,j,cx);});
+}
 function sizeBookCanvas(){
   if(!state.booklet)return;
   const d=devicePixelRatio||1,bc=$('bookCanvas'),bl=$('bookLines');
   bc.width=bl.clientWidth*d;bc.height=bl.clientHeight*d;
-  const bctx=bc.getContext('2d');bctx.setTransform(d,0,0,d,0,0);
-  const s=state.subj,w=wkOf(s),p=pages[pageKey(s,w,state.pageIdx+1)];
-  (p&&p.strokes||[]).forEach(st=>{if(st.t==='label')drawLabel(st,bctx);else for(let j=1;j<st.p.length;j++)seg(st,j,bctx);});
+  bookCtx().setTransform(d,0,0,d,0,0);redrawBook();
 }
 new ResizeObserver(sizeBookCanvas).observe($('bookLines'));
+function bookPersist(){
+  if(!state.booklet||loading)return;
+  const k=bookKey(),existing=pages[k]||blank();
+  const strokes=bookStrokes.map(s=>s.t==='label'?{t:'label',k:s.k,size:s.size,x:Math.round(s.x),y:Math.round(s.y),text:s.text}
+    :{k:s.k,w:s.w,dash:s.dash,arrow:s.arrow,p:s.p.map(a=>a.map(Math.round))});
+  pages[k]={...existing,html:$('bookDoc').innerHTML,grid:$('bookLines').dataset.grid||existing.grid||'lined',
+    minH:$('bookLines').style.minHeight||existing.minH||'',strokes,t:Date.now()};
+  dirty.add(k);scheduleFlush(1500);saveLocal();drawWeeks();drawPageNav();
+}
+function findLabelAtBook(x,y){
+  const cx=bookCtx();
+  for(let i=bookStrokes.length-1;i>=0;i--){
+    const s=bookStrokes[i];
+    if(s.t!=='label')continue;
+    const b=labelBox(s,cx);
+    if(x>=b.x0&&x<=b.x1&&y>=b.y0&&y<=b.y1)return s;
+  }
+  return null;
+}
 function renderBookletPreview(){
   if(!state.booklet)return;
   const s=state.subj,w=wkOf(s),i=state.pageIdx+1,p=pages[pageKey(s,w,i)];
-  const exists=!!p;
-  $('bookwrap').classList.toggle('empty',!exists);
-  $('bookPrevLabel').textContent=exists?`Page ${i} · tap to open →`:'+ New page '+i;
+  $('bookPrevLabel').textContent=`⇄ Open page ${i} as main page`;
   $('bookLines').dataset.grid=(p&&p.grid)||'lined';
+  $('bookLines').style.minHeight=(p&&p.minH)||'';
   const bd=$('bookDoc');
   bd.innerHTML=p&&p.html!==undefined?p.html:'';
-  bd.dataset.ph=`${SUBJ[s].name} · ${WLONG(w)} · Page ${i}. Tap to start writing here.`;
+  bd.dataset.ph=`${SUBJ[s].name} · ${WLONG(w)} · Page ${i}. Start writing here.`;
   bd.classList.toggle('empty',!bd.textContent.replace(/​/g,'').trim()&&!bd.querySelector('table,.eq'));
-  sizeBookCanvas();
+  bookStrokes=(p&&p.strokes||[]).map(x=>x.t==='label'?{...x}:{...x,p:x.p.map(a=>a.slice())});
+  bookFit();sizeBookCanvas();
 }
 function setBooklet(on){
   state.booklet=on;
@@ -1267,6 +1329,70 @@ $('bookOpenBtn').onclick=()=>{
   openPage(state.subj,wkOf(state.subj),false,state.pageIdx+1);
   if(state.mode==='type')doc.focus();
 };
+$('bookDoc').addEventListener('input',()=>{
+  const bd=$('bookDoc');
+  bd.classList.toggle('empty',!bd.textContent.replace(/​/g,'').trim()&&!bd.querySelector('table,.eq'));
+  bookPersist();
+});
+$('bookDoc').addEventListener('keydown',handleTabKey);
+$('bookDoc').addEventListener('focusin',()=>{lastDrawSurface='b';});
+doc.addEventListener('focusin',()=>{lastDrawSurface='a';});
+
+/* drawing directly on the right page -- the same per-tool behaviour as
+   the primary canvas (45°-snapped straight/dashed/arrow lines, tap-to-
+   edit labels, freehand), just writing into bookStrokes/bookPersist()
+   instead of state.strokes/persist(). */
+let bookCur=null,bookStartPt=null,bookCurTool='free';
+const bookPos=e=>{const r=$('bookCanvas').getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top];};
+$('bookCanvas').addEventListener('pointerdown',e=>{
+  if(state.mode!=='draw'||!state.booklet)return;
+  if(state.pencilOnly&&e.pointerType==='touch')return;
+  lastDrawSurface='b';
+  const [x,y]=bookPos(e);
+  if(state.tool==='label'){
+    const hit=findLabelAtBook(x,y);
+    if(hit){
+      const edited=prompt('Edit label text (clear the text to delete it):',hit.text);
+      if(edited===null)return;
+      if(!edited.trim())bookStrokes.splice(bookStrokes.indexOf(hit),1);
+      else hit.text=edited.trim();
+      redrawBook();bookPersist();
+      return;
+    }
+    const txt=prompt('Label text:');
+    if(txt&&txt.trim()){
+      const s={t:'label',k:state.ink==='erase'?'black':state.ink,size:Math.round(20*state.z),x,y,text:txt.trim()};
+      bookStrokes.push(s);drawLabel(s,bookCtx());bookPersist();
+    }
+    return;
+  }
+  $('bookCanvas').setPointerCapture(e.pointerId);
+  bookCurTool=state.ink==='erase'?'free':state.tool;
+  bookCur={k:state.ink,w:state.ink==='erase'?26:state.penWidth,dash:bookCurTool==='dash',arrow:bookCurTool==='arrow',p:[[x,y,0]]};
+  bookStartPt=[x,y];
+  bookStrokes.push(bookCur);
+});
+$('bookCanvas').addEventListener('pointermove',e=>{
+  if(!bookCur)return;
+  const [mx,my]=bookPos(e),bl=$('bookLines');
+  if(bookCurTool==='free'){
+    const q=bookCur.p[bookCur.p.length-1],d=Math.hypot(mx-q[0],my-q[1]);
+    if(d<1.5)return;
+    bookCur.p.push([mx,my,q[2]+d]);seg(bookCur,bookCur.p.length-1,bookCtx());
+    if(my>bl.clientHeight-90) bl.style.minHeight=(bl.clientHeight+320)+'px';
+  }else{
+    const [x,y]=snapEnd(bookStartPt[0],bookStartPt[1],mx,my);
+    bookCur.p=[[bookStartPt[0],bookStartPt[1],0],[x,y,Math.hypot(x-bookStartPt[0],y-bookStartPt[1])]];
+    redrawBook();
+    if(y>bl.clientHeight-90) bl.style.minHeight=(bl.clientHeight+320)+'px';
+  }
+});
+const endBook=()=>{
+  if(!bookCur)return;
+  if(bookCur.p.length===1){bookCur.p.push(bookCur.p[0].slice());seg(bookCur,1,bookCtx());}
+  bookCur=null;bookStartPt=null;bookPersist();
+};
+$('bookCanvas').addEventListener('pointerup',endBook);$('bookCanvas').addEventListener('pointercancel',endBook);
 $('subjects').onclick=e=>{const k=e.target.dataset.s;if(k&&k!==state.subj)openPage(k,wkOf(k));};
 $('weeks').onclick=e=>{const b=e.target.closest('button');if(b&&b.dataset.w!==wkOf(state.subj))openPage(state.subj,b.dataset.w);};
 $('topic').addEventListener('input',()=>{persist();drawWeeks();drawPageNav();});
