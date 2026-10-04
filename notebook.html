@@ -608,13 +608,40 @@ function applyInk(k){
 // equation editor just for a simple a/b. Restricted to digits on both
 // sides (not e.g. "and/or" or "km/h") so it only fires for things that are
 // actually fractions.
+const FRAC_NUM_RE=/(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)([ .,;:)])$/;
+// For anything that isn't bare numbers -- "Fixed costs/Contribution margin"
+// -- a single slash can't be auto-detected the way the numeric case is
+// without also firing on ordinary English like "and/or" or "pass/fail", and
+// scanning some fixed number of words backwards from a trailing space/
+// punctuation doesn't work either: typed live, one keystroke at a time,
+// there's no way to tell "the denominator's first word, more to come" apart
+// from "that's the whole thing, convert now" when both just look like
+// "...text ", and capping word count can't tell a genuine fraction's
+// numerator apart from ordinary preceding prose that happens to also be a
+// few words long ("Total is 4000" before a stray "//" is not a fraction
+// called "Total is 4000"). Wrapping the whole thing in doubled slashes --
+// //numerator/denominator// -- sidesteps both problems: the opening // is
+// an explicit, unambiguous marker for where the fraction actually starts,
+// and each side is simply "whatever isn't a slash", so it converts the
+// instant the closing // is typed, words or numbers, regardless of
+// whatever ordinary text came before it.
+const FRAC_WRAP_RE=/\/\/([^\/\n]+)\/([^\/\n]+)\/\/$/;
 function maybeAutoFraction(){
   const s=getSelection();
   if(!s.rangeCount||!s.isCollapsed)return;
   const node=s.anchorNode;
   if(!node||node.nodeType!==3||!doc.contains(node))return;
   const offset=s.anchorOffset,before=node.textContent.slice(0,offset);
-  const m=before.match(/(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)([ .,;:)])$/);
+  const wm=before.match(FRAC_WRAP_RE);
+  if(wm){
+    const r=document.createRange();
+    r.setStart(node,offset-wm[0].length);r.setEnd(node,offset);
+    s.removeAllRanges();s.addRange(r);
+    document.execCommand('insertHTML',false,eqSpan(wm[1].trim()+'/'+wm[2].trim(),.8)+'&nbsp;');
+    render();persist();
+    return;
+  }
+  const m=before.match(FRAC_NUM_RE);
   if(!m)return;
   // Replacing only up to just *before* the trigger character (not through
   // it) leaves that character in place, untouched, as trailing content --
