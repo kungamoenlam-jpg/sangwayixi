@@ -170,7 +170,13 @@ body[data-mode=draw] #doc{pointer-events:none}
   padding:var(--pad);letter-spacing:var(--ls);white-space:pre-wrap;overflow-wrap:break-word;tab-size:4;caret-color:var(--c0);
   color:var(--c0);-webkit-text-fill-color:transparent;-webkit-background-clip:text;background-clip:text;
   background-image:linear-gradient(90deg,var(--c0),var(--c2),var(--c3),var(--c4),var(--c5),var(--c6),var(--c7),var(--c0));background-size:480px 100%;
-  min-width:0;max-width:100%;box-sizing:border-box}
+  min-width:0;max-width:100%;box-sizing:border-box;display:flow-root}
+/* display:flow-root (rather than overflow:hidden, which would clip things
+   like the equation editor's popovers) gives #doc its own block formatting
+   context, which is what makes it actually extend down to the full height
+   of a floated table inside it -- without it, a container whose content
+   ends in a float collapses to near-zero height past that float, making
+   the page impossible to click into below a tall table. */
 /* #doc is a CSS grid item (.lines is display:grid); a grid item's default
    min-width:auto means one unbreakable run of content (an inline style from
    pasted text, a wide table/equation, ...) can force the whole grid wider
@@ -202,7 +208,12 @@ body[data-mode=draw] #doc{pointer-events:none}
 .ink-plain{background:none;color:var(--ink);-webkit-text-fill-color:var(--ink)}
 @keyframes shine{to{background-position:100% 0}}
 @media (prefers-reduced-motion:reduce){[class^=ink-]{animation:none}}
-#doc table{display:inline-table;vertical-align:top;border-collapse:collapse;margin:6px 10px 6px 0}
+/* float (not inline-table) is what lets *every* subsequent line wrap
+   alongside a table instead of just the one it was inserted into --
+   inline-table only shares a single line box with surrounding text, so
+   anything past the first wrapped line dropped below the table's full
+   height instead of continuing down its side. */
+#doc table{float:left;border-collapse:collapse;margin:4px 16px 10px 0}
 #doc td,#doc th{border:1.5px solid var(--margin);padding:2px 10px;min-width:64px;vertical-align:top}
 #doc th{background:var(--line);text-align:center}
 #doc .num{text-align:right}
