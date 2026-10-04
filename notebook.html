@@ -320,6 +320,7 @@ body.booklet #planPanel{top:auto;bottom:16px;left:16px;right:16px;width:auto;max
         <button type="button" data-k="orange"><i class="pen-dot" style="background:#ff7a00"></i>Orange</button>
         <button type="button" data-k="purple"><i class="pen-dot" style="background:#8b4dff"></i>Purple</button>
         <button type="button" data-k="pink"><i class="pen-dot" style="background:#ff2d95"></i>Pink</button>
+        <button type="button" data-k="highlighter"><i class="pen-dot" style="background:#ffd60a"></i>Highlighter</button>
         <button type="button" data-k="erase">Eraser</button>
       </div>
       <div class="seg" id="thickness" role="group" aria-label="Pen thickness">
@@ -332,6 +333,7 @@ body.booklet #planPanel{top:auto;bottom:16px;left:16px;right:16px;width:auto;max
         <button type="button" data-tool="free" aria-pressed="true">✏️ Freehand</button>
         <button type="button" data-tool="line">╱ Straight line</button>
         <button type="button" data-tool="dash">┄ Dashed line</button>
+        <button type="button" data-tool="arrow">→ Arrow</button>
         <button type="button" data-tool="label">🏷 Label</button>
       </div>
       <button class="plain" id="axes" type="button" title="Insert a pair of graph axes">+ Axes</button>
@@ -887,7 +889,7 @@ $('pencilOnly').onclick=togglePencilOnly;
 
 /* handwriting */
 let strokesChanged=false;
-const PEN_COLORS={blue:'#1a7fff',red:'#e1453a',green:'#1fa05f',orange:'#ff7a00',purple:'#8b4dff',pink:'#ff2d95'};
+const PEN_COLORS={blue:'#1a7fff',red:'#e1453a',green:'#1fa05f',orange:'#ff7a00',purple:'#8b4dff',pink:'#ff2d95',highlighter:'#b8860b'};
 // "Black" is resolved live from --pen-black (not a fixed hex like the other
 // pens) since literal #2b2b2b would be almost invisible on the dark paper
 // in dark mode -- it needs to flip to a light grey there, same as the
@@ -904,8 +906,22 @@ function seg(s,i,cx){
   cx.setLineDash(s.dash?[s.w*2.2,s.w*1.6]:[]);
   if(s.k==='erase'){cx.globalCompositeOperation='destination-out';cx.strokeStyle='#000';}
   else if(s.k==='rainbow') cx.strokeStyle=`hsl(${(320+b[2]*.8)%360} 95% 58%)`;
+  else if(s.k==='highlighter'){cx.strokeStyle='#ffd60a';cx.globalAlpha=.4;cx.lineWidth=Math.max(s.w,18);}
   else cx.strokeStyle=penColor(s.k);
-  cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke();cx.restore();
+  cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke();
+  // The arrow tool is a straight line (always exactly 2 points, so this
+  // only ever fires once per stroke) with a small "V" head drawn at the
+  // end, angled back from the line's own direction -- for labelling a
+  // point or region on a graph without switching to a separate shape tool.
+  if(s.arrow){
+    const ang=Math.atan2(b[1]-a[1],b[0]-a[0]),len=Math.max(10,s.w*2.5),spread=.5;
+    cx.setLineDash([]);
+    for(const d of[spread,-spread]){
+      const wing=ang+Math.PI-d;
+      cx.beginPath();cx.moveTo(b[0],b[1]);cx.lineTo(b[0]+len*Math.cos(wing),b[1]+len*Math.sin(wing));cx.stroke();
+    }
+  }
+  cx.restore();
 }
 const labelFont=s=>`700 ${s.size}px Kalam, "Comic Sans MS", cursive`;
 function drawLabel(s,cx){
@@ -987,7 +1003,7 @@ c.addEventListener('pointerdown',e=>{
   }
   c.setPointerCapture(e.pointerId);
   curTool=state.ink==='erase'?'free':state.tool;
-  cur={k:state.ink,w:state.ink==='erase'?26:state.penWidth,dash:curTool==='dash',p:[[x,y,0]]};
+  cur={k:state.ink,w:state.ink==='erase'?26:state.penWidth,dash:curTool==='dash',arrow:curTool==='arrow',p:[[x,y,0]]};
   startPt=[x,y];
   state.strokes.push(cur);
 });
@@ -1125,7 +1141,7 @@ const dirty=new Set();
 const blank=()=>({html:'',grid:'lined',minH:'',strokes:[],topic:'',status:0});
 function snap(){return{html:doc.innerHTML,grid:state.grid,minH:lines.style.minHeight,topic:$('topic').value,status:+$('pstatus').value,
   strokes:state.strokes.map(s=>s.t==='label'?{t:'label',k:s.k,size:s.size,x:Math.round(s.x),y:Math.round(s.y),text:s.text}
-    :{k:s.k,w:s.w,dash:s.dash,p:s.p.map(a=>a.map(Math.round))})};}
+    :{k:s.k,w:s.w,dash:s.dash,arrow:s.arrow,p:s.p.map(a=>a.map(Math.round))})};}
 function syncNote(m){$('sync').textContent=m;}
 function saveLocal(){
   clearTimeout(lsT);
