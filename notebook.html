@@ -148,7 +148,12 @@ body[data-mode=draw] #doc{pointer-events:none}
 #eqin{flex:1;min-width:200px;font:inherit;padding:8px 12px;border:1px solid var(--margin);border-radius:12px;background:var(--desk);color:var(--soft)}
 #eqprev{min-height:48px;padding:8px 4px;color:var(--c6);font-size:1.25em;overflow-x:auto}
 #eqsym{display:flex;flex-wrap:wrap;gap:6px}
-.eq math{font-size:1.15em;math-style:normal}
+/* math-style:compact (the MathML style meant for math embedded in a line
+   of text, vs. "normal"/display style meant for a standalone equation on
+   its own line) keeps a fraction's numerator/denominator from rendering
+   so tall that it barely fits the current line and visually reads as if
+   it jumped to its own row below the text it's part of. */
+.eq math{font-size:1.15em;math-style:compact}
 .fcbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 #fcCard{margin-top:10px;background:var(--desk);border-radius:14px;padding:12px 14px}
 .fcmeta{font-size:13px}
@@ -232,6 +237,13 @@ body.booklet #planPanel{top:auto;bottom:16px;left:16px;right:16px;width:auto;max
    always wins over any stylesheet rule regardless of selector specificity
    -- this is the one place that actually has to override it. */
 .pagedoc *{max-width:100%!important;overflow-wrap:break-word!important;white-space:pre-wrap!important}
+/* ...except MathML's own internal elements (<math>, <mfrac>, <mrow>, ...),
+   which that wildcard was never meant to reach -- white-space/max-width
+   are plain-text/HTML-box concepts, and forcing them onto MathML's own
+   layout algorithm was corrupting a fraction's intrinsic sizing, making it
+   wrap onto its own line below the text even when there was clearly still
+   room on the current line for it. */
+.pagedoc math,.pagedoc math *{white-space:normal!important;max-width:none!important;overflow-wrap:normal!important}
 .pagedoc ::selection{background:rgba(255,45,149,.28);-webkit-text-fill-color:currentColor}
 .pagedoc.empty::before{content:attr(data-ph);position:absolute;left:0;top:0;padding:var(--pad);color:var(--margin);-webkit-text-fill-color:var(--margin);pointer-events:none}
 .pagedoc div,.pagedoc p,.pagedoc h1,.pagedoc h2,.pagedoc li{margin:0}
@@ -333,7 +345,10 @@ body.booklet #planPanel{top:auto;bottom:16px;left:16px;right:16px;width:auto;max
         <button type="button" data-k="orange"><i class="pen-dot" style="background:#ff7a00"></i>Orange</button>
         <button type="button" data-k="purple"><i class="pen-dot" style="background:#8b4dff"></i>Purple</button>
         <button type="button" data-k="pink"><i class="pen-dot" style="background:#ff2d95"></i>Pink</button>
-        <button type="button" data-k="highlighter"><i class="pen-dot" style="background:#ffd60a"></i>Highlighter</button>
+        <button type="button" data-k="hl-yellow"><i class="pen-dot" style="background:#ffd60a"></i>Yellow HL</button>
+        <button type="button" data-k="hl-aqua"><i class="pen-dot" style="background:#22d3ee"></i>Aqua HL</button>
+        <button type="button" data-k="hl-pink"><i class="pen-dot" style="background:#ff6fc4"></i>Pink HL</button>
+        <button type="button" data-k="hl-purple"><i class="pen-dot" style="background:#c084fc"></i>Purple HL</button>
         <button type="button" data-k="erase">Eraser</button>
       </div>
       <div class="seg" id="thickness" role="group" aria-label="Pen thickness">
@@ -591,10 +606,21 @@ function maybeAutoFraction(){
   const offset=s.anchorOffset,before=node.textContent.slice(0,offset);
   const m=before.match(/(\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)([ .,;:)])$/);
   if(!m)return;
+  // Replacing only up to just *before* the trigger character (not through
+  // it) leaves that character in place, untouched, as trailing content --
+  // replacing all the way to the exact end of the text node instead (as
+  // this used to) put the range's end exactly on the node/block boundary,
+  // which made execCommand('insertHTML') insert the equation as a sibling
+  // *after* the enclosing <div> rather than inside it, landing it on its
+  // own line below the text instead of staying inline within it.
   const r=document.createRange();
-  r.setStart(node,offset-m[0].length);r.setEnd(node,offset);
+  r.setStart(node,offset-m[0].length);r.setEnd(node,offset-m[3].length);
   s.removeAllRanges();s.addRange(r);
-  document.execCommand('insertHTML',false,eqSpan(m[1]+'/'+m[2])+m[3]);
+  // Inserted smaller than full size (80%, a real EQ_SCALES preset) so it
+  // sits closer to the height of the surrounding words instead of towering
+  // over them -- a deliberately-placed equation from the Σ dialog still
+  // defaults to 100%, since that's usually its own standalone content.
+  document.execCommand('insertHTML',false,eqSpan(m[1]+'/'+m[2],.8));
   render();persist();
 }
 doc.addEventListener('input',()=>{
@@ -913,7 +939,13 @@ $('pencilOnly').onclick=togglePencilOnly;
 
 /* handwriting */
 let strokesChanged=false;
-const PEN_COLORS={blue:'#1a7fff',red:'#e1453a',green:'#1fa05f',orange:'#ff7a00',purple:'#8b4dff',pink:'#ff2d95',highlighter:'#b8860b'};
+const PEN_COLORS={blue:'#1a7fff',red:'#e1453a',green:'#1fa05f',orange:'#ff7a00',purple:'#8b4dff',pink:'#ff2d95',
+  'hl-yellow':'#b8860b','hl-aqua':'#0e7490','hl-pink':'#c2267f','hl-purple':'#7c3aed',highlighter:'#b8860b'};
+// Four highlighter colours, each translucent and forced to a wide stroke
+// (regardless of the selected thickness) so a single drag already shades
+// like a real marker -- "highlighter" is kept as an alias for yellow since
+// that was the only option before colours were added.
+const HIGHLIGHT_COLORS={'hl-yellow':'#ffd60a','hl-aqua':'#22d3ee','hl-pink':'#ff6fc4','hl-purple':'#c084fc',highlighter:'#ffd60a'};
 // "Black" is resolved live from --pen-black (not a fixed hex like the other
 // pens) since literal #2b2b2b would be almost invisible on the dark paper
 // in dark mode -- it needs to flip to a light grey there, same as the
@@ -930,7 +962,7 @@ function seg(s,i,cx){
   cx.setLineDash(s.dash?[s.w*2.2,s.w*1.6]:[]);
   if(s.k==='erase'){cx.globalCompositeOperation='destination-out';cx.strokeStyle='#000';}
   else if(s.k==='rainbow') cx.strokeStyle=`hsl(${(320+b[2]*.8)%360} 95% 58%)`;
-  else if(s.k==='highlighter'){cx.strokeStyle='#ffd60a';cx.globalAlpha=.4;cx.lineWidth=Math.max(s.w,18);}
+  else if(HIGHLIGHT_COLORS[s.k]){cx.strokeStyle=HIGHLIGHT_COLORS[s.k];cx.globalAlpha=.4;cx.lineWidth=Math.max(s.w,18);}
   else cx.strokeStyle=penColor(s.k);
   cx.beginPath();cx.moveTo(a[0],a[1]);cx.lineTo(b[0],b[1]);cx.stroke();
   // The arrow tool is a straight line (always exactly 2 points, so this
