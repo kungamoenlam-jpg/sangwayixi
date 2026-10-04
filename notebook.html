@@ -12,11 +12,15 @@
    would be almost invisible on the dark paper, both as this button's own
    label and as actual handwritten/typed ink on the page). */
 @media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){color-scheme:dark;--desk:#2a0e26;--paper:#3b1837;--line:#5b2955;--margin:#a8437f;--soft:#ff9fd0;
+  :root:not([data-theme="light"]):not([data-theme="black"]){color-scheme:dark;--desk:#2a0e26;--paper:#3b1837;--line:#5b2955;--margin:#a8437f;--soft:#ff9fd0;
     --btn:#ff5fae;--btntext:#2a0e26;--ink:#ffe9f5;--pen-black:#dcdce6;--c0:#ff5fae;--c1:#ff8cc6;--c2:#ffa03a;--c3:#ffd23f;--c4:#4be08f;--c5:#5cb0ff;--c6:#b48aff;--c7:#ff6fc4}
 }
 :root[data-theme="dark"]{color-scheme:dark;--desk:#2a0e26;--paper:#3b1837;--line:#5b2955;--margin:#a8437f;--soft:#ff9fd0;
   --btn:#ff5fae;--btntext:#2a0e26;--ink:#ffe9f5;--pen-black:#dcdce6;--c0:#ff5fae;--c1:#ff8cc6;--c2:#ffa03a;--c3:#ffd23f;--c4:#4be08f;--c5:#5cb0ff;--c6:#b48aff;--c7:#ff6fc4}
+/* Same bright ink/accent palette as Dark (Purple) -- just a true-black
+   desk/paper instead, for whoever finds the purple too much at night. */
+:root[data-theme="black"]{color-scheme:dark;--desk:#000000;--paper:#121212;--line:#2e2e2e;--margin:#4a4a4a;--soft:#ff9fd0;
+  --btn:#ff5fae;--btntext:#121212;--ink:#f5f5f5;--pen-black:#e8e8e8;--c0:#ff5fae;--c1:#ff8cc6;--c2:#ffa03a;--c3:#ffd23f;--c4:#4be08f;--c5:#5cb0ff;--c6:#b48aff;--c7:#ff6fc4}
 *{box-sizing:border-box}
 body{margin:0;background:var(--desk);font-family:"Kalam","Comic Sans MS",cursive;color:var(--soft);min-height:100vh}
 .wrap{max-width:860px;margin:0 auto;padding:20px 16px 60px}
@@ -292,7 +296,11 @@ body.booklet #planPanel{top:auto;bottom:16px;left:16px;right:16px;width:auto;max
     <div class="actions">
       <span id="sync" aria-live="polite">Saved on this device</span>
       <span id="status" role="status" aria-live="polite"></span>
-      <button id="themeToggle" type="button" class="plain" aria-pressed="false">🌙 Dark mode</button>
+      <select id="themeSelect" class="plain" aria-label="Colour theme" style="font:inherit;border:0;border-radius:999px;cursor:pointer">
+        <option value="light">🌞 Light</option>
+        <option value="dark">🌙 Dark (Purple)</option>
+        <option value="black">⚫ Dark (Black)</option>
+      </select>
       <button id="planToggle" type="button" class="plain" aria-expanded="false" aria-controls="planPanel">📋 Study planner</button>
       <span id="saveBtns" hidden>
         <button id="saveTxt" type="button">Save as text</button>
@@ -473,38 +481,40 @@ body.booklet #planPanel{top:auto;bottom:16px;left:16px;right:16px;width:auto;max
 const $=id=>document.getElementById(id);
 document.body.dataset.mode='type';
 const root=document.documentElement;
-// The dark colour variables already exist in CSS (:root[data-theme="dark"],
-// plus a prefers-color-scheme fallback for whoever hasn't chosen explicitly)
-// -- this just adds a button so dark mode can be switched on for studying
-// at night regardless of the OS/browser's own setting, and remembers that
-// choice. Leaving data-theme unset (no saved preference yet) keeps
-// following the system setting, same as before this existed.
+// The dark colour variables already exist in CSS (:root[data-theme="dark"]
+// and :root[data-theme="black"], plus a prefers-color-scheme fallback for
+// whoever hasn't chosen explicitly) -- this just adds a picker so a theme
+// can be chosen explicitly for studying at night regardless of the
+// OS/browser's own setting, and remembers that choice. Leaving data-theme
+// unset (no saved preference yet) keeps following the system setting, same
+// as before this existed. Dark (Purple) and Dark (Black) share the exact
+// same bright ink/rainbow accent colours -- only the desk/paper background
+// differs -- so switching to either already "changes all the colours to be
+// suitable for dark mode" on its own, without a separate control for that.
 const THEME_LS='kunga-notebook-theme-v1';
+const THEMES=['light','dark','black'];
 const sysDark=matchMedia('(prefers-color-scheme: dark)');
 function effectiveTheme(){
   const t=root.getAttribute('data-theme');
-  return t==='dark'||t==='light'?t:(sysDark.matches?'dark':'light');
+  return THEMES.includes(t)?t:(sysDark.matches?'dark':'light');
 }
-function renderThemeBtn(){
-  const dark=effectiveTheme()==='dark';
-  $('themeToggle').textContent=dark?'☀️ Light mode':'🌙 Dark mode';
-  $('themeToggle').setAttribute('aria-pressed',String(dark));
-}
+function renderThemeSelect(){$('themeSelect').value=effectiveTheme();}
 function setTheme(t){
   root.setAttribute('data-theme',t);
   try{localStorage.setItem(THEME_LS,t);}catch(e){}
-  renderThemeBtn();
+  renderThemeSelect();
   // Repaint any already-drawn "black" pen strokes so they switch contrast
   // immediately too, instead of only looking right after the next redraw.
   if(typeof redraw==='function')redraw();
+  if(typeof redrawBook==='function')redrawBook();
 }
-$('themeToggle').onclick=()=>setTheme(effectiveTheme()==='dark'?'light':'dark');
+$('themeSelect').onchange=e=>setTheme(e.target.value);
 try{
   const saved=localStorage.getItem(THEME_LS);
-  if(saved==='dark'||saved==='light')root.setAttribute('data-theme',saved);
+  if(THEMES.includes(saved))root.setAttribute('data-theme',saved);
 }catch(e){}
-renderThemeBtn();
-sysDark.addEventListener('change',()=>{if(!root.getAttribute('data-theme'))renderThemeBtn();});
+renderThemeSelect();
+sysDark.addEventListener('change',()=>{if(!root.getAttribute('data-theme'))renderThemeSelect();});
 const doc=$('doc'),c=$('c'),lines=$('lines'),paper=$('paper'),ctx=c.getContext('2d'),status=$('status');
 const SEQ=[0,1,7,2,1,3,0,4,1,5,7,6];
 const CELL={lined:0,math:30,cn:44};
@@ -1008,10 +1018,21 @@ function redraw(){
   ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,c.width,c.height);ctx.restore();
   state.strokes.forEach(s=>{if(s.t==='label')drawLabel(s);else for(let i=1;i<s.p.length;i++)seg(s,i);});
 }
+// Tracks the canvas width sizeCanvas() last rescaled strokes against, so a
+// *live* width change (resizing the window, or toggling booklet view --
+// which halves the page's width without ever calling openPage() again)
+// rescales existing strokes too, not just ones freshly loaded from a page.
+let lastCanvasW=null;
 function sizeCanvas(){
   const d=devicePixelRatio||1;
   c.width=lines.clientWidth*d;c.height=lines.clientHeight*d;
-  ctx.setTransform(d,0,0,d,0,0);redraw();
+  ctx.setTransform(d,0,0,d,0,0);
+  if(lastCanvasW&&Math.abs(lastCanvasW-lines.clientWidth)>=1){
+    state.strokes=normalizeStrokeScale(state.strokes,lastCanvasW,lines.clientWidth);
+    strokesChanged=true;persist();
+  }
+  lastCanvasW=lines.clientWidth;
+  redraw();
 }
 new ResizeObserver(sizeCanvas).observe(lines);
 let cur=null,lastSp=0,curTool='free',startPt=null;
@@ -1206,7 +1227,20 @@ function renderFx(){
 let pages={},loading=true,CLOUD_USER=null,flushing=false,flushT=0,lsT=0;
 const dirty=new Set();
 const blank=()=>({html:'',grid:'lined',minH:'',strokes:[],topic:'',status:0});
+// A stroke's points are plain pixel coordinates in whatever canvas they
+// were drawn on -- canvasW records how wide that canvas was, so that if
+// the same page is later shown at a different width (a different window
+// size, or -- the case that actually surfaced this -- booklet view, where
+// each page only gets about half the usual width) the strokes can be
+// rescaled to match instead of silently overflowing/clipping past the
+// now-narrower canvas edge, or looking shrunken in a wider one.
+function normalizeStrokeScale(arr,storedW,liveW){
+  if(!storedW||!liveW||Math.abs(storedW-liveW)<1)return arr;
+  const k=liveW/storedW;
+  return arr.map(s=>s.t==='label'?{...s,x:s.x*k,y:s.y*k,size:s.size*k}:{...s,w:s.w*k,p:s.p.map(a=>[a[0]*k,a[1]*k,a[2]*k])});
+}
 function snap(){return{html:doc.innerHTML,grid:state.grid,minH:lines.style.minHeight,topic:$('topic').value,status:+$('pstatus').value,
+  canvasW:lines.clientWidth,
   strokes:state.strokes.map(s=>s.t==='label'?{t:'label',k:s.k,size:s.size,x:Math.round(s.x),y:Math.round(s.y),text:s.text}
     :{k:s.k,w:s.w,dash:s.dash,arrow:s.arrow,p:s.p.map(a=>a.map(Math.round))})};}
 function syncNote(m){$('sync').textContent=m;}
@@ -1255,7 +1289,8 @@ function openPage(s,w,skipSave,pageIdx){
   state.subj=s;state.wk[s]=w;state.pageIdx=pageIdx||1;
   const p=pages[key()]||blank();
   doc.innerHTML=p.html!==undefined?p.html:toHtml(p.text||'');
-  state.strokes=(p.strokes||[]).map(x=>x.t==='label'?{...x}:{...x,p:x.p.map(a=>a.slice())});
+  state.strokes=normalizeStrokeScale((p.strokes||[]).map(x=>x.t==='label'?{...x}:{...x,p:x.p.map(a=>a.slice())}),p.canvasW,lines.clientWidth);
+  lastCanvasW=lines.clientWidth;
   lines.style.minHeight=p.minH||'';
   $('topic').value=p.topic||'';$('pstatus').value=String(p.status||0);
   doc.dataset.ph=`${SUBJ[s].name} · ${WLONG(w)}${state.pageIdx>1?' · Page '+state.pageIdx:''}. `+(w==='gen'?'Unit outline, assessment dates, topics by week.':w==='rev'?'Topics to review, practice questions, mistakes to fix.':'Tap "Lecture template" to set up this lecture, or just start writing.');
@@ -1309,11 +1344,18 @@ function redrawBook(){
   cx.save();cx.setTransform(1,0,0,1,0,0);cx.clearRect(0,0,bc.width,bc.height);cx.restore();
   bookStrokes.forEach(s=>{if(s.t==='label')drawLabel(s,cx);else for(let j=1;j<s.p.length;j++)seg(s,j,cx);});
 }
+let lastBookCanvasW=null;
 function sizeBookCanvas(){
   if(!state.booklet)return;
   const d=devicePixelRatio||1,bc=$('bookCanvas'),bl=$('bookLines');
   bc.width=bl.clientWidth*d;bc.height=bl.clientHeight*d;
-  bookCtx().setTransform(d,0,0,d,0,0);redrawBook();
+  bookCtx().setTransform(d,0,0,d,0,0);
+  if(lastBookCanvasW&&Math.abs(lastBookCanvasW-bl.clientWidth)>=1){
+    bookStrokes=normalizeStrokeScale(bookStrokes,lastBookCanvasW,bl.clientWidth);
+    bookPersist();
+  }
+  lastBookCanvasW=bl.clientWidth;
+  redrawBook();
 }
 new ResizeObserver(sizeBookCanvas).observe($('bookLines'));
 function bookPersist(){
@@ -1322,7 +1364,7 @@ function bookPersist(){
   const strokes=bookStrokes.map(s=>s.t==='label'?{t:'label',k:s.k,size:s.size,x:Math.round(s.x),y:Math.round(s.y),text:s.text}
     :{k:s.k,w:s.w,dash:s.dash,arrow:s.arrow,p:s.p.map(a=>a.map(Math.round))});
   pages[k]={...existing,html:$('bookDoc').innerHTML,grid:$('bookLines').dataset.grid||existing.grid||'lined',
-    minH:$('bookLines').style.minHeight||existing.minH||'',strokes,t:Date.now()};
+    minH:$('bookLines').style.minHeight||existing.minH||'',canvasW:$('bookLines').clientWidth,strokes,t:Date.now()};
   dirty.add(k);scheduleFlush(1500);saveLocal();drawWeeks();drawPageNav();
 }
 function findLabelAtBook(x,y){
@@ -1345,8 +1387,10 @@ function renderBookletPreview(){
   bd.innerHTML=p&&p.html!==undefined?p.html:'';
   bd.dataset.ph=`${SUBJ[s].name} · ${WLONG(w)} · Page ${i}. Start writing here.`;
   bd.classList.toggle('empty',!bd.textContent.replace(/​/g,'').trim()&&!bd.querySelector('table,.eq'));
-  bookStrokes=(p&&p.strokes||[]).map(x=>x.t==='label'?{...x}:{...x,p:x.p.map(a=>a.slice())});
-  bookFit();sizeBookCanvas();
+  bookFit();
+  bookStrokes=normalizeStrokeScale((p&&p.strokes||[]).map(x=>x.t==='label'?{...x}:{...x,p:x.p.map(a=>a.slice())}),p&&p.canvasW,$('bookLines').clientWidth);
+  lastBookCanvasW=$('bookLines').clientWidth;
+  sizeBookCanvas();
 }
 function setBooklet(on){
   state.booklet=on;
