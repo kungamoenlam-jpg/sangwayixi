@@ -711,12 +711,28 @@ function seg(s,i){
   else ctx.strokeStyle=PEN_COLORS[s.k]||'#2b2b2b';
   ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.restore();
 }
+const labelFont=s=>`700 ${s.size}px Kalam, "Comic Sans MS", cursive`;
 function drawLabel(s){
   ctx.save();
   ctx.fillStyle=s.k==='rainbow'?'hsl(320 95% 58%)':(PEN_COLORS[s.k]||'#2b2b2b');
-  ctx.font=`700 ${s.size}px Kalam, "Comic Sans MS", cursive`;ctx.textBaseline='middle';
+  ctx.font=labelFont(s);ctx.textBaseline='middle';
   ctx.fillText(s.text,s.x,s.y);
   ctx.restore();
+}
+// A generous hit box (padded a few px beyond the glyphs) so tapping near a
+// label with a fingertip or Pencil reliably catches it for editing.
+function labelBox(s){
+  ctx.save();ctx.font=labelFont(s);const w=ctx.measureText(s.text).width;ctx.restore();
+  return{x0:s.x-5,y0:s.y-s.size/2-5,x1:s.x+w+5,y1:s.y+s.size/2+5};
+}
+function findLabelAt(x,y){
+  for(let i=state.strokes.length-1;i>=0;i--){
+    const s=state.strokes[i];
+    if(s.t!=='label')continue;
+    const b=labelBox(s);
+    if(x>=b.x0&&x<=b.x1&&y>=b.y0&&y<=b.y1)return s;
+  }
+  return null;
 }
 function redraw(){
   ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,c.width,c.height);ctx.restore();
@@ -754,7 +770,20 @@ c.addEventListener('pointerdown',e=>{
   const [x,y]=pos(e);
   // The label tool is a tap-to-place text tag (e.g. "VC", "Relevant Range")
   // rather than a drag, so it skips the drag/stroke setup below entirely.
+  // Tapping an *existing* label edits it in place instead of stacking a new
+  // one on top -- otherwise fixing a typo would mean undoing everything
+  // drawn since, which gets impossible once there's more than a stroke or
+  // two after it.
   if(state.tool==='label'){
+    const hit=findLabelAt(x,y);
+    if(hit){
+      const edited=prompt('Edit label text (clear the text to delete it):',hit.text);
+      if(edited===null)return;
+      if(!edited.trim())state.strokes.splice(state.strokes.indexOf(hit),1);
+      else hit.text=edited.trim();
+      redraw();strokesChanged=true;persist();drawPageNav();
+      return;
+    }
     const txt=prompt('Label text:');
     if(txt&&txt.trim())addLabel(x,y,txt.trim());
     return;
