@@ -208,12 +208,19 @@ body[data-mode=draw] #doc{pointer-events:none}
 .ink-plain{background:none;color:var(--ink);-webkit-text-fill-color:var(--ink)}
 @keyframes shine{to{background-position:100% 0}}
 @media (prefers-reduced-motion:reduce){[class^=ink-]{animation:none}}
-/* float (not inline-table) is what lets *every* subsequent line wrap
-   alongside a table instead of just the one it was inserted into --
-   inline-table only shares a single line box with surrounding text, so
-   anything past the first wrapped line dropped below the table's full
-   height instead of continuing down its side. */
-#doc table{float:left;border-collapse:collapse;margin:4px 16px 10px 0}
+#doc table{border-collapse:collapse;margin:6px 0}
+/* A table from the toolbar comes wrapped in .tblwrap with a dedicated
+   .tblnotes column beside it -- an explicit two-column row, not text
+   reflowing around a float. A float's wrap only lasts as many lines as the
+   float is tall and depends on exactly what was typed before/after it, so
+   inserting a table mid-page (after some existing lines) or pressing Enter
+   a few times before writing notes would push both the table and the notes
+   around unpredictably. This keeps the notes column in a fixed place
+   beside the table no matter how much text is typed into either side. */
+.tblwrap{display:flex;align-items:flex-start;gap:18px;flex-wrap:wrap;margin:6px 0}
+.tblwrap table{margin:0;flex:0 0 auto}
+.tblnotes{position:relative;flex:1 1 140px;min-width:120px;min-height:1.4em;border-left:1.5px dashed var(--margin);padding-left:14px}
+.tblnotes.empty::before{content:attr(data-ph);position:absolute;left:14px;top:0;color:var(--margin);-webkit-text-fill-color:var(--margin);pointer-events:none}
 #doc td,#doc th{border:1.5px solid var(--margin);padding:2px 10px;min-width:64px;vertical-align:top}
 #doc th{background:var(--line);text-align:center}
 #doc .num{text-align:right}
@@ -438,7 +445,10 @@ paint($('title'),"Kunga's Notebook");
 
 const toHtml=s=>s.split('\n').map(l=>'<div>'+(l.replace(/&/g,'&amp;').replace(/</g,'&lt;')||'<br>')+'</div>').join('');
 const plainOf=h=>(h||'').replace(/<[^>]*>|&nbsp;|​/g,'').trim();
-function render(){doc.classList.toggle('empty',!doc.textContent.replace(/​/g,'').trim()&&!doc.querySelector('table,.eq'));}
+function render(){
+  doc.classList.toggle('empty',!doc.textContent.replace(/​/g,'').trim()&&!doc.querySelector('table,.eq'));
+  doc.querySelectorAll('.tblnotes').forEach(n=>n.classList.toggle('empty',!n.textContent.replace(/​/g,'').trim()));
+}
 
 function burst(x,y,n){
   if(reduce) return;
@@ -605,7 +615,19 @@ const TABLES={
   budget:()=>'<table>'+row('th',['Item','Budget','Actual','Variance','F / U'])+blanks(3,['','num','num','num',''])+row('td',['Total','','','',''],['','num tot','num tot','num tot',''])+'</table>',
   blank:()=>'<table>'+blanks(3,['','',''])+'</table>'
 };
-$('ftable').onchange=e=>{const k=e.target.value;e.target.value='';if(!k)return;insertHtml(TABLES[k]()+'<div><br></div>');};
+function insertTable(k){
+  focusDoc();
+  document.execCommand('insertHTML',false,`<div class="tblwrap">${TABLES[k]()}<div class="tblnotes" data-ph="Notes..."><div><br></div></div></div><div><br></div>`);
+  // execCommand collapses the cursor to the very end of whatever HTML was
+  // just inserted -- past the whole wrapper, not inside the notes column --
+  // so it has to be moved there explicitly for typing to land beside the
+  // table instead of on the blank line below it.
+  const wraps=doc.querySelectorAll('.tblwrap'),notes=wraps[wraps.length-1].querySelector('.tblnotes');
+  const r=document.createRange();r.selectNodeContents(notes);r.collapse(true);
+  const sel=getSelection();sel.removeAllRanges();sel.addRange(r);
+  render();persist();
+}
+$('ftable').onchange=e=>{const k=e.target.value;e.target.value='';if(!k)return;insertTable(k);};
 $('tblbar').onclick=e=>{
   const b=e.target.closest('button'),c=curCell();if(!b||!c)return;
   const tr=c.parentElement,tb=c.closest('table'),ix=c.cellIndex,k=b.dataset.t;
