@@ -132,6 +132,38 @@ body[data-mode=draw] #doc{pointer-events:none}
 .legend i{display:inline-block;width:12px;height:12px;border-radius:4px;background:var(--dot);margin-right:5px;vertical-align:-1px}
 .filebtn{display:inline-block;cursor:pointer;border-radius:999px;font-weight:700}
 #bk .plain{margin:8px 6px 0 0}
+#planPanel{position:fixed;top:90px;right:16px;width:250px;max-height:calc(100vh - 110px);overflow:auto;
+  background:var(--paper);border-radius:14px;box-shadow:0 2px 0 var(--line),0 12px 28px rgba(160,40,110,.25);padding:12px 14px;z-index:30}
+#planPanel[hidden]{display:none}
+.pp-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.pp-head h2{font-size:18px;margin:0;color:var(--c0)}
+#planClose{background:transparent;color:var(--soft);padding:2px 9px;font-size:15px}
+.pp-sec{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.pp-sec:first-of-type{margin-top:8px;padding-top:0;border-top:0}
+.pp-sec h3{font-size:14px;margin:0 0 6px;color:var(--c0)}
+#todoForm{display:flex;gap:6px;margin-bottom:8px}
+#todoInput{flex:1;min-width:0;font:inherit;font-size:14px;padding:5px 10px;border:1px solid var(--margin);border-radius:999px;background:var(--desk);color:var(--soft)}
+#todoForm button{padding:5px 13px;font-size:16px}
+#todoList{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+#todoList li{display:flex;align-items:flex-start;gap:7px;font-size:14px}
+#todoList li.done span{text-decoration:line-through;opacity:.55}
+#todoList li span{flex:1;word-break:break-word;padding-top:1px}
+#todoList li input[type=checkbox]{margin-top:3px;accent-color:var(--btn)}
+#todoList li button{background:transparent;color:var(--soft);padding:0 5px;font-size:14px;line-height:1.6}
+#timerPhase{font-size:12px;font-weight:700;color:var(--c0);text-transform:uppercase;letter-spacing:.05em}
+#timerClock{font-size:36px;font-weight:700;color:var(--ink);margin:2px 0 8px;font-variant-numeric:tabular-nums}
+.pp-timerbtns{display:flex;gap:8px}
+.pp-timerbtns button{flex:1;font-size:14px;padding:7px 10px}
+#timerAlert{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);max-width:calc(100vw - 32px);
+  background:var(--btn);color:var(--btntext);padding:12px 12px 12px 18px;border-radius:999px;
+  font-weight:700;font-size:15px;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:40;display:flex;align-items:center;gap:10px}
+#timerAlert[hidden]{display:none}
+#timerAlertClose{background:rgba(255,255,255,.3);color:inherit;padding:4px 10px;font-size:13px;flex-shrink:0}
+/* Below this, .wrap's centred 860px content doesn't leave enough side
+   margin for a 250px sidebar without it sitting on top of the paper/canvas
+   and silently eating clicks meant for drawing -- it becomes a bottom bar
+   instead, which only ever covers the edge of the current viewport. */
+@media (max-width:1440px){#planPanel{top:auto;bottom:16px;left:16px;right:16px;width:auto;max-height:55vh}}
 </style>
 <style id="docstyle">
 #doc{position:relative;outline:none;font:400 var(--fs)/var(--lh) "Kalam","Ma Shan Zheng","KaiTi","STKaiti","Noto Sans SC","Comic Sans MS",cursive;
@@ -187,6 +219,7 @@ body[data-mode=draw] #doc{pointer-events:none}
     <div class="actions">
       <span id="sync" aria-live="polite">Saved on this device</span>
       <span id="status" role="status" aria-live="polite"></span>
+      <button id="planToggle" type="button" class="plain" aria-expanded="false" aria-controls="planPanel">📋 Study planner</button>
       <span id="saveBtns" hidden>
         <button id="saveTxt" type="button">Save as text</button>
         <button id="saveHtml" type="button">Save as pretty page</button>
@@ -320,6 +353,31 @@ body[data-mode=draw] #doc{pointer-events:none}
       <canvas id="c" aria-label="Handwriting area"></canvas>
     </div>
   </main>
+</div>
+<div id="planPanel" hidden role="complementary" aria-label="Study planner">
+  <div class="pp-head">
+    <h2>Study planner</h2>
+    <button type="button" id="planClose" aria-label="Close study planner">✕</button>
+  </div>
+  <section class="pp-sec">
+    <h3>Today's to-do</h3>
+    <form id="todoForm"><input id="todoInput" autocomplete="off" placeholder="Something to study today..." aria-label="New to-do item"><button type="submit" aria-label="Add">+</button></form>
+    <ul id="todoList"></ul>
+  </section>
+  <section class="pp-sec">
+    <h3>Study timer</h3>
+    <div id="timerPhase">Focus</div>
+    <div id="timerClock">25:00</div>
+    <div class="pp-timerbtns">
+      <button type="button" id="timerStart">Start</button>
+      <button type="button" id="timerReset" class="plain">Reset</button>
+    </div>
+    <p class="hint">Every 25 minutes of focus, you'll get a reminder to drink water and take a 3-minute break.</p>
+  </section>
+</div>
+<div id="timerAlert" hidden role="status" aria-live="assertive">
+  <span id="timerAlertMsg"></span>
+  <button type="button" id="timerAlertClose" aria-label="Dismiss">✕</button>
 </div>
 <script>
 const $=id=>document.getElementById(id);
@@ -1382,4 +1440,103 @@ $('savePdf').onclick=()=>{
   print();
   document.title=oldTitle;
 };
+
+/* study planner: a day's to-do list plus a 25-minute-focus / 3-minute-break
+   timer. Both are local to this device/browser (not synced to the account)
+   since they're transient session scaffolding, not notes worth keeping
+   forever the way the pages themselves are. */
+function setPlanOpen(open){
+  $('planPanel').hidden=!open;
+  $('planToggle').setAttribute('aria-expanded',String(open));
+}
+$('planToggle').onclick=()=>setPlanOpen($('planPanel').hidden);
+$('planClose').onclick=()=>setPlanOpen(false);
+// Only auto-open as a standing sidebar when the window is wide enough that
+// it lands beside the paper rather than on top of it (matches the CSS
+// breakpoint above) -- otherwise it would silently block drawing/taps on
+// the canvas underneath until the user noticed and closed it themselves.
+setPlanOpen(innerWidth>1440);
+
+const TODO_LS='kunga-notebook-todos-v1';
+let todos=[];
+try{todos=JSON.parse(localStorage.getItem(TODO_LS)||'[]');if(!Array.isArray(todos))todos=[];}catch(e){todos=[];}
+function saveTodos(){try{localStorage.setItem(TODO_LS,JSON.stringify(todos));}catch(e){}}
+function renderTodos(){
+  $('todoList').innerHTML=todos.length?todos.map((t,i)=>`<li class="${t.done?'done':''}" data-i="${i}">
+      <input type="checkbox" ${t.done?'checked':''} aria-label="Mark done">
+      <span>${esc(t.text)}</span>
+      <button type="button" aria-label="Remove">✕</button>
+    </li>`).join(''):'<li style="list-style:none" class="hint">Nothing on the list yet.</li>';
+}
+$('todoForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const v=$('todoInput').value.trim();if(!v)return;
+  todos.push({text:v,done:false});
+  $('todoInput').value='';saveTodos();renderTodos();
+});
+$('todoList').addEventListener('click',e=>{
+  const li=e.target.closest('li');if(!li||!li.dataset.i)return;
+  if(e.target.matches('button')){todos.splice(+li.dataset.i,1);saveTodos();renderTodos();}
+});
+$('todoList').addEventListener('change',e=>{
+  const li=e.target.closest('li');if(!li||!li.dataset.i)return;
+  if(e.target.matches('input[type=checkbox]')){todos[+li.dataset.i].done=e.target.checked;saveTodos();renderTodos();}
+});
+renderTodos();
+
+const FOCUS_SEC=25*60,BREAK_SEC=3*60;
+let timerPhase='focus',timerRemaining=FOCUS_SEC,timerRunning=false,timerInt=null,timerEndAt=null,alertT=null;
+const fmtClock=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+function renderTimer(){
+  $('timerClock').textContent=fmtClock(timerRemaining);
+  $('timerPhase').textContent=timerPhase==='focus'?'Focus':'Break';
+  $('timerStart').textContent=timerRunning?'Pause':'Start';
+}
+function beep(){
+  try{
+    const Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;
+    const ac=new Ctx(),o=ac.createOscillator(),g=ac.createGain();
+    o.type='sine';o.frequency.value=880;o.connect(g);g.connect(ac.destination);
+    g.gain.setValueAtTime(.0001,ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(.2,ac.currentTime+.02);
+    g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+.5);
+    o.start();o.stop(ac.currentTime+.55);
+    setTimeout(()=>ac.close(),700);
+  }catch(e){}
+}
+function showTimerAlert(msg){
+  beep();
+  if('Notification' in window&&Notification.permission==='granted'){
+    try{new Notification("Kunga's Notebook",{body:msg});}catch(e){}
+  }
+  $('timerAlertMsg').textContent=msg;$('timerAlert').hidden=false;
+  clearTimeout(alertT);alertT=setTimeout(()=>{$('timerAlert').hidden=true;},15000);
+  if(!reduce)burst(innerWidth/2,innerHeight-70,10);
+}
+$('timerAlertClose').onclick=()=>{$('timerAlert').hidden=true;clearTimeout(alertT);};
+function timerTick(){
+  const left=Math.max(0,Math.round((timerEndAt-Date.now())/1000));
+  if(left===timerRemaining)return;
+  timerRemaining=left;renderTimer();
+  if(left<=0){
+    if(timerPhase==='focus'){timerPhase='break';timerRemaining=BREAK_SEC;showTimerAlert('💧 Drink some water and take a 3-minute break!');}
+    else{timerPhase='focus';timerRemaining=FOCUS_SEC;showTimerAlert("Break's over — back to studying!");}
+    timerEndAt=Date.now()+timerRemaining*1000;renderTimer();
+  }
+}
+function startTimer(){
+  if(timerRunning)return;
+  if('Notification' in window&&Notification.permission==='default')Notification.requestPermission().catch(()=>{});
+  timerRunning=true;timerEndAt=Date.now()+timerRemaining*1000;
+  timerInt=setInterval(timerTick,250);renderTimer();
+}
+function pauseTimer(){
+  timerRunning=false;clearInterval(timerInt);
+  if(timerEndAt)timerRemaining=Math.max(0,Math.round((timerEndAt-Date.now())/1000));
+  renderTimer();
+}
+function resetTimer(){pauseTimer();timerPhase='focus';timerRemaining=FOCUS_SEC;timerEndAt=null;renderTimer();}
+$('timerStart').onclick=()=>timerRunning?pauseTimer():startTimer();
+$('timerReset').onclick=resetTimer;
+renderTimer();
 </script>
