@@ -3,24 +3,25 @@
 <style>
 :root{
   --desk:#ffd6e8;--paper:#fffafd;--line:#ffc9e0;--margin:#ff8fbf;--soft:#c2578f;
-  --btn:#ff2d95;--btntext:#fff;--ink:#3a1a33;--pen-black:#2b2b2b;
+  --btn:#ff2d95;--btntext:#fff;--ink:#3a1a33;--pen-black:#2b2b2b;--pen-navy:#1e3a8a;
   --c0:#ff2d95;--c1:#ff5fae;--c2:#ff7a00;--c3:#d99a00;--c4:#0fa05f;--c5:#1a7fff;--c6:#8b4dff;--c7:#e0209d;
 }
-/* --pen-black backs the "Black" ink/pen option specifically (the other
-   fixed ink colours -- red/blue/green -- are mid-tone enough to stay
-   readable against both the light and dark paper, but literal near-black
-   would be almost invisible on the dark paper, both as this button's own
-   label and as actual handwritten/typed ink on the page). */
+/* --pen-black/--pen-navy back the "Black"/"Navy" ink/pen options
+   specifically (the other fixed ink colours -- red/blue/green -- are
+   mid-tone enough to stay readable against both the light and dark paper,
+   but a literal near-black or deep navy would be almost invisible on the
+   dark paper, both as the button's own label and as actual handwritten/
+   typed ink on the page). */
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]):not([data-theme="black"]){color-scheme:dark;--desk:#2a0e26;--paper:#3b1837;--line:#5b2955;--margin:#a8437f;--soft:#ff9fd0;
-    --btn:#ff5fae;--btntext:#2a0e26;--ink:#ffe9f5;--pen-black:#dcdce6;--c0:#ff5fae;--c1:#ff8cc6;--c2:#ffa03a;--c3:#ffd23f;--c4:#4be08f;--c5:#5cb0ff;--c6:#b48aff;--c7:#ff6fc4}
+    --btn:#ff5fae;--btntext:#2a0e26;--ink:#ffe9f5;--pen-black:#dcdce6;--pen-navy:#7ab8ff;--c0:#ff5fae;--c1:#ff8cc6;--c2:#ffa03a;--c3:#ffd23f;--c4:#4be08f;--c5:#5cb0ff;--c6:#b48aff;--c7:#ff6fc4}
 }
 :root[data-theme="dark"]{color-scheme:dark;--desk:#2a0e26;--paper:#3b1837;--line:#5b2955;--margin:#a8437f;--soft:#ff9fd0;
-  --btn:#ff5fae;--btntext:#2a0e26;--ink:#ffe9f5;--pen-black:#dcdce6;--c0:#ff5fae;--c1:#ff8cc6;--c2:#ffa03a;--c3:#ffd23f;--c4:#4be08f;--c5:#5cb0ff;--c6:#b48aff;--c7:#ff6fc4}
+  --btn:#ff5fae;--btntext:#2a0e26;--ink:#ffe9f5;--pen-black:#dcdce6;--pen-navy:#7ab8ff;--c0:#ff5fae;--c1:#ff8cc6;--c2:#ffa03a;--c3:#ffd23f;--c4:#4be08f;--c5:#5cb0ff;--c6:#b48aff;--c7:#ff6fc4}
 /* Same bright ink/accent palette as Dark (Purple) -- just a true-black
    desk/paper instead, for whoever finds the purple too much at night. */
 :root[data-theme="black"]{color-scheme:dark;--desk:#000000;--paper:#121212;--line:#2e2e2e;--margin:#4a4a4a;--soft:#ff9fd0;
-  --btn:#ff5fae;--btntext:#121212;--ink:#f5f5f5;--pen-black:#e8e8e8;--c0:#ff5fae;--c1:#ff8cc6;--c2:#ffa03a;--c3:#ffd23f;--c4:#4be08f;--c5:#5cb0ff;--c6:#b48aff;--c7:#ff6fc4}
+  --btn:#ff5fae;--btntext:#121212;--ink:#f5f5f5;--pen-black:#e8e8e8;--pen-navy:#7ab8ff;--c0:#ff5fae;--c1:#ff8cc6;--c2:#ffa03a;--c3:#ffd23f;--c4:#4be08f;--c5:#5cb0ff;--c6:#b48aff;--c7:#ff6fc4}
 *{box-sizing:border-box}
 body{margin:0;background:var(--desk);font-family:"Kalam","Comic Sans MS",cursive;color:var(--soft);min-height:100vh}
 .wrap{max-width:860px;margin:0 auto;padding:20px 16px 60px}
@@ -271,6 +272,7 @@ body.booklet #planPanel{top:auto;bottom:16px;left:16px;right:16px;width:auto;max
 .ink-aqua{color:#22d3ee;background-image:linear-gradient(100deg,#0891b2,#22d3ee 35%,#a5f3fc 50%,#2dd4bf 70%,#0e7490);background-size:220% 100%;animation:shine 5s ease-in-out infinite alternate}
 .ink-pink{background:none;color:var(--c0);-webkit-text-fill-color:var(--c0)}
 .ink-blue{background:none;color:#1a7fff;-webkit-text-fill-color:#1a7fff}
+.ink-navy{background:none;color:var(--pen-navy);-webkit-text-fill-color:var(--pen-navy)}
 .ink-black{background:none;color:var(--pen-black);-webkit-text-fill-color:var(--pen-black)}
 .ink-red{background:none;color:#e1453a;-webkit-text-fill-color:#e1453a}
 .ink-green{background:none;color:#1fa05f;-webkit-text-fill-color:#1fa05f}
@@ -362,6 +364,7 @@ body.booklet #planPanel{top:auto;bottom:16px;left:16px;right:16px;width:auto;max
         <button type="button" data-k="rainbow"><i class="pen-dot" style="background:linear-gradient(90deg,#ff2d95,#ff7a00,#0fa05f,#1a7fff,#8b4dff)"></i>Rainbow</button>
         <button type="button" data-k="black"><i class="pen-dot" style="background:var(--pen-black)"></i>Black</button>
         <button type="button" data-k="blue"><i class="pen-dot" style="background:#1a7fff"></i>Blue</button>
+        <button type="button" data-k="navy"><i class="pen-dot" style="background:var(--pen-navy)"></i>Navy</button>
         <button type="button" data-k="red"><i class="pen-dot" style="background:#e1453a"></i>Red</button>
         <button type="button" data-k="green"><i class="pen-dot" style="background:#1fa05f"></i>Green</button>
         <button type="button" data-k="orange"><i class="pen-dot" style="background:#ff7a00"></i>Orange</button>
@@ -426,7 +429,7 @@ body.booklet #planPanel{top:auto;bottom:16px;left:16px;right:16px;width:auto;max
     <select id="fsize" aria-label="Font size of selected text"><option value="" selected>Size</option><option>14</option><option>16</option><option>18</option><option>20</option><option>24</option><option>28</option><option>32</option><option>40</option><option>48</option></select>
     <select id="fblock" aria-label="Paragraph style"><option value="" selected>Style</option><option value="div">Normal</option><option value="h1">Heading 1</option><option value="h2">Heading 2</option></select>
     <span class="grp" id="inks" role="group" aria-label="Text colour and sparkle">
-      <button type="button" data-ink="rainbow" class="ink-rainbow">Rainbow</button><button type="button" data-ink="pink" class="ink-pink">Pink</button><button type="button" data-ink="blue" class="ink-blue">Blue</button><button type="button" data-ink="black" class="ink-black">Black</button><button type="button" data-ink="red" class="ink-red">Red</button><button type="button" data-ink="green" class="ink-green">Green</button><button type="button" data-ink="gold" class="ink-gold">Gold</button><button type="button" data-ink="purple" class="ink-purple">Sparkly purple</button><button type="button" data-ink="aqua" class="ink-aqua">Aqua</button><button type="button" data-ink="plain" class="ink-plain">Plain</button>
+      <button type="button" data-ink="rainbow" class="ink-rainbow">Rainbow</button><button type="button" data-ink="pink" class="ink-pink">Pink</button><button type="button" data-ink="blue" class="ink-blue">Blue</button><button type="button" data-ink="navy" class="ink-navy">Navy</button><button type="button" data-ink="black" class="ink-black">Black</button><button type="button" data-ink="red" class="ink-red">Red</button><button type="button" data-ink="green" class="ink-green">Green</button><button type="button" data-ink="gold" class="ink-gold">Gold</button><button type="button" data-ink="purple" class="ink-purple">Sparkly purple</button><button type="button" data-ink="aqua" class="ink-aqua">Aqua</button><button type="button" data-ink="plain" class="ink-plain">Plain</button>
     </span>
     <span class="grp"><button type="button" data-cmd="bold" title="Bold (Ctrl+B)"><b>B</b></button><button type="button" data-cmd="italic" title="Italic (Ctrl+I)"><i>I</i></button><button type="button" data-cmd="underline" title="Underline (Ctrl+U)"><u>U</u></button><button type="button" data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button><button type="button" data-cmd="subscript" title="Subscript">x₂</button><button type="button" data-cmd="superscript" title="Superscript">x²</button></span>
     <span class="grp"><button type="button" data-cmd="justifyLeft">Left</button><button type="button" data-cmd="justifyCenter">Centre</button><button type="button" data-cmd="justifyRight">Right</button><button type="button" data-cmd="justifyFull">Justify</button></span>
@@ -1044,7 +1047,7 @@ const HIGHLIGHT_COLORS={'hl-yellow':'#ffd60a','hl-aqua':'#22d3ee','hl-pink':'#ff
 // pens) since literal #2b2b2b would be almost invisible on the dark paper
 // in dark mode -- it needs to flip to a light grey there, same as the
 // matching toolbar button/dot.
-const penColor=k=>k==='black'?(cssVar('--pen-black')||'#2b2b2b'):(PEN_COLORS[k]||'#2b2b2b');
+const penColor=k=>k==='black'?(cssVar('--pen-black')||'#2b2b2b'):k==='navy'?(cssVar('--pen-navy')||'#1e3a8a'):(PEN_COLORS[k]||'#2b2b2b');
 // Both take an optional explicit canvas context (cx) so the same stroke
 // rendering can also paint the read-only booklet-view preview canvas, not
 // just the live #c -- defaulting to the live canvas keeps every existing
