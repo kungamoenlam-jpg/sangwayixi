@@ -253,6 +253,16 @@ body.booklet #planPanel{top:auto;bottom:16px;left:16px;right:16px;width:auto;max
 .pagedoc div,.pagedoc p,.pagedoc h1,.pagedoc h2,.pagedoc li{margin:0}
 .pagedoc h1{font-size:1.5em;font-weight:700;line-height:calc(var(--lh) * 2)}.pagedoc h2{font-size:1.2em;font-weight:700}
 .pagedoc ul,.pagedoc ol{margin:0;padding-left:1.6em}
+/* ::marker content accepts a plain string (emoji included) in every current
+   browser -- no need for @counter-style or swapping in fake li backgrounds
+   just to get a flower/heart bullet instead of a plain disc. */
+.pagedoc ul.bul-flower li::marker{content:"🌸 "}
+.pagedoc ul.bul-heart li::marker{content:"💗 "}
+.pagedoc ul.bul-star li::marker{content:"⭐ "}
+.pagedoc ul.bul-sparkle li::marker{content:"✨ "}
+.pagedoc ul.bul-check li::marker{content:"✅ "}
+.pagedoc ul.bul-pin li::marker{content:"📌 "}
+.pagedoc ul.bul-bulb li::marker{content:"💡 "}
 .pagedoc blockquote{margin:0 0 0 2em}
 [class^=ink-]{-webkit-text-fill-color:transparent;-webkit-background-clip:text;background-clip:text}
 .ink-rainbow{color:var(--c0);background-image:linear-gradient(90deg,var(--c0),var(--c2),var(--c3),var(--c4),var(--c5),var(--c6),var(--c7),var(--c0));background-size:480px 100%}
@@ -421,6 +431,17 @@ body.booklet #planPanel{top:auto;bottom:16px;left:16px;right:16px;width:auto;max
     <span class="grp"><button type="button" data-cmd="bold" title="Bold (Ctrl+B)"><b>B</b></button><button type="button" data-cmd="italic" title="Italic (Ctrl+I)"><i>I</i></button><button type="button" data-cmd="underline" title="Underline (Ctrl+U)"><u>U</u></button><button type="button" data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button><button type="button" data-cmd="subscript" title="Subscript">x₂</button><button type="button" data-cmd="superscript" title="Superscript">x²</button></span>
     <span class="grp"><button type="button" data-cmd="justifyLeft">Left</button><button type="button" data-cmd="justifyCenter">Centre</button><button type="button" data-cmd="justifyRight">Right</button><button type="button" data-cmd="justifyFull">Justify</button></span>
     <span class="grp"><button type="button" data-cmd="insertUnorderedList">• List</button><button type="button" data-cmd="insertOrderedList">1. List</button><button type="button" data-cmd="outdent">Outdent</button><button type="button" data-cmd="indent">Indent</button><button type="button" data-cmd="undo" title="Undo typing">↶</button><button type="button" data-cmd="redo" title="Redo typing">↷</button></span>
+    <select id="bulletStyle" aria-label="Bullet style">
+      <option value="" selected>Bullet style</option>
+      <option value="dot">• Dot</option>
+      <option value="flower">🌸 Flower</option>
+      <option value="heart">💗 Heart</option>
+      <option value="star">⭐ Star</option>
+      <option value="sparkle">✨ Sparkle</option>
+      <option value="check">✅ Check</option>
+      <option value="pin">📌 Pin</option>
+      <option value="bulb">💡 Lightbulb</option>
+    </select>
     <select id="ftable" aria-label="Insert table"><option value="" selected>Insert table</option><option value="jrnl">Journal entry</option><option value="tacc">T-account</option><option value="trial">Trial balance</option><option value="budget">Budget vs actual</option><option value="blank">Blank table</option></select>
     <button type="button" id="feq" title="Equation (Alt + =)">Σ Equation</button>
   </div>
@@ -595,6 +616,7 @@ let lastRange=null,wantSize=0,eqEdit=null,eqScale=1;
 const EQ_SCALES=[.3,.4,.5,.6,.7,.8,.9,1,1.15,1.3,1.5,1.75,2,2.5,3];
 const selEl=()=>{const n=lastRange&&lastRange.startContainer;const el=n&&(n.nodeType===3?n.parentElement:n);return el&&doc.contains(el)?el:null;};
 const curCell=()=>{const e=selEl();return e?e.closest('td,th'):null;};
+const curList=()=>{const e=selEl();return e?e.closest('ul'):null;};
 const tblState=()=>{$('tblbar').hidden=!curCell();};
 document.addEventListener('selectionchange',()=>{const s=getSelection();if(s.rangeCount&&doc.contains(s.anchorNode)){lastRange=s.getRangeAt(0).cloneRange();tblState();}});
 function focusDoc(){
@@ -797,6 +819,30 @@ function insertTable(k){
   render();persist();
 }
 $('ftable').onchange=e=>{const k=e.target.value;e.target.value='';if(!k)return;insertTable(k);};
+const BULLET_STYLES=['flower','heart','star','sparkle','check','pin','bulb'];
+$('bulletStyle').onchange=e=>{
+  const v=e.target.value;e.target.value='';
+  if(!v)return;
+  focusDoc();
+  // Not already in a list? Make one at the cursor first, same as the
+  // plain "• List" button, then style whichever <ul> that created.
+  // curList() can't be reused for this half -- it reads lastRange, which
+  // only catches up via the async selectionchange listener, so right after
+  // execCommand it would still be looking at where the selection was
+  // *before* the list existed. Reading getSelection() directly instead
+  // sees the DOM as it actually is right now.
+  let ul=curList();
+  if(!ul){
+    document.execCommand('insertUnorderedList');
+    const n=getSelection().anchorNode,el=n&&(n.nodeType===3?n.parentElement:n);
+    ul=el&&el.closest('ul');
+  }
+  if(ul){
+    BULLET_STYLES.forEach(c=>ul.classList.remove('bul-'+c));
+    if(v!=='dot')ul.classList.add('bul-'+v);
+  }
+  render();persist();
+};
 $('tblbar').onclick=e=>{
   const b=e.target.closest('button'),c=curCell();if(!b||!c)return;
   const tr=c.parentElement,tb=c.closest('table'),ix=c.cellIndex,k=b.dataset.t;
