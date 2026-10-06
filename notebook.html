@@ -943,9 +943,18 @@ function tex2ml(src){
   const x=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
   function rowOf(...stop){const o=[];while(p<T.length&&!stop.includes(peek()))o.push(item().ml);return o.join('');}
   function item(){let a=script();while(peek()==='/'){next();const b=script(),ml=`<mfrac><mrow>${a.inner}</mrow><mrow>${b.inner}</mrow></mfrac>`;a={ml,inner:ml};}return a;}
+  // atom() only sets .inner for the handful of bracketed cases (a wrapping
+  // <mrow> makes sense there); for everything else -- a bare digit or
+  // letter, most commonly what actually goes into a subscript/superscript
+  // like x^2 or C_0 -- it's unset. Reading atom().inner directly (as every
+  // call site below used to) silently evaluated to undefined there instead
+  // of falling back to .ml, which is how whole subscripts/superscripts/
+  // square-root arguments/accent targets ended up dropped from the
+  // rendered equation entirely rather than just losing a wrapper <mrow>.
+  function atomInner(){const r=atom();return r.inner||r.ml;}
   function script(){
     let a=atom(),lo,hi;
-    while(peek()==='_'||peek()==='^'){const k=next(),b=atom().inner;if(k==='_')lo=b;else hi=b;}
+    while(peek()==='_'||peek()==='^'){const k=next(),b=atomInner();if(k==='_')lo=b;else hi=b;}
     if(lo||hi){const g=lo&&hi?'msubsup':lo?'msub':'msup';a={ml:`<${g}>${a.ml}${lo||''}${hi||''}</${g}>`};}
     a.inner=a.inner||a.ml;return a;
   }
@@ -975,17 +984,24 @@ function tex2ml(src){
     if(k[0]==='"')return{ml:`<mtext>${x(k.slice(1,-1))}</mtext>`};
     if(/^\\?[A-Za-z]/.test(k)){
       const w=k.replace('\\','');
-      if(w==='sqrt')return{ml:`<msqrt>${atom().inner}</msqrt>`};
-      if(ACC[w])return{ml:`<mover accent="true"><mrow>${atom().inner}</mrow><mo>${ACC[w]}</mo></mover>`};
+      if(w==='sqrt')return{ml:`<msqrt>${atomInner()}</msqrt>`};
+      if(ACC[w])return{ml:`<mover accent="true"><mrow>${atomInner()}</mrow><mo>${ACC[w]}</mo></mover>`};
       if(WORDOP[w])return{ml:`<mo>${WORDOP[w]}</mo>`};
       if(SETS[w])return{ml:`<mi mathvariant="normal">${SETS[w]}</mi>`};
       if(BIG[w]){
-        let lo,hi;if(peek()==='_'){next();lo=atom().inner;}if(peek()==='^'){next();hi=atom().inner;}
+        let lo,hi;if(peek()==='_'){next();lo=atomInner();}if(peek()==='^'){next();hi=atomInner();}
         const op=`<mo largeop="true" movablelimits="true">${BIG[w]}</mo>`,sd=w==='int';
         const g=lo&&hi?(sd?'msubsup':'munderover'):lo?(sd?'msub':'munder'):hi?(sd?'msup':'mover'):'';
         return{ml:g?`<${g}>${op}${lo||''}${hi||''}</${g}>`:op};
       }
-      return{ml:spaceBefore+`<mi>${GREEK[w]||w}</mi>`};
+      // Wrapped in an <mrow> together (not left as two sibling elements)
+      // whenever there's a leading space to preserve -- a fix above means
+      // this atom's .ml can now end up as the *base* of an <msub>/<msup>
+      // (e.g. the "C" in C_0), which requires exactly one child, not two;
+      // left as siblings here, the subscript's actual value either got
+      // mistaken for part of the base or dropped, depending on the
+      // browser's particular MathML renderer.
+      return{ml:spaceBefore?`<mrow>${spaceBefore}<mi>${GREEK[w]||w}</mi></mrow>`:`<mi>${GREEK[w]||w}</mi>`};
     }
     return{ml:`<mo>${x(OPS[k]||k)}</mo>`};
   }
