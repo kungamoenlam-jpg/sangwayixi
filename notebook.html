@@ -1008,7 +1008,8 @@ function tex2ml(src){
   return '<math>'+rowOf()+'</math>';
 }
 const eqSpan=(src,scale)=>`<span class="eq" contenteditable="false" data-src="${esc(src)}" data-scale="${scale||1}" style="font-size:${scale||1}em">${tex2ml(src)}</span>`;
-const SYM=[['a/b','()/()',4],['xⁿ','^()',1],['xₙ','_()',1],['√','sqrt()',1],['dy/dx','(dy)/(dx) ',0],['y′',"y' ",0],['∂','partial ',0],['∫','int_a^b ',0],['∑','sum_(i=1)^n ',0],['lim','lim_(x->0) ',0],
+const SYM=[['a/b','()/()',4],['xⁿ','^()',1],['xₙ','_()',1],['√','sqrt()',1],['dy/dx','(dy)/(dx) ',0],['y′',"y' ",0],['∂','partial ',0],['∫','int_a^b ',0],['∑','sum_(i=1)^n ',0],
+  ['NPV','sum_(t=0)^n C_t/(1+r)^n ',0],['lim','lim_(x->0) ',0],
   ['Matrix','[[1,0],[0,1]] ',0],['Vector','[[x],[y],[z]] ',0],['v⃗','vec()',1],['λ','lambda ',0],['θ','theta ',0],['π','pi ',0],['∞','infty ',0],['∈','in ',0],['ℝ','RR ',0],['⋅','cdot ',0],['→','-> ',0],
   ['β','beta ',0],['σ','sigma ',0],['ρ','rho ',0],['μ','mu ',0],['Δ','Delta ',0],['≤','<= ',0],['≥','>= ',0],['≠','!= ',0],['±','+- ',0],['×','* ',0]];
 $('eqsym').innerHTML=SYM.map((s,i)=>`<button type="button" class="plain" data-i="${i}">${s[0]}</button>`).join('');
