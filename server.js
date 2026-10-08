@@ -9,9 +9,49 @@ const { createClient } = require('@supabase/supabase-js');
 const Stripe = require('stripe');
 const { createAvatar } = require('@dicebear/core');
 const { avataaars } = require('@dicebear/collection');
+const sanitizeHtml = require('sanitize-html');
 
 function hashPassword(value) {
   return crypto.createHash('sha256').update(String(value)).digest('hex');
+}
+
+// Diary entries are rich HTML straight from notebook.html's contenteditable
+// page (the same editor used for notes -- bold/lists/tables/MathML equations,
+// occasionally pasted content from elsewhere). Entries marked public end up
+// rendered, unauthenticated, to any visitor of /diary, so this allowlist runs
+// on every save (not just public ones, so nothing risky sits dormant waiting
+// for a later public toggle) rather than trusting the editor's own paste
+// handling to have kept things clean.
+const DIARY_ALLOWED_TAGS = ['div','p','br','b','strong','i','em','u','s','strike','ul','ol','li','h1','h2','span','sub','sup',
+  'table','tbody','thead','tr','td','th','blockquote','img',
+  'math','mi','mn','mo','mrow','msub','msup','msubsup','mfrac','msqrt','mroot','munder','mover','munderover','mspace','mtext','mstyle','mtable','mtr','mtd'];
+function sanitizeDiaryHtml(html) {
+  return sanitizeHtml(String(html || ''), {
+    allowedTags: DIARY_ALLOWED_TAGS,
+    allowedAttributes: {
+      '*': ['style', 'class'],
+      img: ['src', 'alt', 'style'],
+      span: ['data-src', 'data-scale', 'style', 'class'],
+      math: ['xmlns'],
+    },
+    allowedSchemesByTag: { img: ['data', 'http', 'https'] },
+    allowedStyles: {
+      '*': {
+        color: [/^#[0-9a-fA-F]{3,8}$/, /^rgb\(/, /^[a-zA-Z]+$/],
+        'background-color': [/^#[0-9a-fA-F]{3,8}$/, /^rgb\(/, /^[a-zA-Z]+$/],
+        'font-weight': [/^\d+$/, /^[a-zA-Z]+$/],
+        'font-style': [/^[a-zA-Z]+$/],
+        'text-align': [/^[a-zA-Z]+$/],
+        'text-decoration': [/^[a-zA-Z]+$/],
+        'font-size': [/^[\d.]+(px|em|%)$/],
+        'border-radius': [/^[\d.]+px$/],
+        display: [/^[a-zA-Z]+$/],
+        margin: [/^[\d.]+(px|em)?(\s[\d.]+(px|em)?)*$/],
+        width: [/^[\d.]+(px|%)$/],
+        height: [/^[\d.]+(px|%)$/],
+      },
+    },
+  });
 }
 
 function randomLetters(n) {
@@ -159,6 +199,10 @@ function createApp(overrides = {}) {
   const AZURE_SPEECH_KEY = process.env.AZURE_SPEECH_KEY || null;
   const AZURE_SPEECH_REGION = process.env.AZURE_SPEECH_REGION || null;
   const TTS_CACHE_DIR = overrides.ttsCacheDir || path.join(__dirname, 'data', 'tts-cache');
+  // "Kunga's Diary" (notebook.html): the one account whose entries marked
+  // public are served, unauthenticated, from /diary and /api/diary/public.
+  // Hardcoded to a single owner (not every notebook user) by design.
+  const DIARY_OWNER_USERNAME = overrides.diaryOwnerUsername || process.env.DIARY_OWNER_USERNAME || 'kunga';
 
   // ---- Stripe: Premium subscription (unlocks the final 2 levels: Frontier of
   // Science and Summit of Fluency) --------------------------------------------
@@ -386,7 +430,8 @@ function createApp(overrides = {}) {
         add column if not exists subscription_plan text,
         add column if not exists subscription_period_end timestamptz,
         add column if not exists avatar jsonb,
-        add column if not exists notebook jsonb;
+        add column if not exists notebook jsonb,
+        add column if not exists diary jsonb;
     `);
     databaseReady = true;
     return { connected: true, mode: 'supabase', url: SUPABASE_URL };
@@ -531,6 +576,24 @@ function createApp(overrides = {}) {
     const idx = users.findIndex((u) => u.id === userId);
     if (idx === -1) return;
     users[idx].notebook = notebook;
+    writeUsers(users);
+  }
+
+  // The diary column: { entries: [{id,date,html,mood,public,t}], pinHash }.
+  // Entries never leave the server in one undifferentiated blob the way
+  // notebook pages do -- callers below always read/write through the
+  // diary-specific endpoints so public and PIN-locked entries stay separated
+  // at the point entries are selected for a response, not just in the UI.
+  async function updateUserDiary(userId, diary) {
+    const client = await getDbClient();
+    if (client) {
+      await client.query('update public.users set diary = $2 where id = $1', [userId, JSON.stringify(diary)]);
+      return;
+    }
+    const users = readUsers();
+    const idx = users.findIndex((u) => u.id === userId);
+    if (idx === -1) return;
+    users[idx].diary = diary;
     writeUsers(users);
   }
 
@@ -926,6 +989,116 @@ function createApp(overrides = {}) {
     return res.json({ ok: true });
   });
 
+  // ---- Kunga's Diary (notebook.html's Diary section + /diary): a single
+  //      owner account (DIARY_OWNER_USERNAME) with two kinds of entries --
+  //      public ones, served unauthenticated to any visitor at /diary, and
+  //      PIN-locked ones, which this GET and every other route below never
+  //      includes unless /api/diary/unlock just verified the PIN. The PIN
+  //      is a screen-lock against someone glancing at an already-logged-in
+  //      notebook, not a replacement for real auth -- same trust level as
+  //      the rest of this file's username-trust model. ----------------------
+  const DIARY_MAX_HTML = 500000;
+  function diaryPublicEntries(diary) {
+    return ((diary && diary.entries) || []).filter((e) => e && e.public === true);
+  }
+  function diaryPrivateEntries(diary) {
+    return ((diary && diary.entries) || []).filter((e) => e && e.public !== true);
+  }
+  app.get('/api/diary', async (req, res) => {
+    const username = String(req.query.username || '');
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    const diary = user.diary || {};
+    return res.json({
+      entries: diaryPublicEntries(diary),
+      hasPin: Boolean(diary.pinHash),
+      privateCount: diaryPrivateEntries(diary).length,
+    });
+  });
+
+  app.post('/api/diary/set-pin', async (req, res) => {
+    const { username, pin } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    if (!/^\d{4,8}$/.test(String(pin || ''))) return res.status(400).json({ error: 'PIN must be 4-8 digits.' });
+    const diary = user.diary || { entries: [] };
+    if (diary.pinHash) return res.status(409).json({ error: 'A PIN is already set.' });
+    diary.pinHash = hashPassword(pin);
+    await updateUserDiary(user.id, diary);
+    return res.json({ ok: true });
+  });
+
+  app.post('/api/diary/change-pin', async (req, res) => {
+    const { username, currentPin, newPin } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    const diary = user.diary || { entries: [] };
+    if (!diary.pinHash || diary.pinHash !== hashPassword(currentPin)) {
+      return res.status(401).json({ error: 'Incorrect current PIN.' });
+    }
+    if (!/^\d{4,8}$/.test(String(newPin || ''))) return res.status(400).json({ error: 'PIN must be 4-8 digits.' });
+    diary.pinHash = hashPassword(newPin);
+    await updateUserDiary(user.id, diary);
+    return res.json({ ok: true });
+  });
+
+  app.post('/api/diary/unlock', async (req, res) => {
+    const { username, pin } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    const diary = user.diary || {};
+    if (!diary.pinHash || diary.pinHash !== hashPassword(pin)) {
+      return res.status(401).json({ ok: false, error: 'Incorrect PIN.' });
+    }
+    return res.json({ ok: true, entries: diaryPrivateEntries(diary) });
+  });
+
+  app.post('/api/diary/entry', async (req, res) => {
+    const { username, entry } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    if (!entry || typeof entry !== 'object' || !entry.date) {
+      return res.status(400).json({ error: 'Invalid diary entry.' });
+    }
+    const html = sanitizeDiaryHtml(entry.html);
+    if (html.length > DIARY_MAX_HTML) return res.status(413).json({ error: 'That entry is too large.' });
+    const diary = user.diary || { entries: [] };
+    if (!Array.isArray(diary.entries)) diary.entries = [];
+    const id = String(entry.id || crypto.randomUUID());
+    const saved = {
+      id,
+      date: String(entry.date).slice(0, 10),
+      html,
+      mood: String(entry.mood || '').slice(0, 8),
+      public: entry.public === true,
+      t: Date.now(),
+    };
+    const idx = diary.entries.findIndex((e) => e.id === id);
+    if (idx === -1) diary.entries.push(saved); else diary.entries[idx] = saved;
+    await updateUserDiary(user.id, diary);
+    return res.json({ ok: true, entry: saved });
+  });
+
+  app.post('/api/diary/delete', async (req, res) => {
+    const { username, id } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    const diary = user.diary || { entries: [] };
+    diary.entries = (diary.entries || []).filter((e) => e.id !== id);
+    await updateUserDiary(user.id, diary);
+    return res.json({ ok: true });
+  });
+
+  // Public reader (/diary): no username is ever accepted from the request --
+  // always this one hardcoded owner -- and only entries explicitly marked
+  // public are selected, so a locked entry can never reach this response.
+  app.get('/api/diary/public', async (req, res) => {
+    const user = await findUserByUsername(DIARY_OWNER_USERNAME);
+    const entries = user ? diaryPublicEntries(user.diary || {}) : [];
+    entries.sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.t || 0) - (a.t || 0));
+    return res.json({ entries: entries.map((e) => ({ date: e.date, mood: e.mood, html: e.html, t: e.t })) });
+  });
+
   // ---- avatars: mascot (JSON config) or photo (uploaded image) ---------------
   app.post('/api/avatar/character', async (req, res) => {
     const { username, options } = req.body || {};
@@ -1056,6 +1229,14 @@ function createApp(overrides = {}) {
 
   app.get('/notebook.html', (req, res) => {
     return res.sendFile(path.join(__dirname, 'notebook.html'));
+  });
+
+  app.get('/diary', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'diary.html'));
+  });
+
+  app.get('/diary.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'diary.html'));
   });
 
   // ---- text-to-speech proxy (Azure AI Speech): English + Chinese only ---------
