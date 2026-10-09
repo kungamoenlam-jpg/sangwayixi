@@ -12548,6 +12548,7 @@ function renderCategoryWeekMenu(){
   const weekCards = Object.keys(weekMeta).map(Number).map(w=>{
     const meta = weekMeta[w];
     const count = bizConceptPool(category, w).length;
+    const wPct = bizMasteryPercent(category, w);
     return `
     <button class="track-card" onclick="categoryStartFromWeekMenu(${w})">
       <div class="glyph">${w}</div>
@@ -12555,10 +12556,12 @@ function renderCategoryWeekMenu(){
         <div class="tc-title">${t(meta.titleKey)}</div>
         <div class="tc-sub">${t(meta.descKey)}</div>
         <div class="tc-sub" style="margin-top:2px; font-size:11px;">${bizMasteryLabelHtml(category, w)}</div>
+        <div style="margin-top:5px;">${masteryBarHtml('practicing',wPct)}</div>
       </div>
-      <div class="tc-progress">${count}</div>
+      <div class="tc-progress">${wPct}%</div>
     </button>`;
   }).join('');
+  const allPct = bizMasteryPercent(category, null);
   const allCard = `
     <button class="track-card" onclick="categoryStartFromWeekMenu(null)">
       <div class="glyph">${WEEK_MENU_GLYPH[category]||'📚'}</div>
@@ -12566,17 +12569,25 @@ function renderCategoryWeekMenu(){
         <div class="tc-title">${t(category+'AllWeeksTitle')}</div>
         <div class="tc-sub">${t(category+'AllWeeksDesc')}</div>
         <div class="tc-sub" style="margin-top:2px; font-size:11px;">${bizMasteryLabelHtml(category, null)}</div>
+        <div style="margin-top:5px;">${masteryBarHtml('practicing',allPct)}</div>
       </div>
-      <div class="tc-progress">${BUSINESS_CONCEPTS[category].length}</div>
+      <div class="tc-progress">${allPct}%</div>
     </button>`;
+  // Every lesson in the category, weakest first, each with its own mastery
+  // bar -- so you can see at a glance exactly which ones need review instead
+  // of just a 🏆/📖 badge.
   const rankOrder = {new:0, learning:1, practicing:2, mastered:3};
-  const ranked = [...BUSINESS_CONCEPTS[category]].sort((a,b)=>rankOrder[masteryLevel(a.key)] - rankOrder[masteryLevel(b.key)]).slice(0,8);
+  const ranked = [...BUSINESS_CONCEPTS[category]].sort((a,b)=>rankOrder[masteryLevel(a.key)] - rankOrder[masteryLevel(b.key)]);
   const rankedHtml = ranked.map(c=>{
     const lvl = masteryLevel(c.key);
+    const pct = masteryPercent(c.key);
     return `
-    <div style="display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(255,255,255,.06);">
-      <div style="font-size:13.5px;">${c.icon} ${t(c.titleKey)} <span style="color:var(--snow-dim); font-size:11px;">· W${c.week}</span></div>
-      <div style="font-size:12px; white-space:nowrap;">${masteryBadge(lvl)} ${t(masteryLabelKey(lvl))}</div>
+    <div style="padding:8px 0; border-bottom:1px solid rgba(255,255,255,.06);">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:5px;">
+        <div style="font-size:13.5px;">${c.icon} ${t(c.titleKey)} <span style="color:var(--snow-dim); font-size:11px;">· W${c.week}</span></div>
+        <div style="font-size:12px; white-space:nowrap; color:var(--snow-dim);">${masteryBadge(lvl)} ${pct}%</div>
+      </div>
+      ${masteryBarHtml(lvl,pct)}
     </div>`;
   }).join('');
   return `
@@ -13174,6 +13185,32 @@ function masteryBadge(level){
 }
 function masteryLabelKey(level){
   return {new:'masteryNew', learning:'masteryLearning', practicing:'masteryPracticing', mastered:'masteryMastered'}[level];
+}
+// A continuous 0-100 reading for the progress bars, built from the same
+// {correct,wrong,streak} record masteryLevel() already uses -- streak
+// (progress toward the streak>=3 "mastered" cutoff) carries most of the
+// weight since that's the actual mastery criterion, accuracy fills the
+// rest. Capped at 99 below the streak>=3 threshold so a full bar always
+// means the same thing as the 🏆 badge, never a mismatched "100%, learning".
+function masteryPercent(key){
+  const m = masteryStats(key);
+  const attempts = m.correct + m.wrong;
+  if(attempts===0) return 0;
+  if(m.streak>=3) return 100;
+  const acc = m.correct/attempts;
+  const streakProgress = Math.min(m.streak,3)/3;
+  return Math.round(Math.min(99, streakProgress*60 + acc*40));
+}
+function masteryBarColor(level){
+  return {new:'rgba(255,255,255,.22)', learning:'var(--ice)', practicing:'var(--gold)', mastered:'var(--good)'}[level] || 'var(--ice)';
+}
+function masteryBarHtml(level,pct){
+  return `<div style="height:6px; border-radius:999px; background:rgba(255,255,255,.1); overflow:hidden;"><div style="height:100%; width:${pct}%; border-radius:999px; background:${masteryBarColor(level)};"></div></div>`;
+}
+function bizMasteryPercent(category, weekFilter){
+  const pool = bizConceptPool(category, weekFilter);
+  if(!pool.length) return 0;
+  return Math.round(pool.reduce((s,c)=>s+masteryPercent(c.key),0)/pool.length);
 }
 
 function finalizeQuizBankAnswer(s){
