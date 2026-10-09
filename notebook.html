@@ -362,15 +362,21 @@ body.booklet #planPanel{top:auto;bottom:16px;left:16px;right:16px;width:auto;max
       </span>
     </div>
   </header>
-  <div class="bar">
-    <div class="seg" id="subjects" role="group" aria-label="Subject"></div>
-  </div>
-  <div class="bar">
-    <div class="seg" id="weeks" role="group" aria-label="Week"></div>
-    <div class="seg" id="noteType" role="group" aria-label="Notebook">
-      <button type="button" data-nt="lecture" aria-pressed="true">📘 Lecture</button>
-      <button type="button" data-nt="tutorial">📝 Tutorial</button>
+  <div id="subjWeekHead">
+    <div class="bar">
+      <div class="seg" id="subjects" role="group" aria-label="Subject"></div>
     </div>
+    <div class="bar">
+      <div class="seg" id="weeks" role="group" aria-label="Week"></div>
+      <div class="seg" id="noteType" role="group" aria-label="Notebook">
+        <button type="button" data-nt="lecture" aria-pressed="true">📘 Lecture</button>
+        <button type="button" data-nt="tutorial">📝 Tutorial</button>
+      </div>
+      <button type="button" class="plain" id="hdrCollapseBtn" aria-expanded="true" title="Collapse this so there's more room to write">▲ Collapse</button>
+    </div>
+  </div>
+  <div class="bar" id="hdrSummaryBar" hidden>
+    <button type="button" class="plain" id="hdrExpandBtn"></button>
   </div>
   <div class="pagebar">
     <input id="topic" autocomplete="off" aria-label="Topic" placeholder="Topic, e.g. Eigenvalues and eigenvectors">
@@ -655,7 +661,7 @@ const WEEKS=['gen',...Array.from({length:13},(_,i)=>'w'+(i+1)),'rev'];
 const WLAB=w=>w==='gen'?'Overview':w==='rev'?'Revision':'Wk '+w.slice(1);
 const WLONG=w=>w==='gen'?'Unit overview':w==='rev'?'Exam revision':'Week '+w.slice(1);
 const STAT=['Not started','Notes written','Practised','Mastered'];
-const state={mode:'type',grid:'lined',ink:'rainbow',strokes:[],subj:'',wk:{},z:1,pageIdx:1,penWidth:4,pencilOnly:false,spacing:1,tool:'free',booklet:false,noteType:'lecture'};
+const state={mode:'type',grid:'lined',ink:'rainbow',strokes:[],subj:'',wk:{},z:1,pageIdx:1,penWidth:4,pencilOnly:false,spacing:1,tool:'free',booklet:false,noteType:'lecture',collapseHeader:false};
 const wkOf=s=>state.wk[s]||(s==='free'?'gen':'w1');
 // A lecture page can outgrow one page; extra ones are "subj_week_p2",
 // "_p3", etc. so existing single-page saves (no suffix) keep working
@@ -1461,7 +1467,7 @@ function snap(){return{html:doc.innerHTML,grid:state.grid,minH:lines.style.minHe
 function syncNote(m){$('sync').textContent=m;}
 function saveLocal(){
   clearTimeout(lsT);
-  lsT=setTimeout(()=>{try{localStorage.setItem(LS,JSON.stringify({subj:state.subj,wk:state.wk,mode:state.mode,z:state.z,penWidth:state.penWidth,pencilOnly:state.pencilOnly,spacing:state.spacing,booklet:state.booklet,noteType:state.noteType,pages}));}catch(e){}},300);
+  lsT=setTimeout(()=>{try{localStorage.setItem(LS,JSON.stringify({subj:state.subj,wk:state.wk,mode:state.mode,z:state.z,penWidth:state.penWidth,pencilOnly:state.pencilOnly,spacing:state.spacing,booklet:state.booklet,noteType:state.noteType,collapseHeader:state.collapseHeader,pages}));}catch(e){}},300);
 }
 function persist(){
   if(loading)return;
@@ -1526,7 +1532,26 @@ function drawWeeks(){
     b.setAttribute('aria-pressed',b.dataset.w===wkOf(state.subj));
     b.title=`${WLONG(b.dataset.w)}${p&&p.topic?': '+p.topic:''} (${STAT[p?p.status||0:0]})`;
   });
+  if(state.collapseHeader)renderHdrSummary();
 }
+// Collapsing the subject/week picker (once you've already landed on the
+// right page) trades that whole block for a one-line "tap to expand" pill,
+// so the formatting toolbar sits right under the page instead of several
+// rows of subject/week buttons -- more room to actually write.
+function renderHdrSummary(){
+  const s=state.subj,w=wkOf(s);
+  $('hdrExpandBtn').textContent=`▾ ${SUBJ[s].name} · ${WLAB(w)}${state.noteType==='tutorial'?' · Tutorial':' · Lecture'}`;
+}
+function setHeaderCollapsed(c){
+  state.collapseHeader=c;
+  $('subjWeekHead').hidden=c;
+  $('hdrSummaryBar').hidden=!c;
+  $('hdrCollapseBtn').setAttribute('aria-expanded',String(!c));
+  if(c)renderHdrSummary();
+  saveLocal();
+}
+$('hdrCollapseBtn').onclick=()=>setHeaderCollapsed(true);
+$('hdrExpandBtn').onclick=()=>setHeaderCollapsed(false);
 // Extra pages exist only where a lecture outgrows one page, so the nav only
 // shows itself (prev/next + count) once there is more than one; otherwise
 // just the "+ New page" button, keeping the common case uncluttered.
@@ -1712,6 +1737,7 @@ try{
     if(PEN_WIDTHS.includes(s.penWidth))state.penWidth=s.penWidth;state.pencilOnly=!!s.pencilOnly;
     if(typeof s.spacing==='number'&&s.spacing>=SPACING_RANGE[0]&&s.spacing<=SPACING_RANGE[1])state.spacing=s.spacing;
     state.booklet=!!s.booklet;
+    state.collapseHeader=!!s.collapseHeader;
     if(s.noteType==='tutorial')state.noteType='tutorial';}
   else{
     const v2=JSON.parse(localStorage.getItem('kunga-notebook-v2')||'null');
@@ -1723,7 +1749,7 @@ try{
   }
 }catch(e){}
 if(!SUBJ[state.subj])state.subj='mxb105';
-setInk('rainbow');setTool('free');setMode(state.mode);setZoom(state.z);setPenWidth(state.penWidth);setSpacing(state.spacing);$('pencilOnly').setAttribute('aria-pressed',String(state.pencilOnly));setBooklet(state.booklet);openPage(state.subj,wkOf(state.subj));
+setInk('rainbow');setTool('free');setMode(state.mode);setZoom(state.z);setPenWidth(state.penWidth);setSpacing(state.spacing);$('pencilOnly').setAttribute('aria-pressed',String(state.pencilOnly));setBooklet(state.booklet);openPage(state.subj,wkOf(state.subj));setHeaderCollapsed(state.collapseHeader);
 
 // Notebook sync piggybacks on the same login as the rest of kunga.me: if
 // this browser has an active Yeshe session (shared localStorage, same
