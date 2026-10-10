@@ -2438,7 +2438,6 @@ const I18N = {
     quantWeek4Title: "Week 4: Quant Research & Modern Methods", quantWeek4Desc: "Backtesting, alpha decay, factor investing, HFT, reinforcement learning",
     bizRoundsLabel: "{n} rounds done",
     bizLearnEyebrow: "Concept {n} of {total}",
-    bizNextConceptBtn: "Next concept",
     bizStartQuizBtn: "Start quiz",
     bizQuizEyebrow: "Quiz",
     bizMcqEyebrow: "Choose the right term",
@@ -3605,7 +3604,6 @@ const I18N = {
     bizStatementEyebrow: "填写缺失的数字",
     bizRoundsLabel: "已完成{n}轮",
     bizLearnEyebrow: "概念 {n}/{total}",
-    bizNextConceptBtn: "下一个概念",
     bizStartQuizBtn: "开始测验",
     bizQuizEyebrow: "测验",
     bizMcqEyebrow: "选择正确的术语",
@@ -4785,7 +4783,6 @@ const I18N = {
     bizStatementEyebrow: "མེད་པའི་གྲངས་ཀ་ཁ་སྐོང་རྒྱོབ།",
     bizRoundsLabel: "ཐེངས་{n}གྲུབ་ཟིན།",
     bizLearnEyebrow: "དོན་ཚན {n}/{total}",
-    bizNextConceptBtn: "དོན་ཚན་རྗེས་མ།",
     bizStartQuizBtn: "བརྟག་ཞིབ་འགོ་འཛུགས།",
     bizQuizEyebrow: "བརྟག་ཞིབ།",
     bizMcqEyebrow: "མིང་ཚིག་ངེས་ཅན་འདེམས་ཤིག",
@@ -12736,31 +12733,28 @@ function startBusinessRound(category, weekFilter){
   render();
 }
 
+// All 3 concepts are laid out in one scrollable page, instead of one at a
+// time behind a "Next concept" button, so a learner who's already a couple
+// of cards in can just scroll back up to re-read an earlier one instead of
+// losing it the moment they move on.
 function renderBusinessLearn(){
   const s = state.businessSession;
-  const concept = s.concepts[s.learnIndex];
-  const isLast = s.learnIndex >= s.concepts.length - 1;
-  return `
-  ${topbar({back:'backFromBusinessSession()'})}
-  <div class="home ${appLangClass()}">
-    <div style="font-size:12px; color:var(--snow-dim); text-align:center;">${t('bizLearnEyebrow',{n:s.learnIndex+1, total:s.concepts.length})}</div>
-    <div class="hero" style="padding-top:4px;">
-      <h1 style="font-size:26px;">${concept.icon} ${t(concept.titleKey)}</h1>
+  const cardsHtml = s.concepts.map((concept,i)=>`
+    <div style="font-size:12px; color:var(--snow-dim); text-align:center; ${i>0?'margin-top:28px;':''}">${t('bizLearnEyebrow',{n:i+1, total:s.concepts.length})}</div>
+    <div class="hero" style="padding-top:4px; padding-bottom:0;">
+      <h1 style="font-size:24px;">${concept.icon} ${t(concept.titleKey)}</h1>
     </div>
     <div class="profile-card" style="text-align:left;">
       <div style="font-size:14.5px; color:var(--snow-dim);">${formatReadableText(t(concept.explainKey))}</div>
       ${concept.diagram ? `<div style="margin-top:14px; background:rgba(255,255,255,.04); border-radius:12px; padding:10px;">${concept.diagram()}</div>` : ''}
-    </div>
-    <button class="btn btn-primary btn-block" onclick="nextBusinessLearn()">${isLast ? t('bizStartQuizBtn') : t('bizNextConceptBtn')}</button>
+    </div>`).join('');
+  return `
+  ${topbar({back:'backFromBusinessSession()'})}
+  <div class="home ${appLangClass()}">
+    ${cardsHtml}
+    <button class="btn btn-primary btn-block" style="margin-top:24px;" onclick="startBusinessQuiz()">${t('bizStartQuizBtn')}</button>
   </div>
   `;
-}
-
-function nextBusinessLearn(){
-  const s = state.businessSession;
-  s.learnIndex += 1;
-  if(s.learnIndex >= s.concepts.length){ startBusinessQuiz(); return; }
-  render();
 }
 
 function startBusinessQuiz(){
@@ -13053,50 +13047,51 @@ function startQuizBankLearnRound(partFilter){
   render();
 }
 
+// Same scroll-through-all-3-then-test layout as renderBusinessLearn, so a
+// learner can scroll back up to re-read an earlier question instead of it
+// disappearing behind a "Next concept" button.
 function renderQuizBankTeach(){
   const s = state.quizBankSession;
-  const q = s.learnQuestions[s.learnIndex];
-  const isLast = s.learnIndex >= s.learnQuestions.length - 1;
-  let revealHtml = '';
-  if(q.type==='mcq'){
-    revealHtml = `<div class="options">${q.opts.map((opt,idx)=>
-      `<button class="opt ${idx===q.ans?'correct reveal':'disabled reveal'}" disabled><span>${opt}</span></button>`
-    ).join('')}</div>`;
-  } else if(q.type==='tf'){
-    revealHtml = `<div class="options">
-      <button class="opt ${q.ans===true?'correct reveal':'disabled reveal'}" disabled><span>${t('quizBankTrueBtn')}</span></button>
-      <button class="opt ${q.ans===false?'correct reveal':'disabled reveal'}" disabled><span>${t('quizBankFalseBtn')}</span></button>
-    </div>`;
-  }
-  return `
-  ${topbar({back:'exitQuizBank()'})}
-  <div class="lesson">
-    <div class="q-wrap">
-      ${(q.type==='mcq'||q.type==='tf') ? `
-      <div class="q-card">
-        <div class="q-eyebrow">${t('bizLearnEyebrow',{n:s.learnIndex+1, total:s.learnQuestions.length})}</div>
+  const cardsHtml = s.learnQuestions.map((q,i)=>{
+    let revealHtml = '';
+    if(q.type==='mcq'){
+      revealHtml = `<div class="options">${q.opts.map((opt,idx)=>
+        `<button class="opt ${idx===q.ans?'correct reveal':'disabled reveal'}" disabled><span>${opt}</span></button>`
+      ).join('')}</div>`;
+    } else if(q.type==='tf'){
+      revealHtml = `<div class="options">
+        <button class="opt ${q.ans===true?'correct reveal':'disabled reveal'}" disabled><span>${t('quizBankTrueBtn')}</span></button>
+        <button class="opt ${q.ans===false?'correct reveal':'disabled reveal'}" disabled><span>${t('quizBankFalseBtn')}</span></button>
+      </div>`;
+    }
+    return (q.type==='mcq'||q.type==='tf') ? `
+      <div class="q-card" style="${i>0?'margin-top:28px;':''}">
+        <div class="q-eyebrow">${t('bizLearnEyebrow',{n:i+1, total:s.learnQuestions.length})}</div>
         <div class="q-prompt" style="font-size:19px;">${q.q}</div>
-      </div>` : `
-      <div class="q-eyebrow" style="text-align:center;">${t('bizLearnEyebrow',{n:s.learnIndex+1, total:s.learnQuestions.length})}</div>
-      <div class="profile-card" style="text-align:left;">
-        <div class="qb-prompt-card">${formatReadableText(q.q)}</div>
-      </div>`}
+      </div>
       ${revealHtml}
       <div class="profile-card" style="text-align:left;">
         <div style="font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--gold); margin-bottom:6px;">${t('quizBankAnswerLabel')}</div>
         <div style="font-size:14.5px; color:var(--snow-dim);">${formatReadableText(q.exp)}</div>
+      </div>` : `
+      <div class="q-eyebrow" style="text-align:center; ${i>0?'margin-top:28px;':''}">${t('bizLearnEyebrow',{n:i+1, total:s.learnQuestions.length})}</div>
+      <div class="profile-card" style="text-align:left;">
+        <div class="qb-prompt-card">${formatReadableText(q.q)}</div>
       </div>
-      <button class="btn btn-primary btn-block" onclick="nextQuizBankTeach()">${isLast ? t('bizStartQuizBtn') : t('bizNextConceptBtn')}</button>
+      <div class="profile-card" style="text-align:left;">
+        <div style="font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--gold); margin-bottom:6px;">${t('quizBankAnswerLabel')}</div>
+        <div style="font-size:14.5px; color:var(--snow-dim);">${formatReadableText(q.exp)}</div>
+      </div>`;
+  }).join('');
+  return `
+  ${topbar({back:'exitQuizBank()'})}
+  <div class="lesson">
+    <div class="q-wrap">
+      ${cardsHtml}
+      <button class="btn btn-primary btn-block" style="margin-top:24px;" onclick="startQuizBankLearnTest()">${t('bizStartQuizBtn')}</button>
     </div>
   </div>
   `;
-}
-
-function nextQuizBankTeach(){
-  const s = state.quizBankSession;
-  s.learnIndex += 1;
-  if(s.learnIndex >= s.learnQuestions.length){ startQuizBankLearnTest(); return; }
-  render();
 }
 
 function startQuizBankLearnTest(){
