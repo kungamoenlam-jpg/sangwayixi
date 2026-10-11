@@ -216,6 +216,15 @@
   .profile-card{background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:18px;}
   .profile-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
 
+  /* ---- concept learn cards: one badge+title+prose card per concept, styled
+     for quick scanning (a bold lead line, then short bulleted beats) rather
+     than a dense wall of equal-weight paragraph text. ---------------------- */
+  .concept-card{background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-left:4px solid var(--gold); border-radius:16px; padding:20px; animation:conceptIn .35s ease both;}
+  @keyframes conceptIn{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+  .concept-head{display:flex; align-items:center; gap:12px; margin-bottom:14px;}
+  .concept-badge{font-size:26px; width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; background:rgba(232,163,61,.15); flex-shrink:0;}
+  .concept-title{font-family:var(--font-display); font-size:19px; font-weight:700; color:var(--snow); line-height:1.25;}
+
   /* ---- avatars: mascot (emoji composition) or uploaded photo ---------------- */
   @keyframes avatarBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-3px);}}
   .avatar-circle{
@@ -316,12 +325,17 @@
   .biz-switch.on{background:var(--gold); border-color:var(--gold);}
   .biz-switch-knob{position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%; background:var(--snow); transition:left .15s ease; box-shadow:0 1px 3px rgba(0,0,0,.3);}
   .biz-switch.on .biz-switch-knob{left:22px;}
-  .qb-line{margin-bottom:8px; line-height:1.55;}
+  .qb-prose{font-size:15.5px;}
+  .qb-lead{font-family:var(--font-display); font-size:17.5px; font-weight:700; color:var(--snow); line-height:1.4; margin-bottom:12px;}
+  .qb-lead strong{color:var(--gold);}
+  .qb-line{display:flex; gap:9px; margin-bottom:11px; line-height:1.55; color:var(--snow-dim);}
   .qb-line:last-child{margin-bottom:0;}
+  .qb-line::before{content:''; width:6px; height:6px; margin-top:8px; border-radius:50%; background:var(--gold); flex-shrink:0;}
   .qb-line strong{color:var(--gold);}
-  .qb-list{margin:2px 0 12px 20px; padding:0;}
+  .qb-list{margin:2px 0 12px 0; padding:0; list-style:none;}
   .qb-list:last-child{margin-bottom:0;}
-  .qb-list li{margin-bottom:6px; line-height:1.5;}
+  .qb-list li{position:relative; margin-bottom:8px; padding-left:17px; line-height:1.5; color:var(--snow-dim);}
+  .qb-list li::before{content:''; position:absolute; left:0; top:7px; width:6px; height:6px; border-radius:50%; background:var(--gold);}
   .qb-prompt-card{font-family:var(--font-display); font-size:17px; font-weight:600; line-height:1.4;}
   .auth-error{background:rgba(225,88,75,.18); border:1px solid rgba(225,88,75,.5); color:var(--snow); border-radius:10px; padding:10px 12px; font-size:13px;}
 
@@ -11889,21 +11903,32 @@ function escapeHtml(str){
   div.textContent = str;
   return div.innerHTML;
 }
+// Splits an explanation into one visual "beat" per sentence instead of a
+// single dense paragraph: the first sentence (almost always the actual
+// definition) renders bold and bigger as a lead line with no bullet, and
+// every sentence after it gets its own bulleted line -- something to scan,
+// not a wall of text to push through.
 function formatReadableText(text){
   if(!text) return '';
-  const sentences = text.split(/\.\s+/)
+  const rawSentences = text.split(/\.\s+/)
     .map((s,i,arr) => (i<arr.length-1 && !/[.!?:]$/.test(s)) ? s+'.' : s)
     .map(s=>s.trim()).filter(Boolean);
-  return sentences.map(sentence=>{
+  // A lot of these explanations are written as one long sentence with an
+  // em-dash clause tacked on, rather than two short sentences -- splitting
+  // on the dash too turns that single dense line into two scannable beats.
+  const sentences = [];
+  rawSentences.forEach(s=>{ sentences.push(...s.split(/\s+—\s+/).map(p=>p.trim()).filter(Boolean)); });
+  return sentences.map((sentence,i)=>{
+    const lineCls = i===0 ? 'qb-lead' : 'qb-line';
     const m = sentence.match(/^([^:]{2,60}):\s*(.+)$/);
     let label = null, rest = sentence;
     if(m){ label = m[1].trim(); rest = m[2].trim(); }
     const semiItems = rest.split(';').map(x=>x.trim()).filter(Boolean);
     if(semiItems.length >= 2){
       const items = semiItems.map(it=>`<li>${it.replace(/\.$/,'')}</li>`).join('');
-      return `${label?`<div class="qb-line"><strong>${label}:</strong></div>`:''}<ul class="qb-list">${items}</ul>`;
+      return `${label?`<div class="${lineCls}"><strong>${label}:</strong></div>`:''}<ul class="qb-list">${items}</ul>`;
     }
-    return `<div class="qb-line">${label?`<strong>${label}:</strong> `:''}${rest}</div>`;
+    return `<div class="${lineCls}">${label?`<strong>${label}:</strong> `:''}${rest}</div>`;
   }).join('');
 }
 function checkStatementAnswer(rows, inputs){
@@ -12740,12 +12765,13 @@ function startBusinessRound(category, weekFilter){
 function renderBusinessLearn(){
   const s = state.businessSession;
   const cardsHtml = s.concepts.map((concept,i)=>`
-    <div style="font-size:12px; color:var(--snow-dim); text-align:center; ${i>0?'margin-top:28px;':''}">${t('bizLearnEyebrow',{n:i+1, total:s.concepts.length})}</div>
-    <div class="hero" style="padding-top:4px; padding-bottom:0;">
-      <h1 style="font-size:24px;">${concept.icon} ${t(concept.titleKey)}</h1>
-    </div>
-    <div class="profile-card" style="text-align:left;">
-      <div style="font-size:14.5px; color:var(--snow-dim);">${formatReadableText(t(concept.explainKey))}</div>
+    <div style="font-size:12px; color:var(--snow-dim); text-align:center; margin-bottom:10px; ${i>0?'margin-top:26px;':''}">${t('bizLearnEyebrow',{n:i+1, total:s.concepts.length})}</div>
+    <div class="concept-card">
+      <div class="concept-head">
+        <div class="concept-badge">${concept.icon}</div>
+        <div class="concept-title">${t(concept.titleKey)}</div>
+      </div>
+      <div class="qb-prose">${formatReadableText(t(concept.explainKey))}</div>
       ${concept.diagram ? `<div style="margin-top:14px; background:rgba(255,255,255,.04); border-radius:12px; padding:10px;">${concept.diagram()}</div>` : ''}
     </div>`).join('');
   return `
@@ -13072,7 +13098,7 @@ function renderQuizBankTeach(){
       ${revealHtml}
       <div class="profile-card" style="text-align:left;">
         <div style="font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--gold); margin-bottom:6px;">${t('quizBankAnswerLabel')}</div>
-        <div style="font-size:14.5px; color:var(--snow-dim);">${formatReadableText(q.exp)}</div>
+        <div class="qb-prose">${formatReadableText(q.exp)}</div>
       </div>` : `
       <div class="q-eyebrow" style="text-align:center; ${i>0?'margin-top:28px;':''}">${t('bizLearnEyebrow',{n:i+1, total:s.learnQuestions.length})}</div>
       <div class="profile-card" style="text-align:left;">
@@ -13080,7 +13106,7 @@ function renderQuizBankTeach(){
       </div>
       <div class="profile-card" style="text-align:left;">
         <div style="font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--gold); margin-bottom:6px;">${t('quizBankAnswerLabel')}</div>
-        <div style="font-size:14.5px; color:var(--snow-dim);">${formatReadableText(q.exp)}</div>
+        <div class="qb-prose">${formatReadableText(q.exp)}</div>
       </div>`;
   }).join('');
   return `
@@ -13180,7 +13206,7 @@ function quizBankOptionsHtml(s, q){
     ${yourAnswerHtml}
     <div class="profile-card" style="text-align:left;">
       <div style="font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--gold); margin-bottom:6px;">${t('quizBankAnswerLabel')}</div>
-      <div style="font-size:14.5px; color:var(--snow-dim);">${formatReadableText(q.exp)}</div>
+      <div class="qb-prose">${formatReadableText(q.exp)}</div>
     </div>
     <div style="display:flex; gap:10px;">
       <button class="btn btn-primary btn-block" onclick="submitQuizBankSelfMark(true)">${t('quizBankGotItRightBtn')}</button>
@@ -13191,7 +13217,7 @@ function quizBankOptionsHtml(s, q){
     ${yourAnswerHtml}
     <div class="profile-card" style="text-align:left;">
       <div style="font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--gold); margin-bottom:6px;">${t('quizBankAnswerLabel')}</div>
-      <div style="font-size:14.5px; color:var(--snow-dim);">${formatReadableText(q.exp)}</div>
+      <div class="qb-prose">${formatReadableText(q.exp)}</div>
     </div>`;
 }
 
