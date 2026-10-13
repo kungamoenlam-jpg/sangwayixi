@@ -1247,6 +1247,14 @@ function createApp(overrides = {}) {
     return res.sendFile(path.join(__dirname, 'poker.html'));
   });
 
+  app.get('/probability-night', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'probability-night.html'));
+  });
+
+  app.get('/probability-night.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'probability-night.html'));
+  });
+
   // ---- text-to-speech proxy (Azure AI Speech): English + Chinese only ---------
   // Tibetan has no usable TTS voice on any provider, so it is not handled here —
   // see the /api/admin/audio routes below for the real-recording approach.
