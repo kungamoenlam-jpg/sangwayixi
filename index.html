@@ -1440,6 +1440,34 @@ const I18N = {
     calcDefIntegralPrompt: "Evaluate: ∫ from {a} to {b} of ({expr}) dx",
     calcDefIntegralExplain: "The antiderivative is F(x) = {FExpr}. By the Fundamental Theorem of Calculus: ∫ = F({b}) - F({a}) = {Fb} - ({Fa}) = {answer}.",
 
+    calcTopicTitle_trig_derivatives: "Derivatives: Trig Functions", calcTopicDesc_trig_derivatives: "Differentiate sine, cosine and tangent",
+    calcLearn_trig_derivatives: "The three basic trig derivatives: d/dx[sin x] = cos x, d/dx[cos x] = -sin x (don't drop that minus sign), and d/dx[tan x] = sec²x.\n\nExample: if f(x) = 3sin(x) - 2cos(x), find f'(x).\nf'(x) = 3cos(x) - 2(-sin(x)) = 3cos(x) + 2sin(x).",
+    calcTrigDerivSinPrompt: "If f(x) = {expr}, what is the coefficient of cos(x) in f'(x)?",
+    calcTrigDerivSinExplain: "d/dx[sin x] = cos x, so f'(x) = {derivTerm}. The coefficient is {A}.",
+    calcTrigDerivCosPrompt: "If f(x) = {expr}, what is the coefficient of sin(x) in f'(x)?",
+    calcTrigDerivCosExplain: "d/dx[cos x] = -sin x — the sign flips. f'(x) = {derivTerm}. The coefficient is {answer}.",
+    calcTrigDerivTanPrompt: "If f(x) = {expr}, what is the coefficient of sec²(x) in f'(x)?",
+    calcTrigDerivTanExplain: "d/dx[tan x] = sec²x, so f'(x) = {derivTerm}. The coefficient is {A}.",
+
+    calcTopicTitle_exp_log_derivatives: "Derivatives: Exponential & Log", calcTopicDesc_exp_log_derivatives: "Differentiate eˣ and ln(x)",
+    calcLearn_exp_log_derivatives: "Two of the cleanest rules in calculus: d/dx[eˣ] = eˣ (it's its own derivative), and d/dx[ln x] = 1/x.\n\nExample: if f(x) = 2eˣ + 3x, find f'(0).\nf'(x) = 2eˣ + 3. Since e⁰ = 1: f'(0) = 2(1) + 3 = 5.",
+    calcExpDerivPrompt: "If f(x) = {expr}, find f'(0).",
+    calcExpDerivExplain: "d/dx[eˣ] = eˣ, so f'(x) = {derivExpr}. Since e⁰ = 1: f'(0) = {sumExpr} = {answer}.",
+    calcLogDerivPrompt: "If f(x) = {expr}, find f'(1).",
+    calcLogDerivExplain: "d/dx[ln x] = 1/x, so f'(x) = {derivExpr}. At x = 1, 1/x = 1: f'(1) = {sumExpr} = {answer}.",
+
+    calcTopicTitle_trig_integrals: "Integration: Trig Functions", calcTopicDesc_trig_integrals: "Integrate sine and cosine",
+    calcLearn_trig_integrals: "The two basic trig integrals: ∫sin(x) dx = -cos(x) + C, and ∫cos(x) dx = sin(x) + C. The sign flips for sine's integral but not cosine's — the opposite of their derivatives.\n\nExample: evaluate ∫ from 0 to π/2 of cos(x) dx.\nThe antiderivative is sin(x). sin(π/2) - sin(0) = 1 - 0 = 1.",
+    calcTrigIntegralPrompt: "Evaluate: ∫ from {a} to {b} of {expr} dx",
+    calcTrigIntegralExplain: "{rule}, so the antiderivative is {antiderivExpr}. Evaluating from {a} to {b}: {AFb} - ({AFa}) = {answer}.",
+
+    calcTopicTitle_exp_log_integrals: "Integration: Exponential & Log", calcTopicDesc_exp_log_integrals: "Integrate eˣ and 1/x",
+    calcLearn_exp_log_integrals: "Two more must-know integrals: ∫eˣ dx = eˣ + C, and ∫(1/x) dx = ln|x| + C — the absolute value matters since ln is only defined for positive numbers, but 1/x itself is defined for negative x too.\n\nExample: find the antiderivative of f(x) = 3eˣ + 2/x.\nF(x) = 3eˣ + 2ln|x| + C.",
+    calcExpIntegralPrompt: "Find the antiderivative F(x) of f(x) = {expr}. What is the coefficient of eˣ in F(x)?",
+    calcExpIntegralExplain: "∫eˣ dx = eˣ, so that term integrates straight to {term}. The coefficient is {A}.",
+    calcLogIntegralPrompt: "Find the antiderivative F(x) of f(x) = {expr}. What is the coefficient of ln|x| in F(x)?",
+    calcLogIntegralExplain: "∫(1/x) dx = ln|x|, so that term integrates to {term}. The coefficient is {A}.",
+
     linalgTitle: "Linear Algebra",
     linalgSub: "Month 3: vectors, matrices and the operations that hold them together. Pick a topic to learn the concept, then practice.",
     backToLinAlgMenuBtn: "Back to Linear Algebra",
@@ -6439,6 +6467,112 @@ function calcProblemDefiniteIntegral(){
     explain: t('calcDefIntegralExplain', {FExpr, a, b, Fa, Fb, answer}),
   };
 }
+// Trig/exp/log derivative and integral questions ask for a COEFFICIENT in
+// the result rather than a numeric evaluation, unlike the polynomial topics
+// above -- evaluating sin/cos/eˣ/ln(x) at an arbitrary point rarely gives a
+// clean integer, so asking "what's the coefficient of cos(x) in f'(x)"
+// keeps answers exact while still testing the sign/rule itself (especially
+// the easy-to-drop minus sign on d/dx[cos x]).
+function calcProblemTrigDerivatives(){
+  const A = nonZeroRandInt(-6,6), B = randInt(-8,8);
+  const variant = randInt(0,2);
+  if(variant===0){
+    const expr = `${leadTerm(A,'sin(x)')}${signedCoeffTerm(B,'')}`;
+    return {
+      promptText: t('calcTrigDerivSinPrompt', {expr}),
+      inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+      check(vals){ return Number(vals.ans)===A; },
+      explain: t('calcTrigDerivSinExplain', {A, derivTerm:leadTerm(A,'cos(x)')}),
+    };
+  }
+  if(variant===1){
+    const expr = `${leadTerm(A,'cos(x)')}${signedCoeffTerm(B,'')}`;
+    const answer = -A;
+    return {
+      promptText: t('calcTrigDerivCosPrompt', {expr}),
+      inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+      check(vals){ return Number(vals.ans)===answer; },
+      explain: t('calcTrigDerivCosExplain', {answer, derivTerm:leadTerm(answer,'sin(x)')}),
+    };
+  }
+  const expr = `${leadTerm(A,'tan(x)')}${signedCoeffTerm(B,'')}`;
+  return {
+    promptText: t('calcTrigDerivTanPrompt', {expr}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===A; },
+    explain: t('calcTrigDerivTanExplain', {A, derivTerm:leadTerm(A,'sec²(x)')}),
+  };
+}
+function calcProblemExpLogDerivatives(){
+  const A = nonZeroRandInt(-6,6), B = randInt(-8,8), C = randInt(-8,8);
+  const answer = A + B;
+  if(Math.random()<0.5){
+    const expr = `${leadTerm(A,'eˣ')}${signedCoeffTerm(B,'x')}${signedCoeffTerm(C,'')}`;
+    const derivExpr = `${leadTerm(A,'eˣ')}${signedCoeffTerm(B,'')}`;
+    const sumExpr = `${A}${signedCoeffTerm(B,'')}`;
+    return {
+      promptText: t('calcExpDerivPrompt', {expr}),
+      inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+      check(vals){ return Number(vals.ans)===answer; },
+      explain: t('calcExpDerivExplain', {derivExpr, sumExpr, answer}),
+    };
+  }
+  const expr = `${leadTerm(A,'ln(x)')}${signedCoeffTerm(B,'x')}${signedCoeffTerm(C,'')}`;
+  const overX = A===1 ? '1/x' : A===-1 ? '-1/x' : `${A}/x`;
+  const derivExpr = `${overX}${signedCoeffTerm(B,'')}`;
+  const sumExpr = `${A}${signedCoeffTerm(B,'')}`;
+  return {
+    promptText: t('calcLogDerivPrompt', {expr}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('calcLogDerivExplain', {derivExpr, sumExpr, answer}),
+  };
+}
+// Fa/Fb here are the A=1 antiderivative values at each bound (e.g. for
+// sin on [0,π/2]: F(x)=-cos(x), F(0)=-1, F(π/2)=0) -- scaled by the random
+// amplitude A below so every case still lands on a clean integer answer.
+const TRIG_INT_CASES = [
+  {fn:'sin', aLabel:'0',    bLabel:'π/2', Fa:-1, Fb:0},
+  {fn:'sin', aLabel:'0',    bLabel:'π',   Fa:-1, Fb:1},
+  {fn:'cos', aLabel:'0',    bLabel:'π/2', Fa:0,  Fb:1},
+  {fn:'cos', aLabel:'-π/2', bLabel:'π/2', Fa:-1, Fb:1},
+];
+function calcProblemTrigIntegrals(){
+  const A = nonZeroRandInt(-6,6);
+  const c = TRIG_INT_CASES[randInt(0,TRIG_INT_CASES.length-1)];
+  const AFa = A*c.Fa, AFb = A*c.Fb;
+  const answer = AFb - AFa;
+  const fnLabel = c.fn==='sin' ? 'sin(x)' : 'cos(x)';
+  const expr = leadTerm(A, fnLabel);
+  const antiderivExpr = c.fn==='sin' ? leadTerm(-A,'cos(x)') : leadTerm(A,'sin(x)');
+  const rule = c.fn==='sin' ? '∫sin(x)dx = -cos(x)' : '∫cos(x)dx = sin(x)';
+  return {
+    promptText: t('calcTrigIntegralPrompt', {expr, a:c.aLabel, b:c.bLabel}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===answer; },
+    explain: t('calcTrigIntegralExplain', {rule, antiderivExpr, a:c.aLabel, b:c.bLabel, AFb, AFa, answer}),
+  };
+}
+function calcProblemExpLogIntegrals(){
+  const A = nonZeroRandInt(-6,6), B = randInt(-8,8);
+  if(Math.random()<0.5){
+    const expr = `${leadTerm(A,'eˣ')}${signedCoeffTerm(B,'x')}`;
+    return {
+      promptText: t('calcExpIntegralPrompt', {expr}),
+      inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+      check(vals){ return Number(vals.ans)===A; },
+      explain: t('calcExpIntegralExplain', {A, term:leadTerm(A,'eˣ')}),
+    };
+  }
+  const overX = A===1 ? '1/x' : A===-1 ? '-1/x' : `${A}/x`;
+  const expr = `${overX}${signedCoeffTerm(B,'x')}`;
+  return {
+    promptText: t('calcLogIntegralPrompt', {expr}),
+    inputs: [{key:'ans', placeholder:t('algNumericAnswerPlaceholder')}],
+    check(vals){ return Number(vals.ans)===A; },
+    explain: t('calcLogIntegralExplain', {A, term:leadTerm(A,'ln|x|')}),
+  };
+}
 
 const CALCULUS_TOPICS = [
   {key:'limits', build:calcProblemLimits},
@@ -6449,6 +6583,10 @@ const CALCULUS_TOPICS = [
   {key:'optimisation', build:calcProblemOptimisation},
   {key:'antiderivatives', build:calcProblemAntiderivatives},
   {key:'definite_integrals', build:calcProblemDefiniteIntegral},
+  {key:'trig_derivatives', build:calcProblemTrigDerivatives},
+  {key:'exp_log_derivatives', build:calcProblemExpLogDerivatives},
+  {key:'trig_integrals', build:calcProblemTrigIntegrals},
+  {key:'exp_log_integrals', build:calcProblemExpLogIntegrals},
 ];
 function calcTopicByKey(key){ return CALCULUS_TOPICS.find(x=>x.key===key); }
 
