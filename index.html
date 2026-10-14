@@ -1291,8 +1291,9 @@ const I18N = {
     mathEasyTitle: "Easy", mathEasySub: "Numbers up to 50, times tables up to 12.",
     mathMediumTitle: "Medium", mathMediumSub: "Bigger numbers, two-digit multiplication.",
     mathHardTitle: "Hard", mathHardSub: "Three-digit arithmetic, two-digit by two-digit multiplication.",
+    mathConceptsTitle: "Concepts", mathConceptsSub: "Domain & interval notation, limits, continuity, differentiability — multiple choice.",
     mathBestLabel: "Best: {n} correct",
-    solveEyebrow: "Solve", checkBtn: "Check",
+    solveEyebrow: "Solve", conceptEyebrow: "Choose one", checkBtn: "Check",
     stepLabel: "Step {n} of {total}", nextStepBtn: "Next step →",
     yourAnswerPlaceholder: "Your answer",
     correctAnswersLabel: "Correct answers", newBestReached: "New best!",
@@ -5548,6 +5549,174 @@ function buildMathProblem(difficulty){
   }
   return {a, op, b, answer};
 }
+
+// ---- Mental Math level 4: "Concepts" ---------------------------------------
+// Unlike the three arithmetic tiers above, this one is multiple-choice: it
+// tests recognising domain/interval notation (which bracket, open vs
+// closed) and the definitions behind limits, continuity and
+// differentiability, rather than computing a number. The Calculus track
+// already drills computing limit VALUES, so these stay conceptual.
+function mcqDomainSqrt(){
+  const b = randInt(-9,9);
+  const expr = 'x'+signedCoeffTerm(-b,'');
+  const correct = `x ∈ [${b}, ∞)`;
+  const opts = shuffled([correct, `x ∈ (${b}, ∞)`, `x ∈ (${b}, ∞]`, `x ≠ ${b}`, `x ∈ (-∞, ∞)`]);
+  return {
+    prompt: `Domain of f(x) = √(${expr})`,
+    opts, correct,
+    explain: `The expression under a square root must be ≥ 0: ${expr} ≥ 0 → x ≥ ${b}. x = ${b} itself is allowed (√0 = 0 is defined), so the endpoint is included: [${b}, ∞).`,
+  };
+}
+function mcqDomainLn(){
+  const b = randInt(-9,9);
+  const expr = 'x'+signedCoeffTerm(-b,'');
+  const correct = `x ∈ (${b}, ∞)`;
+  const opts = shuffled([correct, `x ∈ [${b}, ∞)`, `x ∈ (${b}, ∞]`, `x ≠ ${b}`, `x ∈ (-∞, ${b})`]);
+  return {
+    prompt: `Domain of f(x) = ln(${expr})`,
+    opts, correct,
+    explain: `ln is only defined for a strictly positive input: ${expr} > 0 → x > ${b}. Unlike a square root, x = ${b} itself gives ln(0), which is undefined — so the endpoint is excluded: (${b}, ∞).`,
+  };
+}
+function mcqDomainRational(){
+  const b = randInt(-9,9);
+  const expr = 'x'+signedCoeffTerm(-b,'');
+  const correct = `x ∈ ℝ, x ≠ ${b}`;
+  const opts = shuffled([correct, `x ∈ (${b}, ∞)`, `x ∈ [${b}, ∞)`, `x ∈ (-∞, ∞)`, `x = ${b}`]);
+  return {
+    prompt: `Domain of f(x) = 1 / (${expr})`,
+    opts, correct,
+    explain: `Division by zero is undefined, so the only value excluded is wherever the denominator is 0: ${expr} = 0 → x = ${b}. Every other real number is fine, so the domain is all of ℝ except x = ${b} — not an interval with a bracket, just one missing point.`,
+  };
+}
+function mcqDomainSqrtRational(){
+  const b = randInt(-9,9);
+  const expr = 'x'+signedCoeffTerm(-b,'');
+  const correct = `x ∈ (${b}, ∞)`;
+  const opts = shuffled([correct, `x ∈ [${b}, ∞)`, `x ∈ (${b}, ∞]`, `x ≠ ${b}`, `x ∈ (-∞, ${b})`]);
+  return {
+    prompt: `Domain of f(x) = 1 / √(${expr})`,
+    opts, correct,
+    explain: `Two conditions at once: the expression under the root must be ≥ 0 (${expr} ≥ 0 → x ≥ ${b}), AND the denominator can't be 0, so it must be strictly > 0, not just ≥ 0. That rules out x = ${b} itself, leaving the open interval (${b}, ∞).`,
+  };
+}
+const MATH_LIMIT_CONCEPTS = [
+  s=>{
+    const a = randInt(-5,5), equal = Math.random()<0.5;
+    const L1 = randInt(-6,6); let L2 = L1; if(!equal){ do{ L2 = randInt(-6,6); }while(L2===L1); }
+    const correct = equal ? `It equals ${L1}` : 'It does not exist';
+    // Each branch's distractors are built from scratch (not "the other
+    // option's wording, reused"), since when L1===L2 the naive "It equals
+    // {L1}" / "It equals {L2}" pair collapses into the same string twice.
+    const distractors = equal
+      ? ['It does not exist', `It equals ${L1+1}`, `It equals ${L1-1}`, 'Not enough information']
+      : [`It equals ${L1}`, `It equals ${L2}`, `It equals ${L1+L2}/2`, 'Not enough information'];
+    return {
+      prompt: `If lim(x→${a}⁻) f(x) = ${L1} and lim(x→${a}⁺) f(x) = ${L2}, what can you conclude about lim(x→${a}) f(x)?`,
+      opts: shuffled([correct, ...distractors]),
+      correct,
+      explain: equal
+        ? `The two one-sided limits agree (both ${L1}), so the two-sided limit exists and equals that common value.`
+        : `A two-sided limit only exists when the left and right limits agree. Here they're ${L1} and ${L2} — different — so lim(x→${a}) f(x) does not exist, even though both one-sided limits do.`,
+    };
+  },
+  s=>{
+    const a = randInt(-5,5);
+    const correct = '∞ (it diverges)';
+    return {
+      prompt: `As x→${a}⁺, f(x) grows without bound (keeps increasing forever). How do we describe lim(x→${a}⁺) f(x)?`,
+      opts: shuffled([correct, '0', `It equals ${a}`, 'It does not exist, full stop — nothing more can be said', 'It oscillates']),
+      correct,
+      explain: `We write lim(x→${a}⁺) f(x) = ∞ to describe this unbounded growth — the limit still technically "does not exist" as a real number, but saying it diverges to ∞ is more informative than just "DNE".`,
+    };
+  },
+  s=>{
+    const correct = 'Further work is needed (factor, simplify, L\'Hôpital, etc.) — 0/0 alone tells you nothing';
+    return {
+      prompt: `Substituting x=a directly into f(x)/g(x) gives 0/0. What does this tell you about lim(x→a) f(x)/g(x)?`,
+      opts: shuffled([correct, 'The limit does not exist', 'The limit equals 0', 'The limit equals 1', 'f/g is discontinuous everywhere']),
+      correct,
+      explain: `0/0 is an "indeterminate form" — it means direct substitution can't answer the question, not that the limit is 0, 1, or nonexistent. The actual limit could be anything (or not exist) — you have to factor and cancel, or use another technique, to find out.`,
+    };
+  },
+];
+const MATH_CONTINUITY_CONCEPTS = [
+  s=>({
+    prompt: 'Which statement correctly defines "f is continuous at x = a"?',
+    opts: shuffled([
+      'f(a) is defined, lim(x→a) f(x) exists, AND lim(x→a) f(x) = f(a)',
+      'f(a) is defined',
+      'lim(x→a) f(x) exists',
+      'f is differentiable at x = a',
+    ]),
+    correct: 'f(a) is defined, lim(x→a) f(x) exists, AND lim(x→a) f(x) = f(a)',
+    explain: `All three parts are required. f(a) being defined isn't enough on its own (the limit might not match it), and the limit existing isn't enough either (f(a) might be undefined, or different). Differentiability is a stronger, separate condition — not the definition of continuity.`,
+  }),
+  s=>{
+    const kind = ['removable','jump','infinite'][randInt(0,2)];
+    const scenario = {
+      removable: 'f(a) is undefined, but lim(x→a) f(x) exists and is finite.',
+      jump: 'lim(x→a⁻) f(x) and lim(x→a⁺) f(x) both exist but are not equal.',
+      infinite: 'lim(x→a) f(x) = ±∞ (there\'s a vertical asymptote at x = a).',
+    }[kind];
+    const label = {removable:'Removable discontinuity', jump:'Jump discontinuity', infinite:'Infinite discontinuity'}[kind];
+    return {
+      prompt: `${scenario} What type of discontinuity is this at x = a?`,
+      opts: shuffled(['Removable discontinuity', 'Jump discontinuity', 'Infinite discontinuity', 'f is actually continuous here']),
+      correct: label,
+      explain: {
+        removable: 'The limit exists, so the "gap" could be fixed just by (re)defining f(a) to equal that limit — hence "removable".',
+        jump: 'Both one-sided limits exist but disagree, so the graph jumps from one value to another at x = a — there\'s no single value that would fix it.',
+        infinite: 'The function shoots off to ±∞ near x = a, so no finite value could ever make it continuous there.',
+      }[kind],
+    };
+  },
+  s=>{
+    const a = randInt(-5,5), L = randInt(-6,6); let fa = randInt(-6,6); if(fa===L) fa = L+1;
+    return {
+      prompt: `lim(x→${a}) f(x) = ${L}, but f(${a}) = ${fa}. Is f continuous at x = ${a}?`,
+      opts: shuffled(['No — the limit and the function value disagree', 'Yes, continuity only needs the limit to exist', 'Yes, since both are finite numbers', 'Cannot be determined']),
+      correct: 'No — the limit and the function value disagree',
+      explain: `Continuity needs lim(x→${a}) f(x) = f(${a}). Here ${L} ≠ ${fa}, so this fails — it's a removable discontinuity at x = ${a}.`,
+    };
+  },
+];
+const MATH_DIFF_CONCEPTS = [
+  s=>({
+    prompt: 'If f is differentiable at x = a, what MUST also be true at x = a?',
+    opts: shuffled(['f is continuous at a', 'f is a polynomial', 'f\'\'(a) exists', 'f(a) = 0']),
+    correct: 'f is continuous at a',
+    explain: `Differentiability is a stronger condition than continuity — it always implies it. (The reverse isn't true: plenty of continuous functions, like |x| at x=0, aren't differentiable.)`,
+  }),
+  s=>({
+    prompt: 'f is continuous at x = a, but has a sharp corner there (the left and right derivatives are different numbers). Is f differentiable at x = a?',
+    opts: shuffled(['No', 'Yes', 'Only if f is linear', 'Cannot be determined from this alone']),
+    correct: 'No',
+    explain: `A derivative is a single, well-defined slope. If the slope approaching from the left doesn't match the slope approaching from the right, there's no one tangent line, so f'(a) doesn't exist — even though f is perfectly continuous there.`,
+  }),
+  s=>({
+    prompt: 'Which of these does NOT, by itself, prevent f from being differentiable at a point where f is otherwise continuous?',
+    opts: shuffled(['f(a) being a large number', 'A corner (left/right derivatives differ)', 'A vertical tangent line', 'A cusp']),
+    correct: 'f(a) being a large number',
+    explain: `The actual size of f(a) is irrelevant — differentiability is about the local slope behaviour, not the output value. Corners, cusps and vertical tangents are the classic ways a continuous function can still fail to be differentiable.`,
+  }),
+  s=>({
+    prompt: 'True or false: every differentiable function is continuous, but not every continuous function is differentiable.',
+    opts: shuffled(['True', 'False', 'True, but only for polynomials', 'False — it\'s the other way around']),
+    correct: 'True',
+    explain: `This is the key one-way relationship between the two ideas: differentiable ⇒ continuous, but continuity alone never guarantees differentiability (corners, cusps and vertical tangents are all continuous but not differentiable).`,
+  }),
+];
+function buildConceptProblem(){
+  const bucket = randInt(0,3);
+  let q;
+  if(bucket===0) q = [mcqDomainSqrt, mcqDomainLn, mcqDomainRational, mcqDomainSqrtRational][randInt(0,3)]();
+  else if(bucket===1) q = MATH_LIMIT_CONCEPTS[randInt(0,MATH_LIMIT_CONCEPTS.length-1)]();
+  else if(bucket===2) q = MATH_CONTINUITY_CONCEPTS[randInt(0,MATH_CONTINUITY_CONCEPTS.length-1)]();
+  else q = MATH_DIFF_CONCEPTS[randInt(0,MATH_DIFF_CONCEPTS.length-1)]();
+  return {type:'mcq', ...q};
+}
+
 const MATH_MAX_MISTAKES = 3;
 
 // ---- shared gamification: combo streaks, achievements, XP levels ----------
@@ -5628,13 +5797,13 @@ function achievementBannerHtml(newAchievements){
 function startMathPractice(difficulty){
   state.mathSession = {
     difficulty,
-    current: buildMathProblem(difficulty),
-    correct:0, mistakes:0, answered:false, lastCorrect:null, xpEarned:0, input:'', isNewBest:false,
+    current: difficulty==='concepts' ? buildConceptProblem() : buildMathProblem(difficulty),
+    correct:0, mistakes:0, answered:false, lastCorrect:null, selected:null, xpEarned:0, input:'', isNewBest:false,
     showHint:false, combo:0, maxCombo:0, newAchievements:[]
   };
   state.screen = 'math_practice';
   render();
-  focusMathInput();
+  if(difficulty!=='concepts') focusMathInput();
 }
 
 // Hints (hard difficulty only, opt-in): a short strategy note plus, for
@@ -5702,12 +5871,13 @@ function renderMathMenu(){
     {key:'easy', title:t('mathEasyTitle'), sub:t('mathEasySub')},
     {key:'medium', title:t('mathMediumTitle'), sub:t('mathMediumSub')},
     {key:'hard', title:t('mathHardTitle'), sub:t('mathHardSub')},
+    {key:'concepts', title:t('mathConceptsTitle'), sub:t('mathConceptsSub')},
   ];
   const cards = diffs.map(d=>{
     const best = (state.game.math && state.game.math[d.key]) ? state.game.math[d.key].best : 0;
     return `
     <button class="track-card" onclick="startMathPractice('${d.key}')">
-      <div class="glyph">🧮</div>
+      <div class="glyph">${d.key==='concepts'?'🧠':'🧮'}</div>
       <div>
         <div class="tc-title">${d.title}</div>
         <div class="tc-sub">${d.sub}</div>
@@ -5733,11 +5903,13 @@ function renderMathPractice(){
   const q = s.current;
   const willFinish = s.mistakes >= MATH_MAX_MISTAKES;
 
+  const isConcept = q.type==='mcq';
   const feedback = s.answered ? `
     <div class="feedback-bar ${s.lastCorrect?'good':'bad'}">
       <div class="fb-text">
         <div class="fb-title">${s.lastCorrect? t('correctFeedback',{n:s.lastXpGain}) : t('notQuiteFeedback')}</div>
-        ${!s.lastCorrect ? `<div class="fb-sub">${t('answerPrefix')}${q.answer}</div>` : ''}
+        ${!s.lastCorrect ? `<div class="fb-sub">${isConcept ? t('answerPrefix')+q.correct : t('answerPrefix')+q.answer}</div>` : ''}
+        ${isConcept ? `<div class="fb-sub" style="margin-top:4px;">${q.explain}</div>` : ''}
       </div>
       <button class="btn btn-light" onclick="nextMathQuestion()">${willFinish ? t('finishBtn'):t('continueBtn')}</button>
     </div>` : '';
@@ -5776,9 +5948,21 @@ function renderMathPractice(){
     </div>
     <div class="q-wrap">
       <div class="q-card">
-        <div class="q-eyebrow">${t('solveEyebrow')}</div>
-        <div class="q-prompt">${q.a} ${q.op} ${q.b} = ?</div>
+        <div class="q-eyebrow">${isConcept ? t('conceptEyebrow') : t('solveEyebrow')}</div>
+        <div class="q-prompt" style="${isConcept?'font-size:19px;':''}">${isConcept ? q.prompt : `${q.a} ${q.op} ${q.b} = ?`}</div>
       </div>
+      ${isConcept ? `
+      <div class="options">
+        ${q.opts.map(opt=>{
+          let cls = 'opt';
+          if(s.answered){
+            if(opt===q.correct) cls += ' correct reveal';
+            else if(opt===s.selected) cls += ' wrong reveal';
+            else cls += ' disabled reveal';
+          }
+          return `<button class="${cls}" ${s.answered?'':`onclick="submitMathMcq(${JSON.stringify(opt)})"`}><span>${opt}</span></button>`;
+        }).join('')}
+      </div>` : `
       <div class="field" style="align-items:center; gap:12px;">
         <input id="math_input" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
           placeholder="${t('yourAnswerPlaceholder')}"
@@ -5787,7 +5971,7 @@ function renderMathPractice(){
           oninput="state.mathSession.input=this.value.replace(/[^0-9]/g,'')">
         ${!s.answered ? `<button class="btn btn-primary btn-block" onclick="submitMathAnswer()">${t('checkBtn')}</button>` : ''}
         ${hintBlock}
-      </div>
+      </div>`}
     </div>
   </div>
   ${feedback}
@@ -5806,13 +5990,23 @@ function submitMathAnswer(){
   render();
 }
 
+function submitMathMcq(opt){
+  const s = state.mathSession;
+  if(!s || s.answered) return;
+  const correct = opt===s.current.correct;
+  s.selected = opt; s.answered = true; s.lastCorrect = correct;
+  if(correct) registerCorrectAnswer(s, state.game);
+  else registerWrongAnswer(s);
+  render();
+}
+
 function nextMathQuestion(){
   const s = state.mathSession;
   if(s.mistakes>=MATH_MAX_MISTAKES){ finishMathPractice(); return; }
-  s.answered=false; s.lastCorrect=null; s.input=''; s.showHint=false;
-  s.current = buildMathProblem(s.difficulty);
+  s.answered=false; s.lastCorrect=null; s.selected=null; s.input=''; s.showHint=false;
+  s.current = s.difficulty==='concepts' ? buildConceptProblem() : buildMathProblem(s.difficulty);
   render();
-  focusMathInput();
+  if(s.difficulty!=='concepts') focusMathInput();
 }
 
 function finishMathPractice(){
