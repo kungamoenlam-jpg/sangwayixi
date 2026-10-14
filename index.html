@@ -84,6 +84,14 @@
   .track-card .tc-sub{font-size:12.5px; color:var(--snow-dim); margin-top:4px;}
   .track-card .tc-progress{margin-left:auto; font-size:12px; color:var(--snow-dim); text-align:right; flex-shrink:0;}
 
+  .calcRefSection{margin:30px 0 0;}
+  .calcRefSection h2{font-family:var(--font-display); color:var(--gold); font-size:1rem; font-weight:700; letter-spacing:.02em; border-bottom:1px solid rgba(255,255,255,.12); padding-bottom:8px; margin:0 0 12px;}
+  .calcRefGrid{display:grid; grid-template-columns:1fr 1fr; gap:8px 14px;}
+  .calcRefRow{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.88rem; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); border-radius:8px; padding:9px 12px; line-height:1.5; color:var(--snow);}
+  .calcRefRow b{font-family:var(--font-display); color:var(--gold);}
+  .calcRefNote{color:var(--snow-dim); font-size:.8rem;}
+  @media (max-width:620px){.calcRefGrid{grid-template-columns:1fr;}}
+
   .section-heading{font-size:12px; text-transform:uppercase; letter-spacing:.1em; color:var(--gold); font-weight:700; margin:0 2px -8px;}
   .stats-strip{
     display:flex; align-items:center; justify-content:space-between; width:100%; text-align:left;
@@ -1467,6 +1475,10 @@ const I18N = {
     calcExpIntegralExplain: "∫eˣ dx = eˣ, so that term integrates straight to {term}. The coefficient is {A}.",
     calcLogIntegralPrompt: "Find the antiderivative F(x) of f(x) = {expr}. What is the coefficient of ln|x| in F(x)?",
     calcLogIntegralExplain: "∫(1/x) dx = ln|x|, so that term integrates to {term}. The coefficient is {A}.",
+
+    calcRefCardTitle: "📋 Integral Rules Cheat Sheet", calcRefCardDesc: "Every basic integral in one place — just to look up, no quiz",
+    calcRefTitle: "Integral Rules Cheat Sheet", calcRefSub: "Add + C to every one of these — it's omitted below to save space.",
+    calcRefAdvancedTitle: "When the basics don't work",
 
     linalgTitle: "Linear Algebra",
     linalgSub: "Month 3: vectors, matrices and the operations that hold them together. Pick a topic to learn the concept, then practice.",
@@ -5019,6 +5031,7 @@ const screens = {
   calc_learn: renderCalcLearn,
   calc_practice: renderCalcPractice,
   calc_complete: renderCalcComplete,
+  calc_reference: renderCalcReference,
   linalg_menu: renderLinAlgMenu,
   linalg_learn: renderLinAlgLearn,
   linalg_practice: renderLinAlgPractice,
@@ -6611,7 +6624,86 @@ function renderCalcMenu(){
       <h1>${t('calculusTitle')}</h1>
       <div class="sub">${t('calculusSub')}</div>
     </div>
+    <button class="track-card" onclick="state.screen='calc_reference'; render(); window.scrollTo(0,0);">
+      <div class="glyph">📋</div>
+      <div>
+        <div class="tc-title">${t('calcRefCardTitle')}</div>
+        <div class="tc-sub">${t('calcRefCardDesc')}</div>
+      </div>
+      <div class="tc-progress">${t('startArrow')}</div>
+    </button>
     <div class="track-grid">${cards}</div>
+  </div>
+  `;
+}
+
+// A pure read-only cheat sheet, not a quiz -- every standard integral a
+// first calculus course expects you to have memorised, grouped the way
+// they're usually taught (power rule, exponentials, trig, inverse trig,
+// logs, the two linearity rules, then a pointer to the non-basic
+// techniques once none of the above apply on their own).
+const CALC_INTEGRAL_REFERENCE = [
+  {title:'Powers', rows:[
+    ['∫xⁿ dx = x^(n+1)/(n+1)', '(n ≠ -1)'],
+    ['∫(1/x) dx = ln|x|', ''],
+    ['∫k dx = kx', ''],
+  ]},
+  {title:'Exponentials', rows:[
+    ['∫eˣ dx = eˣ', ''],
+    ['∫eᵃˣ dx = (1/a)eᵃˣ', ''],
+    ['∫aˣ dx = aˣ/ln(a)', ''],
+  ]},
+  {title:'Trig', rows:[
+    ['∫sin(x) dx = -cos(x)', ''],
+    ['∫cos(x) dx = sin(x)', ''],
+    ['∫sec²(x) dx = tan(x)', ''],
+    ['∫csc²(x) dx = -cot(x)', ''],
+    ['∫sec(x)tan(x) dx = sec(x)', ''],
+    ['∫csc(x)cot(x) dx = -csc(x)', ''],
+    ['∫tan(x) dx = ln|sec(x)|', ''],
+    ['∫sin(ax) dx = -(1/a)cos(ax)', ''],
+    ['∫cos(ax) dx = (1/a)sin(ax)', ''],
+  ]},
+  {title:'Inverse trig', rows:[
+    ['∫1/√(1-x²) dx = arcsin(x)', ''],
+    ['∫1/(1+x²) dx = arctan(x)', ''],
+    ['∫1/(a²+x²) dx = (1/a)arctan(x/a)', ''],
+  ]},
+  {title:'Logs', rows:[
+    ['∫ln(x) dx = x·ln(x) - x', ''],
+  ]},
+  {title:'Rules', rows:[
+    ['∫k·f(x) dx = k∫f(x) dx', ''],
+    ['∫[f(x) ± g(x)] dx = ∫f(x) dx ± ∫g(x) dx', ''],
+  ]},
+];
+const CALC_ADVANCED_REFERENCE = [
+  {label:'Substitution', example:'∫2x·cos(x²) dx → let u = x², du = 2x dx'},
+  {label:'Integration by parts', example:'∫u dv = uv - ∫v du'},
+  {label:'Partial fractions', example:'1/[(x+1)(x+2)] = A/(x+1) + B/(x+2)'},
+];
+function renderCalcReference(){
+  const sections = CALC_INTEGRAL_REFERENCE.map(sec => `
+    <div class="calcRefSection">
+      <h2>${sec.title}</h2>
+      <div class="calcRefGrid">
+        ${sec.rows.map(([formula,note])=>`<div class="calcRefRow">${formula}${note?` <span class="calcRefNote">${note}</span>`:''}</div>`).join('')}
+      </div>
+    </div>`).join('');
+  const advanced = CALC_ADVANCED_REFERENCE.map(x=>`
+    <div class="calcRefRow"><b>${x.label}:</b> ${x.example}</div>`).join('');
+  return `
+  ${topbar({back:"state.screen='calc_menu'; render();"})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>${t('calcRefTitle')}</h1>
+      <div class="sub">${t('calcRefSub')}</div>
+    </div>
+    ${sections}
+    <div class="calcRefSection">
+      <h2>${t('calcRefAdvancedTitle')}</h2>
+      <div class="calcRefGrid">${advanced}</div>
+    </div>
   </div>
   `;
 }
