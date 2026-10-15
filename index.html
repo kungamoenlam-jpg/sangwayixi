@@ -5962,14 +5962,14 @@ function renderMathPractice(){
       </div>
       ${isConcept ? `
       <div class="options">
-        ${q.opts.map(opt=>{
+        ${q.opts.map((opt,idx)=>{
           let cls = 'opt';
           if(s.answered){
             if(opt===q.correct) cls += ' correct reveal';
             else if(opt===s.selected) cls += ' wrong reveal';
             else cls += ' disabled reveal';
           }
-          return `<button class="${cls}" ${s.answered?'':`onclick="submitMathMcq(${JSON.stringify(opt)})"`}><span>${opt}</span></button>`;
+          return `<button class="${cls}" ${s.answered?'':`onclick="submitMathMcq(${idx})"`}><span>${opt}</span></button>`;
         }).join('')}
       </div>` : `
       <div class="field" style="align-items:center; gap:12px;">
@@ -5999,9 +5999,10 @@ function submitMathAnswer(){
   render();
 }
 
-function submitMathMcq(opt){
+function submitMathMcq(idx){
   const s = state.mathSession;
   if(!s || s.answered) return;
+  const opt = s.current.opts[idx];
   const correct = opt===s.current.correct;
   s.selected = opt; s.answered = true; s.lastCorrect = correct;
   if(correct) registerCorrectAnswer(s, state.game);
