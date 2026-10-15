@@ -1389,6 +1389,11 @@ const I18N = {
     algTrigPrompt: "Evaluate: {expr}",
     algTrigExplain: "{expr} = {answer}. This is one of the standard angle values worth memorizing.",
 
+    algTopicTitle_cancelling: "Cancelling", algTopicDesc_cancelling: "Simplify an algebraic fraction by factoring and cancelling",
+    algCancellingPrompt: "Simplify to lowest terms: ({numExpr}) / ({denExpr}). State any restrictions on x.",
+    algCancellingAnswerPlaceholder: "e.g. (x-6)/(x-3)",
+    algCancellingExplain: "Factor both: numerator = {factNum}, denominator = {factDen}. The common factor cancels, leaving {simplified} — but x still can't take any value that would have made the ORIGINAL denominator zero: {restrText}.",
+
     comboLabel: "{n} in a row!",
     levelLabel: "Level {n}",
     xpToNextLevel: "to next level",
@@ -6322,6 +6327,54 @@ function algProblemFactorisation(){
     explain: t('algFactorisationExplain', {factors:`${factorTerm(rmin)}${factorTerm(rmax)}`, rmin, rmax}),
   };
 }
+// Numerator = (x-r1)(x-r2), denominator = (x-r1)(x-r3) -- a quadratic over
+// a quadratic sharing exactly one root, r1, which is the factor that
+// cancels. The "repeated" variant sets r3=r1 (a squared denominator), so
+// only one restriction survives instead of two -- both shapes show up in
+// real textbooks, so both are worth practicing. r1 (or r2/r3) landing on 0
+// renders as a bare "x" factor rather than "(x-0)", which is itself a
+// useful case to practice (it's exactly where students most often forget
+// to list a restriction, since there's no "-0" in the expression to spot).
+function algProblemCancelling(){
+  const repeated = Math.random()<0.4;
+  let r1, r2, r3;
+  if(repeated){
+    r1 = randInt(-6,6);
+    do{ r2 = randInt(-6,6); }while(r2===r1);
+    r3 = r1;
+  } else {
+    do{ r1=randInt(-6,6); r2=randInt(-6,6); r3=randInt(-6,6); }while(r1===r2 || r1===r3 || r2===r3);
+  }
+  const numB = -(r1+r2), numC = r1*r2;
+  const denB = -(r1+r3), denC = r1*r3;
+  const numExpr = `x²${signedCoeffTerm(numB,'x')}${signedCoeffTerm(numC,'')}`;
+  const denExpr = `x²${signedCoeffTerm(denB,'x')}${signedCoeffTerm(denC,'')}`;
+  const factorStr = r => r===0 ? 'x' : r>0 ? `(x-${r})` : `(x+${-r})`;
+  const simplified = `${factorStr(r2)}/${factorStr(r3)}`;
+  const restrictions = repeated ? [r1] : [r1,r3].sort((a,b)=>a-b);
+  const normalize = s => String(s||'').replace(/\s+/g,'').replace(/[()]/g,'').toLowerCase();
+  const normSimplified = normalize(simplified);
+  const inputs = [
+    {key:'simplified', placeholder:t('algCancellingAnswerPlaceholder')},
+    ...restrictions.map((_,i)=>({key:'r'+i, label:'x ≠'})),
+  ];
+  return {
+    promptText: t('algCancellingPrompt', {numExpr, denExpr}),
+    inputs,
+    check(vals){
+      if(normalize(vals.simplified)!==normSimplified) return false;
+      const got = restrictions.map((_,i)=>Number(vals['r'+i])).sort((a,b)=>a-b);
+      const want = [...restrictions].sort((a,b)=>a-b);
+      return want.length===got.length && want.every((v,i)=>v===got[i]);
+    },
+    explain: t('algCancellingExplain', {
+      factNum: `${factorStr(r1)}${factorStr(r2)}`,
+      factDen: repeated ? `${factorStr(r1)}²` : `${factorStr(r1)}${factorStr(r3)}`,
+      simplified,
+      restrText: restrictions.map(r=>`x ≠ ${r}`).join(', '),
+    }),
+  };
+}
 function algProblemSequences(){
   if(Math.random()<0.3){
     const a1 = randInt(1,5), r = [2,3][randInt(0,1)], n = randInt(2,6);
@@ -6397,6 +6450,7 @@ const ALGEBRA_TOPICS = [
   {key:'simultaneous', build:algProblemSimultaneous},
   {key:'polynomials', build:algProblemPolynomials},
   {key:'factorisation', build:algProblemFactorisation},
+  {key:'cancelling', build:algProblemCancelling},
   {key:'sequences', build:algProblemSequences},
   {key:'functions', build:algProblemFunctions},
   {key:'graphs', build:algProblemGraphs},
