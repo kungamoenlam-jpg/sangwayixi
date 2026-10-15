@@ -1291,7 +1291,7 @@ const I18N = {
     mathEasyTitle: "Easy", mathEasySub: "Numbers up to 50, times tables up to 12.",
     mathMediumTitle: "Medium", mathMediumSub: "Bigger numbers, two-digit multiplication.",
     mathHardTitle: "Hard", mathHardSub: "Three-digit arithmetic, two-digit by two-digit multiplication.",
-    mathConceptsTitle: "Concepts", mathConceptsSub: "Domain & interval notation, limits, continuity, differentiability — multiple choice.",
+    mathConceptsTitle: "Concepts", mathConceptsSub: "Domain & range, interval notation, limits, continuity, differentiability — multiple choice.",
     mathBestLabel: "Best: {n} correct",
     solveEyebrow: "Solve", conceptEyebrow: "Choose one", checkBtn: "Check",
     stepLabel: "Step {n} of {total}", nextStepBtn: "Next step →",
@@ -5609,6 +5609,72 @@ function mcqDomainSqrtRational(){
     explain: `Two conditions at once: the expression under the root must be ≥ 0 (${expr} ≥ 0 → x ≥ ${b}), AND the denominator can't be 0, so it must be strictly > 0, not just ≥ 0. That rules out x = ${b} itself, leaving the open interval (${b}, ∞).`,
   };
 }
+// Range questions mirror the domain ones above, but ask what comes OUT of
+// the function rather than what can go in -- a different enough question
+// that a learner who's nailed domain notation can still trip on range.
+function mcqRangeRational(){
+  // b must be non-zero: the "f(x) ≠ b" distractor is meant to be a distinct
+  // wrong answer (confusing the domain's excluded x-value with the range's
+  // excluded output), but collapses into the correct "f(x) ≠ 0" itself if b
+  // happens to land on 0.
+  const b = nonZeroRandInt(-9,9);
+  const k = nonZeroRandInt(-6,6);
+  const kTerm = k===1 ? '' : k===-1 ? '-' : String(k);
+  const expr = 'x'+signedCoeffTerm(-b,'');
+  const correct = 'f(x) ≠ 0';
+  const opts = shuffled([correct, `f(x) ≠ ${b}`, `-∞ < f(x) < ∞`, `f(x) ∈ [0, ∞)`, `f(x) ∈ (0, ∞)`]);
+  return {
+    prompt: `Range of f(x) = ${kTerm}1 / (${expr})`,
+    opts, correct,
+    explain: `As x sweeps through every real number except ${b}, ${kTerm||1}/(${expr}) gets closer and closer to 0 (its horizontal asymptote) but can never actually equal 0 — there's no x that makes the fraction 0. Every other value is reachable, so the range is f(x) ≠ 0, not a bracketed interval.`,
+  };
+}
+function mcqRangeQuadratic(){
+  const a = nonZeroRandInt(-5,5);
+  const c = randInt(-9,9);
+  const aTerm = a===1 ? '' : a===-1 ? '-' : String(a);
+  const up = a>0;
+  const correct = up ? `f(x) ∈ [${c}, ∞)` : `f(x) ∈ (-∞, ${c}]`;
+  const opts = shuffled([
+    correct,
+    up ? `f(x) ∈ (${c}, ∞)` : `f(x) ∈ (-∞, ${c})`,
+    `f(x) ∈ (-∞, ∞)`,
+    `f(x) ≠ ${c}`,
+    up ? `f(x) ∈ (-∞, ${c}]` : `f(x) ∈ [${c}, ∞)`,
+  ]);
+  return {
+    prompt: `Range of f(x) = ${aTerm}x²${signedCoeffTerm(c,'')}`,
+    opts, correct,
+    explain: `x² ${up?'is always ≥ 0':'is always ≥ 0, but multiplying by the negative leading coefficient flips that to ≤ 0'}, with the smallest effect (x²=0) at x=0. So f(x) is ${up?'smallest':'largest'} there, equal to ${c} — and that extreme value is actually reached (at x=0), so the bracket is closed: ${correct}.`,
+  };
+}
+function mcqRangeSqrt(){
+  // c must be non-zero too, for the same reason: the hardcoded "f(x) ∈ [0,
+  // ∞)" distractor (the unshifted range) is only a distinct wrong answer
+  // when there actually IS a shift.
+  const b = randInt(-9,9), c = nonZeroRandInt(-6,6);
+  const expr = 'x'+signedCoeffTerm(-b,'');
+  const correct = `f(x) ∈ [${c}, ∞)`;
+  const opts = shuffled([correct, `f(x) ∈ (${c}, ∞)`, `f(x) ∈ [0, ∞)`, `f(x) ≠ ${c}`, `f(x) ∈ (-∞, ∞)`]);
+  return {
+    prompt: `Range of f(x) = √(${expr})${signedCoeffTerm(c,'')}`,
+    opts, correct,
+    explain: `A square root itself only ever outputs values ≥ 0 — it can equal 0 (at x = ${b}) but never go negative. Adding ${c} shifts every one of those outputs up by ${c}, so the smallest possible value becomes ${c} itself (included, since √ can equal exactly 0), giving [${c}, ∞).`,
+  };
+}
+function mcqRangeLn(){
+  // Same issue again: the hardcoded "f(x) ∈ (0, ∞)" distractor only stays
+  // distinct from the "f(x) ∈ (b, ∞)" distractor when b ≠ 0.
+  const b = nonZeroRandInt(-9,9), c = randInt(-6,6);
+  const expr = 'x'+signedCoeffTerm(-b,'');
+  const correct = `f(x) ∈ (-∞, ∞)`;
+  const opts = shuffled([correct, `f(x) ∈ (${b}, ∞)`, `f(x) ∈ [${c}, ∞)`, `f(x) ≠ 0`, `f(x) ∈ (0, ∞)`]);
+  return {
+    prompt: `Range of f(x) = ln(${expr})${signedCoeffTerm(c,'')}`,
+    opts, correct,
+    explain: `Don't mix this up with the DOMAIN, which is restricted (x > ${b}) because you can only take ln of a positive number. The RANGE is unrestricted: as x approaches ${b} from above, ln(${expr}) plunges to -∞, and as x grows, it climbs to +∞ (just very slowly) — so every real number is an output somewhere.`,
+  };
+}
 const MATH_LIMIT_CONCEPTS = [
   s=>{
     const a = randInt(-5,5), equal = Math.random()<0.5;
@@ -5717,11 +5783,12 @@ const MATH_DIFF_CONCEPTS = [
   }),
 ];
 function buildConceptProblem(){
-  const bucket = randInt(0,3);
+  const bucket = randInt(0,4);
   let q;
   if(bucket===0) q = [mcqDomainSqrt, mcqDomainLn, mcqDomainRational, mcqDomainSqrtRational][randInt(0,3)]();
-  else if(bucket===1) q = MATH_LIMIT_CONCEPTS[randInt(0,MATH_LIMIT_CONCEPTS.length-1)]();
-  else if(bucket===2) q = MATH_CONTINUITY_CONCEPTS[randInt(0,MATH_CONTINUITY_CONCEPTS.length-1)]();
+  else if(bucket===1) q = [mcqRangeRational, mcqRangeQuadratic, mcqRangeSqrt, mcqRangeLn][randInt(0,3)]();
+  else if(bucket===2) q = MATH_LIMIT_CONCEPTS[randInt(0,MATH_LIMIT_CONCEPTS.length-1)]();
+  else if(bucket===3) q = MATH_CONTINUITY_CONCEPTS[randInt(0,MATH_CONTINUITY_CONCEPTS.length-1)]();
   else q = MATH_DIFF_CONCEPTS[randInt(0,MATH_DIFF_CONCEPTS.length-1)]();
   return {type:'mcq', ...q};
 }
