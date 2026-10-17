@@ -1291,7 +1291,7 @@ const I18N = {
     mathEasyTitle: "Easy", mathEasySub: "Numbers up to 50, times tables up to 12.",
     mathMediumTitle: "Medium", mathMediumSub: "Bigger numbers, two-digit multiplication.",
     mathHardTitle: "Hard", mathHardSub: "Three-digit arithmetic, two-digit by two-digit multiplication.",
-    mathConceptsTitle: "Concepts", mathConceptsSub: "Domain & range, interval notation, limits, continuity, differentiability — multiple choice.",
+    mathConceptsTitle: "Concepts", mathConceptsSub: "Domain & range, graphs, limits, continuity, differentiability, partial fractions — multiple choice.",
     mathBestLabel: "Best: {n} correct",
     solveEyebrow: "Solve", conceptEyebrow: "Choose one", checkBtn: "Check",
     stepLabel: "Step {n} of {total}", nextStepBtn: "Next step →",
@@ -5733,6 +5733,56 @@ function mcqGraphEval(){
       : `Read straight up (or down) from x = ${qx} to where the graph is, then across to the f(x)-axis: that piece of the graph gives f(${qx}) = ${correct}.`,
   };
 }
+// "Choose the right setup" rather than compute a numeric answer, since the
+// actual skill here is recognising which of the 4 standard forms a
+// denominator calls for -- distractors are the classic mistakes (constant
+// numerator over an irreducible quadratic instead of linear; forgetting
+// the lower-power term for a repeated factor; treating an irreducible
+// quadratic as if it factors), not just scrambled numbers, so picking the
+// right answer actually requires knowing why the others are wrong.
+function mcqPartialFractionForm(){
+  const kind = randInt(0,3);
+  const lin = v => v>=0 ? `(x+${v})` : `(x-${-v})`;
+  let denomExpr, correct, distractors, kindLabel, why;
+  if(kind===0){
+    const a = nonZeroRandInt(-6,6);
+    let b; do{ b = nonZeroRandInt(-6,6); }while(b===a);
+    const fa = lin(a), fb = lin(b);
+    denomExpr = `${fa}${fb}`;
+    correct = `A/${fa} + B/${fb}`;
+    distractors = [`A/${fa}${fb}`, `A/${fa} + B/${fb}²`, `(Ax+B)/${fa}${fb}`, `A/${fa}² + B/${fb}²`];
+    kindLabel = 'distinct linear factors';
+    why = 'one constant numerator for each distinct linear factor';
+  } else if(kind===1){
+    const a = nonZeroRandInt(-6,6);
+    const fa = lin(a);
+    denomExpr = `${fa}²`;
+    correct = `A/${fa} + B/${fa}²`;
+    distractors = [`A/${fa}²`, `A/${fa} + B/${fa}`, `(Ax+B)/${fa}²`, `A/${fa} + B/${fa}² + C/${fa}³`];
+    kindLabel = 'a repeated linear factor';
+    why = 'a constant numerator for every power of the repeated factor, from the first power up to the highest';
+  } else if(kind===2){
+    const c = randInt(1,9);
+    denomExpr = `(x²+${c})`;
+    correct = `(Ax+B)/(x²+${c})`;
+    distractors = [`A/(x²+${c})`, `A/(x+${c}) + B/(x-${c})`, `(Ax+B)/(x+${c})`, `A/(x²+${c}) + B/(x²+${c})²`];
+    kindLabel = 'an irreducible quadratic factor';
+    why = "a LINEAR numerator (Ax+B), not just a constant, since this quadratic can't be factored over the reals";
+  } else {
+    const c = randInt(1,9);
+    denomExpr = `(x²+${c})²`;
+    correct = `(Ax+B)/(x²+${c}) + (Cx+D)/(x²+${c})²`;
+    distractors = [`(Ax+B)/(x²+${c})²`, `A/(x²+${c}) + B/(x²+${c})²`, `(Ax+B)/(x²+${c}) + (Cx+D)/(x²+${c})`, `(Ax+B)/(x²+${c})`];
+    kindLabel = 'a repeated irreducible quadratic factor';
+    why = 'a linear numerator for every power of the repeated quadratic, from the first power up to the highest';
+  }
+  const opts = shuffled([correct, ...distractors]);
+  return {
+    prompt: `Which partial fraction setup matches the denominator ${denomExpr}?`,
+    opts, correct,
+    explain: `${denomExpr} is ${kindLabel}, so it needs ${why}: ${correct}.`,
+  };
+}
 const MATH_LIMIT_CONCEPTS = [
   s=>{
     const a = randInt(-5,5), equal = Math.random()<0.5;
@@ -5841,14 +5891,15 @@ const MATH_DIFF_CONCEPTS = [
   }),
 ];
 function buildConceptProblem(){
-  const bucket = randInt(0,5);
+  const bucket = randInt(0,6);
   let q;
   if(bucket===0) q = [mcqDomainSqrt, mcqDomainLn, mcqDomainRational, mcqDomainSqrtRational][randInt(0,3)]();
   else if(bucket===1) q = [mcqRangeRational, mcqRangeQuadratic, mcqRangeSqrt, mcqRangeLn][randInt(0,3)]();
   else if(bucket===2) q = mcqGraphEval();
   else if(bucket===3) q = MATH_LIMIT_CONCEPTS[randInt(0,MATH_LIMIT_CONCEPTS.length-1)]();
   else if(bucket===4) q = MATH_CONTINUITY_CONCEPTS[randInt(0,MATH_CONTINUITY_CONCEPTS.length-1)]();
-  else q = MATH_DIFF_CONCEPTS[randInt(0,MATH_DIFF_CONCEPTS.length-1)]();
+  else if(bucket===5) q = MATH_DIFF_CONCEPTS[randInt(0,MATH_DIFF_CONCEPTS.length-1)]();
+  else q = mcqPartialFractionForm();
   return {type:'mcq', ...q};
 }
 
