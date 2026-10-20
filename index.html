@@ -1041,6 +1041,7 @@ function defaultGame(){
     conceptExposure:{}, // concept key -> times tested (drives MCQ -> typed progression)
     conceptMastery:{}, // concept key (or "qb_<id>" for Quiz Bank questions) -> {correct, wrong, streak}
     totalCorrect:0, bestCombo:0, achievements:[], // shared across all practice modes
+    dailyHistory:{}, // 'YYYY-MM-DD' -> {correct, xp} -- powers the performance-over-time graph
     unlockedCharacters:[] // level indices (into LEVELS) whose character has been unlocked, any track
   };
 }
@@ -1059,7 +1060,7 @@ function saveGame(){
 //      progress and accounts persist — see boot() below) ---------------------
 function defaultAppState(){
   return {
-    screen:'auth', authMode:'login', authError:'', homeView:'apps',
+    screen:'auth', authMode:'login', authError:'', homeView:'apps', perfChartDays:14,
     appLang:'en',
     voicePref: {en:'female', zh:'female'},
     currentUser:null,
@@ -1223,6 +1224,9 @@ const I18N = {
     backToHomeScreen: "Back to home screen",
     guestMathSub: "Mental math, algebra, calculus, linear algebra and more — free, no account needed.",
     guestMathSignupNudge: "Create a free account to save your progress and come back to it on any device.",
+    performanceLabel: "Performance over time", perfDaysLabel: "{n}d",
+    perfSummary: "{correct} correct answers across {days} active {dayWord} in this window",
+    perfEmpty: "Solve a few problems to start seeing your trend here.",
     ctaStartLearning: "🎓 Start Learning English", ctaOpenNotebook: "📝 Open Notebook — free, no account needed", ctaOpenPoker: "♠ Play Poker — free, play money only",
     appLanguageLabel: "App Language",
     tabLogin: "Log In", tabSignup: "Sign Up",
@@ -6055,6 +6059,23 @@ function xpLevel(xp){
 // isolated correct answer still earns the original flat 10 (no regression),
 // while a run of consecutive correct answers earns progressively more,
 // capped at +10 so it stays a bonus rather than runaway inflation.
+// Local calendar date, not UTC -- a correct answer at 11pm shouldn't log
+// against tomorrow for someone a few timezones from UTC.
+function todayKey(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+// One shared choke point (every practice mode in the app already calls
+// registerCorrectAnswer for XP) means the performance graph in the profile
+// stays accurate without having to remember to log it separately in each
+// mode's own submit function.
+function recordDailyProgress(game, xpGain){
+  if(!game.dailyHistory) game.dailyHistory = {};
+  const key = todayKey();
+  const day = game.dailyHistory[key] || (game.dailyHistory[key] = {correct:0, xp:0});
+  day.correct += 1;
+  day.xp += xpGain;
+}
 function registerCorrectAnswer(session, game){
   const bonus = Math.min(session.combo||0, 10);
   session.combo = (session.combo||0) + 1;
@@ -6066,6 +6087,7 @@ function registerCorrectAnswer(session, game){
   session.xpEarned += xpGain;
   session.lastXpGain = xpGain;
   game.xp += xpGain;
+  recordDailyProgress(game, xpGain);
   return xpGain;
 }
 function registerWrongAnswer(session){
@@ -14981,6 +15003,46 @@ async function uploadAvatarPhoto(blob){
   }
 }
 
+// ---- performance-over-time graph (Profile screen) --------------------------
+// Hand-drawn inline SVG bars, same approach as the Business Concepts
+// diagrams -- one bar per day over the chosen window, today highlighted gold.
+// Reads state.game.dailyHistory, written by recordDailyProgress() inside
+// registerCorrectAnswer(), so it reflects every practice mode in the app
+// (Mental Math, Algebra, Calculus, Concepts, Business, Speed Math, ...) with
+// no per-mode wiring needed.
+function setPerfChartDays(n){ state.perfChartDays = n; render(); }
+function buildPerformanceChart(days){
+  const hist = state.game.dailyHistory || {};
+  const today = new Date();
+  const points = [];
+  for(let i=days-1;i>=0;i--){
+    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate()-i);
+    const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    points.push({key, date:d, correct:(hist[key]&&hist[key].correct)||0});
+  }
+  const max = Math.max(1, ...points.map(p=>p.correct));
+  const W=320, H=120, padB=20, padT=8;
+  const barGap=2, barW=(W/points.length)-barGap;
+  const showLabels = days<=14;
+  const bars = points.map((p,i)=>{
+    const h = p.correct>0 ? Math.max(3,Math.round((p.correct/max)*(H-padT-padB))) : 0;
+    const x = i*(barW+barGap)+barGap/2;
+    const y = H-padB-h;
+    const isToday = i===points.length-1;
+    const label = showLabels ? p.date.toLocaleDateString(undefined,{weekday:'narrow'}) : '';
+    return `<rect x="${x}" y="${h?y:H-padB-2}" width="${Math.max(barW,1)}" height="${h||2}" rx="2.5" style="fill:${isToday?'var(--gold)':'var(--ice)'}; opacity:${p.correct>0?1:.3};">
+      <title>${p.date.toLocaleDateString(undefined,{month:'short',day:'numeric'})}: ${p.correct}</title>
+    </rect>
+    ${label?`<text x="${x+barW/2}" y="${H-6}" text-anchor="middle" style="fill:rgba(255,255,255,.45); font-size:8px;">${label}</text>`:''}`;
+  }).join('');
+  const total = points.reduce((s,p)=>s+p.correct,0);
+  const activeDays = points.filter(p=>p.correct>0).length;
+  return {
+    svg:`<svg viewBox="0 0 ${W} ${H}" style="width:100%; height:auto;">${bars}</svg>`,
+    total, activeDays,
+  };
+}
+
 function renderProfile(){
   const totalDone = Object.values(state.game.tracks).reduce((n,t)=>n+Object.keys(t.completed).length,0);
   const eta = nextHeartEta();
@@ -15009,6 +15071,19 @@ function renderProfile(){
       ${charThumbs ? `<div style="display:flex; flex-wrap:wrap; gap:8px;">${charThumbs}</div>` : `<div style="font-size:12px; color:var(--snow-dim);">${t('noCharactersYet')}</div>`}
     </div>`;
 
+  const perfChart = buildPerformanceChart(state.perfChartDays);
+  const perfCard = `
+    <div class="profile-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; flex-wrap:wrap; gap:6px;">
+        <div style="font-weight:600;">${t('performanceLabel')}</div>
+        <div style="display:flex; gap:4px;">
+          ${[7,14,30].map(n=>`<button class="btn ${state.perfChartDays===n?'btn-primary':'btn-ghost'}" style="font-size:11px; padding:4px 9px;" onclick="setPerfChartDays(${n})">${t('perfDaysLabel',{n})}</button>`).join('')}
+        </div>
+      </div>
+      <div style="font-size:12px; color:var(--snow-dim); margin-bottom:10px;">${perfChart.total>0 ? t('perfSummary',{correct:perfChart.total, days:perfChart.activeDays, dayWord:perfChart.activeDays===1?'day':'days'}) : t('perfEmpty')}</div>
+      ${perfChart.svg}
+    </div>`;
+
   return `
   ${topbar({back:'goHome()'})}
   <div class="profile ${appLangClass()}">
@@ -15026,6 +15101,7 @@ function renderProfile(){
       <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">${state.game.hearts}/${HEARTS_MAX}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">${t('heartsLabel')}${eta?t('nextInM',{n:eta}):''}</div></div>
       <div class="profile-card"><div class="val" style="font-family:var(--font-display); font-size:22px; color:var(--gold);">${totalDone}</div><div class="lab" style="font-size:12px; color:var(--snow-dim); margin-top:4px;">${t('modulesDoneLabel')}</div></div>
     </div>
+    ${perfCard}
     <div class="profile-card">
       <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
         <div style="font-weight:600;">${t('levelLabel',{n:lvl.level})}</div>
