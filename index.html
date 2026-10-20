@@ -70,6 +70,24 @@
   .hero{text-align:center; padding:22px 6px 6px;}
   .hero h1{font-size:34px; color:var(--snow);}
   .hero .sub{margin-top:8px; font-size:15px; color:var(--snow-dim); line-height:1.5;}
+
+  /* ---- logged-out landing: a phone home screen of "apps" ---- */
+  .phoneHome{max-width:420px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column;}
+  .statusBar{display:flex; justify-content:space-between; align-items:center; padding:12px 26px 0; font-family:var(--font-display); font-size:13px; font-weight:600; color:var(--snow); opacity:.85;}
+  .phoneHeader{text-align:center; padding:30px 24px 6px;}
+  .phoneHeaderTitle{font-family:var(--font-display); font-weight:800; font-size:23px; color:var(--snow);}
+  .phoneHeaderSub{font-size:12.5px; color:var(--snow-dim); margin-top:5px; line-height:1.5;}
+  .langRow{display:flex; gap:6px; justify-content:center; margin-top:14px;}
+  .langChip{all:unset; cursor:pointer; font-size:12px; font-weight:600; padding:6px 12px; border-radius:999px; background:rgba(255,255,255,.08); color:var(--snow-dim);}
+  .langChip.on{background:var(--gold); color:var(--ink);}
+  .appGrid{display:grid; grid-template-columns:repeat(4,1fr); gap:20px 10px; padding:28px 18px 0; flex:1;}
+  .homeIcon{all:unset; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:7px; text-align:center;}
+  .homeIconGlyph{width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:25px; box-shadow:0 5px 12px rgba(0,0,0,.4); transition:transform .12s ease;}
+  .homeIcon:active .homeIconGlyph{transform:scale(.9);}
+  .homeIconLabel{font-size:10.5px; color:var(--snow); font-weight:600; line-height:1.25; max-width:72px;}
+  .phoneDock{margin-top:auto; display:flex; justify-content:center; padding:20px 0 28px;}
+  .dockBar{background:rgba(255,255,255,.08); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.1); border-radius:26px; padding:12px 26px;}
+  @media (min-width:421px){ .appGrid{grid-template-columns:repeat(4,76px); justify-content:center;} }
   .track-grid{display:grid; grid-template-columns:1fr; gap:14px;}
   .track-card{
     text-align:left; border:1px solid rgba(255,255,255,.1); border-radius:var(--radius);
@@ -1041,7 +1059,7 @@ function saveGame(){
 //      progress and accounts persist — see boot() below) ---------------------
 function defaultAppState(){
   return {
-    screen:'auth', authMode:'login', authError:'',
+    screen:'auth', authMode:'login', authError:'', homeView:'apps',
     appLang:'en',
     voicePref: {en:'female', zh:'female'},
     currentUser:null,
@@ -1200,6 +1218,9 @@ function touchStreak(){
 const I18N = {
   en: {
     heroSub: "Create an account to save your progress across devices.",
+    phoneHomeSub: "Tap an app to get started.",
+    appNotebook: "Kunga's Notebook", appPoker: "Kunga's Poker", appMaths: "Kunga's Maths", appYeshe: "Yeshe",
+    backToHomeScreen: "Back to home screen",
     ctaStartLearning: "🎓 Start Learning English", ctaOpenNotebook: "📝 Open Notebook — free, no account needed", ctaOpenPoker: "♠ Play Poker — free, play money only",
     appLanguageLabel: "App Language",
     tabLogin: "Log In", tabSignup: "Sign Up",
@@ -5132,27 +5153,64 @@ function setAuthMode(mode){ state.authMode = mode; state.authError=''; render();
 function setAppLang(lang){ state.appLang = lang; safeStorage.set(LANG_KEY, lang); render(); }
 function appLangClass(){ return state.appLang==='bo' ? 'lang-bo' : state.appLang==='zh' ? 'lang-zh' : ''; }
 
+// ---- Logged-out landing: a phone home screen, "apps" being the different
+// parts of kunga.me. Data-driven so adding a 5th/6th app later is a one-line
+// entry here rather than another hand-built CTA button. Notebook/Poker/Maths
+// are reachable without an account (Maths deep-links into Yeshe's math
+// practice, same as everything else under the Yeshe icon, since that content
+// still lives behind the one login); tapping Yeshe or Maths just opens the
+// existing signup/login panel in place of the grid.
+const HOME_APPS = [
+  {key:'notebook', nameKey:'appNotebook', icon:'📝', bg:'linear-gradient(145deg,#ff6fae,#ff2d95)', action:"window.location.href='/notebook'"},
+  {key:'poker', nameKey:'appPoker', icon:'♠️', bg:'linear-gradient(145deg,#1fa05f,#0c4328)', action:"window.location.href='/poker'"},
+  {key:'maths', nameKey:'appMaths', icon:'🧮', bg:'linear-gradient(145deg,#a16bff,#5b2ac9)', action:"openHomeApp('auth')"},
+];
+function openHomeApp(view){ state.homeView=view; if(view==='auth') state.authMode='signup'; render(); }
+function backToHomeScreen(){ state.homeView='apps'; render(); }
+function phoneClock(){
+  try{ return new Date().toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}); }catch(e){ return ''; }
+}
+function renderPhoneHome(){
+  const cls = appLangClass();
+  const icons = HOME_APPS.map(a=>`
+    <button class="homeIcon" onclick="${a.action}">
+      <div class="homeIconGlyph" style="background:${a.bg}">${a.icon}</div>
+      <div class="homeIconLabel">${t(a.nameKey)}</div>
+    </button>`).join('');
+  return `
+  <div class="phoneHome ${cls}">
+    <div class="statusBar"><span>${phoneClock()}</span><span>●●●●  🛜  🔋</span></div>
+    <div class="phoneHeader">
+      <div class="phoneHeaderTitle">ཡེ་ཤེས་ <span style="color:var(--gold)">Yeshe</span></div>
+      <div class="phoneHeaderSub">${t('phoneHomeSub')}</div>
+      <div class="langRow">
+        <button class="langChip ${state.appLang==='en'?'on':''}" onclick="setAppLang('en')">English</button>
+        <button class="langChip ${state.appLang==='zh'?'on':''}" onclick="setAppLang('zh')">中文</button>
+        <button class="langChip lang-bo ${state.appLang==='bo'?'on':''}" onclick="setAppLang('bo')">བོད་སྐད</button>
+      </div>
+    </div>
+    <div class="appGrid">${icons}</div>
+    <div class="phoneDock">
+      <div class="dockBar">
+        <button class="homeIcon dock" onclick="openHomeApp('auth')">
+          <div class="homeIconGlyph" style="background:linear-gradient(145deg,#4fa8e8,#1b2e52)">⛰️</div>
+          <div class="homeIconLabel">${t('appYeshe')}</div>
+        </button>
+      </div>
+    </div>
+  </div>
+  `;
+}
 function renderAuth(){
+  if(state.homeView!=='auth') return renderPhoneHome();
   const mode = state.authMode;
   const cls = appLangClass();
   return `
-  <div class="home ${cls}" style="padding-top:40px;">
+  <div class="home ${cls}" style="padding-top:20px;">
+    <button class="iconbtn" style="margin:0 0 10px 20px;" onclick="backToHomeScreen()" title="${t('backToHomeScreen')}">←</button>
     <div class="hero">
       <h1>ཡེ་ཤེས་ <span style="color:var(--gold)">Yeshe</span></h1>
       <div class="sub">${t('heroSub')}</div>
-    </div>
-    <div style="padding:0 20px; margin-bottom:20px; display:flex; flex-direction:column; gap:10px;">
-      <button class="btn btn-primary btn-block" onclick="setAuthMode('signup'); document.getElementById('auth_username')?.scrollIntoView({behavior:'smooth', block:'center'});">${t('ctaStartLearning')}</button>
-      <button class="btn btn-ghost btn-block" onclick="window.location.href='/notebook'">${t('ctaOpenNotebook')}</button>
-      <button class="btn btn-ghost btn-block" onclick="window.location.href='/poker'">${t('ctaOpenPoker')}</button>
-    </div>
-    <div style="padding:0 20px; margin-bottom:16px;">
-      <div style="font-size:12px; color:var(--snow-dim); font-weight:600; margin-bottom:8px;">${t('appLanguageLabel')}</div>
-      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;">
-        <button class="btn ${state.appLang==='en'?'btn-primary':'btn-ghost'}" style="font-size:13px;" onclick="setAppLang('en')">English</button>
-        <button class="btn ${state.appLang==='zh'?'btn-primary':'btn-ghost'}" style="font-size:13px;" onclick="setAppLang('zh')">中文</button>
-        <button class="btn lang-bo ${state.appLang==='bo'?'btn-primary':'btn-ghost'}" style="font-size:13px;" onclick="setAppLang('bo')">བོད་སྐད</button>
-      </div>
     </div>
     <div class="auth-tabs">
       <button class="auth-tab ${mode==='login'?'active':''}" onclick="setAuthMode('login')">${t('tabLogin')}</button>
