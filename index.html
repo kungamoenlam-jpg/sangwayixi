@@ -1221,6 +1221,8 @@ const I18N = {
     phoneHomeSub: "Tap an app to get started.",
     appNotebook: "Kunga's Notebook", appPoker: "Kunga's Poker", appMaths: "Kunga's Maths", appYeshe: "Yeshe",
     backToHomeScreen: "Back to home screen",
+    guestMathSub: "Mental math, algebra, calculus, linear algebra and more — free, no account needed.",
+    guestMathSignupNudge: "Create a free account to save your progress and come back to it on any device.",
     ctaStartLearning: "🎓 Start Learning English", ctaOpenNotebook: "📝 Open Notebook — free, no account needed", ctaOpenPoker: "♠ Play Poker — free, play money only",
     appLanguageLabel: "App Language",
     tabLogin: "Log In", tabSignup: "Sign Up",
@@ -5078,6 +5080,7 @@ const screens = {
   math_speed_setup: renderSpeedSetup,
   math_speed_play: renderSpeedPlay,
   math_speed_result: renderSpeedResult,
+  guest_math_menu: renderGuestMathMenu,
   algebra_menu: renderAlgebraMenu,
   algebra_learn: renderAlgebraLearn,
   algebra_practice: renderAlgebraPractice,
@@ -5163,10 +5166,13 @@ function appLangClass(){ return state.appLang==='bo' ? 'lang-bo' : state.appLang
 const HOME_APPS = [
   {key:'notebook', nameKey:'appNotebook', icon:'📝', bg:'linear-gradient(145deg,#ff6fae,#ff2d95)', action:"window.location.href='/notebook'"},
   {key:'poker', nameKey:'appPoker', icon:'♠️', bg:'linear-gradient(145deg,#1fa05f,#0c4328)', action:"window.location.href='/poker'"},
-  {key:'maths', nameKey:'appMaths', icon:'🧮', bg:'linear-gradient(145deg,#a16bff,#5b2ac9)', action:"openHomeApp('auth')"},
+  {key:'maths', nameKey:'appMaths', icon:'🧮', bg:'linear-gradient(145deg,#a16bff,#5b2ac9)', action:"state.screen='guest_math_menu'; render();"},
 ];
 function openHomeApp(view){ state.homeView=view; if(view==='auth') state.authMode='signup'; render(); }
-function backToHomeScreen(){ state.homeView='apps'; render(); }
+// Setting screen (not just homeView) makes this safe to call from any
+// screen -- not just 'auth', where homeView alone used to be enough since
+// that was the only screen that ever checked it.
+function backToHomeScreen(){ state.screen='auth'; state.homeView='apps'; render(); }
 function phoneClock(){
   try{ return new Date().toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}); }catch(e){ return ''; }
 }
@@ -5435,7 +5441,32 @@ function renderHome(){
       <div class="see-more">${t('ctaOpenPoker')} →</div>
     </button>`;
 
-  const practiceGrid = `
+  const practiceGrid = buildPracticeGrid();
+
+  return `
+  ${topbar({back:'state.screen="pick_language"; render();'})}
+  <div class="home ${appLangClass()}">
+    ${checkoutBanner}
+    <div class="hero">
+      <h1>ཡེ་ཤེས་ <span style="color:var(--gold)">Yeshe</span></h1>
+      <div class="sub">${t('homeSub')}</div>
+    </div>
+    ${statsStrip}
+    ${charactersBanner}
+    ${pokerBanner}
+    <div class="section-heading">${t('sectionLanguagesLabel')}</div>
+    <div class="track-grid">${cards}</div>
+    <div class="section-heading">${t('sectionPracticeLabel')}</div>
+    ${practiceGrid}
+  </div>
+  <div class="footer-note">${t('homeFooter')}</div>
+  `;
+}
+// Shared by the logged-in dashboard (renderHome) and the guest math hub
+// (renderGuestMathMenu) -- one definition for every practice tile so the
+// two never drift apart.
+function buildPracticeGrid(){
+  return `
     <div class="practice-grid">
       <button class="practice-tile" onclick="state.screen='math_menu'; render();">
         <div class="glyph">🧮</div>
@@ -5498,24 +5529,29 @@ function renderHome(){
         <div class="pt-title">${t('businessTitle')}</div>
       </button>
     </div>`;
+}
 
+// "Kunga's Maths" app icon on the phone home screen jumps straight here --
+// no signup wall -- showing the same practice tiles renderHome does, just
+// without the dashboard chrome (streak/XP/language tracks) that only makes
+// sense once signed in. goHome() (the "back" target on every practice
+// screen below this one) checks state.currentUser and returns here instead
+// of the real dashboard for exactly this reason, so backing out of e.g.
+// Calculus lands a guest back on this menu, not a broken/empty home screen.
+function renderGuestMathMenu(){
   return `
-  ${topbar({back:'state.screen="pick_language"; render();'})}
+  ${topbar({back:'backToHomeScreen()'})}
   <div class="home ${appLangClass()}">
-    ${checkoutBanner}
     <div class="hero">
-      <h1>ཡེ་ཤེས་ <span style="color:var(--gold)">Yeshe</span></h1>
-      <div class="sub">${t('homeSub')}</div>
+      <h1>🧮 ${t('appMaths')}</h1>
+      <div class="sub">${t('guestMathSub')}</div>
     </div>
-    ${statsStrip}
-    ${charactersBanner}
-    ${pokerBanner}
-    <div class="section-heading">${t('sectionLanguagesLabel')}</div>
-    <div class="track-grid">${cards}</div>
-    <div class="section-heading">${t('sectionPracticeLabel')}</div>
-    ${practiceGrid}
+    ${buildPracticeGrid()}
+    <div class="profile-card" style="text-align:center;">
+      <div style="font-size:13.5px; color:var(--snow-dim); margin-bottom:10px;">${t('guestMathSignupNudge')}</div>
+      <button class="btn btn-primary btn-block" onclick="openHomeApp('auth')">${t('ctaStartLearning')}</button>
+    </div>
   </div>
-  <div class="footer-note">${t('homeFooter')}</div>
   `;
 }
 
@@ -15028,7 +15064,14 @@ function resetProgress(){
 }
 
 // ---- navigation ---------------------------------------------------------------
-function goHome(){ regenHearts(); state.screen='home'; render(); }
+// A guest can only ever have reached a practice screen via the "Kunga's
+// Maths" app icon (nothing else is reachable without logging in), so for a
+// guest, "back to home" always means the guest math hub, never the real
+// (login-only) dashboard.
+function goHome(){
+  if(!state.currentUser){ state.screen='guest_math_menu'; render(); return; }
+  regenHearts(); state.screen='home'; render();
+}
 function goProfile(){ regenHearts(); state.screen='profile'; render(); }
 function openTrack(id){ regenHearts(); state.currentTrack=id; state.screen='map'; render(); }
 
