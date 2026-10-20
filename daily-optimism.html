@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kunga's Daily Optimism</title>
+<meta name="description" content="Type today's affirmations, word for word — a short daily ritual for clear thinking and taking action over procrastinating.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#2b1608; --paper:#fff7ec; --card:#ffffff;
+  --sun1:#ffb347; --sun2:#ff7a59; --sun3:#ffe08a;
+  --muted:#8a6a52; --line:#f0ddc4;
+  --good:#1f8a5b; --good-bg:#e3f4ec; --bad:#c2410c; --bad-bg:#fdece3;
+  --f-display:"Fraunces",Georgia,serif; --f-body:"Inter",sans-serif; --f-mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--f-body);background:linear-gradient(170deg,var(--sun3) 0%,var(--paper) 38%);min-height:100vh;color:var(--ink)}
+a{color:var(--bad)}
+.top{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;max-width:620px;margin:0 auto}
+.brand{font-family:var(--f-display);font-weight:700;font-size:15px;color:var(--ink);text-decoration:none;opacity:.75}
+.streakChip{font-family:var(--f-mono);font-size:12.5px;background:#fff;border:1px solid var(--line);padding:6px 12px;border-radius:999px;font-weight:600}
+
+.wrap{max-width:560px;margin:0 auto;padding:10px 20px 60px}
+.hero{text-align:center;margin:18px 0 28px}
+.sunGlyph{font-size:38px}
+.hero h1{font-family:var(--f-display);font-weight:700;font-size:clamp(26px,6vw,34px);margin:6px 0 8px}
+.hero p{color:var(--muted);font-size:14.5px;line-height:1.6;max-width:42ch;margin:0 auto}
+
+.progressDots{display:flex;gap:8px;justify-content:center;margin:0 0 22px}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--line)}
+.dot.done{background:var(--good)}
+.dot.now{background:var(--sun2);transform:scale(1.3)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:30px 26px;box-shadow:0 18px 40px rgba(180,100,40,.14)}
+.themeTag{font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--bad);font-weight:600}
+.affirmText{font-family:var(--f-display);font-size:clamp(20px,5vw,25px);line-height:1.55;margin:12px 0 26px;font-style:italic}
+.affirmText span{transition:color .08s}
+.ch-pending{color:#d8c6ac}
+.ch-good{color:var(--ink)}
+.ch-bad{color:#fff;background:var(--bad);border-radius:2px}
+
+textarea#typer{all:unset;display:block;width:100%;min-height:90px;font-family:var(--f-mono);font-size:15px;line-height:1.6;background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:14px 16px;resize:none;color:var(--ink)}
+textarea#typer:focus{border-color:var(--sun2)}
+.hint{font-size:12px;color:var(--muted);margin-top:8px;min-height:16px}
+.hint.bad{color:var(--bad)}
+.hint.good{color:var(--good)}
+
+.doneCard{text-align:center;padding:40px 26px}
+.doneCard .big{font-family:var(--f-display);font-size:30px;font-weight:700;margin:14px 0 6px}
+.doneCard .streakBig{font-family:var(--f-mono);font-size:15px;color:var(--muted);margin-bottom:22px}
+.btn{all:unset;cursor:pointer;font-family:var(--f-display);font-weight:600;font-size:14.5px;padding:12px 22px;border-radius:999px;background:linear-gradient(135deg,var(--sun1),var(--sun2));color:#3a1200;box-shadow:0 8px 20px rgba(255,120,60,.3)}
+.btn.ghost{background:none;box-shadow:none;color:var(--muted);text-decoration:underline}
+
+.history{margin-top:28px;background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:16px;padding:16px 18px;font-size:13px;color:var(--muted);text-align:center}
+.history b{color:var(--ink)}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <a class="brand" href="/">← kunga.me</a>
+  <div class="streakChip" id="streakChip"></div>
+</div>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="sunGlyph">🌅</div>
+    <h1>Kunga's Daily Optimism</h1>
+    <p>Type each line exactly as written. Not read it — <i>write</i> it, with your own hands, so it actually sinks in. A short daily rep for a clearer, more decisive mind.</p>
+  </div>
+  <div id="view"></div>
+</div>
+
+<script>
+// Original affirmations, grouped by theme. Written for this app specifically --
+// short, direct, and typeable on an ordinary keyboard (plain straight quotes
+// throughout, so exact-match typing doesn't trip on smart-quote mismatches).
+const AFFIRMATIONS = [
+  {theme:'Optimism', text:"Today holds more good than I can predict."},
+  {theme:'Optimism', text:"I choose to see what's possible, not just what's hard."},
+  {theme:'Optimism', text:"Setbacks are information, not verdicts."},
+  {theme:'Optimism', text:"My effort today is already a win."},
+  {theme:'Optimism', text:"Good things come to people who keep showing up."},
+  {theme:'Optimism', text:"I trust that I am capable of figuring this out."},
+  {theme:'Take Action', text:"I start before I feel ready."},
+  {theme:'Take Action', text:"Done today beats perfect someday."},
+  {theme:'Take Action', text:"The first small step is enough to begin."},
+  {theme:'Take Action', text:"I act now and adjust later."},
+  {theme:'Take Action', text:"Waiting for motivation wastes the time I already have."},
+  {theme:'Take Action', text:"I do the hard thing first, while my energy is highest."},
+  {theme:'Clear Mind', text:"My mind is clear, calm, and ready to work."},
+  {theme:'Clear Mind', text:"I think in one direction at a time."},
+  {theme:'Clear Mind', text:"The fog lifts the moment I start moving."},
+  {theme:'Clear Mind', text:"I give this moment my full attention."},
+  {theme:'Clear Mind', text:"Distraction is a choice, and I choose focus."},
+  {theme:'Clear Mind', text:"My thoughts are organized and easy to follow."},
+  {theme:'Sharp Thinking', text:"I slow down just enough to get it right."},
+  {theme:'Sharp Thinking', text:"I check my work because I respect my own effort."},
+  {theme:'Sharp Thinking', text:"A careful mind catches its own mistakes."},
+  {theme:'Sharp Thinking', text:"I think clearly, so I act correctly."},
+  {theme:'Sharp Thinking', text:"Precision today saves confusion tomorrow."},
+  {theme:'Sharp Thinking', text:"I am becoming a sharper thinker every single day."},
+];
+const SESSION_SIZE = 3;
+const LS_KEY = 'kunga-optimism-v1';
+
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function dateSeed(str){ let h=0; for(const c of str) h=(h*31+c.charCodeAt(0))|0; return Math.abs(h); }
+// A tiny deterministic PRNG seeded from today's date, so the same 3
+// affirmations show all day (and change tomorrow) without needing a server.
+function seededPick(n){
+  let x = dateSeed(todayStr()) || 1;
+  const rand = () => { x = (x*1103515245+12345) & 0x7fffffff; return x/0x7fffffff; };
+  const pool = AFFIRMATIONS.slice();
+  const picked = [];
+  for(let i=0;i<n && pool.length;i++){ picked.push(pool.splice(Math.floor(rand()*pool.length),1)[0]); }
+  return picked;
+}
+
+let progress = {};
+try{ progress = JSON.parse(localStorage.getItem(LS_KEY)||'{}') || {}; }catch(e){ progress = {}; }
+function saveProgress(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(progress)); }catch(e){} }
+function computeStreak(){
+  let streak = 0;
+  let d = new Date();
+  if(!progress[todayStr()]) d.setDate(d.getDate()-1); // today not done yet -> count backwards from yesterday
+  while(true){
+    const key = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    if(progress[key]) { streak++; d.setDate(d.getDate()-1); } else break;
+  }
+  return streak;
+}
+function totalDaysDone(){ return Object.keys(progress).length; }
+
+const session = { items: seededPick(SESSION_SIZE), index: 0 };
+const todayDone = !!progress[todayStr()];
+
+function renderStreakChip(){
+  document.getElementById('streakChip').textContent = `🔥 ${computeStreak()} day streak`;
+}
+
+function diffHTML(target, typed){
+  let out = '';
+  for(let i=0;i<target.length;i++){
+    const tc = target[i];
+    if(i >= typed.length){ out += `<span class="ch-pending">${esc(tc)}</span>`; }
+    else if(typed[i]===tc){ out += `<span class="ch-good">${esc(tc)}</span>`; }
+    else { out += `<span class="ch-bad">${esc(tc)}</span>`; }
+  }
+  return out;
+}
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderSession(){
+  const view = document.getElementById('view');
+  if(todayDone){
+    view.innerHTML = `
+      <div class="card doneCard">
+        <div style="font-size:40px;">☀️</div>
+        <div class="big">Already done for today</div>
+        <div class="streakBig">🔥 ${computeStreak()} day streak · ${totalDaysDone()} total days</div>
+        <p style="color:var(--muted); font-size:13.5px; max-width:36ch; margin:0 auto 18px;">Come back tomorrow for three new lines — same quiet ritual, new words.</p>
+        <button class="btn ghost" id="reviewBtn">Review today's lines again</button>
+      </div>`;
+    document.getElementById('reviewBtn').onclick = () => { reviewMode = true; session.index = 0; renderCard(); };
+    return;
+  }
+  renderCard();
+}
+
+let reviewMode = false;
+function renderCard(){
+  const view = document.getElementById('view');
+  if(session.index >= session.items.length){
+    if(!reviewMode){
+      progress[todayStr()] = true;
+      saveProgress();
+      renderStreakChip();
+    }
+    view.innerHTML = `
+      <div class="card doneCard">
+        <div style="font-size:40px;">🌞</div>
+        <div class="big">${reviewMode ? 'Nicely done, again.' : "That's today, done."}</div>
+        <div class="streakBig">🔥 ${computeStreak()} day streak · ${totalDaysDone()} total days</div>
+        <p style="color:var(--muted); font-size:13.5px; max-width:36ch; margin:0 auto 18px;">Carry one line with you today. Come back tomorrow for three new ones.</p>
+        <a class="btn" href="/">Back to kunga.me</a>
+      </div>`;
+    return;
+  }
+  const dotsHtml = session.items.map((_,i)=>`<div class="dot ${i<session.index?'done':i===session.index?'now':''}"></div>`).join('');
+  const item = session.items[session.index];
+  view.innerHTML = `
+    <div class="progressDots">${dotsHtml}</div>
+    <div class="card">
+      <div class="themeTag">${item.theme}</div>
+      <div class="affirmText" id="affirmDisplay">${diffHTML(item.text,'')}</div>
+      <textarea id="typer" placeholder="Type the line above, exactly…" autocomplete="off" autocapitalize="off" spellcheck="false" rows="3"></textarea>
+      <div class="hint" id="typeHint">Match every character, including punctuation, to continue.</div>
+    </div>`;
+  const typer = document.getElementById('typer');
+  const display = document.getElementById('affirmDisplay');
+  const hint = document.getElementById('typeHint');
+  typer.focus();
+  typer.addEventListener('input', ()=>{
+    const typed = typer.value;
+    display.innerHTML = diffHTML(item.text, typed);
+    if(typed === item.text){
+      hint.textContent = 'Matched. Moving on…'; hint.className = 'hint good';
+      typer.disabled = true;
+      setTimeout(()=>{ session.index++; renderCard(); }, 550);
+    } else if(typed.length >= item.text.length){
+      hint.textContent = "Close — check the highlighted character(s)."; hint.className = 'hint bad';
+    } else {
+      hint.textContent = 'Match every character, including punctuation, to continue.'; hint.className = 'hint';
+    }
+  });
+}
+
+renderStreakChip();
+renderSession();
+</script>
+
+</body>
+</html>
