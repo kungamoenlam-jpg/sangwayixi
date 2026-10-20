@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kunga's Daily News</title>
+<meta name="description" content="Real newspaper clippings shared by the community — read one, then type it out word for word.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#12213B;--sky-deep:#0d1a30;--sky-mid:#1b2e52;--snow:#F5F8FC;--snow-dim:#b9c4d8;
+  --gold:#E8A33D;--gold-dim:#B87F2A;--good:#3FAE72;--bad:#E1584B;--card:#17274a;
+  --radius:18px;--shadow:0 10px 30px rgba(0,0,0,.4);
+  --font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--font-body);background:linear-gradient(180deg,var(--sky-deep),var(--sky-mid) 60%,var(--sky-deep));color:var(--snow);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px 16px 60px}
+a{color:var(--gold);text-decoration:none}
+.top{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:620px;margin-bottom:22px;gap:10px}
+.brand{font-family:var(--font-display);font-weight:700;font-size:15px;color:var(--snow-dim)}
+.topActions{display:flex;gap:8px;align-items:center}
+.pill{font-size:13px;color:var(--gold);padding:6px 12px;border-radius:999px;background:rgba(232,163,61,.12);cursor:pointer;border:none;font-family:var(--font-body);font-weight:600}
+.wrap{width:100%;max-width:620px}
+h1{font-family:var(--font-display);font-size:26px;margin:0 0 4px}
+.sub{color:var(--snow-dim);font-size:13.5px;margin:0 0 22px}
+.card{background:radial-gradient(ellipse at top,rgba(232,163,61,.06),transparent 60%),var(--card);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
+.newsCard{display:flex;gap:14px;align-items:flex-start;cursor:pointer;transition:border-color .15s}
+.newsCard:hover{border-color:rgba(232,163,61,.4)}
+.thumb{width:72px;height:72px;border-radius:12px;object-fit:cover;flex-shrink:0;background:rgba(255,255,255,.06)}
+.thumbPlaceholder{width:72px;height:72px;border-radius:12px;flex-shrink:0;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:28px}
+.newsTitle{font-family:var(--font-display);font-weight:700;font-size:16.5px;margin:0 0 4px}
+.newsByline{font-size:12px;color:var(--snow-dim);margin:0 0 6px}
+.newsSnippet{font-size:13px;color:var(--snow-dim);margin:0;line-height:1.5;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.emptyState,.loadingState{text-align:center;color:var(--snow-dim);padding:40px 10px}
+.postBtn{all:unset;cursor:pointer;display:block;width:100%;text-align:center;font-family:var(--font-display);font-weight:700;font-size:14.5px;padding:14px;border-radius:14px;background:var(--gold);color:var(--ink);margin-top:6px}
+.loginNudge{text-align:center;color:var(--snow-dim);font-size:13px;margin-top:10px}
+.loginNudge a{color:var(--gold);font-weight:600}
+
+.articleImg{width:100%;border-radius:14px;margin-bottom:16px;display:block}
+.pdfLink{display:block;text-align:center;padding:14px;border-radius:14px;background:rgba(255,255,255,.06);margin-bottom:16px;font-weight:600}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:6px}
+.artTitle{font-family:var(--font-display);font-size:22px;font-weight:800;margin:0 0 4px}
+.artByline{font-size:13px;color:var(--snow-dim);margin:0 0 18px}
+.affirmText{font-size:16px;line-height:1.65;margin:0 0 18px}
+.ch-pending{color:var(--snow-dim)}
+.ch-good{color:var(--snow)}
+.ch-bad{color:#fff;background:var(--bad);border-radius:2px}
+#typer{width:100%;font-family:var(--font-mono);font-size:14.5px;line-height:1.6;padding:14px;border-radius:12px;border:1.5px solid rgba(255,255,255,.15);background:rgba(0,0,0,.2);color:var(--snow);resize:vertical;outline:none}
+#typer:focus{border-color:var(--gold)}
+.hint{margin-top:8px;font-size:12.5px;color:var(--snow-dim);min-height:16px}
+.hint.good{color:var(--good);font-weight:600}
+.hint.bad{color:var(--bad)}
+.doneCard{text-align:center}
+.doneCard .big{font-family:var(--font-display);font-size:19px;font-weight:700;margin:10px 0 6px}
+.actions{display:flex;gap:10px;margin-top:20px;justify-content:center;flex-wrap:wrap}
+button.secondary,.btnlink{all:unset;cursor:pointer;font-family:var(--font-display);font-weight:600;font-size:13.5px;padding:10px 18px;border-radius:999px;background:rgba(255,255,255,.08);color:var(--snow)}
+.deleteRow{text-align:center;margin-top:18px}
+.deleteBtn{all:unset;cursor:pointer;font-size:12px;color:var(--bad)}
+
+label{display:block;font-size:13px;color:var(--snow-dim);margin:16px 0 6px;font-weight:600}
+label:first-of-type{margin-top:0}
+input[type=text],textarea.formField{width:100%;font-family:var(--font-body);font-size:14.5px;padding:12px;border-radius:12px;border:1.5px solid rgba(255,255,255,.15);background:rgba(0,0,0,.2);color:var(--snow);outline:none}
+textarea.formField{font-family:var(--font-mono);resize:vertical}
+input[type=text]:focus,textarea.formField:focus{border-color:var(--gold)}
+input[type=file]{width:100%;font-size:13px;color:var(--snow-dim);margin-top:4px}
+.charCount{font-size:11.5px;color:var(--snow-dim);text-align:right;margin-top:3px}
+.errorBox{background:rgba(225,88,75,.12);border:1px solid rgba(225,88,75,.4);color:#ffb3ab;padding:10px 14px;border-radius:10px;font-size:13px;margin-top:14px}
+.state{text-align:center;color:var(--snow-dim);margin-top:40px}
+@media (max-width:480px){.card{padding:16px}}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <a class="brand" href="/">← kunga.me</a>
+  <div class="topActions">
+    <button class="pill" id="feedLink" style="display:none">📰 Feed</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div id="view"></div>
+</div>
+
+<script>
+const LS_SESSION_KEY = 'sangwa_session_v1';
+function currentUser(){
+  try{
+    const s = JSON.parse(localStorage.getItem(LS_SESSION_KEY) || 'null');
+    return (s && s.currentUser) ? String(s.currentUser) : null;
+  }catch(e){ return null; }
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(iso){
+  try{ return new Date(iso).toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}); }catch(e){ return iso; }
+}
+function diffHTML(target, typed){
+  let out = '';
+  for(let i=0;i<target.length;i++){
+    const tc = target[i];
+    if(i >= typed.length){ out += `<span class="ch-pending">${esc(tc)}</span>`; }
+    else if(typed[i]===tc){ out += `<span class="ch-good">${esc(tc)}</span>`; }
+    else { out += `<span class="ch-bad">${esc(tc)}</span>`; }
+  }
+  return out;
+}
+
+const feedLinkBtn = document.getElementById('feedLink');
+feedLinkBtn.onclick = () => navigate('/daily-news');
+
+function navigate(path){
+  history.pushState(null, '', path);
+  route();
+}
+window.addEventListener('popstate', route);
+
+async function route(){
+  const path = location.pathname;
+  feedLinkBtn.style.display = path === '/daily-news' ? 'none' : '';
+  if(path === '/daily-news/submit'){ return renderSubmit(); }
+  const idMatch = path.match(/^\/daily-news\/(\d+)$/);
+  if(idMatch){ return renderArticle(Number(idMatch[1])); }
+  return renderFeed();
+}
+
+async function renderFeed(){
+  const view = document.getElementById('view');
+  view.innerHTML = `<div class="loadingState">Loading today's clippings…</div>`;
+  let articles = [];
+  try{
+    const resp = await fetch('/api/news');
+    const data = await resp.json();
+    articles = data.articles || [];
+  }catch(e){
+    view.innerHTML = `<div class="state">Couldn't load Daily News. Try again shortly.</div>`;
+    return;
+  }
+
+  const user = currentUser();
+  const postSection = user
+    ? `<button class="postBtn" id="postBtn">+ Post a newspaper clipping</button>`
+    : `<button class="postBtn" id="postBtn" style="opacity:.55">+ Post a newspaper clipping</button><div class="loginNudge">Log in on <a href="/">kunga.me</a> to post your own.</div>`;
+
+  const cardsHtml = articles.length
+    ? articles.map(a => {
+        const thumb = (a.imagePath && a.imageMime && a.imageMime.startsWith('image/'))
+          ? `<img class="thumb" src="/news-photo/${a.id}" loading="lazy">`
+          : `<div class="thumbPlaceholder">${a.imagePath ? '📄' : '📰'}</div>`;
+        return `
+        <div class="card newsCard" data-id="${a.id}">
+          ${thumb}
+          <div>
+            <div class="newsTitle">${esc(a.title)}</div>
+            <div class="newsByline">by @${esc(a.username)} · ${fmtDate(a.createdAt)}</div>
+            <div class="newsSnippet">${esc(a.body)}</div>
+          </div>
+        </div>`;
+      }).join('')
+    : `<div class="emptyState">No clippings yet. Be the first to share one.</div>`;
+
+  view.innerHTML = `
+    <h1>🗞️ Kunga's Daily News</h1>
+    <p class="sub">Real clippings from the community. Pick one, read it, then type it out exactly.</p>
+    ${postSection}
+    <div style="height:8px"></div>
+    ${cardsHtml}
+  `;
+  document.getElementById('postBtn').onclick = () => {
+    if(currentUser()) navigate('/daily-news/submit');
+  };
+  view.querySelectorAll('.newsCard').forEach(el => {
+    el.onclick = () => navigate('/daily-news/' + el.dataset.id);
+  });
+}
+
+function renderSubmit(){
+  const view = document.getElementById('view');
+  const user = currentUser();
+  if(!user){
+    view.innerHTML = `<div class="state">Log in on <a href="/">kunga.me</a> first, then come back to post.</div>`;
+    return;
+  }
+  view.innerHTML = `
+    <h1>Post a clipping</h1>
+    <p class="sub">Paste the article exactly as printed — this is the text other users will type.</p>
+    <div class="card">
+      <label>Title</label>
+      <input type="text" id="titleInput" maxlength="140" placeholder="Headline">
+      <label>Article text</label>
+      <textarea class="formField" id="bodyInput" maxlength="4000" rows="8" placeholder="Paste or type the article, word for word…"></textarea>
+      <div class="charCount" id="charCount">0 / 4000</div>
+      <label>Photo or PDF of the clipping (optional, recommended)</label>
+      <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp,application/pdf">
+      <div id="errorBox"></div>
+      <button class="postBtn" id="submitBtn" style="margin-top:18px">Post it</button>
+    </div>
+  `;
+  const bodyInput = document.getElementById('bodyInput');
+  const charCount = document.getElementById('charCount');
+  bodyInput.addEventListener('input', () => { charCount.textContent = bodyInput.value.length + ' / 4000'; });
+  document.getElementById('submitBtn').onclick = doSubmit;
+}
+
+async function doSubmit(){
+  const errorBox = document.getElementById('errorBox');
+  errorBox.innerHTML = '';
+  const title = document.getElementById('titleInput').value.trim();
+  const body = document.getElementById('bodyInput').value.trim();
+  const file = document.getElementById('fileInput').files[0];
+  if(!title){ errorBox.innerHTML = `<div class="errorBox">Please add a title.</div>`; return; }
+  if(body.length < 10){ errorBox.innerHTML = `<div class="errorBox">Article text should be at least 10 characters.</div>`; return; }
+
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.textContent = 'Posting…';
+
+  try{
+    const resp = await fetch('/api/news', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username: currentUser(), title, body }),
+    });
+    const data = await resp.json();
+    if(!resp.ok){ errorBox.innerHTML = `<div class="errorBox">${esc(data.error || 'Something went wrong.')}</div>`; submitBtn.textContent = 'Post it'; return; }
+    const id = data.article.id;
+
+    if(file){
+      const buf = await file.arrayBuffer();
+      const photoResp = await fetch('/api/news/' + id + '/photo', {
+        method: 'POST',
+        headers: {'Content-Type': file.type},
+        body: buf,
+      });
+      if(!photoResp.ok){
+        const photoData = await photoResp.json().catch(() => ({}));
+        errorBox.innerHTML = `<div class="errorBox">Posted, but the photo upload failed: ${esc(photoData.error || 'unknown error')}</div>`;
+        setTimeout(() => navigate('/daily-news/' + id), 1400);
+        return;
+      }
+    }
+    navigate('/daily-news/' + id);
+  }catch(e){
+    errorBox.innerHTML = `<div class="errorBox">Network error — try again.</div>`;
+    submitBtn.textContent = 'Post it';
+  }
+}
+
+async function renderArticle(id){
+  const view = document.getElementById('view');
+  view.innerHTML = `<div class="loadingState">Loading…</div>`;
+  let article;
+  try{
+    const resp = await fetch('/api/news/' + id);
+    if(!resp.ok){ view.innerHTML = `<div class="state">That clipping doesn't exist.<br><a href="#" id="backLink">← Back to Daily News</a></div>`; document.getElementById('backLink').onclick = (e) => { e.preventDefault(); navigate('/daily-news'); }; return; }
+    const data = await resp.json();
+    article = data.article;
+  }catch(e){
+    view.innerHTML = `<div class="state">Couldn't load this clipping.</div>`;
+    return;
+  }
+
+  const media = !article.imagePath ? '' :
+    (article.imageMime && article.imageMime.startsWith('image/'))
+      ? `<img class="articleImg" src="/news-photo/${article.id}">`
+      : `<a class="pdfLink" href="/news-photo/${article.id}" target="_blank">📄 View source PDF</a>`;
+
+  const canDelete = currentUser() && currentUser().toLowerCase() === article.username.toLowerCase();
+
+  view.innerHTML = `
+    <div class="eyebrow">Daily News</div>
+    ${media}
+    <div class="card">
+      <div class="artTitle">${esc(article.title)}</div>
+      <div class="artByline">by @${esc(article.username)} · ${fmtDate(article.createdAt)}</div>
+      <div class="affirmText" id="affirmDisplay">${diffHTML(article.body,'')}</div>
+      <textarea id="typer" placeholder="Type the article above, exactly…" autocomplete="off" autocapitalize="off" spellcheck="false" rows="6"></textarea>
+      <div class="hint" id="typeHint">Match every character, including punctuation, to finish.</div>
+    </div>
+    ${canDelete ? `<div class="deleteRow"><button class="deleteBtn" id="deleteBtn">Delete this post</button></div>` : ''}
+  `;
+
+  const typer = document.getElementById('typer');
+  const display = document.getElementById('affirmDisplay');
+  const hint = document.getElementById('typeHint');
+  typer.focus();
+  typer.addEventListener('input', () => {
+    const typed = typer.value;
+    display.innerHTML = diffHTML(article.body, typed);
+    if(typed === article.body){
+      hint.textContent = 'Matched — nicely typed.'; hint.className = 'hint good';
+      typer.disabled = true;
+      setTimeout(() => renderDone(article), 550);
+    } else if(typed.length >= article.body.length){
+      hint.textContent = 'Close — check the highlighted character(s).'; hint.className = 'hint bad';
+    } else {
+      hint.textContent = 'Match every character, including punctuation, to finish.'; hint.className = 'hint';
+    }
+  });
+
+  if(canDelete){
+    document.getElementById('deleteBtn').onclick = async () => {
+      if(!confirm('Delete this post? This cannot be undone.')) return;
+      await fetch('/api/news/' + article.id, {
+        method: 'DELETE',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ username: currentUser() }),
+      });
+      navigate('/daily-news');
+    };
+  }
+}
+
+function renderDone(article){
+  const view = document.getElementById('view');
+  view.innerHTML = `
+    <div class="card doneCard">
+      <div style="font-size:40px;">📰</div>
+      <div class="big">Typed it, word for word.</div>
+      <p style="color:var(--snow-dim); font-size:13.5px; max-width:36ch; margin:0 auto 18px;">"${esc(article.title)}" — by @${esc(article.username)}</p>
+      <div class="actions">
+        <button class="secondary" id="moreBtn">See more clippings</button>
+        <a class="btnlink" href="/">Back to kunga.me</a>
+      </div>
+    </div>
+  `;
+  document.getElementById('moreBtn').onclick = () => navigate('/daily-news');
+}
+
+route();
+</script>
+</body>
+</html>

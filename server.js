@@ -194,6 +194,7 @@ function createApp(overrides = {}) {
   const PORT = overrides.port || Number(process.env.PORT) || 3000;
   const DATA_FILE = overrides.dataFile || path.join(__dirname, 'data', 'users.json');
   const CERTS_FILE = overrides.certsFile || path.join(__dirname, 'data', 'certificates.json');
+  const NEWS_FILE = overrides.newsFile || path.join(__dirname, 'data', 'news.json');
   const ADMIN_KEY = overrides.adminKey || process.env.ADMIN_KEY || 'sangwa-admin-key';
   const DATABASE_URL = overrides.databaseUrl || process.env.DATABASE_URL || null;
   const SUPABASE_URL = process.env.SUPABASE_URL || null;
@@ -326,6 +327,7 @@ function createApp(overrides = {}) {
   const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || null;
   const AUDIO_BUCKET = 'audio';
   const AVATAR_BUCKET = 'avatars';
+  const NEWS_BUCKET = 'news-photos';
   const supabaseAdmin = (SUPABASE_PROJECT_URL && SUPABASE_SERVICE_ROLE_KEY)
     ? createClient(SUPABASE_PROJECT_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
     : null;
@@ -345,6 +347,7 @@ function createApp(overrides = {}) {
   }
   const ensureAudioBucket = () => ensureBucket(AUDIO_BUCKET);
   const ensureAvatarBucket = () => ensureBucket(AVATAR_BUCKET);
+  const ensureNewsBucket = () => ensureBucket(NEWS_BUCKET);
 
   // High-quality neural voices: British English + Beijing-standard Mandarin, one
   // male and one female each. Mandarin uses Azure's newer "Multilingual" neural
@@ -441,6 +444,17 @@ function createApp(overrides = {}) {
         correct integer not null,
         wrong integer not null,
         duration_sec integer not null,
+        created_at timestamptz default now()
+      );
+    `);
+    await client.query(`
+      create table if not exists public.daily_news (
+        id serial primary key,
+        username text not null,
+        title text not null,
+        body text not null,
+        image_path text,
+        image_mime text,
         created_at timestamptz default now()
       );
     `);
@@ -676,6 +690,106 @@ function createApp(overrides = {}) {
       .filter((c) => c.durationSec === durationSec)
       .sort((a, b) => b.correct - a.correct || new Date(a.createdAt) - new Date(b.createdAt))
       .slice(0, limit);
+  }
+
+  // Daily News: any logged-in user can post a newspaper clipping (photo/PDF
+  // for context + the exact text, typed by hand at submission time, since
+  // OCR is unreliable for Tibetan and inconsistent for Mandarin). Same flat,
+  // append-only, listable-by-id shape as the certificates above, plus an
+  // optional Storage-backed image like avatars.
+  function ensureNewsFile() {
+    const dir = path.dirname(NEWS_FILE);
+    fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(NEWS_FILE)) {
+      fs.writeFileSync(NEWS_FILE, JSON.stringify({ nextId: 1, articles: [] }, null, 2), 'utf8');
+    }
+  }
+  function readNewsFile() {
+    ensureNewsFile();
+    try {
+      const parsed = JSON.parse(fs.readFileSync(NEWS_FILE, 'utf8'));
+      return { nextId: parsed.nextId || 1, articles: Array.isArray(parsed.articles) ? parsed.articles : [] };
+    } catch (error) {
+      return { nextId: 1, articles: [] };
+    }
+  }
+  function writeNewsFile(data) {
+    ensureNewsFile();
+    fs.writeFileSync(NEWS_FILE, JSON.stringify(data, null, 2), 'utf8');
+  }
+  async function createNewsArticle({ username, title, body }) {
+    const client = await getDbClient();
+    const createdAt = new Date().toISOString();
+    if (client) {
+      const result = await client.query(
+        'insert into public.daily_news (username, title, body, created_at) values ($1,$2,$3,$4) returning id, username, title, body, image_path as "imagePath", image_mime as "imageMime", created_at as "createdAt"',
+        [username, title, body, createdAt]
+      );
+      return result.rows[0];
+    }
+    const data = readNewsFile();
+    const article = { id: data.nextId, username, title, body, imagePath: null, imageMime: null, createdAt };
+    data.articles.push(article);
+    data.nextId += 1;
+    writeNewsFile(data);
+    return article;
+  }
+  async function getNewsArticleById(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        'select id, username, title, body, image_path as "imagePath", image_mime as "imageMime", created_at as "createdAt" from public.daily_news where id = $1',
+        [id]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readNewsFile();
+    return data.articles.find((a) => a.id === id) || null;
+  }
+  async function listNewsArticles(limit) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        'select id, username, title, body, image_path as "imagePath", image_mime as "imageMime", created_at as "createdAt" from public.daily_news order by created_at desc limit $1',
+        [limit]
+      );
+      return result.rows;
+    }
+    const data = readNewsFile();
+    return data.articles.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, limit);
+  }
+  async function setNewsArticleImage(id, { imagePath, imageMime }) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        'update public.daily_news set image_path=$1, image_mime=$2 where id=$3 returning id, username, title, body, image_path as "imagePath", image_mime as "imageMime", created_at as "createdAt"',
+        [imagePath, imageMime, id]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readNewsFile();
+    const article = data.articles.find((a) => a.id === id);
+    if (!article) return null;
+    article.imagePath = imagePath;
+    article.imageMime = imageMime;
+    writeNewsFile(data);
+    return article;
+  }
+  async function deleteNewsArticle(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        'delete from public.daily_news where id=$1 returning image_path as "imagePath"',
+        [id]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readNewsFile();
+    const idx = data.articles.findIndex((a) => a.id === id);
+    if (idx === -1) return null;
+    const [removed] = data.articles.splice(idx, 1);
+    writeNewsFile(data);
+    return { imagePath: removed.imagePath };
   }
 
   async function listUsersFromDb() {
@@ -1322,6 +1436,87 @@ function createApp(overrides = {}) {
     return res.json({ avatar: result.avatar });
   });
 
+  // ---- Daily News: user-submitted newspaper clippings, typed out exactly ----
+  const NEWS_TITLE_MAX = 140;
+  const NEWS_BODY_MAX = 4000;
+  const NEWS_MIME_EXT = { 'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'application/pdf': 'pdf' };
+
+  app.post('/api/news', async (req, res) => {
+    const { username, title, body } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    const cleanTitle = String(title || '').trim();
+    const cleanBody = String(body || '').trim();
+    if (!cleanTitle || cleanTitle.length > NEWS_TITLE_MAX) {
+      return res.status(400).json({ error: `Title must be 1-${NEWS_TITLE_MAX} characters.` });
+    }
+    if (cleanBody.length < 10 || cleanBody.length > NEWS_BODY_MAX) {
+      return res.status(400).json({ error: `Article text must be 10-${NEWS_BODY_MAX} characters.` });
+    }
+    const article = await createNewsArticle({ username: user.username, title: cleanTitle, body: cleanBody });
+    return res.json({ article });
+  });
+
+  app.post('/api/news/:id/photo', express.raw({ type: '*/*', limit: '10mb' }), async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    if (!supabaseAdmin) return res.status(503).json({ error: 'Photo storage is not configured on this server yet.' });
+    const article = await getNewsArticleById(id);
+    if (!article) return res.status(404).json({ error: 'Article not found.' });
+    const contentType = (req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+    const ext = NEWS_MIME_EXT[contentType];
+    if (!ext) return res.status(400).json({ error: 'Only JPEG, PNG, WebP images or PDF files are accepted.' });
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+      return res.status(400).json({ error: 'No file data received.' });
+    }
+    const objectPath = id + '.' + ext;
+    const { error } = await supabaseAdmin.storage.from(NEWS_BUCKET).upload(objectPath, req.body, { contentType, upsert: true });
+    if (error) return res.status(502).json({ error: 'Upload to storage failed.', details: error.message });
+    const updated = await setNewsArticleImage(id, { imagePath: objectPath, imageMime: contentType });
+    return res.json({ article: updated });
+  });
+
+  app.get('/api/news', async (req, res) => {
+    const limit = Math.min(Number(req.query.limit) || 50, 100);
+    const articles = await listNewsArticles(limit);
+    return res.json({ articles });
+  });
+
+  app.get('/api/news/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const article = await getNewsArticleById(id);
+    if (!article) return res.status(404).json({ error: 'Article not found.' });
+    return res.json({ article });
+  });
+
+  app.delete('/api/news/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const { username } = req.body || {};
+    const article = await getNewsArticleById(id);
+    if (!article) return res.status(404).json({ error: 'Article not found.' });
+    if (!username || String(username).toLowerCase() !== String(article.username).toLowerCase()) {
+      return res.status(403).json({ error: 'Only the original poster can delete this.' });
+    }
+    const removed = await deleteNewsArticle(id);
+    if (removed && removed.imagePath && supabaseAdmin) {
+      await supabaseAdmin.storage.from(NEWS_BUCKET).remove([removed.imagePath]).catch(() => {});
+    }
+    return res.json({ ok: true });
+  });
+
+  // Same redirect-to-Storage pattern as /avatar above.
+  app.get('/news-photo/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).end();
+    if (!supabaseAdmin) return res.status(503).end();
+    const article = await getNewsArticleById(id);
+    if (!article || !article.imagePath) return res.status(404).end();
+    const { data } = supabaseAdmin.storage.from(NEWS_BUCKET).getPublicUrl(article.imagePath);
+    return res.redirect(302, data.publicUrl);
+  });
+
   app.get('/api/admin/users', async (req, res) => {
     const incomingKey = req.headers['x-admin-key'];
     if (incomingKey !== ADMIN_KEY) {
@@ -1402,6 +1597,22 @@ function createApp(overrides = {}) {
 
   app.get('/daily-optimism.html', (req, res) => {
     return res.sendFile(path.join(__dirname, 'daily-optimism.html'));
+  });
+
+  app.get('/daily-news', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'daily-news.html'));
+  });
+
+  app.get('/daily-news.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'daily-news.html'));
+  });
+
+  app.get('/daily-news/submit', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'daily-news.html'));
+  });
+
+  app.get('/daily-news/:id', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'daily-news.html'));
   });
 
   // ---- text-to-speech proxy (Azure AI Speech): English + Chinese only ---------
@@ -1588,6 +1799,7 @@ function createApp(overrides = {}) {
     getDbClient,
     ensureAudioBucket,
     ensureAvatarBucket,
+    ensureNewsBucket,
     ensureStripeProduct,
   };
 }
@@ -1602,6 +1814,10 @@ if (require.main === module) {
   appState.ensureAvatarBucket().then((bucketStatus) => {
     if (bucketStatus.ok) console.log('Supabase Storage: avatars bucket ready.');
     else console.log('Supabase Storage not active for avatars (' + bucketStatus.reason + ') — photo avatars would not persist.');
+  });
+  appState.ensureNewsBucket().then((bucketStatus) => {
+    if (bucketStatus.ok) console.log('Supabase Storage: news-photos bucket ready.');
+    else console.log('Supabase Storage not active for news photos (' + bucketStatus.reason + ') — photos/PDFs would not persist.');
   });
   appState.ensureStripeProduct().then((stripeStatus) => {
     if (stripeStatus.ok) console.log('Stripe: Premium product/prices ready.');
