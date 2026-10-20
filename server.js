@@ -193,6 +193,7 @@ function createApp(overrides = {}) {
   const app = express();
   const PORT = overrides.port || Number(process.env.PORT) || 3000;
   const DATA_FILE = overrides.dataFile || path.join(__dirname, 'data', 'users.json');
+  const CERTS_FILE = overrides.certsFile || path.join(__dirname, 'data', 'certificates.json');
   const ADMIN_KEY = overrides.adminKey || process.env.ADMIN_KEY || 'sangwa-admin-key';
   const DATABASE_URL = overrides.databaseUrl || process.env.DATABASE_URL || null;
   const SUPABASE_URL = process.env.SUPABASE_URL || null;
@@ -433,6 +434,16 @@ function createApp(overrides = {}) {
         add column if not exists notebook jsonb,
         add column if not exists diary jsonb;
     `);
+    await client.query(`
+      create table if not exists public.speedmath_certificates (
+        id serial primary key,
+        username text not null,
+        correct integer not null,
+        wrong integer not null,
+        duration_sec integer not null,
+        created_at timestamptz default now()
+      );
+    `);
     databaseReady = true;
     return { connected: true, mode: 'supabase', url: SUPABASE_URL };
   }
@@ -595,6 +606,76 @@ function createApp(overrides = {}) {
     if (idx === -1) return;
     users[idx].diary = diary;
     writeUsers(users);
+  }
+
+  // Speed Math certificates: a flat, append-only public record (not nested
+  // under a user row like notebook/diary, since these need to be listable
+  // and linkable by their own id regardless of who earned them) -- file mode
+  // keeps its own incrementing counter since there's no serial column to
+  // lean on outside Postgres.
+  function ensureCertsFile() {
+    const dir = path.dirname(CERTS_FILE);
+    fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(CERTS_FILE)) {
+      fs.writeFileSync(CERTS_FILE, JSON.stringify({ nextId: 1, certificates: [] }, null, 2), 'utf8');
+    }
+  }
+  function readCertsFile() {
+    ensureCertsFile();
+    try {
+      const parsed = JSON.parse(fs.readFileSync(CERTS_FILE, 'utf8'));
+      return { nextId: parsed.nextId || 1, certificates: Array.isArray(parsed.certificates) ? parsed.certificates : [] };
+    } catch (error) {
+      return { nextId: 1, certificates: [] };
+    }
+  }
+  function writeCertsFile(data) {
+    ensureCertsFile();
+    fs.writeFileSync(CERTS_FILE, JSON.stringify(data, null, 2), 'utf8');
+  }
+  async function createCertificate({ username, correct, wrong, durationSec }) {
+    const client = await getDbClient();
+    const createdAt = new Date().toISOString();
+    if (client) {
+      const result = await client.query(
+        'insert into public.speedmath_certificates (username, correct, wrong, duration_sec, created_at) values ($1,$2,$3,$4,$5) returning id, username, correct, wrong, duration_sec as "durationSec", created_at as "createdAt"',
+        [username, correct, wrong, durationSec, createdAt]
+      );
+      return result.rows[0];
+    }
+    const data = readCertsFile();
+    const cert = { id: data.nextId, username, correct, wrong, durationSec, createdAt };
+    data.certificates.push(cert);
+    data.nextId += 1;
+    writeCertsFile(data);
+    return cert;
+  }
+  async function getCertificateById(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        'select id, username, correct, wrong, duration_sec as "durationSec", created_at as "createdAt" from public.speedmath_certificates where id = $1',
+        [id]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readCertsFile();
+    return data.certificates.find((c) => c.id === id) || null;
+  }
+  async function listTopCertificates(durationSec, limit) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        'select id, username, correct, wrong, duration_sec as "durationSec", created_at as "createdAt" from public.speedmath_certificates where duration_sec = $1 order by correct desc, created_at asc limit $2',
+        [durationSec, limit]
+      );
+      return result.rows;
+    }
+    const data = readCertsFile();
+    return data.certificates
+      .filter((c) => c.durationSec === durationSec)
+      .sort((a, b) => b.correct - a.correct || new Date(a.createdAt) - new Date(b.createdAt))
+      .slice(0, limit);
   }
 
   async function listUsersFromDb() {
@@ -1099,6 +1180,50 @@ function createApp(overrides = {}) {
     return res.json({ entries: entries.map((e) => ({ date: e.date, mood: e.mood, html: e.html, t: e.t })) });
   });
 
+  // ---- Speed Math (Mental Math's timed mode): a "most correct before the
+  //      clock runs out" drill. A completed run can be "certified" -- written
+  //      to a public, append-only table so the score is shareable and
+  //      verifiable via its own certificate id, not just a private best-score
+  //      number like the other math modes. --------------------------------
+  const SPEEDMATH_DURATIONS = [60, 120];
+  app.post('/api/speedmath/certify', async (req, res) => {
+    const { username, correct, wrong, durationSec } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    const duration = Number(durationSec);
+    if (!SPEEDMATH_DURATIONS.includes(duration)) {
+      return res.status(400).json({ error: 'Invalid duration.' });
+    }
+    const correctNum = Number(correct), wrongNum = Number(wrong);
+    if (!Number.isInteger(correctNum) || !Number.isInteger(wrongNum) || correctNum < 0 || wrongNum < 0) {
+      return res.status(400).json({ error: 'Invalid score.' });
+    }
+    // Generous sanity cap, not a serious anti-cheat measure (same username-
+    // trust model as the rest of this file) -- just enough to keep an
+    // obvious client-side tamper from landing a nonsense number in a PUBLIC
+    // table. ~2 answers/second sustained is already far beyond realistic play.
+    if (correctNum > duration * 2 || wrongNum > duration * 2) {
+      return res.status(400).json({ error: 'Score out of range.' });
+    }
+    const cert = await createCertificate({ username: user.username, correct: correctNum, wrong: wrongNum, durationSec: duration });
+    return res.json({ ok: true, certificate: cert });
+  });
+
+  app.get('/api/speedmath/certificate/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const cert = await getCertificateById(id);
+    if (!cert) return res.status(404).json({ error: 'Certificate not found.' });
+    return res.json({ certificate: cert });
+  });
+
+  app.get('/api/speedmath/leaderboard', async (req, res) => {
+    const duration = Number(req.query.duration) || 120;
+    if (!SPEEDMATH_DURATIONS.includes(duration)) return res.status(400).json({ error: 'Invalid duration.' });
+    const top = await listTopCertificates(duration, 50);
+    return res.json({ duration, certificates: top });
+  });
+
   // ---- avatars: mascot (JSON config) or photo (uploaded image) ---------------
   app.post('/api/avatar/character', async (req, res) => {
     const { username, options } = req.body || {};
@@ -1253,6 +1378,22 @@ function createApp(overrides = {}) {
 
   app.get('/probability-night.html', (req, res) => {
     return res.sendFile(path.join(__dirname, 'probability-night.html'));
+  });
+
+  app.get('/certificate/:id', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'certificate.html'));
+  });
+
+  app.get('/certificate', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'certificate.html'));
+  });
+
+  app.get('/leaderboard', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'leaderboard.html'));
+  });
+
+  app.get('/leaderboard.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'leaderboard.html'));
   });
 
   // ---- text-to-speech proxy (Azure AI Speech): English + Chinese only ---------

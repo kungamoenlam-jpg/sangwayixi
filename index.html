@@ -1049,6 +1049,7 @@ function defaultAppState(){
     currentTrack:null, currentWorld:0,
     session:null,
     mathSession:null,
+    speedSession:null,
     algebraSession:null,
     calcSession:null,
     businessSession:null,
@@ -1292,6 +1293,19 @@ const I18N = {
     mathMediumTitle: "Medium", mathMediumSub: "Bigger numbers, two-digit multiplication.",
     mathHardTitle: "Hard", mathHardSub: "Three-digit arithmetic, two-digit by two-digit multiplication.",
     mathConceptsTitle: "Concepts", mathConceptsSub: "Domain & range, graphs, limits, continuity, differentiability, partial fractions — multiple choice.",
+    speedTileTitle: "Speed", speedTileSub: "Timed arithmetic — most correct before the clock runs out, certificate optional.",
+    speedSetupSub: "Pick a time limit. Problems keep coming until it runs out — a wrong answer just doesn't score, it doesn't end your run.",
+    speed60Title: "60 seconds", speed60Sub: "A quick sprint",
+    speed120Title: "120 seconds", speed120Sub: "The standard length",
+    speedExplain: "Mixed addition, subtraction, multiplication and division. Type your answer and hit Enter — right or wrong, the next problem appears immediately, so don't stop to think too long on one.",
+    speedViewLeaderboard: "View the public leaderboard",
+    speedTimeUp: "Time's up!",
+    speedAccuracyLabel: "Accuracy", speedDurationLabel: "Duration",
+    speedIssueCert: "Issue a public certificate", speedIssuing: "Issuing…",
+    speedCertIssued: "Certificate issued", speedCertNo: "No. {n}",
+    speedViewCert: "View your certificate →",
+    speedCertNeedsLogin: "Log in (free) to issue a shareable, public certificate for this score.",
+    speedTryAgain: "Try again",
     mathBestLabel: "Best: {n} correct",
     solveEyebrow: "Solve", conceptEyebrow: "Choose one", checkBtn: "Check",
     stepLabel: "Step {n} of {total}", nextStepBtn: "Next step →",
@@ -4980,6 +4994,8 @@ document.addEventListener('keydown', function(e){
   if(state.screen === 'math_practice' && state.mathSession){
     if(state.mathSession.answered) nextMathQuestion();
     else submitMathAnswer();
+  } else if(state.screen === 'math_speed_play' && state.speedSession){
+    submitSpeedAnswer();
   } else {
     // Every other math mode shares the same guided step-engine: Enter
     // submits the current step, then either reveals the next step or (once
@@ -5038,6 +5054,9 @@ const screens = {
   math_menu: renderMathMenu,
   math_practice: renderMathPractice,
   math_complete: renderMathComplete,
+  math_speed_setup: renderSpeedSetup,
+  math_speed_play: renderSpeedPlay,
+  math_speed_result: renderSpeedResult,
   algebra_menu: renderAlgebraMenu,
   algebra_learn: renderAlgebraLearn,
   algebra_practice: renderAlgebraPractice,
@@ -6072,6 +6091,16 @@ function renderMathMenu(){
     </button>`;
   }).join('');
 
+  const speedCard = `
+    <button class="track-card" onclick="state.screen='math_speed_setup'; render();">
+      <div class="glyph">⏱️</div>
+      <div>
+        <div class="tc-title">${t('speedTileTitle')}</div>
+        <div class="tc-sub">${t('speedTileSub')}</div>
+      </div>
+      <div class="tc-progress">${t('startArrow')}</div>
+    </button>`;
+
   return `
   ${topbar({back:'goHome()'})}
   <div class="home ${appLangClass()}">
@@ -6079,7 +6108,7 @@ function renderMathMenu(){
       <h1>${t('mentalMathTitle')}</h1>
       <div class="sub">${t('mentalMathSub')}</div>
     </div>
-    <div class="track-grid">${cards}</div>
+    <div class="track-grid">${cards}${speedCard}</div>
   </div>
   `;
 }
@@ -6231,6 +6260,182 @@ function renderMathComplete(){
 
 function backToMathMenu(){ state.screen='math_menu'; render(); }
 function exitMathPractice(){ state.screen='math_menu'; render(); }
+
+// ---- Speed Math: a timed "most correct before the clock runs out" drill --
+// own problem generator (reuses buildMathProblem), own UI, own certificate/
+// leaderboard system, not modelled on any particular existing site. Unlike
+// the survival-style easy/medium/hard tiers above there are no hearts: a
+// wrong answer just doesn't score and the clock keeps running, so the only
+// thing that matters is how many you get through. A finished run can be
+// "certified" -- written to a public, server-side table (see /api/speedmath/*
+// in server.js) so the score is shareable and independently verifiable by
+// its own certificate number at /certificate/<id>, not just a private
+// best-score figure like state.game.math already tracks for the other tiers.
+let speedTimerInt=null, speedStartedAt=0;
+function renderSpeedSetup(){
+  return `
+  ${topbar({back:'backToMathMenu()'})}
+  <div class="home ${appLangClass()}">
+    <div class="hero">
+      <h1>⏱️ ${t('speedTileTitle')}</h1>
+      <div class="sub">${t('speedSetupSub')}</div>
+    </div>
+    <div class="track-grid">
+      <button class="track-card" onclick="startSpeedMath(60)">
+        <div class="glyph">1️⃣</div>
+        <div><div class="tc-title">${t('speed60Title')}</div><div class="tc-sub">${t('speed60Sub')}</div></div>
+        <div class="tc-progress">${t('startArrow')}</div>
+      </button>
+      <button class="track-card" onclick="startSpeedMath(120)">
+        <div class="glyph">2️⃣</div>
+        <div><div class="tc-title">${t('speed120Title')}</div><div class="tc-sub">${t('speed120Sub')}</div></div>
+        <div class="tc-progress">${t('startArrow')}</div>
+      </button>
+    </div>
+    <div class="profile-card" style="text-align:left;">
+      <div style="font-size:13.5px; color:var(--snow-dim); line-height:1.6;">${t('speedExplain')}</div>
+    </div>
+    <p style="text-align:center; margin-top:4px;"><a href="/leaderboard" target="_blank" rel="noopener" style="color:var(--gold); font-size:13.5px; text-decoration:none;">🏆 ${t('speedViewLeaderboard')}</a></p>
+  </div>
+  `;
+}
+
+function fmtSpeedClock(s){ return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+function focusSpeedInput(){ setTimeout(()=>{ const el=document.getElementById('speed_input'); if(el) el.focus(); }, 30); }
+
+function startSpeedMath(durationSec){
+  state.speedSession = {
+    durationSec, timeLeft: durationSec, correct:0, wrong:0, input:'',
+    current: buildMathProblem('medium'),
+    certStatus:'idle', certError:null, certificate:null,
+  };
+  state.screen = 'math_speed_play';
+  render();
+  focusSpeedInput();
+  clearInterval(speedTimerInt);
+  speedStartedAt = Date.now();
+  speedTimerInt = setInterval(speedTick, 200);
+}
+// Ticks go straight to the DOM (clock text + bar width) instead of through
+// the SPA's normal render() -- render() replaces #app's whole innerHTML,
+// which would steal focus off the answer input roughly 5 times a second and
+// make a timed typing drill nearly unusable. Only actual state changes
+// (a new problem, time running out) go through render().
+function speedTick(){
+  const s = state.speedSession;
+  if(!s){ clearInterval(speedTimerInt); return; }
+  const elapsed = (Date.now()-speedStartedAt)/1000;
+  const left = Math.max(0, Math.round(s.durationSec - elapsed));
+  if(left===s.timeLeft) return;
+  s.timeLeft = left;
+  const clockEl = document.getElementById('speedClock');
+  if(clockEl) clockEl.textContent = fmtSpeedClock(left);
+  const barEl = document.getElementById('speedBar');
+  if(barEl) barEl.style.width = (100*left/s.durationSec)+'%';
+  if(left<=0){
+    clearInterval(speedTimerInt);
+    finishSpeedMath();
+  }
+}
+function submitSpeedAnswer(){
+  const s = state.speedSession;
+  if(!s || s.timeLeft<=0) return;
+  if(s.input==='') return;
+  if(Number(s.input)===s.current.answer) s.correct++; else s.wrong++;
+  s.input='';
+  s.current = buildMathProblem('medium');
+  render();
+  focusSpeedInput();
+}
+function finishSpeedMath(){
+  const s = state.speedSession;
+  if(!s) return;
+  touchStreak();
+  state.game.xp += s.correct*2;
+  saveGame();
+  state.screen = 'math_speed_result';
+  render();
+}
+function renderSpeedPlay(){
+  const s = state.speedSession;
+  const q = s.current;
+  return `
+  <div class="lesson">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:6px 0 10px;">
+      <div style="font-family:var(--font-display); font-weight:800; font-size:24px;" id="speedClock">${fmtSpeedClock(s.timeLeft)}</div>
+      <div style="font-size:12px; color:var(--snow-dim); text-align:right;">${t('correctAnswersLabel')}: <b style="color:var(--snow); font-size:15px;">${s.correct}</b></div>
+    </div>
+    <div style="height:6px; border-radius:999px; background:rgba(255,255,255,.1); overflow:hidden; margin-bottom:26px;">
+      <div id="speedBar" style="height:100%; background:var(--gold); width:${100*s.timeLeft/s.durationSec}%;"></div>
+    </div>
+    <div class="q-wrap">
+      <div class="q-card">
+        <div class="q-eyebrow">${t('solveEyebrow')}</div>
+        <div class="q-prompt">${q.a} ${q.op} ${q.b} = ?</div>
+      </div>
+      <div class="field" style="align-items:center; gap:12px;">
+        <input id="speed_input" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off"
+          placeholder="${t('yourAnswerPlaceholder')}"
+          style="text-align:center; font-size:26px; font-family:var(--font-display); font-weight:700; width:100%;"
+          value="${s.input||''}"
+          oninput="state.speedSession.input=this.value.replace(/[^0-9]/g,'')">
+        <button class="btn btn-primary btn-block" onclick="submitSpeedAnswer()">${t('checkBtn')}</button>
+      </div>
+    </div>
+  </div>
+  `;
+}
+async function issueSpeedCertificate(){
+  const s = state.speedSession;
+  if(!s) return;
+  if(!state.currentUser){ s.certStatus='guest'; render(); return; }
+  s.certStatus='loading'; render();
+  try{
+    const res = await fetch('/api/speedmath/certify', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({username:state.currentUser, correct:s.correct, wrong:s.wrong, durationSec:s.durationSec})});
+    const data = await res.json();
+    if(!res.ok){ s.certStatus='error'; s.certError=data.error||'Could not issue a certificate.'; render(); return; }
+    s.certStatus='done'; s.certificate=data.certificate; render();
+  }catch(e){
+    s.certStatus='error'; s.certError='Network error — try again.'; render();
+  }
+}
+function renderSpeedResult(){
+  const s = state.speedSession;
+  const total = s.correct+s.wrong;
+  const accuracy = total>0 ? Math.round((s.correct/total)*100) : 100;
+  const certBlock = (()=>{
+    if(s.certStatus==='done'){
+      const url = '/certificate/'+s.certificate.id;
+      return `
+        <div class="profile-card" style="text-align:center;">
+          <div style="font-size:13px; color:var(--gold); font-weight:700; margin-bottom:4px;">${t('speedCertIssued')}</div>
+          <div style="font-size:13.5px; color:var(--snow-dim);">${t('speedCertNo',{n:String(s.certificate.id).padStart(6,'0')})}</div>
+          <a href="${url}" target="_blank" rel="noopener" class="btn btn-primary btn-block" style="margin-top:12px; display:block; text-align:center; text-decoration:none; box-sizing:border-box;">${t('speedViewCert')}</a>
+        </div>`;
+    }
+    if(s.certStatus==='guest'){
+      return `<p style="text-align:center; color:var(--snow-dim); font-size:13.5px;">${t('speedCertNeedsLogin')}</p>`;
+    }
+    if(s.certStatus==='error'){
+      return `<p style="text-align:center; color:var(--bad); font-size:13.5px;">${esc(s.certError)}</p><button class="btn btn-primary btn-block" onclick="issueSpeedCertificate()">${t('speedIssueCert')}</button>`;
+    }
+    return `<button class="btn btn-primary btn-block" onclick="issueSpeedCertificate()" ${s.certStatus==='loading'?'disabled':''}>${s.certStatus==='loading'?t('speedIssuing'):t('speedIssueCert')}</button>`;
+  })();
+  return `
+  ${topbar()}
+  <div class="complete ${appLangClass()}">
+    <div class="medal">⏱️</div>
+    <h2>${t('speedTimeUp')}</h2>
+    <div class="stat-row">
+      <div class="stat-box"><div class="val">${s.correct}</div><div class="lab">${t('correctAnswersLabel')}</div></div>
+      <div class="stat-box"><div class="val">${accuracy}%</div><div class="lab">${t('speedAccuracyLabel')}</div></div>
+      <div class="stat-box"><div class="val">${s.durationSec}s</div><div class="lab">${t('speedDurationLabel')}</div></div>
+    </div>
+    ${certBlock}
+    <button class="btn btn-ghost btn-block" onclick="startSpeedMath(${s.durationSec})">${t('speedTryAgain')}</button>
+    <button class="btn btn-ghost btn-block" onclick="backToMathMenu()">${t('backToMathMenuBtn')}</button>
+  </div>`;
+}
 
 // ---- algebra learning: Month 1 of a longer planned progression (algebra ->
 // calculus -> linear algebra -> discrete math -> probability). Unlike mental
