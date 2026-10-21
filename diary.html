@@ -30,30 +30,87 @@ h1{color:var(--c0);font-size:clamp(28px,6vw,42px);text-align:center;margin:0 0 4
 .entry .body td,.entry .body th{border:1.5px solid var(--margin);padding:2px 10px}
 .empty,.err{text-align:center;color:var(--soft);font-size:16px;margin-top:60px}
 a{color:var(--c5)}
+.lockCard{background:var(--paper);border-radius:14px;padding:26px 22px;margin:0 0 18px;box-shadow:0 2px 0 var(--line);text-align:center}
+.lockCard .big{color:var(--c0);font-weight:700;font-size:19px;margin-bottom:6px}
+.lockCard p{color:var(--ink);font-size:14.5px;margin:0 0 16px}
+.subBtn{all:unset;cursor:pointer;display:inline-block;font-family:"Kalam","Comic Sans MS",cursive;font-weight:700;font-size:15px;padding:12px 22px;border-radius:999px;background:var(--c0);color:#fff}
+.subBtn:disabled{opacity:.6;cursor:default}
+.loginNudge{color:var(--soft);font-size:13.5px;margin-top:4px}
+.loginNudge a{font-weight:700}
+.banner{text-align:center;font-size:14px;padding:10px 16px;border-radius:10px;margin:0 0 18px}
+.banner.good{background:rgba(63,174,114,.15);color:#1f7a4d}
+.banner.bad{background:rgba(225,88,75,.15);color:#a3352a}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Kunga's Diary</h1>
   <p class="sub">Public entries, newest first.</p>
+  <div id="banner"></div>
   <div id="list"><p class="empty">Loading…</p></div>
 </div>
 <script>
+const SESSION_KEY='sangwa_session_v1';
+function currentUser(){
+  try{
+    const s=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');
+    return (s&&s.currentUser)?String(s.currentUser):null;
+  }catch(e){return null;}
+}
 const WLONG=d=>{
   try{
     const dt=new Date(d+'T00:00:00');
     return dt.toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   }catch(e){return d;}
 };
-fetch('/api/diary/public').then(r=>r.json()).then(data=>{
+
+const subParam=new URLSearchParams(location.search).get('sub');
+if(subParam==='success'){
+  document.getElementById('banner').innerHTML='<div class="banner good">Subscribed — the full archive is unlocked below.</div>';
+}else if(subParam==='cancel'){
+  document.getElementById('banner').innerHTML='<div class="banner bad">Checkout was cancelled — you can try again any time.</div>';
+}
+
+async function subscribe(){
+  const user=currentUser();
+  if(!user) return;
+  const btn=document.getElementById('subBtn');
+  if(btn){ btn.disabled=true; btn.textContent='Starting checkout…'; }
+  try{
+    const resp=await fetch('/api/kungas-diary/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:user})});
+    const data=await resp.json();
+    if(!resp.ok||!data.url){ if(btn){btn.disabled=false;btn.textContent='$1 / week — unlock the full archive';} return; }
+    location.href=data.url;
+  }catch(e){
+    if(btn){ btn.disabled=false; btn.textContent='$1 / week — unlock the full archive'; }
+  }
+}
+
+function lockCardHtml(lockedCount){
+  const user=currentUser();
+  const cta=user
+    ? `<button class="subBtn" id="subBtn" onclick="subscribe()">$1 / week — unlock the full archive</button>`
+    : `<div class="loginNudge">Log in on <a href="/">kunga.me</a> to subscribe.</div>`;
+  return `
+    <div class="lockCard">
+      <div class="big">🔒 ${lockedCount} more ${lockedCount===1?'entry':'entries'}</div>
+      <p>The last 5 days are free. Subscribe for $1/week to read the full archive.</p>
+      ${cta}
+    </div>`;
+}
+
+const qs=currentUser()?('?username='+encodeURIComponent(currentUser())):'';
+fetch('/api/diary/public'+qs).then(r=>r.json()).then(data=>{
   const entries=(data&&data.entries)||[];
+  const lockedCount=(data&&data.lockedCount)||0;
   const list=document.getElementById('list');
-  if(!entries.length){list.innerHTML='<p class="empty">No public entries yet.</p>';return;}
-  list.innerHTML=entries.map(e=>`
+  if(!entries.length && !lockedCount){list.innerHTML='<p class="empty">No public entries yet.</p>';return;}
+  const entriesHtml=entries.map(e=>`
     <div class="entry">
       <div class="meta">${e.mood?`<span class="mood">${e.mood}</span>`:''}<span>${WLONG(e.date)}</span></div>
       <div class="body">${e.html||''}</div>
     </div>`).join('');
+  list.innerHTML=entriesHtml+(lockedCount>0?lockCardHtml(lockedCount):'');
 }).catch(()=>{
   document.getElementById('list').innerHTML='<p class="err">Couldn\'t load the diary right now. Try again shortly.</p>';
 });

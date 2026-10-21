@@ -309,6 +309,51 @@ function createApp(overrides = {}) {
     }
   }
 
+  // Kunga's Diary archive: a second, independent Stripe subscription (weekly,
+  // flat $1 — no regional pricing like Premium above, since this wasn't asked
+  // for) that unlocks entries older than the free preview window. Kept as its
+  // own product/price/customer-subscription rather than folding into Premium,
+  // since the user explicitly wants it billed separately.
+  const DIARY_PRODUCT_METADATA_KEY = 'yeshe_diary';
+  let diaryPriceId = null;
+  let diaryStripeReady = false;
+
+  async function ensureDiaryStripeProduct() {
+    if (!stripe) return { ok: false, reason: 'not-configured' };
+    try {
+      const products = await stripe.products.search({
+        query: `metadata['app']:'${DIARY_PRODUCT_METADATA_KEY}'`,
+      });
+      let product = products.data[0];
+      if (!product) {
+        product = await stripe.products.create({
+          name: "Kunga's Diary — full archive",
+          description: "Weekly access to every past entry of Kunga's Diary, not just the last 5 days.",
+          metadata: { app: DIARY_PRODUCT_METADATA_KEY },
+        });
+      }
+      const prices = await stripe.prices.search({
+        query: `product:'${product.id}' AND active:'true'`,
+      });
+      let price = prices.data[0];
+      if (!price) {
+        price = await stripe.prices.create({
+          product: product.id,
+          currency: 'usd',
+          unit_amount: 100,
+          recurring: { interval: 'week' },
+          metadata: { app: DIARY_PRODUCT_METADATA_KEY },
+        });
+      }
+      diaryPriceId = price.id;
+      diaryStripeReady = true;
+      return { ok: true, priceId: diaryPriceId };
+    } catch (error) {
+      diaryStripeReady = false;
+      return { ok: false, reason: error.message };
+    }
+  }
+
   // ---- Supabase Storage: persistent home for admin-recorded audio -------------
   // Render's disk is ephemeral (wiped on every restart, including automatic
   // spin-down after ~15 min idle on the free plan, not just on redeploy), so
@@ -435,7 +480,9 @@ function createApp(overrides = {}) {
         add column if not exists subscription_period_end timestamptz,
         add column if not exists avatar jsonb,
         add column if not exists notebook jsonb,
-        add column if not exists diary jsonb;
+        add column if not exists diary jsonb,
+        add column if not exists diary_subscription_status text,
+        add column if not exists diary_subscription_period_end timestamptz;
     `);
     await client.query(`
       create table if not exists public.speedmath_certificates (
@@ -523,6 +570,19 @@ function createApp(overrides = {}) {
     };
   }
 
+  // Kept separate from sanitizeSubscription/updateUserSubscription above —
+  // the diary archive is billed as its own weekly Stripe subscription on the
+  // same customer, so conflating the two fields would let either purchase's
+  // webhook events silently overwrite the other's status.
+  function sanitizeDiarySubscription(user) {
+    const status = user.diary_subscription_status || user.diarySubscriptionStatus || null;
+    return {
+      active: status === 'active' || status === 'trialing',
+      status,
+      periodEnd: user.diary_subscription_period_end || user.diarySubscriptionPeriodEnd || null,
+    };
+  }
+
   // Looks a user up by username, returning the raw DB row / file record (not
   // sanitized) so callers can read/write subscription_* fields directly.
   async function findUserByUsername(username) {
@@ -569,6 +629,26 @@ function createApp(overrides = {}) {
     if (fields.status) users[idx].subscription_status = fields.status;
     if (fields.plan) users[idx].subscription_plan = fields.plan;
     if (fields.periodEnd) users[idx].subscription_period_end = fields.periodEnd;
+    writeUsers(users);
+  }
+
+  async function updateUserDiarySubscription(userId, fields) {
+    const client = await getDbClient();
+    if (client) {
+      await client.query(
+        `update public.users set
+           diary_subscription_status = coalesce($2, diary_subscription_status),
+           diary_subscription_period_end = coalesce($3, diary_subscription_period_end)
+         where id = $1`,
+        [userId, fields.status || null, fields.periodEnd || null]
+      );
+      return;
+    }
+    const users = readUsers();
+    const idx = users.findIndex((u) => u.id === userId);
+    if (idx === -1) return;
+    if (fields.status) users[idx].diary_subscription_status = fields.status;
+    if (fields.periodEnd) users[idx].diary_subscription_period_end = fields.periodEnd;
     writeUsers(users);
   }
 
@@ -843,12 +923,20 @@ function createApp(overrides = {}) {
       const subscription = session.subscription
         ? await stripe.subscriptions.retrieve(session.subscription)
         : null;
-      await updateUserSubscription(user.id, {
-        stripeCustomerId: session.customer,
-        status: subscription ? subscription.status : 'active',
-        plan: session.metadata && session.metadata.region,
-        periodEnd: subscription ? subscriptionPeriodEnd(subscription) : null,
-      });
+      const isDiary = session.metadata && session.metadata.app === DIARY_PRODUCT_METADATA_KEY;
+      if (isDiary) {
+        await updateUserDiarySubscription(user.id, {
+          status: subscription ? subscription.status : 'active',
+          periodEnd: subscription ? subscriptionPeriodEnd(subscription) : null,
+        });
+      } else {
+        await updateUserSubscription(user.id, {
+          stripeCustomerId: session.customer,
+          status: subscription ? subscription.status : 'active',
+          plan: session.metadata && session.metadata.region,
+          periodEnd: subscription ? subscriptionPeriodEnd(subscription) : null,
+        });
+      }
     }
 
     try {
@@ -858,10 +946,18 @@ function createApp(overrides = {}) {
         const subscription = event.data.object;
         const user = await findUserByStripeCustomerId(subscription.customer);
         if (user) {
-          await updateUserSubscription(user.id, {
-            status: subscription.status,
-            periodEnd: subscriptionPeriodEnd(subscription),
-          });
+          const isDiary = subscription.metadata && subscription.metadata.app === DIARY_PRODUCT_METADATA_KEY;
+          if (isDiary) {
+            await updateUserDiarySubscription(user.id, {
+              status: subscription.status,
+              periodEnd: subscriptionPeriodEnd(subscription),
+            });
+          } else {
+            await updateUserSubscription(user.id, {
+              status: subscription.status,
+              periodEnd: subscriptionPeriodEnd(subscription),
+            });
+          }
         }
       } else if (event.type === 'invoice.payment_failed') {
         // The subscription's own status (past_due, unpaid, etc.) already comes
@@ -1161,6 +1257,55 @@ function createApp(overrides = {}) {
     return res.json({ subscription: sanitizeSubscription(user), avatar: sanitizeAvatar(user) });
   });
 
+  app.post('/api/kungas-diary/subscribe', async (req, res) => {
+    if (!stripe) {
+      return res.status(503).json({ error: 'Payments are not configured on this server yet.' });
+    }
+    const { username } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    if (!diaryStripeReady) await ensureDiaryStripeProduct();
+    if (!diaryPriceId) {
+      return res.status(503).json({ error: 'Stripe product/price setup has not completed yet. Try again shortly.' });
+    }
+
+    try {
+      let customerId = user.stripe_customer_id;
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user.email || undefined,
+          name: user.full_name || user.username,
+          metadata: { username: user.username },
+        });
+        customerId = customer.id;
+        await updateUserSubscription(user.id, { stripeCustomerId: customerId });
+      }
+
+      const session = await stripe.checkout.sessions.create({
+        mode: 'subscription',
+        customer: customerId,
+        client_reference_id: user.username,
+        line_items: [{ price: diaryPriceId, quantity: 1 }],
+        metadata: { app: DIARY_PRODUCT_METADATA_KEY, username: user.username },
+        subscription_data: { metadata: { app: DIARY_PRODUCT_METADATA_KEY, username: user.username } },
+        success_url: `${APP_BASE_URL}/diary?sub=success`,
+        cancel_url: `${APP_BASE_URL}/diary?sub=cancel`,
+        integration_identifier: 'kungasdiary' + randomLetters(8),
+      });
+
+      return res.json({ url: session.url });
+    } catch (error) {
+      return res.status(500).json({ error: 'Could not start checkout.', details: error.message });
+    }
+  });
+
+  app.get('/api/kungas-diary/subscription-status', async (req, res) => {
+    const username = String(req.query.username || '');
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    return res.json({ subscription: sanitizeDiarySubscription(user) });
+  });
+
   // ---- notebook (kunga-notebook.html / /notebook): free-form notes, synced
   //      to the account when the visitor is logged in on the main site (same
   //      username-trust model as the rest of this file — no session token,
@@ -1284,14 +1429,81 @@ function createApp(overrides = {}) {
     return res.json({ ok: true });
   });
 
-  // Public reader (/diary): no username is ever accepted from the request --
-  // always this one hardcoded owner -- and only entries explicitly marked
-  // public are selected, so a locked entry can never reach this response.
+  // Public reader (/diary): the owner's own entries are never selected by
+  // request-supplied username -- always this one hardcoded owner -- and only
+  // entries explicitly marked public are selected, so a locked entry can
+  // never reach this response. A separate, OPTIONAL ?username= identifies
+  // the *viewer* (not the owner) purely to check whether they've paid for
+  // the full archive -- it never changes which diary is being read.
+  const DIARY_FREE_ENTRIES = 5;
   app.get('/api/diary/public', async (req, res) => {
+    const owner = await findUserByUsername(DIARY_OWNER_USERNAME);
+    const entries = owner ? diaryPublicEntries(owner.diary || {}) : [];
+    entries.sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.t || 0) - (a.t || 0));
+
+    const viewerUsername = String(req.query.username || '').trim();
+    let unlocked = false;
+    if (viewerUsername) {
+      if (viewerUsername.toLowerCase() === DIARY_OWNER_USERNAME.toLowerCase()) {
+        unlocked = true;
+      } else {
+        const viewer = await findUserByUsername(viewerUsername);
+        unlocked = viewer ? sanitizeDiarySubscription(viewer).active : false;
+      }
+    }
+
+    const visible = unlocked ? entries : entries.slice(0, DIARY_FREE_ENTRIES);
+    return res.json({
+      entries: visible.map((e) => ({ date: e.date, mood: e.mood, html: e.html, t: e.t })),
+      lockedCount: unlocked ? 0 : Math.max(0, entries.length - DIARY_FREE_ENTRIES),
+      subscribed: unlocked,
+    });
+  });
+
+  // ---- Kunga's Diary writing: gated by the server's ADMIN_KEY (not the
+  //      username-trust model the rest of this file uses) because this is
+  //      now the one piece of content people pay to read in full -- letting
+  //      any client assert username:'kunga' the way /api/diary/entry above
+  //      does would let anyone deface or fabricate paid content. -----------
+  app.get('/api/kungas-diary/entries', async (req, res) => {
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
     const user = await findUserByUsername(DIARY_OWNER_USERNAME);
     const entries = user ? diaryPublicEntries(user.diary || {}) : [];
     entries.sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.t || 0) - (a.t || 0));
-    return res.json({ entries: entries.map((e) => ({ date: e.date, mood: e.mood, html: e.html, t: e.t })) });
+    return res.json({ entries });
+  });
+
+  app.post('/api/kungas-diary/entry', async (req, res) => {
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const { id, date, html, mood } = req.body || {};
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ''))) {
+      return res.status(400).json({ error: 'date must be YYYY-MM-DD.' });
+    }
+    const cleanHtml = sanitizeDiaryHtml(html);
+    if (!cleanHtml.trim()) return res.status(400).json({ error: 'Entry text cannot be empty.' });
+    if (cleanHtml.length > DIARY_MAX_HTML) return res.status(413).json({ error: 'That entry is too large.' });
+
+    const user = await findUserByUsername(DIARY_OWNER_USERNAME);
+    if (!user) return res.status(500).json({ error: 'Diary owner account not found.' });
+    const diary = user.diary || { entries: [] };
+    if (!Array.isArray(diary.entries)) diary.entries = [];
+    const entryId = String(id || crypto.randomUUID());
+    const saved = { id: entryId, date: String(date), html: cleanHtml, mood: String(mood || '').slice(0, 8), public: true, t: Date.now() };
+    const idx = diary.entries.findIndex((e) => e.id === entryId);
+    if (idx === -1) diary.entries.push(saved); else diary.entries[idx] = saved;
+    await updateUserDiary(user.id, diary);
+    return res.json({ ok: true, entry: saved });
+  });
+
+  app.post('/api/kungas-diary/delete', async (req, res) => {
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const { id } = req.body || {};
+    const user = await findUserByUsername(DIARY_OWNER_USERNAME);
+    if (!user) return res.status(500).json({ error: 'Diary owner account not found.' });
+    const diary = user.diary || { entries: [] };
+    diary.entries = (diary.entries || []).filter((e) => e.id !== id);
+    await updateUserDiary(user.id, diary);
+    return res.json({ ok: true });
   });
 
   // ---- Speed Math (Mental Math's timed mode): a "most correct before the
@@ -1559,6 +1771,14 @@ function createApp(overrides = {}) {
     return res.sendFile(path.join(__dirname, 'diary.html'));
   });
 
+  app.get('/diary/write', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'diary-write.html'));
+  });
+
+  app.get('/diary/write.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'diary-write.html'));
+  });
+
   app.get('/poker', (req, res) => {
     return res.sendFile(path.join(__dirname, 'poker.html'));
   });
@@ -1801,6 +2021,7 @@ function createApp(overrides = {}) {
     ensureAvatarBucket,
     ensureNewsBucket,
     ensureStripeProduct,
+    ensureDiaryStripeProduct,
   };
 }
 
@@ -1822,6 +2043,10 @@ if (require.main === module) {
   appState.ensureStripeProduct().then((stripeStatus) => {
     if (stripeStatus.ok) console.log('Stripe: Premium product/prices ready.');
     else console.log('Stripe not active (' + stripeStatus.reason + ') — subscriptions disabled until STRIPE_SECRET_KEY is set.');
+  });
+  appState.ensureDiaryStripeProduct().then((stripeStatus) => {
+    if (stripeStatus.ok) console.log("Stripe: Kunga's Diary archive price ready.");
+    else console.log('Stripe not active for the diary archive (' + stripeStatus.reason + ') — subscriptions disabled until STRIPE_SECRET_KEY is set.');
   });
   appState.initDatabase()
     .then((status) => {

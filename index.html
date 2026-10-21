@@ -1221,7 +1221,7 @@ const I18N = {
     heroSub: "Create an account to save your progress across devices.",
     phoneHomeSub: "Tap an app to get started.",
     appNotebook: "Kunga's Notebook", appPoker: "Kunga's Poker", appMaths: "Kunga's Maths", appYeshe: "Yeshe",
-    appOptimism: "Daily Optimism", appNews: "Daily News",
+    appOptimism: "Daily Optimism", appNews: "Daily News", appDiary: "Kunga's Diary",
     backToHomeScreen: "Back to home screen",
     guestMathSub: "Mental math, algebra, calculus, linear algebra and more — free, no account needed.",
     guestMathSignupNudge: "Create a free account to save your progress and come back to it on any device.",
@@ -5174,6 +5174,7 @@ const HOME_APPS = [
   {key:'maths', nameKey:'appMaths', icon:'🧮', bg:'linear-gradient(145deg,#a16bff,#5b2ac9)', action:"state.screen='guest_math_menu'; render();"},
   {key:'optimism', nameKey:'appOptimism', icon:'🌅', bg:'linear-gradient(145deg,#ffb347,#ff7a59)', action:"window.location.href='/daily-optimism'"},
   {key:'news', nameKey:'appNews', icon:'🗞️', bg:'linear-gradient(145deg,#4a7fd6,#1b2e52)', action:"window.location.href='/daily-news'"},
+  {key:'diary', nameKey:'appDiary', icon:'📔', bg:'linear-gradient(145deg,#ff8fbf,#c2578f)', action:"window.location.href='/diary'"},
 ];
 function openHomeApp(view){ state.homeView=view; if(view==='auth') state.authMode='signup'; render(); }
 // Setting screen (not just homeView) makes this safe to call from any
