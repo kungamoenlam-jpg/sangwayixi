@@ -136,8 +136,8 @@ function renderForm(bannerHtml){
       errorBox.innerHTML = `<div class="errorBox">Enter at least $1.</div>`;
       return;
     }
-    if(amount > 2000){
-      errorBox.innerHTML = `<div class="errorBox">That's over the $2,000 limit for a single tip.</div>`;
+    if(amount > 100000){
+      errorBox.innerHTML = `<div class="errorBox">That's over the $100,000 limit for a single tip.</div>`;
       return;
     }
     sendBtn.disabled = true;

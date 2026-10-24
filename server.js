@@ -1316,7 +1316,7 @@ function createApp(overrides = {}) {
   //      client_reference_id, so a logged-in reader's subscription can never
   //      be touched by a tip. ------------------------------------------------
   const TIP_MIN_CENTS = 100;
-  const TIP_MAX_CENTS = 200000;
+  const TIP_MAX_CENTS = 10000000;
   app.post('/api/tip/checkout-session', async (req, res) => {
     if (!stripe) {
       return res.status(503).json({ error: 'Payments are not configured on this server yet.' });
