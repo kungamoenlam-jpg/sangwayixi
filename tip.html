@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Send Kunga Money</title>
+<meta name="description" content="Send any amount, for no reason, straight to Kunga via Stripe.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#12213B;--sky-deep:#0d1a30;--sky-mid:#1b2e52;--snow:#F5F8FC;--snow-dim:#b9c4d8;
+  --gold:#E8A33D;--gold-dim:#B87F2A;--good:#3FAE72;--bad:#E1584B;
+  --radius:18px;--shadow:0 10px 30px rgba(0,0,0,.4);
+  --font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--font-body);background:linear-gradient(180deg,var(--sky-deep),var(--sky-mid) 60%,var(--sky-deep));color:var(--snow);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px 16px 60px}
+a{color:var(--gold)}
+.top{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:460px;margin-bottom:22px}
+.brand{font-family:var(--font-display);font-weight:700;font-size:15px;text-decoration:none;color:var(--snow-dim)}
+
+.wrap{width:100%;max-width:460px}
+.hero{text-align:center;margin-bottom:22px}
+.heroGlyph{font-size:40px;margin-bottom:8px}
+h1{font-family:var(--font-display);font-size:26px;font-weight:800;margin:0 0 8px}
+.sub{color:var(--snow-dim);font-size:14.5px;line-height:1.6;margin:0}
+
+.card{background:radial-gradient(ellipse at top,rgba(232,163,61,.08),transparent 60%),var(--sky-mid);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:26px 24px;box-shadow:var(--shadow)}
+
+.presetGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.presetBtn{all:unset;box-sizing:border-box;cursor:pointer;text-align:center;padding:12px 4px;border-radius:12px;background:rgba(255,255,255,.06);border:1.5px solid transparent;font-family:var(--font-display);font-weight:700;font-size:15px}
+.presetBtn.sel{border-color:var(--gold);background:rgba(232,163,61,.14);color:var(--gold)}
+
+.customRow{display:flex;align-items:center;background:rgba(0,0,0,.22);border:1.5px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 14px;margin-bottom:14px}
+.customRow.focused{border-color:var(--gold)}
+.dollarSign{font-family:var(--font-display);font-weight:700;font-size:20px;color:var(--snow-dim);margin-right:6px}
+.customRow input{all:unset;flex:1;font-family:var(--font-display);font-weight:700;font-size:20px;color:var(--snow)}
+
+label.fieldLabel{display:block;font-size:12px;color:var(--snow-dim);margin:0 0 6px;font-weight:600}
+input[type=text]{width:100%;font-family:var(--font-body);font-size:14px;padding:11px 13px;border-radius:10px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.22);color:var(--snow);outline:none;margin-bottom:16px}
+input[type=text]:focus{border-color:var(--gold)}
+input[type=text]::placeholder{color:var(--snow-dim)}
+
+button.sendBtn{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:100%;text-align:center;font-family:var(--font-display);font-weight:700;font-size:16px;padding:15px;border-radius:12px;background:var(--gold);color:var(--ink)}
+button.sendBtn:disabled{opacity:.5;cursor:default}
+.errorBox{background:rgba(225,88,75,.14);border:1px solid rgba(225,88,75,.4);color:#ffb3ab;padding:10px 14px;border-radius:10px;font-size:13px;margin-top:14px;text-align:center}
+.note{text-align:center;color:var(--snow-dim);font-size:12px;margin-top:16px;line-height:1.6}
+
+.state{text-align:center;margin-top:20px}
+.state .big{font-family:var(--font-display);font-size:22px;font-weight:800;margin:14px 0 8px}
+.state p{color:var(--snow-dim);font-size:14px;line-height:1.6}
+.state .glyph{font-size:46px}
+.btnlink{all:unset;cursor:pointer;display:inline-block;margin-top:18px;font-family:var(--font-display);font-weight:700;font-size:13.5px;padding:10px 18px;border-radius:999px;background:rgba(255,255,255,.08);color:var(--snow)}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <a class="brand" href="/">← kunga.me</a>
+</div>
+
+<div class="wrap">
+  <div id="view"></div>
+</div>
+
+<script>
+const PRESETS = [3, 5, 10, 25];
+let selectedAmount = PRESETS[1];
+let customValue = '';
+
+function renderForm(bannerHtml){
+  const view = document.getElementById('view');
+  view.innerHTML = `
+    <div class="hero">
+      <div class="heroGlyph">💸</div>
+      <h1>Send Kunga some money</h1>
+      <p class="sub">No reason needed. Pick an amount, or type your own, and send it — just because.</p>
+    </div>
+    ${bannerHtml || ''}
+    <div class="card">
+      <div class="presetGrid" id="presetGrid">
+        ${PRESETS.map(p => `<button type="button" class="presetBtn ${selectedAmount===p && !customValue ? 'sel':''}" data-preset="${p}">$${p}</button>`).join('')}
+      </div>
+      <div class="customRow" id="customRow">
+        <span class="dollarSign">$</span>
+        <input type="text" inputmode="decimal" id="customInput" placeholder="Custom amount" value="${customValue}">
+      </div>
+      <label class="fieldLabel" for="nameInput">Your name (optional — just for the receipt)</label>
+      <input type="text" id="nameInput" placeholder="Anonymous" maxlength="60">
+      <button class="sendBtn" id="sendBtn">Send $${(customValue ? Number(customValue) : selectedAmount) || 0}</button>
+      <div id="errorBox"></div>
+    </div>
+    <p class="note">Handled by Stripe. kunga.me never sees your card details. Payments are final — this is a gift, not a purchase.</p>
+  `;
+
+  const presetGrid = document.getElementById('presetGrid');
+  const customInput = document.getElementById('customRow');
+  const customField = document.getElementById('customInput');
+  const sendBtn = document.getElementById('sendBtn');
+
+  function updateSendLabel(){
+    const amt = customValue ? Number(customValue) : selectedAmount;
+    sendBtn.textContent = 'Send $' + (Number.isFinite(amt) && amt > 0 ? trimAmount(amt) : '0');
+  }
+  function trimAmount(n){
+    return (Math.round(n*100)/100).toString();
+  }
+
+  presetGrid.querySelectorAll('[data-preset]').forEach(btn => {
+    btn.onclick = () => {
+      selectedAmount = Number(btn.dataset.preset);
+      customValue = '';
+      customField.value = '';
+      presetGrid.querySelectorAll('[data-preset]').forEach(b => b.classList.toggle('sel', b === btn));
+      updateSendLabel();
+    };
+  });
+
+  customField.addEventListener('focus', () => customInput.classList.add('focused'));
+  customField.addEventListener('blur', () => customInput.classList.remove('focused'));
+  customField.addEventListener('input', () => {
+    customValue = customField.value.replace(/[^0-9.]/g, '');
+    if(customValue){
+      presetGrid.querySelectorAll('[data-preset]').forEach(b => b.classList.remove('sel'));
+    }
+    updateSendLabel();
+  });
+
+  sendBtn.onclick = async () => {
+    const amount = customValue ? Number(customValue) : selectedAmount;
+    const errorBox = document.getElementById('errorBox');
+    errorBox.innerHTML = '';
+    if(!Number.isFinite(amount) || amount < 1){
+      errorBox.innerHTML = `<div class="errorBox">Enter at least $1.</div>`;
+      return;
+    }
+    if(amount > 2000){
+      errorBox.innerHTML = `<div class="errorBox">That's over the $2,000 limit for a single tip.</div>`;
+      return;
+    }
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Starting checkout…';
+    try{
+      const resp = await fetch('/api/tip/checkout-session', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ amount, name: document.getElementById('nameInput').value }),
+      });
+      const data = await resp.json();
+      if(!resp.ok || !data.url){
+        errorBox.innerHTML = `<div class="errorBox">${esc(data.error || 'Something went wrong.')}</div>`;
+        sendBtn.disabled = false;
+        updateSendLabel();
+        return;
+      }
+      location.href = data.url;
+    }catch(e){
+      errorBox.innerHTML = `<div class="errorBox">Network error — try again.</div>`;
+      sendBtn.disabled = false;
+      updateSendLabel();
+    }
+  };
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderDone(){
+  document.getElementById('view').innerHTML = `
+    <div class="state">
+      <div class="glyph">🙏</div>
+      <div class="big">Thank you.</div>
+      <p>That means a lot — genuinely.</p>
+      <a class="btnlink" href="/">Back to kunga.me</a>
+    </div>`;
+}
+
+function renderCancelled(){
+  renderForm(`<p style="text-align:center;color:var(--snow-dim);font-size:13px;margin-bottom:14px;">Checkout was cancelled — no charge was made.</p>`);
+}
+
+const sent = new URLSearchParams(location.search).get('sent');
+if(sent === 'success') renderDone();
+else if(sent === 'cancel') renderCancelled();
+else renderForm();
+</script>
+</body>
+</html>

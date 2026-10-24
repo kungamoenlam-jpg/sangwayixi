@@ -1306,6 +1306,50 @@ function createApp(overrides = {}) {
     return res.json({ subscription: sanitizeDiarySubscription(user) });
   });
 
+  // ---- Tip jar: a one-off payment for any amount, no account needed. Built
+  //      with price_data (an amount chosen at checkout-session-creation time)
+  //      rather than a pre-created Price, since the whole point is that the
+  //      amount isn't fixed. No webhook handling is added for this: there is
+  //      no account to update and nothing to fulfill, so Stripe's own
+  //      dashboard is the record of what came in. The shared webhook handler
+  //      already no-ops safely on these sessions since they never set
+  //      client_reference_id, so a logged-in reader's subscription can never
+  //      be touched by a tip. ------------------------------------------------
+  const TIP_MIN_CENTS = 100;
+  const TIP_MAX_CENTS = 200000;
+  app.post('/api/tip/checkout-session', async (req, res) => {
+    if (!stripe) {
+      return res.status(503).json({ error: 'Payments are not configured on this server yet.' });
+    }
+    const { amount, name } = req.body || {};
+    const amountCents = Math.round(Number(amount) * 100);
+    if (!Number.isFinite(amountCents) || amountCents < TIP_MIN_CENTS || amountCents > TIP_MAX_CENTS) {
+      return res.status(400).json({ error: `Enter an amount between $${(TIP_MIN_CENTS/100).toFixed(2)} and $${(TIP_MAX_CENTS/100).toFixed(2)}.` });
+    }
+    const safeName = String(name || '').trim().slice(0, 60).replace(/[<>]/g, '');
+
+    try {
+      const session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        submit_type: 'donate',
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: { name: safeName ? `Tip for Kunga, from ${safeName}` : 'Tip for Kunga' },
+            unit_amount: amountCents,
+          },
+          quantity: 1,
+        }],
+        success_url: `${APP_BASE_URL}/tip?sent=success`,
+        cancel_url: `${APP_BASE_URL}/tip?sent=cancel`,
+        integration_identifier: 'kungatipjar' + randomLetters(8),
+      });
+      return res.json({ url: session.url });
+    } catch (error) {
+      return res.status(500).json({ error: 'Could not start checkout.', details: error.message });
+    }
+  });
+
   // ---- notebook (kunga-notebook.html / /notebook): free-form notes, synced
   //      to the account when the visitor is logged in on the main site (same
   //      username-trust model as the rest of this file — no session token,
@@ -1833,6 +1877,14 @@ function createApp(overrides = {}) {
 
   app.get('/daily-news/:id', (req, res) => {
     return res.sendFile(path.join(__dirname, 'daily-news.html'));
+  });
+
+  app.get('/tip', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'tip.html'));
+  });
+
+  app.get('/tip.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'tip.html'));
   });
 
   // ---- text-to-speech proxy (Azure AI Speech): English + Chinese only ---------
