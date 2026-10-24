@@ -195,6 +195,7 @@ function createApp(overrides = {}) {
   const DATA_FILE = overrides.dataFile || path.join(__dirname, 'data', 'users.json');
   const CERTS_FILE = overrides.certsFile || path.join(__dirname, 'data', 'certificates.json');
   const NEWS_FILE = overrides.newsFile || path.join(__dirname, 'data', 'news.json');
+  const BOOKINGS_FILE = overrides.bookingsFile || path.join(__dirname, 'data', 'bookings.json');
   const ADMIN_KEY = overrides.adminKey || process.env.ADMIN_KEY || 'sangwa-admin-key';
   const DATABASE_URL = overrides.databaseUrl || process.env.DATABASE_URL || null;
   const SUPABASE_URL = process.env.SUPABASE_URL || null;
@@ -315,6 +316,7 @@ function createApp(overrides = {}) {
   // own product/price/customer-subscription rather than folding into Premium,
   // since the user explicitly wants it billed separately.
   const DIARY_PRODUCT_METADATA_KEY = 'yeshe_diary';
+  const BOOKING_PRODUCT_METADATA_KEY = 'yeshe_call_booking';
   let diaryPriceId = null;
   let diaryStripeReady = false;
 
@@ -502,6 +504,20 @@ function createApp(overrides = {}) {
         body text not null,
         image_path text,
         image_mime text,
+        created_at timestamptz default now()
+      );
+    `);
+    await client.query(`
+      create table if not exists public.call_bookings (
+        id serial primary key,
+        datetime timestamptz not null,
+        duration_minutes integer not null,
+        status text not null default 'open',
+        checkout_session_id text,
+        hold_expires_at timestamptz,
+        booker_name text,
+        booker_email text,
+        booker_note text,
         created_at timestamptz default now()
       );
     `);
@@ -872,6 +888,185 @@ function createApp(overrides = {}) {
     return { imagePath: removed.imagePath };
   }
 
+  // Call booking calendar: kunga adds individual open slots from the admin
+  // page; a visitor picks one, pays $50, and the slot is only ever marked
+  // "booked" from the webhook once payment is confirmed -- never from the
+  // checkout-creation step, since a created Checkout Session is no guarantee
+  // anyone pays. Between those two points the slot sits "pending" (holding
+  // it off the public list) with a short expiry so an abandoned checkout
+  // doesn't permanently lock the slot; both the expired-session webhook AND
+  // every write-time check below self-heal a stale pending hold back to
+  // open, so a missed webhook can't strand a slot forever.
+  function ensureBookingsFile() {
+    const dir = path.dirname(BOOKINGS_FILE);
+    fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(BOOKINGS_FILE)) {
+      fs.writeFileSync(BOOKINGS_FILE, JSON.stringify({ nextId: 1, slots: [] }, null, 2), 'utf8');
+    }
+  }
+  function readBookingsFile() {
+    ensureBookingsFile();
+    try {
+      const parsed = JSON.parse(fs.readFileSync(BOOKINGS_FILE, 'utf8'));
+      return { nextId: parsed.nextId || 1, slots: Array.isArray(parsed.slots) ? parsed.slots : [] };
+    } catch (error) {
+      return { nextId: 1, slots: [] };
+    }
+  }
+  function writeBookingsFile(data) {
+    ensureBookingsFile();
+    fs.writeFileSync(BOOKINGS_FILE, JSON.stringify(data, null, 2), 'utf8');
+  }
+  function slotIsAvailable(slot, nowIso) {
+    return slot.status === 'open' || (slot.status === 'pending' && slot.holdExpiresAt && slot.holdExpiresAt < nowIso);
+  }
+  const BOOKING_SELECT_SQL = `id, datetime, duration_minutes as "durationMinutes", status,
+    checkout_session_id as "checkoutSessionId", hold_expires_at as "holdExpiresAt",
+    booker_name as "bookerName", booker_email as "bookerEmail", booker_note as "bookerNote",
+    created_at as "createdAt"`;
+
+  async function createSlot({ datetime, durationMinutes }) {
+    const client = await getDbClient();
+    const createdAt = new Date().toISOString();
+    if (client) {
+      const result = await client.query(
+        `insert into public.call_bookings (datetime, duration_minutes, status, created_at) values ($1,$2,'open',$3) returning ${BOOKING_SELECT_SQL}`,
+        [datetime, durationMinutes, createdAt]
+      );
+      return result.rows[0];
+    }
+    const data = readBookingsFile();
+    const slot = {
+      id: data.nextId, datetime, durationMinutes, status: 'open',
+      checkoutSessionId: null, holdExpiresAt: null,
+      bookerName: null, bookerEmail: null, bookerNote: null, createdAt,
+    };
+    data.slots.push(slot);
+    data.nextId += 1;
+    writeBookingsFile(data);
+    return slot;
+  }
+
+  async function listOpenSlots() {
+    const nowIso = new Date().toISOString();
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select ${BOOKING_SELECT_SQL} from public.call_bookings
+         where datetime > now() and (status='open' or (status='pending' and hold_expires_at < now()))
+         order by datetime asc`
+      );
+      return result.rows;
+    }
+    const data = readBookingsFile();
+    return data.slots
+      .filter((s) => s.datetime > nowIso && slotIsAvailable(s, nowIso))
+      .sort((a, b) => a.datetime.localeCompare(b.datetime));
+  }
+
+  async function listAllSlotsAdmin() {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(`select ${BOOKING_SELECT_SQL} from public.call_bookings order by datetime asc`);
+      return result.rows;
+    }
+    const data = readBookingsFile();
+    return data.slots.slice().sort((a, b) => a.datetime.localeCompare(b.datetime));
+  }
+
+  async function getSlotById(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(`select ${BOOKING_SELECT_SQL} from public.call_bookings where id=$1`, [id]);
+      return result.rows[0] || null;
+    }
+    const data = readBookingsFile();
+    return data.slots.find((s) => s.id === id) || null;
+  }
+
+  // Transitions an open (or stale-pending) slot to pending for a fresh
+  // checkout attempt. Returns null if the slot is unavailable (already
+  // booked, or genuinely held by someone else's still-live checkout) so the
+  // caller can reject the request instead of double-booking.
+  async function holdSlotForCheckout(id, { checkoutSessionId, holdExpiresAt }) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `update public.call_bookings set status='pending', checkout_session_id=$2, hold_expires_at=$3
+         where id=$1 and (status='open' or (status='pending' and hold_expires_at < now()))
+         returning ${BOOKING_SELECT_SQL}`,
+        [id, checkoutSessionId, holdExpiresAt]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readBookingsFile();
+    const slot = data.slots.find((s) => s.id === id);
+    if (!slot || !slotIsAvailable(slot, new Date().toISOString())) return null;
+    slot.status = 'pending';
+    slot.checkoutSessionId = checkoutSessionId;
+    slot.holdExpiresAt = holdExpiresAt;
+    writeBookingsFile(data);
+    return slot;
+  }
+
+  async function markSlotBooked(checkoutSessionId, { name, email, note }) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `update public.call_bookings set status='booked', booker_name=$2, booker_email=$3, booker_note=$4
+         where checkout_session_id=$1 returning ${BOOKING_SELECT_SQL}`,
+        [checkoutSessionId, name, email, note]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readBookingsFile();
+    const slot = data.slots.find((s) => s.checkoutSessionId === checkoutSessionId);
+    if (!slot) return null;
+    slot.status = 'booked';
+    slot.bookerName = name;
+    slot.bookerEmail = email;
+    slot.bookerNote = note;
+    writeBookingsFile(data);
+    return slot;
+  }
+
+  // Only releases a hold that's still "pending" -- a session that expires
+  // after the webhook already (rarely but theoretically, out of order)
+  // marked it booked must never un-book a paid slot.
+  async function releaseSlotIfPending(checkoutSessionId) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `update public.call_bookings set status='open', checkout_session_id=null, hold_expires_at=null
+         where checkout_session_id=$1 and status='pending' returning ${BOOKING_SELECT_SQL}`,
+        [checkoutSessionId]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readBookingsFile();
+    const slot = data.slots.find((s) => s.checkoutSessionId === checkoutSessionId && s.status === 'pending');
+    if (!slot) return null;
+    slot.status = 'open';
+    slot.checkoutSessionId = null;
+    slot.holdExpiresAt = null;
+    writeBookingsFile(data);
+    return slot;
+  }
+
+  async function deleteSlot(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(`delete from public.call_bookings where id=$1 returning status`, [id]);
+      return result.rows[0] || null;
+    }
+    const data = readBookingsFile();
+    const idx = data.slots.findIndex((s) => s.id === id);
+    if (idx === -1) return null;
+    const [removed] = data.slots.splice(idx, 1);
+    writeBookingsFile(data);
+    return { status: removed.status };
+  }
+
   async function listUsersFromDb() {
     const client = await getDbClient();
     if (!client) return readUsers().map(sanitizeUser);
@@ -939,9 +1134,33 @@ function createApp(overrides = {}) {
       }
     }
 
+    // Fulfillment for a call booking happens only here, from a confirmed
+    // payment — never at checkout-session-creation time, since a created
+    // session is no guarantee anyone actually pays. See the comment above
+    // the booking data-layer functions for how the pending hold works.
+    async function finalizeBookingFromSession(session) {
+      if (session.payment_status === 'unpaid') return;
+      const details = session.customer_details || {};
+      await markSlotBooked(session.id, {
+        name: (session.metadata && session.metadata.bookerName) || details.name || '',
+        email: (session.metadata && session.metadata.bookerEmail) || details.email || '',
+        note: (session.metadata && session.metadata.bookerNote) || '',
+      });
+    }
+
     try {
       if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
-        await activateFromSession(event.data.object);
+        const session = event.data.object;
+        if (session.metadata && session.metadata.app === BOOKING_PRODUCT_METADATA_KEY) {
+          await finalizeBookingFromSession(session);
+        } else {
+          await activateFromSession(session);
+        }
+      } else if (event.type === 'checkout.session.expired') {
+        const session = event.data.object;
+        if (session.metadata && session.metadata.app === BOOKING_PRODUCT_METADATA_KEY) {
+          await releaseSlotIfPending(session.id);
+        }
       } else if (event.type === 'customer.subscription.updated' || event.type === 'customer.subscription.deleted') {
         const subscription = event.data.object;
         const user = await findUserByStripeCustomerId(subscription.customer);
@@ -1348,6 +1567,110 @@ function createApp(overrides = {}) {
     } catch (error) {
       return res.status(500).json({ error: 'Could not start checkout.', details: error.message });
     }
+  });
+
+  // ---- Call booking calendar: a flat $50, fixed-duration slot, paid before
+  //      it's confirmed. Writing (adding/removing open slots) is admin-key
+  //      gated, same reasoning as Kunga's Diary -- this is now a monetized
+  //      calendar, not a trust-the-client notebook field. Booking itself
+  //      needs no account: a visitor gives a name/email so Kunga can follow
+  //      up and send the call link himself (there's no email-sending
+  //      integration in this codebase to automate that). ---------------------
+  const CALL_PRICE_CENTS = 5000;
+  const CALL_HOLD_MINUTES = 30;
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  app.get('/api/booking/slots', async (req, res) => {
+    const slots = await listOpenSlots();
+    return res.json({ slots, priceCents: CALL_PRICE_CENTS });
+  });
+
+  app.post('/api/booking/checkout', async (req, res) => {
+    if (!stripe) {
+      return res.status(503).json({ error: 'Payments are not configured on this server yet.' });
+    }
+    const id = Number(req.body && req.body.slotId);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid slot.' });
+    const name = String((req.body && req.body.name) || '').trim().slice(0, 80);
+    const email = String((req.body && req.body.email) || '').trim().slice(0, 200);
+    const note = String((req.body && req.body.note) || '').trim().slice(0, 500);
+    if (!name) return res.status(400).json({ error: 'Please enter your name.' });
+    if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Please enter a valid email.' });
+
+    const slot = await getSlotById(id);
+    if (!slot) return res.status(404).json({ error: 'That slot no longer exists.' });
+    if (slot.datetime <= new Date().toISOString()) return res.status(409).json({ error: "That slot's time has already passed." });
+
+    try {
+      const holdExpiresAt = new Date(Date.now() + CALL_HOLD_MINUTES * 60000).toISOString();
+      const session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        submit_type: 'book',
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: { name: `Call with Kunga — ${fmtSlotLabel(slot)}` },
+            unit_amount: CALL_PRICE_CENTS,
+          },
+          quantity: 1,
+        }],
+        customer_email: email,
+        metadata: { app: BOOKING_PRODUCT_METADATA_KEY, slotId: String(id), bookerName: name, bookerEmail: email, bookerNote: note },
+        expires_at: Math.floor(Date.now() / 1000) + CALL_HOLD_MINUTES * 60,
+        success_url: `${APP_BASE_URL}/calendar?booked=success`,
+        cancel_url: `${APP_BASE_URL}/calendar?booked=cancel`,
+        integration_identifier: 'kungacallbooking' + randomLetters(8),
+      });
+
+      const held = await holdSlotForCheckout(id, { checkoutSessionId: session.id, holdExpiresAt });
+      if (!held) {
+        // Someone else grabbed it between the read above and now -- the
+        // Checkout Session we just created is simply left to expire unused.
+        return res.status(409).json({ error: 'That slot was just booked by someone else. Pick another.' });
+      }
+      return res.json({ url: session.url });
+    } catch (error) {
+      return res.status(500).json({ error: 'Could not start checkout.', details: error.message });
+    }
+  });
+
+  function fmtSlotLabel(slot) {
+    try {
+      return new Date(slot.datetime).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' }) + ' UTC';
+    } catch (error) {
+      return slot.datetime;
+    }
+  }
+
+  app.get('/api/booking/admin/slots', async (req, res) => {
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const slots = await listAllSlotsAdmin();
+    return res.json({ slots });
+  });
+
+  app.post('/api/booking/admin/slots', async (req, res) => {
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const { datetime, durationMinutes } = req.body || {};
+    const parsedDate = new Date(datetime);
+    if (!datetime || Number.isNaN(parsedDate.getTime())) return res.status(400).json({ error: 'Invalid date/time.' });
+    if (parsedDate.toISOString() <= new Date().toISOString()) return res.status(400).json({ error: 'Pick a time in the future.' });
+    const duration = Number(durationMinutes);
+    if (![15, 30, 45, 60].includes(duration)) return res.status(400).json({ error: 'Duration must be 15, 30, 45 or 60 minutes.' });
+    const slot = await createSlot({ datetime: parsedDate.toISOString(), durationMinutes: duration });
+    return res.json({ slot });
+  });
+
+  app.post('/api/booking/admin/delete-slot', async (req, res) => {
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const id = Number(req.body && req.body.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const slot = await getSlotById(id);
+    if (!slot) return res.status(404).json({ error: 'Slot not found.' });
+    if (slot.status === 'booked') {
+      return res.status(409).json({ error: "This slot is already booked and paid for — cancel it from Stripe's dashboard if you need to refund, then delete it here." });
+    }
+    await deleteSlot(id);
+    return res.json({ ok: true });
   });
 
   // ---- notebook (kunga-notebook.html / /notebook): free-form notes, synced
@@ -1821,6 +2144,22 @@ function createApp(overrides = {}) {
 
   app.get('/diary/write.html', (req, res) => {
     return res.sendFile(path.join(__dirname, 'diary-write.html'));
+  });
+
+  app.get('/calendar', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'calendar.html'));
+  });
+
+  app.get('/calendar.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'calendar.html'));
+  });
+
+  app.get('/calendar/admin', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'calendar-admin.html'));
+  });
+
+  app.get('/calendar/admin.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'calendar-admin.html'));
   });
 
   app.get('/poker', (req, res) => {

@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book a Call</title>
+<meta name="description" content="Book a 1:1 call with Kunga. $50 per call, paid at booking.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#12213B;--sky-deep:#0d1a30;--sky-mid:#1b2e52;--snow:#F5F8FC;--snow-dim:#b9c4d8;
+  --gold:#E8A33D;--gold-dim:#B87F2A;--good:#3FAE72;--bad:#E1584B;
+  --radius:18px;--shadow:0 10px 30px rgba(0,0,0,.4);
+  --font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--font-body);background:linear-gradient(180deg,var(--sky-deep),var(--sky-mid) 60%,var(--sky-deep));color:var(--snow);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px 16px 60px}
+a{color:var(--gold)}
+.top{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:520px;margin-bottom:22px}
+.brand{font-family:var(--font-display);font-weight:700;font-size:15px;text-decoration:none;color:var(--snow-dim)}
+
+.wrap{width:100%;max-width:520px}
+.hero{text-align:center;margin-bottom:22px}
+.heroGlyph{font-size:38px;margin-bottom:8px}
+h1{font-family:var(--font-display);font-size:25px;font-weight:800;margin:0 0 8px}
+.sub{color:var(--snow-dim);font-size:14.5px;line-height:1.6;margin:0}
+.priceTag{display:inline-block;margin-top:10px;font-family:var(--font-mono);font-weight:700;font-size:13px;color:var(--gold);background:rgba(232,163,61,.12);padding:6px 14px;border-radius:999px}
+
+.dayGroup{margin-bottom:18px}
+.dayLabel{font-family:var(--font-display);font-weight:700;font-size:13px;color:var(--snow-dim);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px;padding-left:2px}
+.slotCard{background:radial-gradient(ellipse at top,rgba(232,163,61,.06),transparent 60%),var(--sky-mid);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;transition:border-color .15s}
+.slotCard:hover{border-color:rgba(232,163,61,.4)}
+.slotTime{font-family:var(--font-display);font-weight:700;font-size:16px}
+.slotDuration{font-size:12px;color:var(--snow-dim);margin-top:2px}
+.slotBookBtn{all:unset;font-family:var(--font-display);font-weight:700;font-size:13px;padding:9px 16px;border-radius:999px;background:var(--gold);color:var(--ink);white-space:nowrap}
+
+.emptyState,.loadingState{text-align:center;color:var(--snow-dim);padding:40px 10px}
+
+.card{background:radial-gradient(ellipse at top,rgba(232,163,61,.08),transparent 60%),var(--sky-mid);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:26px 24px;box-shadow:var(--shadow)}
+.selectedTime{font-family:var(--font-display);font-weight:700;font-size:19px;margin-bottom:4px}
+.selectedSub{color:var(--snow-dim);font-size:13px;margin-bottom:18px}
+label.fieldLabel{display:block;font-size:12px;color:var(--snow-dim);margin:0 0 6px;font-weight:600}
+input[type=text],input[type=email],textarea{width:100%;font-family:var(--font-body);font-size:14px;padding:11px 13px;border-radius:10px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.22);color:var(--snow);outline:none;margin-bottom:16px;resize:vertical}
+input:focus,textarea:focus{border-color:var(--gold)}
+input::placeholder,textarea::placeholder{color:var(--snow-dim)}
+button.sendBtn{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:100%;text-align:center;font-family:var(--font-display);font-weight:700;font-size:16px;padding:15px;border-radius:12px;background:var(--gold);color:var(--ink)}
+button.sendBtn:disabled{opacity:.5;cursor:default}
+button.secondary{all:unset;cursor:pointer;display:block;width:100%;text-align:center;font-family:var(--font-display);font-weight:600;font-size:13px;padding:10px;border-radius:10px;background:rgba(255,255,255,.08);color:var(--snow);margin-top:10px}
+.errorBox{background:rgba(225,88,75,.14);border:1px solid rgba(225,88,75,.4);color:#ffb3ab;padding:10px 14px;border-radius:10px;font-size:13px;margin-top:14px;text-align:center}
+.note{text-align:center;color:var(--snow-dim);font-size:12px;margin-top:16px;line-height:1.6}
+
+.state{text-align:center;margin-top:20px}
+.state .big{font-family:var(--font-display);font-size:22px;font-weight:800;margin:14px 0 8px}
+.state p{color:var(--snow-dim);font-size:14px;line-height:1.6}
+.state .glyph{font-size:46px}
+.btnlink{all:unset;cursor:pointer;display:inline-block;margin-top:18px;font-family:var(--font-display);font-weight:700;font-size:13.5px;padding:10px 18px;border-radius:999px;background:rgba(255,255,255,.08);color:var(--snow)}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <a class="brand" href="/">← kunga.me</a>
+</div>
+
+<div class="wrap">
+  <div id="view"></div>
+</div>
+
+<script>
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function fmtPrice(cents){ return '$' + (cents/100).toFixed(cents % 100 === 0 ? 0 : 2); }
+
+function dayKey(d){ return d.toLocaleDateString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric' }); }
+function timeLabel(d){
+  return d.toLocaleTimeString(undefined, { hour:'numeric', minute:'2-digit' })
+    + ' (' + Intl.DateTimeFormat().resolvedOptions().timeZone + ')';
+}
+
+let allSlots = [];
+let priceCents = 5000;
+let selectedSlot = null;
+
+async function renderList(bannerHtml){
+  const view = document.getElementById('view');
+  view.innerHTML = `
+    <div class="hero">
+      <div class="heroGlyph">📅</div>
+      <h1>Book a call with Kunga</h1>
+      <p class="sub">Pick a time that works for you. 1:1, paid at booking.</p>
+      <div class="priceTag" id="priceTag">$50 per call</div>
+    </div>
+    ${bannerHtml || ''}
+    <div id="slotsArea"><div class="loadingState">Loading open times…</div></div>
+  `;
+
+  try{
+    const resp = await fetch('/api/booking/slots');
+    const data = await resp.json();
+    allSlots = data.slots || [];
+    priceCents = data.priceCents || priceCents;
+    document.getElementById('priceTag').textContent = fmtPrice(priceCents) + ' per call';
+    renderSlots();
+  }catch(e){
+    document.getElementById('slotsArea').innerHTML = `<div class="emptyState">Couldn't load open times. Try again shortly.</div>`;
+  }
+}
+
+function renderSlots(){
+  const area = document.getElementById('slotsArea');
+  if(!allSlots.length){
+    area.innerHTML = `<div class="emptyState">No open times right now — check back soon.</div>`;
+    return;
+  }
+  const groups = new Map();
+  allSlots.forEach(s => {
+    const d = new Date(s.datetime);
+    const key = dayKey(d);
+    if(!groups.has(key)) groups.set(key, []);
+    groups.get(key).push({ slot: s, date: d });
+  });
+
+  let html = '';
+  for(const [day, items] of groups){
+    html += `<div class="dayGroup"><div class="dayLabel">${esc(day)}</div>`;
+    items.forEach(({ slot, date }) => {
+      html += `
+        <div class="slotCard" data-id="${slot.id}">
+          <div>
+            <div class="slotTime">${esc(timeLabel(date))}</div>
+            <div class="slotDuration">${slot.durationMinutes} min call</div>
+          </div>
+          <button class="slotBookBtn" data-id="${slot.id}">Book — ${fmtPrice(priceCents)}</button>
+        </div>`;
+    });
+    html += `</div>`;
+  }
+  area.innerHTML = html;
+  area.querySelectorAll('[data-id]').forEach(el => {
+    el.onclick = () => openBookForm(Number(el.dataset.id));
+  });
+}
+
+function openBookForm(id){
+  const found = allSlots.find(s => s.id === id);
+  if(!found) return;
+  selectedSlot = found;
+  const date = new Date(found.datetime);
+  const view = document.getElementById('view');
+  view.innerHTML = `
+    <div class="card">
+      <div class="selectedTime">${esc(dayKey(date))}, ${esc(timeLabel(date))}</div>
+      <div class="selectedSub">${found.durationMinutes} min call · ${fmtPrice(priceCents)}</div>
+      <label class="fieldLabel" for="nameInput">Your name</label>
+      <input type="text" id="nameInput" placeholder="Full name" maxlength="80">
+      <label class="fieldLabel" for="emailInput">Your email</label>
+      <input type="email" id="emailInput" placeholder="you@example.com" maxlength="200">
+      <label class="fieldLabel" for="noteInput">What do you want to talk about? (optional)</label>
+      <textarea id="noteInput" rows="3" maxlength="500" placeholder="A couple of lines so Kunga can prep…"></textarea>
+      <button class="sendBtn" id="bookBtn">Pay ${fmtPrice(priceCents)} &amp; book</button>
+      <button class="secondary" id="backBtn">← Choose a different time</button>
+      <div id="errorBox"></div>
+    </div>
+    <p class="note">Handled by Stripe. kunga.me never sees your card details. Kunga will email you to confirm the call link.</p>
+  `;
+  document.getElementById('backBtn').onclick = () => renderList();
+  document.getElementById('bookBtn').onclick = submitBooking;
+}
+
+async function submitBooking(){
+  const errorBox = document.getElementById('errorBox');
+  errorBox.innerHTML = '';
+  const name = document.getElementById('nameInput').value.trim();
+  const email = document.getElementById('emailInput').value.trim();
+  const note = document.getElementById('noteInput').value.trim();
+  if(!name){ errorBox.innerHTML = `<div class="errorBox">Please enter your name.</div>`; return; }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ errorBox.innerHTML = `<div class="errorBox">Please enter a valid email.</div>`; return; }
+
+  const bookBtn = document.getElementById('bookBtn');
+  bookBtn.disabled = true;
+  bookBtn.textContent = 'Starting checkout…';
+  try{
+    const resp = await fetch('/api/booking/checkout', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ slotId: selectedSlot.id, name, email, note }),
+    });
+    const data = await resp.json();
+    if(!resp.ok || !data.url){
+      errorBox.innerHTML = `<div class="errorBox">${esc(data.error || 'Something went wrong.')}</div>`;
+      bookBtn.disabled = false;
+      bookBtn.textContent = `Pay ${fmtPrice(priceCents)} & book`;
+      return;
+    }
+    location.href = data.url;
+  }catch(e){
+    errorBox.innerHTML = `<div class="errorBox">Network error — try again.</div>`;
+    bookBtn.disabled = false;
+    bookBtn.textContent = `Pay ${fmtPrice(priceCents)} & book`;
+  }
+}
+
+function renderDone(){
+  document.getElementById('view').innerHTML = `
+    <div class="state">
+      <div class="glyph">✅</div>
+      <div class="big">You're booked.</div>
+      <p>Kunga will email you to confirm the call link before your slot.</p>
+      <a class="btnlink" href="/">Back to kunga.me</a>
+    </div>`;
+}
+
+function renderCancelled(){
+  renderList(`<p style="text-align:center;color:var(--snow-dim);font-size:13px;margin-bottom:14px;">Checkout was cancelled — no charge was made.</p>`);
+}
+
+const booked = new URLSearchParams(location.search).get('booked');
+if(booked === 'success') renderDone();
+else if(booked === 'cancel') renderCancelled();
+else renderList();
+</script>
+</body>
+</html>

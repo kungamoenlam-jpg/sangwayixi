@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Manage — Book a Call</title>
+<style>
+:root{
+  --bg:#0a0f1d;--panel:#121b2f;--panel-2:#1a2540;--text:#eef3ff;--muted:#9bb0d3;
+  --gold:#f4c95d;--accent:#7cc7ff;--danger:#ff7a7a;--good:#6fd79a;--warn:#e3b24f;--border:rgba(255,255,255,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(180deg,#0a0f1d 0%,#0f172a 100%);color:var(--text);min-height:100vh}
+.shell{max-width:720px;margin:0 auto;padding:28px 18px 80px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px}
+.brand{font-size:1.25rem;font-weight:700}
+.brand span{color:var(--gold)}
+a{color:var(--accent);text-decoration:none;font-size:13px}
+.panel{background:rgba(18,27,47,.9);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+label{display:block;font-size:12.5px;color:var(--muted);margin:14px 0 6px;font-weight:600}
+label:first-of-type{margin-top:0}
+input[type=password],input[type=datetime-local],select{width:100%;padding:11px 13px;border-radius:10px;border:1px solid var(--border);background:rgba(10,15,29,.8);color:var(--text);font-size:14px;outline:none}
+input:focus,select:focus{border-color:var(--gold)}
+button{border:0;border-radius:10px;background:linear-gradient(135deg,var(--gold),#e9b440);color:#111827;font-weight:700;padding:11px 16px;cursor:pointer;font-size:13.5px}
+button.secondary{background:rgba(255,255,255,.08);color:var(--text)}
+button.danger{background:rgba(255,122,122,.15);color:var(--danger)}
+button:disabled{opacity:.5;cursor:default}
+.actions{display:flex;gap:10px;margin-top:18px}
+.msg{font-size:13px;margin-top:10px;min-height:16px}
+.msg.good{color:var(--good)}
+.msg.bad{color:var(--danger)}
+.hidden{display:none}
+.empty{color:var(--muted);font-size:13px;text-align:center;padding:14px 0}
+.hint{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5}
+
+.slotRow{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--border)}
+.slotRow:last-child{border-bottom:none}
+.slotWhen{font-weight:700;font-size:13.5px}
+.slotMeta{font-size:12px;color:var(--muted);margin-top:3px}
+.statusBadge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:2px 8px;border-radius:999px;margin-left:8px}
+.statusBadge.open{background:rgba(255,255,255,.08);color:var(--muted)}
+.statusBadge.pending{background:rgba(227,178,79,.15);color:var(--warn)}
+.statusBadge.booked{background:rgba(111,215,154,.15);color:var(--good)}
+.bookerInfo{font-size:12px;color:var(--text);margin-top:6px;background:rgba(0,0,0,.2);border-radius:8px;padding:8px 10px;max-width:40ch}
+.bookerInfo div{margin-bottom:2px}
+.slotBtns{flex-shrink:0}
+.slotBtns button{padding:6px 10px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="brand">Manage — <span>Book a Call</span></div>
+    <a href="/calendar">View public page →</a>
+  </div>
+
+  <div class="panel" id="lockPanel">
+    <label>Admin key</label>
+    <input type="password" id="adminKeyInput" placeholder="Admin key">
+    <div class="actions"><button id="unlockBtn">Unlock</button></div>
+    <div class="msg" id="lockMsg"></div>
+  </div>
+
+  <div id="adminArea" class="hidden">
+    <div class="panel">
+      <label>Add an open slot</label>
+      <label>Date &amp; time (your local time)</label>
+      <input type="datetime-local" id="dateTimeInput">
+      <label>Duration</label>
+      <select id="durationInput">
+        <option value="15">15 minutes</option>
+        <option value="30" selected>30 minutes</option>
+        <option value="45">45 minutes</option>
+        <option value="60">60 minutes</option>
+      </select>
+      <div class="actions"><button id="addBtn">Add slot</button></div>
+      <div class="msg" id="addMsg"></div>
+      <div class="hint">Slots show as $50 bookings on the public page the moment you add them.</div>
+    </div>
+
+    <div class="panel">
+      <label>All slots</label>
+      <div id="slotList"><div class="empty">Loading…</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let adminKey = '';
+
+const lockPanel = document.getElementById('lockPanel');
+const adminArea = document.getElementById('adminArea');
+const lockMsg = document.getElementById('lockMsg');
+const addMsg = document.getElementById('addMsg');
+const slotList = document.getElementById('slotList');
+const dateTimeInput = document.getElementById('dateTimeInput');
+const durationInput = document.getElementById('durationInput');
+
+document.getElementById('unlockBtn').onclick = async () => {
+  adminKey = document.getElementById('adminKeyInput').value.trim();
+  if(!adminKey){ lockMsg.textContent = 'Enter the admin key.'; lockMsg.className = 'msg bad'; return; }
+  const ok = await loadSlots();
+  if(ok){
+    lockPanel.classList.add('hidden');
+    adminArea.classList.remove('hidden');
+  }
+};
+
+async function loadSlots(){
+  try{
+    const resp = await fetch('/api/booking/admin/slots', { headers: { 'x-admin-key': adminKey } });
+    if(resp.status === 401){ lockMsg.textContent = 'Incorrect admin key.'; lockMsg.className = 'msg bad'; adminKey = ''; return false; }
+    const data = await resp.json();
+    renderSlots(data.slots || []);
+    return true;
+  }catch(e){
+    lockMsg.textContent = 'Network error.'; lockMsg.className = 'msg bad';
+    return false;
+  }
+}
+
+function fmtWhen(iso){
+  try{ return new Date(iso).toLocaleString(undefined, { weekday:'short', month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }); }
+  catch(e){ return iso; }
+}
+function esc(s){ return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderSlots(slots){
+  if(!slots.length){ slotList.innerHTML = '<div class="empty">No slots yet — add one above.</div>'; return; }
+  slotList.innerHTML = slots.map(s => {
+    const bookerHtml = s.status === 'booked'
+      ? `<div class="bookerInfo">
+          <div><b>${esc(s.bookerName)}</b> — ${esc(s.bookerEmail)}</div>
+          ${s.bookerNote ? `<div>"${esc(s.bookerNote)}"</div>` : ''}
+        </div>`
+      : '';
+    return `
+      <div class="slotRow">
+        <div>
+          <div class="slotWhen">${esc(fmtWhen(s.datetime))}<span class="statusBadge ${s.status}">${s.status}</span></div>
+          <div class="slotMeta">${s.durationMinutes} min</div>
+          ${bookerHtml}
+        </div>
+        <div class="slotBtns">
+          <button class="danger" data-del="${s.id}">Delete</button>
+        </div>
+      </div>`;
+  }).join('');
+  slotList.querySelectorAll('[data-del]').forEach(btn => {
+    btn.onclick = () => deleteSlot(Number(btn.dataset.del));
+  });
+}
+
+document.getElementById('addBtn').onclick = async () => {
+  addMsg.textContent = '';
+  const localValue = dateTimeInput.value;
+  if(!localValue){ addMsg.textContent = 'Pick a date and time.'; addMsg.className = 'msg bad'; return; }
+  const datetime = new Date(localValue).toISOString();
+  const durationMinutes = Number(durationInput.value);
+
+  try{
+    const resp = await fetch('/api/booking/admin/slots', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+      body: JSON.stringify({ datetime, durationMinutes }),
+    });
+    const data = await resp.json();
+    if(!resp.ok){ addMsg.textContent = data.error || 'Could not add slot.'; addMsg.className = 'msg bad'; return; }
+    addMsg.textContent = 'Added.'; addMsg.className = 'msg good';
+    dateTimeInput.value = '';
+    loadSlots();
+  }catch(e){
+    addMsg.textContent = 'Network error.'; addMsg.className = 'msg bad';
+  }
+};
+
+async function deleteSlot(id){
+  if(!confirm('Delete this slot?')) return;
+  const resp = await fetch('/api/booking/admin/delete-slot', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+    body: JSON.stringify({ id }),
+  });
+  if(!resp.ok){
+    const data = await resp.json().catch(() => ({}));
+    alert(data.error || 'Could not delete slot.');
+    return;
+  }
+  loadSlots();
+}
+</script>
+</body>
+</html>
