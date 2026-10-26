@@ -1221,7 +1221,7 @@ const I18N = {
     heroSub: "Create an account to save your progress across devices.",
     phoneHomeSub: "Tap an app to get started.",
     appNotebook: "Kunga's Notebook", appPoker: "Kunga's Poker", appMaths: "Kunga's Maths", appYeshe: "Yeshe",
-    appOptimism: "Daily Optimism", appNews: "Daily News", appDiary: "Kunga's Diary", appTip: "Send Money", appCalendar: "Book a Call", appTurkey: "Turkey",
+    appOptimism: "Daily Optimism", appNews: "Daily News", appDiary: "Kunga's Diary", appTip: "Send Money", appCalendar: "Book a Call", appTurkey: "Turkey", appStore: "Yeshe Store",
     backToHomeScreen: "Back to home screen",
     guestMathSub: "Mental math, algebra, calculus, linear algebra and more — free, no account needed.",
     guestMathSignupNudge: "Create a free account to save your progress and come back to it on any device.",
@@ -5187,6 +5187,7 @@ const HOME_APPS = [
   {key:'tip', nameKey:'appTip', icon:'💸', bg:'linear-gradient(145deg,#e8a33d,#b87f2a)', action:"window.location.href='/tip'"},
   {key:'calendar', nameKey:'appCalendar', icon:'📅', bg:'linear-gradient(145deg,#5b7fde,#2f4ea8)', action:"window.location.href='/calendar'"},
   {key:'turkey', nameKey:'appTurkey', icon:'🦃', bg:'linear-gradient(145deg,#3a3f4b,#16181e)', action:"window.location.href='/turkey'"},
+  {key:'store', nameKey:'appStore', icon:'🛍️', bg:'linear-gradient(145deg,#d6559a,#8e2f68)', action:"window.location.href='/store'"},
 ];
 function openHomeApp(view){ state.homeView=view; if(view==='auth') state.authMode='signup'; render(); }
 // Setting screen (not just homeView) makes this safe to call from any

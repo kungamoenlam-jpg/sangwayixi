@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Manage — Yeshe Store</title>
+<style>
+:root{
+  --bg:#0a0f1d;--panel:#121b2f;--panel-2:#1a2540;--text:#eef3ff;--muted:#9bb0d3;
+  --gold:#f4c95d;--accent:#7cc7ff;--danger:#ff7a7a;--good:#6fd79a;--border:rgba(255,255,255,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(180deg,#0a0f1d 0%,#0f172a 100%);color:var(--text);min-height:100vh}
+.shell{max-width:760px;margin:0 auto;padding:28px 18px 80px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px}
+.brand{font-size:1.25rem;font-weight:700}
+.brand span{color:var(--gold)}
+a{color:var(--accent);text-decoration:none;font-size:13px}
+.panel{background:rgba(18,27,47,.9);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+label{display:block;font-size:12.5px;color:var(--muted);margin:14px 0 6px;font-weight:600}
+label:first-of-type{margin-top:0}
+input[type=password],input[type=text],input[type=number],select,textarea{width:100%;padding:11px 13px;border-radius:10px;border:1px solid var(--border);background:rgba(10,15,29,.8);color:var(--text);font-size:14px;outline:none;font-family:inherit}
+textarea{resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--gold)}
+button{border:0;border-radius:10px;background:linear-gradient(135deg,var(--gold),#e9b440);color:#111827;font-weight:700;padding:11px 16px;cursor:pointer;font-size:13.5px}
+button.secondary{background:rgba(255,255,255,.08);color:var(--text)}
+button.danger{background:rgba(255,122,122,.15);color:var(--danger)}
+button:disabled{opacity:.5;cursor:default}
+.actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.msg{font-size:13px;margin-top:10px;min-height:16px}
+.msg.good{color:var(--good)}
+.msg.bad{color:var(--danger)}
+.hidden{display:none}
+.empty{color:var(--muted);font-size:13px;text-align:center;padding:14px 0}
+.hint{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5}
+
+.tabRow{display:flex;gap:8px;margin-bottom:18px}
+.tabBtn{all:unset;cursor:pointer;font-size:13px;font-weight:600;padding:9px 18px;border-radius:999px;background:rgba(255,255,255,.06);color:var(--muted)}
+.tabBtn.sel{background:var(--gold);color:#111827}
+
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+
+.productRow{display:flex;gap:12px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--border)}
+.productRow:last-child{border-bottom:none}
+.pThumb{width:48px;height:48px;border-radius:8px;object-fit:cover;background:rgba(255,255,255,.06);flex-shrink:0}
+.pThumbPlaceholder{width:48px;height:48px;border-radius:8px;background:rgba(255,255,255,.06);display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.pInfo{flex:1;min-width:0}
+.pName{font-weight:700;font-size:13.5px}
+.pMeta{font-size:12px;color:var(--muted);margin-top:2px}
+.pBtns{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap}
+.pBtns button{padding:6px 10px;font-size:12px}
+.inactiveTag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--danger);background:rgba(255,122,122,.15);padding:2px 7px;border-radius:999px;margin-left:6px}
+
+.orderCard{border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.orderHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.orderId{font-weight:700;font-size:13.5px}
+.orderStatus{font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:3px 9px;border-radius:999px}
+.orderStatus.paid{background:rgba(111,215,154,.15);color:var(--good)}
+.orderStatus.pending{background:rgba(255,255,255,.08);color:var(--muted)}
+.orderMeta{font-size:12.5px;color:var(--muted);margin-bottom:6px}
+.orderItems{font-size:12.5px;margin-bottom:6px}
+.orderItems div{padding:2px 0}
+.orderShip{font-size:12px;color:var(--muted);background:rgba(0,0,0,.2);border-radius:8px;padding:8px 10px;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="brand">Manage — <span>Yeshe Store</span></div>
+    <a href="/store">View store →</a>
+  </div>
+
+  <div class="panel" id="lockPanel">
+    <label>Admin key</label>
+    <input type="password" id="adminKeyInput" placeholder="Admin key">
+    <div class="actions"><button id="unlockBtn">Unlock</button></div>
+    <div class="msg" id="lockMsg"></div>
+  </div>
+
+  <div id="adminArea" class="hidden">
+    <div class="tabRow">
+      <button class="tabBtn sel" id="tabProductsBtn">Products</button>
+      <button class="tabBtn" id="tabOrdersBtn">Orders</button>
+    </div>
+
+    <div id="productsTab">
+      <div class="panel">
+        <label id="formHeading">Add a product</label>
+        <label>Name</label>
+        <input type="text" id="nameInput" placeholder="e.g. YESHE Classic Tee" maxlength="120">
+        <label>Description</label>
+        <textarea id="descInput" rows="3" maxlength="2000" placeholder="What is it, what's it made of, what's included…"></textarea>
+        <div class="row">
+          <div>
+            <label>Price (USD)</label>
+            <input type="number" id="priceInput" min="0.01" step="0.01" placeholder="35.00">
+          </div>
+          <div>
+            <label>Type</label>
+            <select id="typeInput">
+              <option value="physical">Physical (clothing etc)</option>
+              <option value="digital">Digital (course etc)</option>
+            </select>
+          </div>
+        </div>
+        <label>Category</label>
+        <input type="text" id="categoryInput" placeholder="e.g. Clothing, Courses" maxlength="60">
+        <label>Options (optional, comma-separated — e.g. sizes)</label>
+        <input type="text" id="variantsInput" placeholder="S, M, L, XL">
+        <label>Photo (optional, add after saving)</label>
+        <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp">
+        <div class="actions">
+          <button id="saveBtn">Save product</button>
+          <button class="secondary hidden" id="cancelEditBtn">Cancel edit</button>
+        </div>
+        <div class="msg" id="saveMsg"></div>
+        <div class="hint">New products appear on the public store immediately.</div>
+      </div>
+
+      <div class="panel">
+        <label>All products</label>
+        <div id="productList"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+
+    <div id="ordersTab" class="hidden">
+      <div class="panel">
+        <label>All orders</label>
+        <div id="orderList"><div class="empty">Loading…</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let adminKey = '';
+let editingId = null;
+let products = [];
+
+const lockPanel = document.getElementById('lockPanel');
+const adminArea = document.getElementById('adminArea');
+const lockMsg = document.getElementById('lockMsg');
+const saveMsg = document.getElementById('saveMsg');
+
+document.getElementById('unlockBtn').onclick = async () => {
+  adminKey = document.getElementById('adminKeyInput').value.trim();
+  if(!adminKey){ lockMsg.textContent = 'Enter the admin key.'; lockMsg.className = 'msg bad'; return; }
+  const ok = await loadProducts();
+  if(ok){
+    lockPanel.classList.add('hidden');
+    adminArea.classList.remove('hidden');
+  }
+};
+
+document.getElementById('tabProductsBtn').onclick = () => switchTab('products');
+document.getElementById('tabOrdersBtn').onclick = () => switchTab('orders');
+function switchTab(tab){
+  document.getElementById('tabProductsBtn').classList.toggle('sel', tab==='products');
+  document.getElementById('tabOrdersBtn').classList.toggle('sel', tab==='orders');
+  document.getElementById('productsTab').classList.toggle('hidden', tab!=='products');
+  document.getElementById('ordersTab').classList.toggle('hidden', tab!=='orders');
+  if(tab==='orders') loadOrders();
+}
+
+function esc(s){ return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtPrice(cents){ return '$' + (cents/100).toFixed(cents % 100 === 0 ? 0 : 2); }
+
+async function loadProducts(){
+  try{
+    const resp = await fetch('/api/store/admin/products', { headers: { 'x-admin-key': adminKey } });
+    if(resp.status === 401){ lockMsg.textContent = 'Incorrect admin key.'; lockMsg.className = 'msg bad'; adminKey = ''; return false; }
+    const data = await resp.json();
+    products = data.products || [];
+    renderProducts();
+    return true;
+  }catch(e){
+    lockMsg.textContent = 'Network error.'; lockMsg.className = 'msg bad';
+    return false;
+  }
+}
+
+function renderProducts(){
+  const list = document.getElementById('productList');
+  if(!products.length){ list.innerHTML = '<div class="empty">No products yet.</div>'; return; }
+  list.innerHTML = products.map(p => {
+    const thumb = p.imagePath ? `<img class="pThumb" src="/store-photo/${p.id}">` : `<div class="pThumbPlaceholder">${p.type==='digital'?'📘':'👕'}</div>`;
+    return `
+      <div class="productRow">
+        ${thumb}
+        <div class="pInfo">
+          <div class="pName">${esc(p.name)}${!p.active ? '<span class="inactiveTag">Hidden</span>' : ''}</div>
+          <div class="pMeta">${fmtPrice(p.priceCents)} · ${p.type === 'digital' ? 'Digital' : 'Physical'} · ${esc(p.category || 'Uncategorized')}${p.variants && p.variants.length ? ' · ' + p.variants.map(esc).join(', ') : ''}</div>
+        </div>
+        <div class="pBtns">
+          <button class="secondary" data-edit="${p.id}">Edit</button>
+          ${p.active ? `<button class="danger" data-hide="${p.id}">Hide</button>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+  list.querySelectorAll('[data-edit]').forEach(btn => btn.onclick = () => startEdit(products.find(p => p.id === Number(btn.dataset.edit))));
+  list.querySelectorAll('[data-hide]').forEach(btn => btn.onclick = () => hideProduct(Number(btn.dataset.hide)));
+}
+
+function startEdit(product){
+  if(!product) return;
+  editingId = product.id;
+  document.getElementById('nameInput').value = product.name;
+  document.getElementById('descInput').value = product.description || '';
+  document.getElementById('priceInput').value = (product.priceCents/100).toFixed(2);
+  document.getElementById('typeInput').value = product.type;
+  document.getElementById('categoryInput').value = product.category || '';
+  document.getElementById('variantsInput').value = (product.variants || []).join(', ');
+  document.getElementById('formHeading').textContent = 'Editing ' + product.name;
+  document.getElementById('cancelEditBtn').classList.remove('hidden');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+document.getElementById('cancelEditBtn').onclick = () => { resetForm(); saveMsg.textContent = ''; };
+function resetForm(){
+  editingId = null;
+  document.getElementById('nameInput').value = '';
+  document.getElementById('descInput').value = '';
+  document.getElementById('priceInput').value = '';
+  document.getElementById('typeInput').value = 'physical';
+  document.getElementById('categoryInput').value = '';
+  document.getElementById('variantsInput').value = '';
+  document.getElementById('photoInput').value = '';
+  document.getElementById('formHeading').textContent = 'Add a product';
+  document.getElementById('cancelEditBtn').classList.add('hidden');
+}
+
+document.getElementById('saveBtn').onclick = async () => {
+  saveMsg.textContent = '';
+  const name = document.getElementById('nameInput').value.trim();
+  const description = document.getElementById('descInput').value.trim();
+  const price = document.getElementById('priceInput').value;
+  const type = document.getElementById('typeInput').value;
+  const category = document.getElementById('categoryInput').value.trim();
+  const variants = document.getElementById('variantsInput').value.split(',').map(v => v.trim()).filter(Boolean);
+  if(!name){ saveMsg.textContent = 'Name is required.'; saveMsg.className = 'msg bad'; return; }
+  if(!price || Number(price) <= 0){ saveMsg.textContent = 'Enter a valid price.'; saveMsg.className = 'msg bad'; return; }
+
+  try{
+    const resp = await fetch('/api/store/admin/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+      body: JSON.stringify({ id: editingId, name, description, price, type, category, variants }),
+    });
+    const data = await resp.json();
+    if(!resp.ok){ saveMsg.textContent = data.error || 'Could not save.'; saveMsg.className = 'msg bad'; return; }
+
+    const file = document.getElementById('photoInput').files[0];
+    if(file){
+      const buf = await file.arrayBuffer();
+      await fetch('/api/store/admin/products/' + data.product.id + '/photo', {
+        method: 'POST',
+        headers: { 'Content-Type': file.type, 'x-admin-key': adminKey },
+        body: buf,
+      });
+    }
+
+    saveMsg.textContent = 'Saved.'; saveMsg.className = 'msg good';
+    resetForm();
+    loadProducts();
+  }catch(e){
+    saveMsg.textContent = 'Network error.'; saveMsg.className = 'msg bad';
+  }
+};
+
+async function hideProduct(id){
+  if(!confirm('Hide this product from the store?')) return;
+  await fetch('/api/store/admin/delete-product', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+    body: JSON.stringify({ id }),
+  });
+  loadProducts();
+}
+
+async function loadOrders(){
+  const list = document.getElementById('orderList');
+  list.innerHTML = '<div class="empty">Loading…</div>';
+  try{
+    const resp = await fetch('/api/store/admin/orders', { headers: { 'x-admin-key': adminKey } });
+    const data = await resp.json();
+    renderOrders(data.orders || []);
+  }catch(e){
+    list.innerHTML = '<div class="empty">Couldn\'t load orders.</div>';
+  }
+}
+
+function renderOrders(orders){
+  const list = document.getElementById('orderList');
+  if(!orders.length){ list.innerHTML = '<div class="empty">No orders yet.</div>'; return; }
+  list.innerHTML = orders.map(o => {
+    const itemsHtml = (o.items || []).map(i => `<div>${i.qty}× ${esc(i.name)}${i.variant ? ' (' + esc(i.variant) + ')' : ''} — ${fmtPrice(i.priceCents * i.qty)}</div>`).join('');
+    const shipHtml = (o.status === 'paid' && o.hasPhysical && o.shippingAddress)
+      ? `<div class="orderShip"><b>${esc(o.shippingName || o.buyerName)}</b><br>${esc(o.shippingAddress.line1 || '')}${o.shippingAddress.line2 ? ', ' + esc(o.shippingAddress.line2) : ''}<br>${esc(o.shippingAddress.city || '')} ${esc(o.shippingAddress.state || '')} ${esc(o.shippingAddress.postal_code || '')}<br>${esc(o.shippingAddress.country || '')}</div>`
+      : (o.status === 'paid' && o.hasPhysical ? '<div class="orderShip">Shipping address pending from Stripe.</div>' : '');
+    return `
+      <div class="orderCard">
+        <div class="orderHead">
+          <span class="orderId">Order #${o.id}</span>
+          <span class="orderStatus ${o.status}">${o.status}</span>
+        </div>
+        <div class="orderMeta">${esc(o.buyerName)} · ${esc(o.buyerEmail)} · ${new Date(o.createdAt).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'})}</div>
+        <div class="orderItems">${itemsHtml}</div>
+        <div class="orderMeta"><b>Total: ${fmtPrice(o.totalCents)}</b></div>
+        ${shipHtml}
+      </div>`;
+  }).join('');
+}
+</script>
+</body>
+</html>

@@ -196,6 +196,8 @@ function createApp(overrides = {}) {
   const CERTS_FILE = overrides.certsFile || path.join(__dirname, 'data', 'certificates.json');
   const NEWS_FILE = overrides.newsFile || path.join(__dirname, 'data', 'news.json');
   const BOOKINGS_FILE = overrides.bookingsFile || path.join(__dirname, 'data', 'bookings.json');
+  const STORE_PRODUCTS_FILE = overrides.storeProductsFile || path.join(__dirname, 'data', 'store-products.json');
+  const STORE_ORDERS_FILE = overrides.storeOrdersFile || path.join(__dirname, 'data', 'store-orders.json');
   const ADMIN_KEY = overrides.adminKey || process.env.ADMIN_KEY || 'sangwa-admin-key';
   const DATABASE_URL = overrides.databaseUrl || process.env.DATABASE_URL || null;
   const SUPABASE_URL = process.env.SUPABASE_URL || null;
@@ -317,6 +319,7 @@ function createApp(overrides = {}) {
   // since the user explicitly wants it billed separately.
   const DIARY_PRODUCT_METADATA_KEY = 'yeshe_diary';
   const BOOKING_PRODUCT_METADATA_KEY = 'yeshe_call_booking';
+  const STORE_PRODUCT_METADATA_KEY = 'yeshe_store';
   let diaryPriceId = null;
   let diaryStripeReady = false;
 
@@ -375,6 +378,7 @@ function createApp(overrides = {}) {
   const AUDIO_BUCKET = 'audio';
   const AVATAR_BUCKET = 'avatars';
   const NEWS_BUCKET = 'news-photos';
+  const STORE_BUCKET = 'store-photos';
   const supabaseAdmin = (SUPABASE_PROJECT_URL && SUPABASE_SERVICE_ROLE_KEY)
     ? createClient(SUPABASE_PROJECT_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
     : null;
@@ -395,6 +399,7 @@ function createApp(overrides = {}) {
   const ensureAudioBucket = () => ensureBucket(AUDIO_BUCKET);
   const ensureAvatarBucket = () => ensureBucket(AVATAR_BUCKET);
   const ensureNewsBucket = () => ensureBucket(NEWS_BUCKET);
+  const ensureStoreBucket = () => ensureBucket(STORE_BUCKET);
 
   // High-quality neural voices: British English + Beijing-standard Mandarin, one
   // male and one female each. Mandarin uses Azure's newer "Multilingual" neural
@@ -518,6 +523,36 @@ function createApp(overrides = {}) {
         booker_name text,
         booker_email text,
         booker_note text,
+        created_at timestamptz default now()
+      );
+    `);
+    await client.query(`
+      create table if not exists public.store_products (
+        id serial primary key,
+        name text not null,
+        description text,
+        price_cents integer not null,
+        type text not null default 'physical',
+        category text,
+        variants jsonb default '[]'::jsonb,
+        image_path text,
+        image_mime text,
+        active boolean not null default true,
+        created_at timestamptz default now()
+      );
+    `);
+    await client.query(`
+      create table if not exists public.store_orders (
+        id serial primary key,
+        items jsonb not null,
+        total_cents integer not null,
+        buyer_name text,
+        buyer_email text,
+        has_physical boolean not null default false,
+        shipping_name text,
+        shipping_address jsonb,
+        status text not null default 'pending',
+        checkout_session_id text,
         created_at timestamptz default now()
       );
     `);
@@ -1067,6 +1102,242 @@ function createApp(overrides = {}) {
     return { status: removed.status };
   }
 
+  // Yeshe Store: admin-managed products (digital courses and physical
+  // clothing side by side) and the orders they generate. Orders are created
+  // as "pending" right when checkout starts -- entirely in this app's own
+  // storage, never crammed into Stripe metadata, which both keeps metadata
+  // tiny (just an order id) and gives every checkout attempt a durable
+  // record even if the payment is abandoned. Unlike the booking calendar's
+  // slots, a pending order holds nothing exclusive (no inventory is
+  // decremented), so there's no race to guard against and no expiry to
+  // release -- an abandoned "pending" order is just inert history.
+  function ensureStoreProductsFile() {
+    const dir = path.dirname(STORE_PRODUCTS_FILE);
+    fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(STORE_PRODUCTS_FILE)) {
+      fs.writeFileSync(STORE_PRODUCTS_FILE, JSON.stringify({ nextId: 1, products: [] }, null, 2), 'utf8');
+    }
+  }
+  function readStoreProductsFile() {
+    ensureStoreProductsFile();
+    try {
+      const parsed = JSON.parse(fs.readFileSync(STORE_PRODUCTS_FILE, 'utf8'));
+      return { nextId: parsed.nextId || 1, products: Array.isArray(parsed.products) ? parsed.products : [] };
+    } catch (error) {
+      return { nextId: 1, products: [] };
+    }
+  }
+  function writeStoreProductsFile(data) {
+    ensureStoreProductsFile();
+    fs.writeFileSync(STORE_PRODUCTS_FILE, JSON.stringify(data, null, 2), 'utf8');
+  }
+  const PRODUCT_SELECT_SQL = `id, name, description, price_cents as "priceCents", type, category, variants,
+    image_path as "imagePath", image_mime as "imageMime", active, created_at as "createdAt"`;
+
+  async function createProduct({ name, description, priceCents, type, category, variants }) {
+    const client = await getDbClient();
+    const createdAt = new Date().toISOString();
+    if (client) {
+      const result = await client.query(
+        `insert into public.store_products (name, description, price_cents, type, category, variants, created_at)
+         values ($1,$2,$3,$4,$5,$6,$7) returning ${PRODUCT_SELECT_SQL}`,
+        [name, description, priceCents, type, category, JSON.stringify(variants), createdAt]
+      );
+      return result.rows[0];
+    }
+    const data = readStoreProductsFile();
+    const product = {
+      id: data.nextId, name, description, priceCents, type, category, variants,
+      imagePath: null, imageMime: null, active: true, createdAt,
+    };
+    data.products.push(product);
+    data.nextId += 1;
+    writeStoreProductsFile(data);
+    return product;
+  }
+
+  async function updateProduct(id, { name, description, priceCents, type, category, variants }) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `update public.store_products set name=$2, description=$3, price_cents=$4, type=$5, category=$6, variants=$7
+         where id=$1 returning ${PRODUCT_SELECT_SQL}`,
+        [id, name, description, priceCents, type, category, JSON.stringify(variants)]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readStoreProductsFile();
+    const product = data.products.find((p) => p.id === id);
+    if (!product) return null;
+    Object.assign(product, { name, description, priceCents, type, category, variants });
+    writeStoreProductsFile(data);
+    return product;
+  }
+
+  async function getProductById(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(`select ${PRODUCT_SELECT_SQL} from public.store_products where id=$1`, [id]);
+      return result.rows[0] || null;
+    }
+    const data = readStoreProductsFile();
+    return data.products.find((p) => p.id === id) || null;
+  }
+
+  async function listActiveProducts() {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(`select ${PRODUCT_SELECT_SQL} from public.store_products where active=true order by created_at desc`);
+      return result.rows;
+    }
+    const data = readStoreProductsFile();
+    return data.products.filter((p) => p.active).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  async function listAllProductsAdmin() {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(`select ${PRODUCT_SELECT_SQL} from public.store_products order by created_at desc`);
+      return result.rows;
+    }
+    const data = readStoreProductsFile();
+    return data.products.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  async function setProductImage(id, { imagePath, imageMime }) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `update public.store_products set image_path=$1, image_mime=$2 where id=$3 returning ${PRODUCT_SELECT_SQL}`,
+        [imagePath, imageMime, id]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readStoreProductsFile();
+    const product = data.products.find((p) => p.id === id);
+    if (!product) return null;
+    product.imagePath = imagePath;
+    product.imageMime = imageMime;
+    writeStoreProductsFile(data);
+    return product;
+  }
+
+  async function setProductActive(id, active) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `update public.store_products set active=$2 where id=$1 returning ${PRODUCT_SELECT_SQL}`,
+        [id, active]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readStoreProductsFile();
+    const product = data.products.find((p) => p.id === id);
+    if (!product) return null;
+    product.active = active;
+    writeStoreProductsFile(data);
+    return product;
+  }
+
+  function ensureStoreOrdersFile() {
+    const dir = path.dirname(STORE_ORDERS_FILE);
+    fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(STORE_ORDERS_FILE)) {
+      fs.writeFileSync(STORE_ORDERS_FILE, JSON.stringify({ nextId: 1, orders: [] }, null, 2), 'utf8');
+    }
+  }
+  function readStoreOrdersFile() {
+    ensureStoreOrdersFile();
+    try {
+      const parsed = JSON.parse(fs.readFileSync(STORE_ORDERS_FILE, 'utf8'));
+      return { nextId: parsed.nextId || 1, orders: Array.isArray(parsed.orders) ? parsed.orders : [] };
+    } catch (error) {
+      return { nextId: 1, orders: [] };
+    }
+  }
+  function writeStoreOrdersFile(data) {
+    ensureStoreOrdersFile();
+    fs.writeFileSync(STORE_ORDERS_FILE, JSON.stringify(data, null, 2), 'utf8');
+  }
+  const ORDER_SELECT_SQL = `id, items, total_cents as "totalCents", buyer_name as "buyerName", buyer_email as "buyerEmail",
+    has_physical as "hasPhysical", shipping_name as "shippingName", shipping_address as "shippingAddress",
+    status, checkout_session_id as "checkoutSessionId", created_at as "createdAt"`;
+
+  async function createStoreOrder({ items, totalCents, buyerName, buyerEmail, hasPhysical }) {
+    const client = await getDbClient();
+    const createdAt = new Date().toISOString();
+    if (client) {
+      const result = await client.query(
+        `insert into public.store_orders (items, total_cents, buyer_name, buyer_email, has_physical, status, created_at)
+         values ($1,$2,$3,$4,$5,'pending',$6) returning ${ORDER_SELECT_SQL}`,
+        [JSON.stringify(items), totalCents, buyerName, buyerEmail, hasPhysical, createdAt]
+      );
+      return result.rows[0];
+    }
+    const data = readStoreOrdersFile();
+    const order = {
+      id: data.nextId, items, totalCents, buyerName, buyerEmail, hasPhysical,
+      shippingName: null, shippingAddress: null, status: 'pending', checkoutSessionId: null, createdAt,
+    };
+    data.orders.push(order);
+    data.nextId += 1;
+    writeStoreOrdersFile(data);
+    return order;
+  }
+
+  async function setOrderCheckoutSession(id, checkoutSessionId) {
+    const client = await getDbClient();
+    if (client) {
+      await client.query(`update public.store_orders set checkout_session_id=$2 where id=$1`, [id, checkoutSessionId]);
+      return;
+    }
+    const data = readStoreOrdersFile();
+    const order = data.orders.find((o) => o.id === id);
+    if (!order) return;
+    order.checkoutSessionId = checkoutSessionId;
+    writeStoreOrdersFile(data);
+  }
+
+  async function markOrderPaid(checkoutSessionId, { shippingName, shippingAddress }) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `update public.store_orders set status='paid', shipping_name=$2, shipping_address=$3
+         where checkout_session_id=$1 returning ${ORDER_SELECT_SQL}`,
+        [checkoutSessionId, shippingName, shippingAddress ? JSON.stringify(shippingAddress) : null]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readStoreOrdersFile();
+    const order = data.orders.find((o) => o.checkoutSessionId === checkoutSessionId);
+    if (!order) return null;
+    order.status = 'paid';
+    order.shippingName = shippingName;
+    order.shippingAddress = shippingAddress || null;
+    writeStoreOrdersFile(data);
+    return order;
+  }
+
+  async function getOrderById(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(`select ${ORDER_SELECT_SQL} from public.store_orders where id=$1`, [id]);
+      return result.rows[0] || null;
+    }
+    const data = readStoreOrdersFile();
+    return data.orders.find((o) => o.id === id) || null;
+  }
+
+  async function listAllOrdersAdmin() {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(`select ${ORDER_SELECT_SQL} from public.store_orders order by created_at desc`);
+      return result.rows;
+    }
+    const data = readStoreOrdersFile();
+    return data.orders.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
   async function listUsersFromDb() {
     const client = await getDbClient();
     if (!client) return readUsers().map(sanitizeUser);
@@ -1148,11 +1419,27 @@ function createApp(overrides = {}) {
       });
     }
 
+    // Store order fulfillment, same "only from a confirmed payment" rule as
+    // the booking calendar above. Shipping comes from
+    // collected_information.shipping_details in the current API version --
+    // the older top-level session.shipping_details field this account's
+    // Stripe docs used to document has been superseded there.
+    async function finalizeStoreOrderFromSession(session) {
+      if (session.payment_status === 'unpaid') return;
+      const shipping = session.collected_information && session.collected_information.shipping_details;
+      await markOrderPaid(session.id, {
+        shippingName: shipping ? shipping.name : null,
+        shippingAddress: shipping ? shipping.address : null,
+      });
+    }
+
     try {
       if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
         const session = event.data.object;
         if (session.metadata && session.metadata.app === BOOKING_PRODUCT_METADATA_KEY) {
           await finalizeBookingFromSession(session);
+        } else if (session.metadata && session.metadata.app === STORE_PRODUCT_METADATA_KEY) {
+          await finalizeStoreOrderFromSession(session);
         } else {
           await activateFromSession(session);
         }
@@ -1673,6 +1960,157 @@ function createApp(overrides = {}) {
     return res.json({ ok: true });
   });
 
+  // ---- Yeshe Store: a real cart (digital courses + physical YESHE clothing
+  //      side by side). Prices always come from THIS server's product
+  //      record at the moment of checkout, never trusted from the client,
+  //      so an edited price or a tampered cart total can't slip through.
+  //      Placeholder country list for physical shipping -- ask to change it
+  //      if it doesn't match where orders should actually be allowed to ship.
+  const STORE_SHIP_COUNTRIES = ['AU','US','CA','GB','NZ','CN','HK','TW','SG','JP','DE','FR'];
+  const STORE_MAX_LINE_QTY = 20;
+  const STORE_MAX_LINE_ITEMS = 30;
+
+  app.get('/api/store/products', async (req, res) => {
+    const products = await listActiveProducts();
+    return res.json({ products });
+  });
+
+  app.post('/api/store/checkout', async (req, res) => {
+    if (!stripe) {
+      return res.status(503).json({ error: 'Payments are not configured on this server yet.' });
+    }
+    const body = req.body || {};
+    const cartItems = Array.isArray(body.items) ? body.items : [];
+    const name = String(body.name || '').trim().slice(0, 80);
+    const email = String(body.email || '').trim().slice(0, 200);
+    if (!name) return res.status(400).json({ error: 'Please enter your name.' });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Please enter a valid email.' });
+    if (!cartItems.length) return res.status(400).json({ error: 'Your cart is empty.' });
+    if (cartItems.length > STORE_MAX_LINE_ITEMS) return res.status(400).json({ error: 'Too many different items in one order.' });
+
+    const orderItems = [];
+    let totalCents = 0;
+    let hasPhysical = false;
+    for (const raw of cartItems) {
+      const productId = Number(raw && raw.productId);
+      const qty = Number(raw && raw.qty);
+      if (!Number.isInteger(productId) || !Number.isInteger(qty) || qty < 1 || qty > STORE_MAX_LINE_QTY) {
+        return res.status(400).json({ error: 'Invalid cart item.' });
+      }
+      const product = await getProductById(productId);
+      if (!product || !product.active) return res.status(409).json({ error: `"${raw.name || 'An item'}" in your cart is no longer available.` });
+      const variant = raw.variant ? String(raw.variant).slice(0, 40) : null;
+      if (variant && !product.variants.includes(variant)) {
+        return res.status(400).json({ error: `Invalid option for ${product.name}.` });
+      }
+      if (!variant && product.variants.length) {
+        return res.status(400).json({ error: `Please choose an option for ${product.name}.` });
+      }
+      if (product.type === 'physical') hasPhysical = true;
+      orderItems.push({ productId: product.id, name: product.name, priceCents: product.priceCents, qty, variant });
+      totalCents += product.priceCents * qty;
+    }
+
+    try {
+      const order = await createStoreOrder({ items: orderItems, totalCents, buyerName: name, buyerEmail: email, hasPhysical });
+
+      const sessionParams = {
+        mode: 'payment',
+        line_items: orderItems.map((item) => ({
+          price_data: {
+            currency: 'usd',
+            product_data: { name: item.name + (item.variant ? ` (${item.variant})` : '') },
+            unit_amount: item.priceCents,
+          },
+          quantity: item.qty,
+        })),
+        customer_email: email,
+        metadata: { app: STORE_PRODUCT_METADATA_KEY, orderId: String(order.id) },
+        success_url: `${APP_BASE_URL}/store?order=success`,
+        cancel_url: `${APP_BASE_URL}/store?order=cancel`,
+        integration_identifier: 'yeshestore' + randomLetters(8),
+      };
+      if (hasPhysical) {
+        sessionParams.shipping_address_collection = { allowed_countries: STORE_SHIP_COUNTRIES };
+      }
+      const session = await stripe.checkout.sessions.create(sessionParams);
+      await setOrderCheckoutSession(order.id, session.id);
+      return res.json({ url: session.url });
+    } catch (error) {
+      return res.status(500).json({ error: 'Could not start checkout.', details: error.message });
+    }
+  });
+
+  app.get('/api/store/admin/products', async (req, res) => {
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const products = await listAllProductsAdmin();
+    return res.json({ products });
+  });
+
+  app.post('/api/store/admin/products', async (req, res) => {
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const { id, name, description, price, type, category, variants } = req.body || {};
+    const cleanName = String(name || '').trim().slice(0, 120);
+    const cleanDesc = String(description || '').trim().slice(0, 2000);
+    const priceCents = Math.round(Number(price) * 100);
+    const cleanType = type === 'digital' ? 'digital' : 'physical';
+    const cleanCategory = String(category || '').trim().slice(0, 60);
+    const cleanVariants = Array.isArray(variants)
+      ? variants.map((v) => String(v).trim().slice(0, 40)).filter(Boolean).slice(0, 12)
+      : [];
+    if (!cleanName) return res.status(400).json({ error: 'Name is required.' });
+    if (!Number.isFinite(priceCents) || priceCents <= 0) return res.status(400).json({ error: 'Enter a valid price.' });
+
+    const fields = { name: cleanName, description: cleanDesc, priceCents, type: cleanType, category: cleanCategory, variants: cleanVariants };
+    const product = id ? await updateProduct(Number(id), fields) : await createProduct(fields);
+    if (!product) return res.status(404).json({ error: 'Product not found.' });
+    return res.json({ product });
+  });
+
+  app.post('/api/store/admin/products/:id/photo', express.raw({ type: '*/*', limit: '8mb' }), async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    if (!supabaseAdmin) return res.status(503).json({ error: 'Photo storage is not configured on this server yet.' });
+    const product = await getProductById(id);
+    if (!product) return res.status(404).json({ error: 'Product not found.' });
+    const contentType = (req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+    const ext = { 'image/jpeg':'jpg', 'image/jpg':'jpg', 'image/png':'png', 'image/webp':'webp' }[contentType];
+    if (!ext) return res.status(400).json({ error: 'Only JPEG, PNG or WebP images are accepted.' });
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) return res.status(400).json({ error: 'No image data received.' });
+    const objectPath = id + '.' + ext;
+    const { error } = await supabaseAdmin.storage.from(STORE_BUCKET).upload(objectPath, req.body, { contentType, upsert: true });
+    if (error) return res.status(502).json({ error: 'Upload to storage failed.', details: error.message });
+    const updated = await setProductImage(id, { imagePath: objectPath, imageMime: contentType });
+    return res.json({ product: updated });
+  });
+
+  app.post('/api/store/admin/delete-product', async (req, res) => {
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const id = Number(req.body && req.body.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const product = await setProductActive(id, false);
+    if (!product) return res.status(404).json({ error: 'Product not found.' });
+    return res.json({ ok: true });
+  });
+
+  app.get('/api/store/admin/orders', async (req, res) => {
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const orders = await listAllOrdersAdmin();
+    return res.json({ orders });
+  });
+
+  // Same redirect-to-Storage pattern as /news-photo and /avatar.
+  app.get('/store-photo/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).end();
+    if (!supabaseAdmin) return res.status(503).end();
+    const product = await getProductById(id);
+    if (!product || !product.imagePath) return res.status(404).end();
+    const { data } = supabaseAdmin.storage.from(STORE_BUCKET).getPublicUrl(product.imagePath);
+    return res.redirect(302, data.publicUrl);
+  });
+
   // ---- notebook (kunga-notebook.html / /notebook): free-form notes, synced
   //      to the account when the visitor is logged in on the main site (same
   //      username-trust model as the rest of this file — no session token,
@@ -2170,6 +2608,22 @@ function createApp(overrides = {}) {
     return res.sendFile(path.join(__dirname, 'turkey.html'));
   });
 
+  app.get('/store', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'store.html'));
+  });
+
+  app.get('/store.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'store.html'));
+  });
+
+  app.get('/store/admin', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'store-admin.html'));
+  });
+
+  app.get('/store/admin.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'store-admin.html'));
+  });
+
   app.get('/poker', (req, res) => {
     return res.sendFile(path.join(__dirname, 'poker.html'));
   });
@@ -2419,6 +2873,7 @@ function createApp(overrides = {}) {
     ensureAudioBucket,
     ensureAvatarBucket,
     ensureNewsBucket,
+    ensureStoreBucket,
     ensureStripeProduct,
     ensureDiaryStripeProduct,
   };
@@ -2438,6 +2893,10 @@ if (require.main === module) {
   appState.ensureNewsBucket().then((bucketStatus) => {
     if (bucketStatus.ok) console.log('Supabase Storage: news-photos bucket ready.');
     else console.log('Supabase Storage not active for news photos (' + bucketStatus.reason + ') — photos/PDFs would not persist.');
+  });
+  appState.ensureStoreBucket().then((bucketStatus) => {
+    if (bucketStatus.ok) console.log('Supabase Storage: store-photos bucket ready.');
+    else console.log('Supabase Storage not active for store photos (' + bucketStatus.reason + ') — product photos would not persist.');
   });
   appState.ensureStripeProduct().then((stripeStatus) => {
     if (stripeStatus.ok) console.log('Stripe: Premium product/prices ready.');
