@@ -2162,6 +2162,14 @@ function createApp(overrides = {}) {
     return res.sendFile(path.join(__dirname, 'calendar-admin.html'));
   });
 
+  app.get('/turkey', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'turkey.html'));
+  });
+
+  app.get('/turkey.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'turkey.html'));
+  });
+
   app.get('/poker', (req, res) => {
     return res.sendFile(path.join(__dirname, 'poker.html'));
   });

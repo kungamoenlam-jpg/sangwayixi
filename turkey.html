@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Turkey</title>
+<meta name="description" content="A self-report credit score for your attention — track what you have open, and take the hit when you open Instagram.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#12151c; --surface:#1a1e28; --ink:#eef1f7; --muted:#8891a3; --line:rgba(255,255,255,.1);
+  --good:#3FAE72; --fair:#E8A33D; --poor:#E1584B;
+  --font-display:'Space Grotesk',sans-serif; --font-body:'Inter',sans-serif; --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--font-body);background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px 16px 60px}
+a{color:var(--muted)}
+.top{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:460px;margin-bottom:22px}
+.brand{font-family:var(--font-display);font-weight:700;font-size:15px;text-decoration:none;color:var(--muted)}
+.wrap{width:100%;max-width:460px;display:flex;flex-direction:column;gap:16px}
+
+.scoreCard{background:radial-gradient(ellipse at top,rgba(255,255,255,.04),transparent 60%),var(--surface);border:1px solid var(--line);border-radius:20px;padding:28px 24px;text-align:center;position:relative;overflow:hidden}
+.scoreNum{font-family:var(--font-mono);font-weight:700;font-size:64px;line-height:1;font-variant-numeric:tabular-nums;transition:color .3s}
+.scoreTier{font-family:var(--font-display);font-weight:700;font-size:15px;letter-spacing:.02em;margin-top:6px;transition:color .3s}
+.scoreBar{height:8px;border-radius:999px;background:rgba(255,255,255,.08);margin-top:16px;overflow:hidden}
+.scoreBarFill{height:100%;border-radius:999px;transition:width .4s ease,background .3s}
+.scoreRange{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10.5px;color:var(--muted);margin-top:4px}
+.flash{position:absolute;top:18px;right:20px;font-family:var(--font-mono);font-weight:700;font-size:14px;color:var(--poor);opacity:0;transform:translateY(0);pointer-events:none}
+.flash.show{animation:flashPop 1.6s ease forwards}
+@keyframes flashPop{0%{opacity:0;transform:translateY(6px)}15%{opacity:1;transform:translateY(0)}80%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}
+
+.statsRow{display:flex;gap:10px}
+.statChip{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;text-align:center}
+.statChip .n{font-family:var(--font-mono);font-weight:700;font-size:20px}
+.statChip .l{font-size:11px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.04em}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px 20px 20px}
+.cardTitle{font-family:var(--font-display);font-weight:700;font-size:15px;margin-bottom:4px}
+.cardSub{font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.5}
+
+.addRow{display:flex;gap:8px}
+.addRow input{flex:1;font-family:var(--font-body);font-size:14px;padding:11px 13px;border-radius:10px;border:1.5px solid var(--line);background:rgba(0,0,0,.2);color:var(--ink);outline:none}
+.addRow input:focus{border-color:var(--muted)}
+.addRow button{all:unset;cursor:pointer;font-family:var(--font-display);font-weight:700;font-size:13.5px;padding:11px 16px;border-radius:10px;background:var(--ink);color:var(--bg)}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:999px;padding:7px 8px 7px 14px;font-size:13px}
+.chip.ig{background:rgba(225,88,75,.14);border-color:rgba(225,88,75,.35);color:#ffb3ab}
+.chip button{all:unset;cursor:pointer;width:20px;height:20px;display:grid;place-items:center;border-radius:50%;color:inherit;opacity:.7}
+.chip button:hover{opacity:1;background:rgba(255,255,255,.12)}
+.emptyChips{font-size:12.5px;color:var(--muted);padding:4px 0}
+
+.historyList{display:flex;flex-direction:column;gap:6px}
+.historyRow{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:7px 0;border-bottom:1px solid var(--line)}
+.historyRow:last-child{border-bottom:none}
+.historyDate{color:var(--muted);font-family:var(--font-mono);font-size:12px}
+.historyCount{font-family:var(--font-mono);font-weight:700}
+.historyCount.clean{color:var(--good)}
+.historyCount.hit{color:var(--poor)}
+
+.resetRow{text-align:center}
+.resetBtn{all:unset;cursor:pointer;font-size:12px;color:var(--muted)}
+.resetBtn:hover{color:var(--poor)}
+
+.note{text-align:center;color:var(--muted);font-size:11.5px;margin-top:4px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <a class="brand" href="/">← kunga.me</a>
+  <a class="brand" href="#" id="resetLink">Reset</a>
+</div>
+
+<div class="wrap">
+  <div class="scoreCard">
+    <div class="flash" id="flash">−15</div>
+    <div class="scoreNum" id="scoreNum">850</div>
+    <div class="scoreTier" id="scoreTier">EXCELLENT</div>
+    <div class="scoreBar"><div class="scoreBarFill" id="scoreBarFill"></div></div>
+    <div class="scoreRange"><span>300</span><span>850</span></div>
+  </div>
+
+  <div class="statsRow">
+    <div class="statChip"><div class="n" id="streakNum">0</div><div class="l">Day streak</div></div>
+    <div class="statChip"><div class="n" id="todayNum">0</div><div class="l">Opens today</div></div>
+  </div>
+
+  <div class="card">
+    <div class="cardTitle">Apps you have open right now</div>
+    <div class="cardSub">Add anything you're actually using. Add "Instagram" and it logs the open and takes the hit — on your honor.</div>
+    <div class="addRow">
+      <input type="text" id="appInput" placeholder="e.g. Instagram, Mail, Spotify…" maxlength="40">
+      <button id="addBtn">Add</button>
+    </div>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="card">
+    <div class="cardTitle">Last 7 days</div>
+    <div class="historyList" id="historyList"></div>
+  </div>
+
+  <p class="note">Tracked only on this device, by you, for you. There's no way for a website to see what's really open on your phone — this only knows what you tell it.</p>
+</div>
+
+<script>
+const LS_KEY = 'turkeyTrackerV1';
+const START_SCORE = 850, MIN_SCORE = 300, MAX_SCORE = 850;
+const HIT = 15, DAILY_BONUS = 10;
+
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function dateKeyFromDate(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function uid(){ return Math.random().toString(36).slice(2,9); }
+
+function defaultState(){
+  return { score: START_SCORE, openApps: [], instagramLog: {}, lastBonusDate: null, firstUseDate: todayStr() };
+}
+function loadState(){
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return defaultState();
+    const parsed = JSON.parse(raw);
+    const base = defaultState();
+    if(parsed && typeof parsed === 'object'){
+      if(typeof parsed.score === 'number') base.score = parsed.score;
+      if(Array.isArray(parsed.openApps)) base.openApps = parsed.openApps;
+      if(parsed.instagramLog && typeof parsed.instagramLog === 'object') base.instagramLog = parsed.instagramLog;
+      if(parsed.lastBonusDate) base.lastBonusDate = parsed.lastBonusDate;
+      // Older saves made before firstUseDate existed: back-date it to the
+      // earliest logged day rather than "today", so an existing streak
+      // isn't silently wiped out by the fix below.
+      if(parsed.firstUseDate) base.firstUseDate = parsed.firstUseDate;
+      else{
+        const loggedDays = Object.keys(base.instagramLog).sort();
+        if(loggedDays.length) base.firstUseDate = loggedDays[0];
+      }
+    }
+    return base;
+  }catch(e){ return defaultState(); }
+}
+let state = loadState();
+function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
+
+// Daily bonus: the day after a clean day (zero Instagram opens) that hasn't
+// already been credited bumps the score back up a little, so the tracker
+// rewards good days instead of only ever punishing bad ones.
+function applyDailyBonusIfDue(){
+  const today = todayStr();
+  if(state.lastBonusDate === today) return;
+  const y = new Date(); y.setDate(y.getDate()-1);
+  const yKey = dateKeyFromDate(y);
+  const yesterdayOpens = state.instagramLog[yKey] || 0;
+  // Only credit once we actually have a "yesterday" to judge (not on the
+  // very first visit, where lastBonusDate is null and there's no history).
+  if(state.lastBonusDate !== null && yesterdayOpens === 0){
+    state.score = Math.min(MAX_SCORE, state.score + DAILY_BONUS);
+  }
+  state.lastBonusDate = today;
+  save();
+}
+
+function tierFor(score){
+  if(score >= 800) return { label:'EXCELLENT', color:'var(--good)' };
+  if(score >= 670) return { label:'GOOD', color:'var(--good)' };
+  if(score >= 580) return { label:'FAIR', color:'var(--fair)' };
+  return { label:'POOR', color:'var(--poor)' };
+}
+
+function computeStreak(){
+  // Only whole, completed past days count -- today is still in progress
+  // (a clean "so far" isn't a clean day yet), so the walk always starts at
+  // yesterday regardless of today's state.
+  let streak = 0;
+  let d = new Date(); d.setDate(d.getDate()-1);
+  while(true){
+    const key = dateKeyFromDate(d);
+    if(key < state.firstUseDate) break; // never count days before tracking began
+    const opens = state.instagramLog[key] || 0;
+    if(opens === 0){ streak++; d.setDate(d.getDate()-1); } else break;
+  }
+  return streak;
+}
+
+function renderScore(){
+  const tier = tierFor(state.score);
+  document.getElementById('scoreNum').textContent = state.score;
+  document.getElementById('scoreNum').style.color = tier.color;
+  document.getElementById('scoreTier').textContent = tier.label;
+  document.getElementById('scoreTier').style.color = tier.color;
+  const pct = Math.round(((state.score - MIN_SCORE) / (MAX_SCORE - MIN_SCORE)) * 100);
+  const fill = document.getElementById('scoreBarFill');
+  fill.style.width = pct + '%';
+  fill.style.background = tier.color;
+  document.getElementById('streakNum').textContent = computeStreak();
+  document.getElementById('todayNum').textContent = state.instagramLog[todayStr()] || 0;
+}
+
+function renderChips(){
+  const chips = document.getElementById('chips');
+  if(!state.openApps.length){
+    chips.innerHTML = '<div class="emptyChips">Nothing added yet.</div>';
+    return;
+  }
+  chips.innerHTML = state.openApps.map(a => `
+    <div class="chip ${a.name.toLowerCase()==='instagram' ? 'ig' : ''}" data-id="${a.id}">
+      <span>${esc(a.name)}</span>
+      <button data-remove="${a.id}" aria-label="Remove">×</button>
+    </div>`).join('');
+  chips.querySelectorAll('[data-remove]').forEach(btn => {
+    btn.onclick = () => removeApp(btn.dataset.remove);
+  });
+}
+
+function renderHistory(){
+  const list = document.getElementById('historyList');
+  const rows = [];
+  for(let i=0;i<7;i++){
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const key = dateKeyFromDate(d);
+    const count = state.instagramLog[key] || 0;
+    const label = i===0 ? 'Today' : d.toLocaleDateString(undefined,{weekday:'short', month:'short', day:'numeric'});
+    rows.push({label, count});
+  }
+  list.innerHTML = rows.map(r => `
+    <div class="historyRow">
+      <span class="historyDate">${esc(r.label)}</span>
+      <span class="historyCount ${r.count===0?'clean':'hit'}">${r.count===0?'Clean':r.count+' open'+(r.count===1?'':'s')}</span>
+    </div>`).join('');
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function flashHit(){
+  const el = document.getElementById('flash');
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+}
+
+function addApp(){
+  const input = document.getElementById('appInput');
+  const name = input.value.trim();
+  if(!name) return;
+  state.openApps.push({ id: uid(), name });
+  if(name.toLowerCase() === 'instagram'){
+    const key = todayStr();
+    state.instagramLog[key] = (state.instagramLog[key] || 0) + 1;
+    state.score = Math.max(MIN_SCORE, state.score - HIT);
+    flashHit();
+  }
+  input.value = '';
+  save();
+  renderAll();
+}
+
+function removeApp(id){
+  state.openApps = state.openApps.filter(a => a.id !== id);
+  save();
+  renderChips();
+}
+
+document.getElementById('addBtn').onclick = addApp;
+document.getElementById('appInput').addEventListener('keydown', e => { if(e.key==='Enter') addApp(); });
+document.getElementById('resetLink').onclick = (e) => {
+  e.preventDefault();
+  if(!confirm('Reset your score, open-apps list, and history? This cannot be undone.')) return;
+  state = defaultState();
+  save();
+  renderAll();
+};
+
+function renderAll(){
+  renderScore();
+  renderChips();
+  renderHistory();
+}
+
+applyDailyBonusIfDue();
+renderAll();
+</script>
+</body>
+</html>
