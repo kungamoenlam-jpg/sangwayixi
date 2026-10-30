@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kunga's Camera</title>
+<meta name="description" content="A live camera with color filters, flower overlays, brightness/contrast, and a focal-length slider that flatters your face.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#12213B;--sky-deep:#0d1a30;--sky-mid:#1b2e52;--snow:#F5F8FC;--snow-dim:#b9c4d8;
+  --gold:#E8A33D;--pink:#ff6fae;--bad:#E1584B;
+  --font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;--font-mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--font-body);background:linear-gradient(180deg,var(--sky-deep),var(--sky-mid) 60%,var(--sky-deep));color:var(--snow);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 16px 50px}
+a{color:var(--gold)}
+.top{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:520px;margin-bottom:16px}
+.brand{font-family:var(--font-display);font-weight:700;font-size:15px;text-decoration:none;color:var(--snow-dim)}
+.title{font-family:var(--font-display);font-weight:700;font-size:15px}
+
+.wrap{width:100%;max-width:520px;display:flex;flex-direction:column;gap:14px}
+
+.stage{position:relative;width:100%;aspect-ratio:3/4;border-radius:18px;overflow:hidden;background:#000;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+#outCanvas{width:100%;height:100%;display:block;object-fit:cover}
+.stageState{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:30px;background:rgba(13,26,48,.92)}
+.stageState .glyph{font-size:44px}
+.stageState p{color:var(--snow-dim);font-size:14px;line-height:1.6;margin:0;max-width:32ch}
+.startBtn{all:unset;cursor:pointer;font-family:var(--font-display);font-weight:700;font-size:14px;padding:12px 24px;border-radius:999px;background:var(--gold);color:var(--ink)}
+.flashOverlay{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.flashOverlay.go{animation:flashFade .35s ease forwards}
+@keyframes flashFade{0%{opacity:.85}100%{opacity:0}}
+
+.panel{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px 16px}
+.panelTitle{font-family:var(--font-display);font-weight:700;font-size:12.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--snow-dim);margin-bottom:10px}
+
+.chipRow{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.chipRow::-webkit-scrollbar{display:none}
+.chip{all:unset;box-sizing:border-box;flex-shrink:0;cursor:pointer;font-size:12.5px;font-weight:600;padding:9px 15px;border-radius:999px;background:rgba(255,255,255,.07);color:var(--snow-dim);border:1.5px solid transparent;white-space:nowrap}
+.chip.sel{background:rgba(232,163,61,.16);border-color:var(--gold);color:var(--gold)}
+.chip.pink.sel{background:rgba(255,111,174,.16);border-color:var(--pink);color:var(--pink)}
+
+.sliderRow{display:grid;grid-template-columns:86px 1fr 46px;align-items:center;gap:10px;margin-bottom:12px}
+.sliderRow:last-child{margin-bottom:0}
+.sliderRow label{font-size:12.5px;color:var(--snow-dim)}
+.sliderRow input[type=range]{width:100%;accent-color:var(--gold)}
+.sliderRow output{font-family:var(--font-mono);font-size:11.5px;color:var(--snow-dim);text-align:right}
+.focalHint{font-size:11.5px;color:var(--snow-dim);line-height:1.5;margin-top:2px}
+
+.actionRow{display:flex;gap:10px;align-items:center}
+.iconBtn{all:unset;cursor:pointer;width:44px;height:44px;flex-shrink:0;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.08);font-size:18px}
+.iconBtn.sel{background:rgba(232,163,61,.2);color:var(--gold)}
+.captureBtn{all:unset;box-sizing:border-box;cursor:pointer;flex:1;text-align:center;font-family:var(--font-display);font-weight:700;font-size:15px;padding:14px;border-radius:999px;background:var(--gold);color:var(--ink)}
+.captureBtn:disabled{opacity:.4;cursor:default}
+
+.note{text-align:center;color:var(--snow-dim);font-size:11.5px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <a class="brand" href="/">← kunga.me</a>
+  <div class="title">📷 Kunga's Camera</div>
+  <span style="width:60px"></span>
+</div>
+
+<div class="wrap">
+  <div class="stage" id="stage">
+    <canvas id="outCanvas" width="720" height="960"></canvas>
+    <div class="flashOverlay" id="flashOverlay"></div>
+    <div class="stageState" id="stageState">
+      <div class="glyph">📷</div>
+      <p>Kunga's Camera needs access to your camera. Nothing is uploaded — filters run entirely in your browser.</p>
+      <button class="startBtn" id="startBtn">Turn on camera</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panelTitle">Style</div>
+    <div class="chipRow" id="styleChips"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panelTitle">Flowers</div>
+    <div class="chipRow" id="flowerChips"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panelTitle">Adjust</div>
+    <div class="sliderRow">
+      <label for="brightnessSlider">Brightness</label>
+      <input type="range" id="brightnessSlider" min="50" max="150" value="100">
+      <output id="brightnessOut">100%</output>
+    </div>
+    <div class="sliderRow">
+      <label for="contrastSlider">Contrast</label>
+      <input type="range" id="contrastSlider" min="50" max="150" value="100">
+      <output id="contrastOut">100%</output>
+    </div>
+    <div class="sliderRow">
+      <label for="saturationSlider">Saturation</label>
+      <input type="range" id="saturationSlider" min="0" max="200" value="100">
+      <output id="saturationOut">100%</output>
+    </div>
+    <div class="sliderRow">
+      <label for="focalSlider">Focal length</label>
+      <input type="range" id="focalSlider" min="24" max="135" value="50">
+      <output id="focalOut">50mm</output>
+    </div>
+    <div class="focalHint" id="focalHint">A normal lens — no extra flattering or wide-angle distortion.</div>
+  </div>
+
+  <div class="panel">
+    <div class="actionRow">
+      <button class="iconBtn sel" id="mirrorBtn" title="Mirror preview">🪞</button>
+      <button class="iconBtn" id="switchBtn" title="Switch camera" hidden>🔄</button>
+      <button class="captureBtn" id="captureBtn" disabled>Take photo</button>
+    </div>
+  </div>
+
+  <p class="note">Everything here — the camera feed, the filters, your photos — stays on this device. Nothing is sent to kunga.me.</p>
+</div>
+
+<script>
+const video = document.createElement('video');
+video.autoplay = true; video.muted = true; video.playsInline = true;
+
+const outCanvas = document.getElementById('outCanvas');
+const outCtx = outCanvas.getContext('2d');
+const srcCanvas = document.createElement('canvas');
+const srcCtx = srcCanvas.getContext('2d');
+
+const CW = outCanvas.width, CH = outCanvas.height;
+srcCanvas.width = CW; srcCanvas.height = CH;
+
+let stream = null;
+let running = false;
+let mirrored = true;
+let currentDeviceIndex = 0;
+let videoDevices = [];
+
+const STYLES = [
+  { key:'none', label:'Normal', filter:'', tint:null },
+  { key:'bw', label:'B&W', filter:'grayscale(100%)', tint:null },
+  { key:'noir', label:'Noir', filter:'grayscale(100%) contrast(125%) brightness(92%)', tint:null },
+  { key:'vintage', label:'Vintage', filter:'sepia(55%) contrast(92%) brightness(104%) saturate(115%)', tint:null },
+  { key:'vivid', label:'Vivid', filter:'saturate(165%) contrast(112%)', tint:null },
+  { key:'fade', label:'Fade', filter:'contrast(85%) brightness(112%) saturate(78%)', tint:'rgba(255,255,255,0.12)' },
+  { key:'warm', label:'Warm', filter:'brightness(104%)', tint:'rgba(255,170,90,0.14)' },
+  { key:'cool', label:'Cool', filter:'brightness(102%)', tint:'rgba(110,170,255,0.14)' },
+];
+let activeStyle = STYLES[0];
+
+let flowerFrame = false;
+let flowerPetals = false;
+let flowerCrown = false;
+let crownPos = { x: CW/2, y: CH*0.28 };
+let draggingCrown = false;
+
+let brightness = 100, contrast = 100, saturation = 100;
+let focalMM = 50;
+
+// ---- petal particle system ----
+const petals = [];
+function spawnPetal(){
+  return {
+    x: Math.random()*CW, y: -20 - Math.random()*200,
+    vy: 40 + Math.random()*40, vx: (Math.random()-0.5)*30,
+    size: 10 + Math.random()*14, rot: Math.random()*Math.PI*2, rotSpeed: (Math.random()-0.5)*2,
+    hue: [340, 350, 10, 320][Math.floor(Math.random()*4)],
+  };
+}
+for(let i=0;i<16;i++) petals.push(spawnPetal());
+
+function drawFlower(ctx, x, y, size, hue){
+  ctx.save();
+  ctx.translate(x, y);
+  for(let i=0;i<6;i++){
+    ctx.save();
+    ctx.rotate((Math.PI*2/6)*i);
+    ctx.beginPath();
+    ctx.ellipse(0, -size*0.55, size*0.42, size*0.62, 0, 0, Math.PI*2);
+    ctx.fillStyle = `hsl(${hue}, 80%, 72%)`;
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.beginPath();
+  ctx.arc(0, 0, size*0.34, 0, Math.PI*2);
+  ctx.fillStyle = `hsl(${hue+40}, 85%, 60%)`;
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawPetal(ctx, p){
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(p.rot);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, p.size*0.45, p.size, 0, 0, Math.PI*2);
+  ctx.fillStyle = `hsla(${p.hue}, 85%, 75%, 0.85)`;
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawFlowerOverlays(ctx, dt){
+  if(flowerFrame){
+    const hues = [340, 20, 300, 350];
+    const spots = [];
+    const marginX = CW*0.09, marginY = CH*0.07;
+    for(let i=0;i<6;i++) spots.push({x: marginX + (CW-2*marginX)*(i/5), y: marginY*0.6});
+    for(let i=0;i<6;i++) spots.push({x: marginX + (CW-2*marginX)*(i/5), y: CH - marginY*0.6});
+    for(let i=0;i<4;i++) spots.push({x: marginX*0.5, y: marginY + (CH-2*marginY)*(i/3)});
+    for(let i=0;i<4;i++) spots.push({x: CW - marginX*0.5, y: marginY + (CH-2*marginY)*(i/3)});
+    spots.forEach((s, i) => drawFlower(ctx, s.x, s.y, 30, hues[i % hues.length]));
+  }
+  if(flowerPetals){
+    petals.forEach(p => {
+      p.y += p.vy*dt; p.x += p.vx*dt; p.rot += p.rotSpeed*dt;
+      if(p.y > CH+30){ Object.assign(p, spawnPetal(), { y: -20 }); }
+      drawPetal(ctx, p);
+    });
+  }
+  if(flowerCrown){
+    const base = crownPos;
+    const offsets = [[-70,-6],[-40,-26],[0,-34],[40,-26],[70,-6]];
+    offsets.forEach(([dx,dy], i) => drawFlower(ctx, base.x+dx, base.y+dy, 26, [340,20,300,350,10][i]));
+  }
+}
+
+// ---- horizontal-strip "slim face" warp: a cheap, face-tracking-free
+// approximation of what a longer portrait lens actually sells people on --
+// a gentle horizontal compression centered on the frame, strongest in the
+// upper-middle band where a face usually sits in a selfie, tapering to
+// nothing at top/bottom. Not a real optical simulation; the UI copy says so. --
+function applyFocalWarp(destCtx, srcC, strength){
+  if(strength <= 0.001){
+    destCtx.drawImage(srcC, 0, 0);
+    return;
+  }
+  const stripH = 6;
+  const cx = CW/2;
+  for(let y=0; y<CH; y+=stripH){
+    const h = Math.min(stripH, CH-y);
+    const centerY = y + h/2;
+    const t = centerY / CH; // 0..1
+    // bell-ish falloff peaking around the upper-middle (face zone)
+    const falloff = Math.exp(-Math.pow((t-0.38)/0.28, 2));
+    const scale = 1 - strength*0.16*falloff;
+    const destW = CW*scale;
+    const destX = cx - destW/2;
+    destCtx.drawImage(srcC, 0, y, CW, h, destX, y, destW, h);
+  }
+}
+
+function focalToParams(mm){
+  const t = Math.max(0, Math.min(1, (mm-24)/(135-24)));
+  const zoom = 1 + t*0.55;         // digital zoom-in as focal length grows
+  const slim = Math.max(0, (mm-50)/(135-50)); // slimming kicks in past "normal" 50mm
+  return { zoom, slim };
+}
+function focalHintText(mm){
+  if(mm < 35) return 'Wide angle — close-up distortion, nothing hidden.';
+  if(mm < 55) return 'A normal lens — no extra flattering or wide-angle distortion.';
+  if(mm < 90) return 'A short portrait lens — mild flattering compression.';
+  return 'A true portrait telephoto — maximum flattering, minimal distortion.';
+}
+
+function filterString(){
+  const base = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
+  return activeStyle.filter ? `${base} ${activeStyle.filter}` : base;
+}
+
+let lastT = performance.now();
+function frame(now){
+  if(!running) return;
+  const dt = Math.min(0.05, (now-lastT)/1000);
+  lastT = now;
+
+  if(video.readyState >= 2){
+    const vw = video.videoWidth, vh = video.videoHeight;
+    const targetAR = CW/CH;
+    let sw = vw, sh = vw/targetAR;
+    if(sh > vh){ sh = vh; sw = vh*targetAR; }
+    const { zoom } = focalToParams(focalMM);
+    sw /= zoom; sh /= zoom;
+    const sx = (vw-sw)/2, sy = (vh-sh)/2;
+
+    srcCtx.save();
+    srcCtx.filter = filterString();
+    if(mirrored){ srcCtx.translate(CW,0); srcCtx.scale(-1,1); }
+    srcCtx.drawImage(video, sx, sy, sw, sh, 0, 0, CW, CH);
+    srcCtx.restore();
+
+    if(activeStyle.tint){
+      srcCtx.save();
+      srcCtx.globalCompositeOperation = 'overlay';
+      srcCtx.fillStyle = activeStyle.tint;
+      srcCtx.fillRect(0,0,CW,CH);
+      srcCtx.restore();
+    }
+
+    const { slim } = focalToParams(focalMM);
+    applyFocalWarp(outCtx, srcCanvas, slim);
+    drawFlowerOverlays(outCtx, dt);
+  }
+  requestAnimationFrame(frame);
+}
+
+async function startCamera(deviceId){
+  try{
+    if(stream) stream.getTracks().forEach(t => t.stop());
+    const constraints = { video: deviceId ? { deviceId:{exact:deviceId} } : { facingMode:'user' }, audio:false };
+    stream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = stream;
+    await video.play();
+    document.getElementById('stageState').style.display = 'none';
+    document.getElementById('captureBtn').disabled = false;
+    running = true;
+    lastT = performance.now();
+    requestAnimationFrame(frame);
+
+    try{
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      videoDevices = devices.filter(d => d.kind === 'videoinput');
+      document.getElementById('switchBtn').hidden = videoDevices.length < 2;
+    }catch(e){}
+  }catch(err){
+    const stageState = document.getElementById('stageState');
+    stageState.style.display = 'flex';
+    stageState.innerHTML = `
+      <div class="glyph">🚫</div>
+      <p>Couldn't access the camera (${esc(err.message || err.name || 'unknown error')}). Check your browser's permission settings and try again.</p>
+      <button class="startBtn" id="startBtn">Try again</button>`;
+    document.getElementById('startBtn').onclick = () => startCamera();
+  }
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+document.getElementById('startBtn').onclick = () => startCamera();
+
+document.getElementById('switchBtn').onclick = () => {
+  if(videoDevices.length < 2) return;
+  currentDeviceIndex = (currentDeviceIndex+1) % videoDevices.length;
+  startCamera(videoDevices[currentDeviceIndex].deviceId);
+};
+
+document.getElementById('mirrorBtn').onclick = (e) => {
+  mirrored = !mirrored;
+  e.currentTarget.classList.toggle('sel', mirrored);
+};
+
+// Style chips
+const styleChips = document.getElementById('styleChips');
+styleChips.innerHTML = STYLES.map(s => `<button class="chip ${s===activeStyle?'sel':''}" data-key="${s.key}">${s.label}</button>`).join('');
+styleChips.querySelectorAll('.chip').forEach(btn => {
+  btn.onclick = () => {
+    activeStyle = STYLES.find(s => s.key === btn.dataset.key);
+    styleChips.querySelectorAll('.chip').forEach(b => b.classList.toggle('sel', b===btn));
+  };
+});
+
+// Flower chips (independently toggleable)
+const FLOWERS = [
+  { key:'frame', label:'🌸 Frame' },
+  { key:'petals', label:'🌼 Falling petals' },
+  { key:'crown', label:'💐 Crown (drag me)' },
+];
+const flowerChips = document.getElementById('flowerChips');
+flowerChips.innerHTML = FLOWERS.map(f => `<button class="chip pink" data-key="${f.key}">${f.label}</button>`).join('');
+flowerChips.querySelectorAll('.chip').forEach(btn => {
+  btn.onclick = () => {
+    const key = btn.dataset.key;
+    if(key==='frame') flowerFrame = !flowerFrame;
+    if(key==='petals') flowerPetals = !flowerPetals;
+    if(key==='crown') flowerCrown = !flowerCrown;
+    btn.classList.toggle('sel');
+  };
+});
+
+// Sliders
+function wireSlider(id, outId, onChange, suffix){
+  const el = document.getElementById(id), out = document.getElementById(outId);
+  el.addEventListener('input', () => {
+    out.textContent = el.value + (suffix || '%');
+    onChange(Number(el.value));
+  });
+}
+wireSlider('brightnessSlider', 'brightnessOut', v => brightness = v);
+wireSlider('contrastSlider', 'contrastOut', v => contrast = v);
+wireSlider('saturationSlider', 'saturationOut', v => saturation = v);
+wireSlider('focalSlider', 'focalOut', v => {
+  focalMM = v;
+  document.getElementById('focalHint').textContent = focalHintText(v);
+}, 'mm');
+
+// Draggable flower crown (pointer events on the stage, mapped into canvas coordinates)
+const stage = document.getElementById('stage');
+function stageToCanvas(clientX, clientY){
+  const rect = outCanvas.getBoundingClientRect();
+  return { x: (clientX-rect.left)/rect.width*CW, y: (clientY-rect.top)/rect.height*CH };
+}
+stage.addEventListener('pointerdown', (e) => {
+  if(!flowerCrown) return;
+  const p = stageToCanvas(e.clientX, e.clientY);
+  if(Math.hypot(p.x-crownPos.x, p.y-crownPos.y) < 90){ draggingCrown = true; stage.setPointerCapture(e.pointerId); }
+});
+stage.addEventListener('pointermove', (e) => {
+  if(!draggingCrown) return;
+  crownPos = stageToCanvas(e.clientX, e.clientY);
+});
+stage.addEventListener('pointerup', () => draggingCrown = false);
+stage.addEventListener('pointercancel', () => draggingCrown = false);
+
+// Capture photo
+document.getElementById('captureBtn').onclick = () => {
+  const flash = document.getElementById('flashOverlay');
+  flash.classList.remove('go'); void flash.offsetWidth; flash.classList.add('go');
+  outCanvas.toBlob((blob) => {
+    if(!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `kungas-camera-${Date.now()}.png`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }, 'image/png');
+};
+
+document.getElementById('focalHint').textContent = focalHintText(focalMM);
+</script>
+</body>
+</html>

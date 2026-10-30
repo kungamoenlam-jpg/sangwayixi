@@ -1221,7 +1221,7 @@ const I18N = {
     heroSub: "Create an account to save your progress across devices.",
     phoneHomeSub: "Tap an app to get started.",
     appNotebook: "Kunga's Notebook", appPoker: "Kunga's Poker", appMaths: "Kunga's Maths", appYeshe: "Yeshe",
-    appOptimism: "Daily Optimism", appNews: "Daily News", appDiary: "Kunga's Diary", appTip: "Send Money", appCalendar: "Book a Call", appTurkey: "Turkey", appStore: "Yeshe Store", appMessages: "Message Kunga",
+    appOptimism: "Daily Optimism", appNews: "Daily News", appDiary: "Kunga's Diary", appTip: "Send Money", appCalendar: "Book a Call", appTurkey: "Turkey", appStore: "Yeshe Store", appMessages: "Message Kunga", appCamera: "Kunga's Camera",
     backToHomeScreen: "Back to home screen",
     guestMathSub: "Mental math, algebra, calculus, linear algebra and more — free, no account needed.",
     guestMathSignupNudge: "Create a free account to save your progress and come back to it on any device.",
@@ -5189,6 +5189,7 @@ const HOME_APPS = [
   {key:'turkey', nameKey:'appTurkey', icon:'🦃', bg:'linear-gradient(145deg,#3a3f4b,#16181e)', action:"window.location.href='/turkey'"},
   {key:'store', nameKey:'appStore', icon:'🛍️', bg:'linear-gradient(145deg,#d6559a,#8e2f68)', action:"window.location.href='/store'"},
   {key:'messages', nameKey:'appMessages', icon:'💌', bg:'linear-gradient(145deg,#8b5cf6,#ec4899)', action:"window.location.href='/messages'"},
+  {key:'camera', nameKey:'appCamera', icon:'📷', bg:'linear-gradient(145deg,#ff8fbf,#ff6fae)', action:"window.location.href='/camera'"},
 ];
 function openHomeApp(view){ state.homeView=view; if(view==='auth') state.authMode='signup'; render(); }
 // Setting screen (not just homeView) makes this safe to call from any

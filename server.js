@@ -2821,6 +2821,14 @@ function createApp(overrides = {}) {
     return res.sendFile(path.join(__dirname, 'messages-admin.html'));
   });
 
+  app.get('/camera', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'camera.html'));
+  });
+
+  app.get('/camera.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'camera.html'));
+  });
+
   app.get('/poker', (req, res) => {
     return res.sendFile(path.join(__dirname, 'poker.html'));
   });
