@@ -11,6 +11,25 @@ const { createAvatar } = require('@dicebear/core');
 const { avataaars } = require('@dicebear/collection');
 const sanitizeHtml = require('sanitize-html');
 
+// Safety net: an Express async route handler that throws without its own
+// try/catch produces a genuinely unhandled promise rejection at the Node
+// process level (Express does not await or catch what an async handler
+// returns), and Node's default since v15 is to crash the whole process on
+// one of those -- taking down every route, not just the one that threw.
+// That's exactly what happened in production from a single query against a
+// column a migration had failed to actually add: one request to the
+// booking API crashed the entire server, including completely unrelated
+// routes like the store and the message inbox, until Render restarted it.
+// Logging and surviving here isn't a substitute for fixing the real bug
+// each time, but it stops one broken endpoint from being a whole-site
+// outage while that fix lands.
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled promise rejection (request may have failed, but the server is staying up):', reason);
+});
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught exception (server is staying up):', error);
+});
+
 function hashPassword(value) {
   return crypto.createHash('sha256').update(String(value)).digest('hex');
 }
@@ -524,9 +543,17 @@ function createApp(overrides = {}) {
         booker_name text,
         booker_email text,
         booker_note text,
-        call_type text,
         created_at timestamptz default now()
       );
+    `);
+    // The table above already existed in production before call_type was
+    // added, so "create table if not exists" silently no-ops on it and
+    // never adds the new column -- same reason the users table's own
+    // incrementally-added columns go through a separate alter table block
+    // instead of being edited into its original create statement.
+    await client.query(`
+      alter table public.call_bookings
+        add column if not exists call_type text;
     `);
     await client.query(`
       create table if not exists public.store_products (
