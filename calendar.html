@@ -41,6 +41,9 @@ h1{font-family:var(--font-display);font-size:25px;font-weight:800;margin:0 0 8px
 .card{background:radial-gradient(ellipse at top,rgba(232,163,61,.08),transparent 60%),var(--sky-mid);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:26px 24px;box-shadow:var(--shadow)}
 .selectedTime{font-family:var(--font-display);font-weight:700;font-size:19px;margin-bottom:4px}
 .selectedSub{color:var(--snow-dim);font-size:13px;margin-bottom:18px}
+.callTypeRow{display:flex;gap:8px;margin-bottom:16px}
+.callTypeBtn{all:unset;box-sizing:border-box;flex:1;cursor:pointer;text-align:center;padding:11px 8px;border-radius:12px;background:rgba(255,255,255,.06);border:1.5px solid transparent;font-family:var(--font-display);font-weight:700;font-size:13.5px;color:var(--snow-dim)}
+.callTypeBtn.sel{border-color:var(--gold);background:rgba(232,163,61,.14);color:var(--gold)}
 label.fieldLabel{display:block;font-size:12px;color:var(--snow-dim);margin:0 0 6px;font-weight:600}
 input[type=text],input[type=email],textarea{width:100%;font-family:var(--font-body);font-size:14px;padding:11px 13px;border-radius:10px;border:1.5px solid rgba(255,255,255,.1);background:rgba(0,0,0,.22);color:var(--snow);outline:none;margin-bottom:16px;resize:vertical}
 input:focus,textarea:focus{border-color:var(--gold)}
@@ -80,8 +83,9 @@ function timeLabel(d){
 }
 
 let allSlots = [];
-let priceCents = 5000;
+let pricePerHourCents = 5000;
 let selectedSlot = null;
+let selectedCallType = 'voice';
 
 async function renderList(bannerHtml){
   const view = document.getElementById('view');
@@ -89,8 +93,8 @@ async function renderList(bannerHtml){
     <div class="hero">
       <div class="heroGlyph">📅</div>
       <h1>Book a call with Kunga</h1>
-      <p class="sub">Pick a time that works for you. 1:1, paid at booking.</p>
-      <div class="priceTag" id="priceTag">$50 per call</div>
+      <p class="sub">Talk about anything — advice, a chat, company, whatever's on your mind. Voice or video, paid at booking.</p>
+      <div class="priceTag" id="priceTag">$50 / hour</div>
     </div>
     ${bannerHtml || ''}
     <div id="slotsArea"><div class="loadingState">Loading open times…</div></div>
@@ -100,8 +104,8 @@ async function renderList(bannerHtml){
     const resp = await fetch('/api/booking/slots');
     const data = await resp.json();
     allSlots = data.slots || [];
-    priceCents = data.priceCents || priceCents;
-    document.getElementById('priceTag').textContent = fmtPrice(priceCents) + ' per call';
+    pricePerHourCents = data.pricePerHourCents || pricePerHourCents;
+    document.getElementById('priceTag').textContent = fmtPrice(pricePerHourCents) + ' / hour';
     renderSlots();
   }catch(e){
     document.getElementById('slotsArea').innerHTML = `<div class="emptyState">Couldn't load open times. Try again shortly.</div>`;
@@ -132,7 +136,7 @@ function renderSlots(){
             <div class="slotTime">${esc(timeLabel(date))}</div>
             <div class="slotDuration">${slot.durationMinutes} min call</div>
           </div>
-          <button class="slotBookBtn" data-id="${slot.id}">Book — ${fmtPrice(priceCents)}</button>
+          <button class="slotBookBtn" data-id="${slot.id}">Book — ${fmtPrice(slot.priceCents)}</button>
         </div>`;
     });
     html += `</div>`;
@@ -147,19 +151,25 @@ function openBookForm(id){
   const found = allSlots.find(s => s.id === id);
   if(!found) return;
   selectedSlot = found;
+  selectedCallType = 'voice';
   const date = new Date(found.datetime);
   const view = document.getElementById('view');
   view.innerHTML = `
     <div class="card">
       <div class="selectedTime">${esc(dayKey(date))}, ${esc(timeLabel(date))}</div>
-      <div class="selectedSub">${found.durationMinutes} min call · ${fmtPrice(priceCents)}</div>
+      <div class="selectedSub">${found.durationMinutes} min call · ${fmtPrice(found.priceCents)}</div>
+      <label class="fieldLabel">Call type</label>
+      <div class="callTypeRow">
+        <button type="button" class="callTypeBtn sel" id="voiceBtn" data-type="voice">🎙️ Voice</button>
+        <button type="button" class="callTypeBtn" id="videoBtn" data-type="video">🎥 Video</button>
+      </div>
       <label class="fieldLabel" for="nameInput">Your name</label>
       <input type="text" id="nameInput" placeholder="Full name" maxlength="80">
       <label class="fieldLabel" for="emailInput">Your email</label>
       <input type="email" id="emailInput" placeholder="you@example.com" maxlength="200">
       <label class="fieldLabel" for="noteInput">What do you want to talk about? (optional)</label>
-      <textarea id="noteInput" rows="3" maxlength="500" placeholder="A couple of lines so Kunga can prep…"></textarea>
-      <button class="sendBtn" id="bookBtn">Pay ${fmtPrice(priceCents)} &amp; book</button>
+      <textarea id="noteInput" rows="3" maxlength="500" placeholder="Could be anything — advice, a chat, company, a project you're working on…"></textarea>
+      <button class="sendBtn" id="bookBtn">Pay ${fmtPrice(found.priceCents)} &amp; book</button>
       <button class="secondary" id="backBtn">← Choose a different time</button>
       <div id="errorBox"></div>
     </div>
@@ -167,6 +177,12 @@ function openBookForm(id){
   `;
   document.getElementById('backBtn').onclick = () => renderList();
   document.getElementById('bookBtn').onclick = submitBooking;
+  document.querySelectorAll('.callTypeBtn').forEach(btn => {
+    btn.onclick = () => {
+      selectedCallType = btn.dataset.type;
+      document.querySelectorAll('.callTypeBtn').forEach(b => b.classList.toggle('sel', b === btn));
+    };
+  });
 }
 
 async function submitBooking(){
@@ -179,26 +195,27 @@ async function submitBooking(){
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ errorBox.innerHTML = `<div class="errorBox">Please enter a valid email.</div>`; return; }
 
   const bookBtn = document.getElementById('bookBtn');
+  const payLabel = `Pay ${fmtPrice(selectedSlot.priceCents)} & book`;
   bookBtn.disabled = true;
   bookBtn.textContent = 'Starting checkout…';
   try{
     const resp = await fetch('/api/booking/checkout', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ slotId: selectedSlot.id, name, email, note }),
+      body: JSON.stringify({ slotId: selectedSlot.id, name, email, note, callType: selectedCallType }),
     });
     const data = await resp.json();
     if(!resp.ok || !data.url){
       errorBox.innerHTML = `<div class="errorBox">${esc(data.error || 'Something went wrong.')}</div>`;
       bookBtn.disabled = false;
-      bookBtn.textContent = `Pay ${fmtPrice(priceCents)} & book`;
+      bookBtn.textContent = payLabel;
       return;
     }
     location.href = data.url;
   }catch(e){
     errorBox.innerHTML = `<div class="errorBox">Network error — try again.</div>`;
     bookBtn.disabled = false;
-    bookBtn.textContent = `Pay ${fmtPrice(priceCents)} & book`;
+    bookBtn.textContent = payLabel;
   }
 }
 

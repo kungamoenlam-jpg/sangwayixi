@@ -76,7 +76,7 @@ button:disabled{opacity:.5;cursor:default}
       </select>
       <div class="actions"><button id="addBtn">Add slot</button></div>
       <div class="msg" id="addMsg"></div>
-      <div class="hint">Slots show as $50 bookings on the public page the moment you add them.</div>
+      <div class="hint">Priced at $50/hour (e.g. a 30-min slot is $25). Slots appear on the public page the moment you add them.</div>
     </div>
 
     <div class="panel">
@@ -126,12 +126,16 @@ function fmtWhen(iso){
 }
 function esc(s){ return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+const CALL_PRICE_PER_HOUR_CENTS = 5000;
+function priceFor(durationMinutes){ return Math.round((CALL_PRICE_PER_HOUR_CENTS * durationMinutes) / 60); }
+function fmtPrice(cents){ return '$' + (cents/100).toFixed(cents % 100 === 0 ? 0 : 2); }
+
 function renderSlots(slots){
   if(!slots.length){ slotList.innerHTML = '<div class="empty">No slots yet — add one above.</div>'; return; }
   slotList.innerHTML = slots.map(s => {
     const bookerHtml = s.status === 'booked'
       ? `<div class="bookerInfo">
-          <div><b>${esc(s.bookerName)}</b> — ${esc(s.bookerEmail)}</div>
+          <div><b>${esc(s.bookerName)}</b> — ${esc(s.bookerEmail)} · ${s.callType === 'video' ? '🎥 Video' : '🎙️ Voice'}</div>
           ${s.bookerNote ? `<div>"${esc(s.bookerNote)}"</div>` : ''}
         </div>`
       : '';
@@ -139,7 +143,7 @@ function renderSlots(slots){
       <div class="slotRow">
         <div>
           <div class="slotWhen">${esc(fmtWhen(s.datetime))}<span class="statusBadge ${s.status}">${s.status}</span></div>
-          <div class="slotMeta">${s.durationMinutes} min</div>
+          <div class="slotMeta">${s.durationMinutes} min · ${fmtPrice(priceFor(s.durationMinutes))}</div>
           ${bookerHtml}
         </div>
         <div class="slotBtns">

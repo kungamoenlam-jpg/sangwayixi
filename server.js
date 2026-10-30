@@ -524,6 +524,7 @@ function createApp(overrides = {}) {
         booker_name text,
         booker_email text,
         booker_note text,
+        call_type text,
         created_at timestamptz default now()
       );
     `);
@@ -970,7 +971,7 @@ function createApp(overrides = {}) {
   const BOOKING_SELECT_SQL = `id, datetime, duration_minutes as "durationMinutes", status,
     checkout_session_id as "checkoutSessionId", hold_expires_at as "holdExpiresAt",
     booker_name as "bookerName", booker_email as "bookerEmail", booker_note as "bookerNote",
-    created_at as "createdAt"`;
+    call_type as "callType", created_at as "createdAt"`;
 
   async function createSlot({ datetime, durationMinutes }) {
     const client = await getDbClient();
@@ -986,7 +987,7 @@ function createApp(overrides = {}) {
     const slot = {
       id: data.nextId, datetime, durationMinutes, status: 'open',
       checkoutSessionId: null, holdExpiresAt: null,
-      bookerName: null, bookerEmail: null, bookerNote: null, createdAt,
+      bookerName: null, bookerEmail: null, bookerNote: null, callType: null, createdAt,
     };
     data.slots.push(slot);
     data.nextId += 1;
@@ -1056,13 +1057,13 @@ function createApp(overrides = {}) {
     return slot;
   }
 
-  async function markSlotBooked(checkoutSessionId, { name, email, note }) {
+  async function markSlotBooked(checkoutSessionId, { name, email, note, callType }) {
     const client = await getDbClient();
     if (client) {
       const result = await client.query(
-        `update public.call_bookings set status='booked', booker_name=$2, booker_email=$3, booker_note=$4
+        `update public.call_bookings set status='booked', booker_name=$2, booker_email=$3, booker_note=$4, call_type=$5
          where checkout_session_id=$1 returning ${BOOKING_SELECT_SQL}`,
-        [checkoutSessionId, name, email, note]
+        [checkoutSessionId, name, email, note, callType]
       );
       return result.rows[0] || null;
     }
@@ -1073,6 +1074,7 @@ function createApp(overrides = {}) {
     slot.bookerName = name;
     slot.bookerEmail = email;
     slot.bookerNote = note;
+    slot.callType = callType;
     writeBookingsFile(data);
     return slot;
   }
@@ -1515,6 +1517,7 @@ function createApp(overrides = {}) {
         name: (session.metadata && session.metadata.bookerName) || details.name || '',
         email: (session.metadata && session.metadata.bookerEmail) || details.email || '',
         note: (session.metadata && session.metadata.bookerNote) || '',
+        callType: (session.metadata && session.metadata.callType) || 'voice',
       });
     }
 
@@ -1955,20 +1958,27 @@ function createApp(overrides = {}) {
     }
   });
 
-  // ---- Call booking calendar: a flat $50, fixed-duration slot, paid before
-  //      it's confirmed. Writing (adding/removing open slots) is admin-key
+  // ---- Call booking calendar: $50/hour, scaled to the slot's actual
+  //      duration (a 30-min slot is $25, not a flat $50), paid before it's
+  //      confirmed. Writing (adding/removing open slots) is admin-key
   //      gated, same reasoning as Kunga's Diary -- this is now a monetized
   //      calendar, not a trust-the-client notebook field. Booking itself
   //      needs no account: a visitor gives a name/email so Kunga can follow
   //      up and send the call link himself (there's no email-sending
   //      integration in this codebase to automate that). ---------------------
-  const CALL_PRICE_CENTS = 5000;
+  const CALL_PRICE_PER_HOUR_CENTS = 5000;
   const CALL_HOLD_MINUTES = 30;
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const CALL_TYPES = ['voice', 'video'];
+
+  function callPriceCentsFor(durationMinutes) {
+    return Math.round((CALL_PRICE_PER_HOUR_CENTS * durationMinutes) / 60);
+  }
 
   app.get('/api/booking/slots', async (req, res) => {
     const slots = await listOpenSlots();
-    return res.json({ slots, priceCents: CALL_PRICE_CENTS });
+    const withPrice = slots.map((s) => ({ ...s, priceCents: callPriceCentsFor(s.durationMinutes) }));
+    return res.json({ slots: withPrice, pricePerHourCents: CALL_PRICE_PER_HOUR_CENTS });
   });
 
   app.post('/api/booking/checkout', async (req, res) => {
@@ -1980,8 +1990,10 @@ function createApp(overrides = {}) {
     const name = String((req.body && req.body.name) || '').trim().slice(0, 80);
     const email = String((req.body && req.body.email) || '').trim().slice(0, 200);
     const note = String((req.body && req.body.note) || '').trim().slice(0, 500);
+    const callType = CALL_TYPES.includes(req.body && req.body.callType) ? req.body.callType : null;
     if (!name) return res.status(400).json({ error: 'Please enter your name.' });
     if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Please enter a valid email.' });
+    if (!callType) return res.status(400).json({ error: 'Please choose voice or video.' });
 
     const slot = await getSlotById(id);
     if (!slot) return res.status(404).json({ error: 'That slot no longer exists.' });
@@ -1989,19 +2001,20 @@ function createApp(overrides = {}) {
 
     try {
       const holdExpiresAt = new Date(Date.now() + CALL_HOLD_MINUTES * 60000).toISOString();
+      const priceCents = callPriceCentsFor(slot.durationMinutes);
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
         submit_type: 'book',
         line_items: [{
           price_data: {
             currency: 'usd',
-            product_data: { name: `Call with Kunga — ${fmtSlotLabel(slot)}` },
-            unit_amount: CALL_PRICE_CENTS,
+            product_data: { name: `${callType === 'video' ? 'Video' : 'Voice'} call with Kunga — ${fmtSlotLabel(slot)} (${slot.durationMinutes} min)` },
+            unit_amount: priceCents,
           },
           quantity: 1,
         }],
         customer_email: email,
-        metadata: { app: BOOKING_PRODUCT_METADATA_KEY, slotId: String(id), bookerName: name, bookerEmail: email, bookerNote: note },
+        metadata: { app: BOOKING_PRODUCT_METADATA_KEY, slotId: String(id), bookerName: name, bookerEmail: email, bookerNote: note, callType },
         expires_at: Math.floor(Date.now() / 1000) + CALL_HOLD_MINUTES * 60,
         success_url: `${APP_BASE_URL}/calendar?booked=success`,
         cancel_url: `${APP_BASE_URL}/calendar?booked=cancel`,
