@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Inbox — Kunga</title>
+<style>
+:root{
+  --bg:#0a0f1d;--panel:#121b2f;--text:#eef3ff;--muted:#9bb0d3;
+  --gold:#f4c95d;--accent:#7cc7ff;--danger:#ff7a7a;--good:#6fd79a;--border:rgba(255,255,255,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(180deg,#0a0f1d 0%,#0f172a 100%);color:var(--text);min-height:100vh}
+.shell{max-width:640px;margin:0 auto;padding:28px 18px 80px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px}
+.brand{font-size:1.25rem;font-weight:700}
+.brand span{color:var(--gold)}
+a{color:var(--accent);text-decoration:none;font-size:13px}
+.panel{background:rgba(18,27,47,.9);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+label{display:block;font-size:12.5px;color:var(--muted);margin:0 0 6px;font-weight:600}
+input[type=password]{width:100%;padding:11px 13px;border-radius:10px;border:1px solid var(--border);background:rgba(10,15,29,.8);color:var(--text);font-size:14px;outline:none}
+input:focus{border-color:var(--gold)}
+button{border:0;border-radius:10px;background:linear-gradient(135deg,var(--gold),#e9b440);color:#111827;font-weight:700;padding:11px 16px;cursor:pointer;font-size:13.5px}
+button.secondary{background:rgba(255,255,255,.08);color:var(--text)}
+button.danger{background:rgba(255,122,122,.15);color:var(--danger)}
+.actions{display:flex;gap:10px;margin-top:18px}
+.msg{font-size:13px;margin-top:10px;min-height:16px}
+.msg.bad{color:var(--danger)}
+.hidden{display:none}
+.empty{color:var(--muted);font-size:13px;text-align:center;padding:30px 0}
+
+.summaryRow{display:flex;gap:10px;margin-bottom:18px}
+.summaryChip{flex:1;background:rgba(18,27,47,.9);border:1px solid var(--border);border-radius:14px;padding:12px 14px;text-align:center}
+.summaryChip .n{font-weight:700;font-size:20px}
+.summaryChip .l{font-size:11px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.04em}
+
+.msgCard{border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:12px;position:relative}
+.msgCard.unread{border-color:rgba(244,201,93,.4);background:rgba(244,201,93,.04)}
+.msgHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+.senderTag{font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;padding:3px 9px;border-radius:999px}
+.senderTag.anon{background:rgba(255,255,255,.08);color:var(--muted)}
+.senderTag.named{background:rgba(124,199,255,.15);color:var(--accent)}
+.msgTime{font-size:11.5px;color:var(--muted)}
+.msgText{font-size:14.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word;margin-bottom:10px}
+.senderInfo{font-size:12.5px;color:var(--muted);margin-bottom:10px}
+.msgBtns{display:flex;gap:8px;flex-wrap:wrap}
+.msgBtns button{padding:6px 12px;font-size:12px}
+.unreadDot{width:8px;height:8px;border-radius:50%;background:var(--gold);display:inline-block;margin-right:6px}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="brand">Inbox — <span>Kunga</span></div>
+    <a href="/messages">Send a message →</a>
+  </div>
+
+  <div class="panel" id="lockPanel">
+    <label>Admin key</label>
+    <input type="password" id="adminKeyInput" placeholder="Admin key">
+    <div class="actions"><button id="unlockBtn">Unlock</button></div>
+    <div class="msg bad" id="lockMsg"></div>
+  </div>
+
+  <div id="adminArea" class="hidden">
+    <div class="summaryRow">
+      <div class="summaryChip"><div class="n" id="totalCount">0</div><div class="l">Total</div></div>
+      <div class="summaryChip"><div class="n" id="unreadCount">0</div><div class="l">Unread</div></div>
+    </div>
+    <div id="messageList"><div class="empty">Loading…</div></div>
+  </div>
+</div>
+
+<script>
+let adminKey = '';
+let messages = [];
+
+const lockPanel = document.getElementById('lockPanel');
+const adminArea = document.getElementById('adminArea');
+const lockMsg = document.getElementById('lockMsg');
+
+document.getElementById('unlockBtn').onclick = async () => {
+  adminKey = document.getElementById('adminKeyInput').value.trim();
+  if(!adminKey){ lockMsg.textContent = 'Enter the admin key.'; return; }
+  const ok = await loadMessages();
+  if(ok){
+    lockPanel.classList.add('hidden');
+    adminArea.classList.remove('hidden');
+  }
+};
+
+function esc(s){ return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtTime(iso){
+  try{ return new Date(iso).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}); }
+  catch(e){ return iso; }
+}
+
+async function loadMessages(){
+  try{
+    const resp = await fetch('/api/messages/admin', { headers: { 'x-admin-key': adminKey } });
+    if(resp.status === 401){ lockMsg.textContent = 'Incorrect admin key.'; adminKey = ''; return false; }
+    const data = await resp.json();
+    messages = data.messages || [];
+    renderMessages();
+    return true;
+  }catch(e){
+    lockMsg.textContent = 'Network error.';
+    return false;
+  }
+}
+
+function renderMessages(){
+  document.getElementById('totalCount').textContent = messages.length;
+  document.getElementById('unreadCount').textContent = messages.filter(m => !m.read).length;
+
+  const list = document.getElementById('messageList');
+  if(!messages.length){ list.innerHTML = '<div class="empty">No messages yet.</div>'; return; }
+
+  list.innerHTML = messages.map(m => {
+    const senderTag = m.anonymous
+      ? `<span class="senderTag anon">Anonymous</span>`
+      : `<span class="senderTag named">${esc(m.senderName || 'Named')}</span>`;
+    const senderInfo = (!m.anonymous && m.senderEmail) ? `<div class="senderInfo">${esc(m.senderEmail)}</div>` : '';
+    return `
+      <div class="msgCard ${!m.read ? 'unread' : ''}" data-id="${m.id}">
+        <div class="msgHead">
+          <div>${!m.read ? '<span class="unreadDot"></span>' : ''}${senderTag}</div>
+          <div class="msgTime">${fmtTime(m.createdAt)}</div>
+        </div>
+        ${senderInfo}
+        <div class="msgText">${esc(m.text)}</div>
+        <div class="msgBtns">
+          <button class="secondary" data-toggle-read="${m.id}">${m.read ? 'Mark unread' : 'Mark read'}</button>
+          <button class="danger" data-delete="${m.id}">Delete</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  list.querySelectorAll('[data-toggle-read]').forEach(btn => {
+    btn.onclick = () => toggleRead(Number(btn.dataset.toggleRead));
+  });
+  list.querySelectorAll('[data-delete]').forEach(btn => {
+    btn.onclick = () => deleteMsg(Number(btn.dataset.delete));
+  });
+}
+
+async function toggleRead(id){
+  const message = messages.find(m => m.id === id);
+  if(!message) return;
+  await fetch('/api/messages/admin/mark-read', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+    body: JSON.stringify({ id, read: !message.read }),
+  });
+  loadMessages();
+}
+
+async function deleteMsg(id){
+  if(!confirm('Delete this message? This cannot be undone.')) return;
+  await fetch('/api/messages/admin/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+    body: JSON.stringify({ id }),
+  });
+  loadMessages();
+}
+</script>
+</body>
+</html>

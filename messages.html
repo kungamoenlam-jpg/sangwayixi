@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Message Kunga</title>
+<meta name="description" content="Send Kunga a message — anonymous or not, your choice.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#241a3b;--bg1:#f4ecff;--bg2:#ffe9f4;--surface:#ffffff;--muted:#7c6a99;
+  --accent:#8b5cf6;--accent-dim:#6d3fd6;--pink:#ec4899;--good:#3FAE72;--bad:#E1584B;
+  --radius:20px;--shadow:0 10px 30px rgba(107,63,214,.15);
+  --font-display:'Baloo 2',sans-serif;--font-body:'Inter',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--font-body);background:linear-gradient(160deg,var(--bg1),var(--bg2));color:var(--ink);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px 16px 60px}
+a{color:var(--accent-dim)}
+.top{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:460px;margin-bottom:22px}
+.brand{font-family:var(--font-display);font-weight:700;font-size:15px;text-decoration:none;color:var(--muted)}
+
+.wrap{width:100%;max-width:460px}
+.hero{text-align:center;margin-bottom:22px}
+.heroGlyph{font-size:40px;margin-bottom:8px}
+h1{font-family:var(--font-display);font-size:27px;font-weight:800;margin:0 0 8px}
+.sub{color:var(--muted);font-size:14.5px;line-height:1.6;margin:0}
+
+.card{background:var(--surface);border-radius:var(--radius);padding:24px 22px;box-shadow:var(--shadow)}
+
+.toggleRow{display:flex;align-items:center;justify-content:space-between;padding:4px 2px 18px;border-bottom:1px solid rgba(107,63,214,.1);margin-bottom:16px}
+.toggleLabel{display:flex;flex-direction:column;gap:2px}
+.toggleLabel b{font-family:var(--font-display);font-size:15px}
+.toggleLabel span{font-size:12px;color:var(--muted)}
+.switch{position:relative;width:48px;height:28px;border-radius:999px;background:var(--accent);cursor:pointer;flex-shrink:0;transition:background .2s}
+.switch.off{background:#dcd4ea}
+.switch .knob{position:absolute;top:3px;left:23px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .2s}
+.switch.off .knob{left:3px}
+
+.identityFields{display:grid;gap:0;max-height:0;overflow:hidden;transition:max-height .25s ease}
+.identityFields.open{max-height:220px}
+label.fieldLabel{display:block;font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:600}
+input[type=text],input[type=email],textarea{width:100%;font-family:var(--font-body);font-size:14.5px;padding:12px 14px;border-radius:12px;border:1.5px solid rgba(107,63,214,.18);background:#faf8ff;color:var(--ink);outline:none;margin-bottom:14px;resize:vertical}
+input:focus,textarea:focus{border-color:var(--accent)}
+input::placeholder,textarea::placeholder{color:#b3a7cc}
+
+textarea#textInput{min-height:120px}
+.charCount{text-align:right;font-size:11.5px;color:var(--muted);margin-top:-8px;margin-bottom:14px}
+
+button.sendBtn{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:100%;text-align:center;font-family:var(--font-display);font-weight:700;font-size:16px;padding:15px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--pink));color:#fff}
+button.sendBtn:disabled{opacity:.5;cursor:default}
+.errorBox{background:rgba(225,88,75,.1);border:1px solid rgba(225,88,75,.3);color:#a3352a;padding:10px 14px;border-radius:10px;font-size:13px;margin-top:14px;text-align:center}
+.note{text-align:center;color:var(--muted);font-size:11.5px;margin-top:18px;line-height:1.6}
+
+.state{text-align:center;margin-top:20px}
+.state .glyph{font-size:46px}
+.state .big{font-family:var(--font-display);font-size:22px;font-weight:800;margin:14px 0 8px}
+.state p{color:var(--muted);font-size:14px;line-height:1.6}
+.btnlink{all:unset;cursor:pointer;display:inline-block;margin-top:18px;margin-right:8px;font-family:var(--font-display);font-weight:700;font-size:13.5px;padding:10px 18px;border-radius:999px;background:rgba(107,63,214,.1);color:var(--accent-dim)}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <a class="brand" href="/">← kunga.me</a>
+</div>
+
+<div class="wrap">
+  <div id="view"></div>
+</div>
+
+<script>
+let anonymous = true;
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderForm(){
+  const view = document.getElementById('view');
+  view.innerHTML = `
+    <div class="hero">
+      <div class="heroGlyph">💌</div>
+      <h1>Message Kunga</h1>
+      <p class="sub">Say whatever's on your mind. Anonymous or not — your choice.</p>
+    </div>
+    <div class="card">
+      <div class="toggleRow">
+        <div class="toggleLabel"><b>Send anonymously</b><span id="toggleSub">Kunga won't see who sent this</span></div>
+        <div class="switch" id="anonSwitch"><div class="knob"></div></div>
+      </div>
+      <div class="identityFields" id="identityFields">
+        <label class="fieldLabel" for="nameInput">Your name</label>
+        <input type="text" id="nameInput" placeholder="Full name" maxlength="80">
+        <label class="fieldLabel" for="emailInput">Your email (optional — so Kunga can reply)</label>
+        <input type="email" id="emailInput" placeholder="you@example.com" maxlength="200">
+      </div>
+      <label class="fieldLabel" for="textInput">Your message</label>
+      <textarea id="textInput" placeholder="Type your message…" maxlength="1000"></textarea>
+      <div class="charCount" id="charCount">0 / 1000</div>
+      <button class="sendBtn" id="sendBtn">Send message</button>
+      <div id="errorBox"></div>
+    </div>
+    <p class="note">Sent straight to Kunga. If you stay anonymous, there's genuinely no way to trace it back to you.</p>
+  `;
+
+  const anonSwitch = document.getElementById('anonSwitch');
+  const identityFields = document.getElementById('identityFields');
+  const toggleSub = document.getElementById('toggleSub');
+  function updateSwitch(){
+    anonSwitch.classList.toggle('off', !anonymous);
+    identityFields.classList.toggle('open', !anonymous);
+    toggleSub.textContent = anonymous ? "Kunga won't see who sent this" : "Kunga will see your name";
+  }
+  anonSwitch.onclick = () => { anonymous = !anonymous; updateSwitch(); };
+  updateSwitch();
+
+  const textInput = document.getElementById('textInput');
+  const charCount = document.getElementById('charCount');
+  textInput.addEventListener('input', () => { charCount.textContent = textInput.value.length + ' / 1000'; });
+
+  document.getElementById('sendBtn').onclick = submitMessage;
+}
+
+async function submitMessage(){
+  const errorBox = document.getElementById('errorBox');
+  errorBox.innerHTML = '';
+  const text = document.getElementById('textInput').value.trim();
+  if(!text){ errorBox.innerHTML = `<div class="errorBox">Write something first.</div>`; return; }
+
+  const body = { text, anonymous };
+  if(!anonymous){
+    const name = document.getElementById('nameInput').value.trim();
+    const email = document.getElementById('emailInput').value.trim();
+    if(!name){ errorBox.innerHTML = `<div class="errorBox">Add your name, or switch to anonymous.</div>`; return; }
+    body.senderName = name;
+    if(email) body.senderEmail = email;
+  }
+
+  const btn = document.getElementById('sendBtn');
+  btn.disabled = true;
+  btn.textContent = 'Sending…';
+  try{
+    const resp = await fetch('/api/messages/send', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(body),
+    });
+    const data = await resp.json();
+    if(!resp.ok){
+      errorBox.innerHTML = `<div class="errorBox">${esc(data.error || 'Something went wrong.')}</div>`;
+      btn.disabled = false;
+      btn.textContent = 'Send message';
+      return;
+    }
+    renderDone();
+  }catch(e){
+    errorBox.innerHTML = `<div class="errorBox">Network error — try again.</div>`;
+    btn.disabled = false;
+    btn.textContent = 'Send message';
+  }
+}
+
+function renderDone(){
+  document.getElementById('view').innerHTML = `
+    <div class="state">
+      <div class="glyph">💌</div>
+      <div class="big">Message sent.</div>
+      <p>It's on its way to Kunga.</p>
+      <a class="btnlink" href="#" id="sendAnotherBtn">Send another</a>
+      <a class="btnlink" href="/">Back to kunga.me</a>
+    </div>`;
+  document.getElementById('sendAnotherBtn').onclick = (e) => { e.preventDefault(); renderForm(); };
+}
+
+renderForm();
+</script>
+</body>
+</html>

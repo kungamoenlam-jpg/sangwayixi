@@ -198,6 +198,7 @@ function createApp(overrides = {}) {
   const BOOKINGS_FILE = overrides.bookingsFile || path.join(__dirname, 'data', 'bookings.json');
   const STORE_PRODUCTS_FILE = overrides.storeProductsFile || path.join(__dirname, 'data', 'store-products.json');
   const STORE_ORDERS_FILE = overrides.storeOrdersFile || path.join(__dirname, 'data', 'store-orders.json');
+  const MESSAGES_FILE = overrides.messagesFile || path.join(__dirname, 'data', 'messages.json');
   const ADMIN_KEY = overrides.adminKey || process.env.ADMIN_KEY || 'sangwa-admin-key';
   const DATABASE_URL = overrides.databaseUrl || process.env.DATABASE_URL || null;
   const SUPABASE_URL = process.env.SUPABASE_URL || null;
@@ -553,6 +554,17 @@ function createApp(overrides = {}) {
         shipping_address jsonb,
         status text not null default 'pending',
         checkout_session_id text,
+        created_at timestamptz default now()
+      );
+    `);
+    await client.query(`
+      create table if not exists public.messages (
+        id serial primary key,
+        text text not null,
+        anonymous boolean not null default true,
+        sender_name text,
+        sender_email text,
+        read boolean not null default false,
         created_at timestamptz default now()
       );
     `);
@@ -1338,6 +1350,93 @@ function createApp(overrides = {}) {
     return data.orders.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
+  // Anonymous (or named) messages to Kunga -- a Tellonym-style ask box.
+  // Whoever sends it chooses whether their name/email are even collected;
+  // the public GET surface never exists at all (only the admin-key-gated
+  // inbox can list these), so there's nothing for this feature to leak.
+  function ensureMessagesFile() {
+    const dir = path.dirname(MESSAGES_FILE);
+    fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(MESSAGES_FILE)) {
+      fs.writeFileSync(MESSAGES_FILE, JSON.stringify({ nextId: 1, messages: [] }, null, 2), 'utf8');
+    }
+  }
+  function readMessagesFile() {
+    ensureMessagesFile();
+    try {
+      const parsed = JSON.parse(fs.readFileSync(MESSAGES_FILE, 'utf8'));
+      return { nextId: parsed.nextId || 1, messages: Array.isArray(parsed.messages) ? parsed.messages : [] };
+    } catch (error) {
+      return { nextId: 1, messages: [] };
+    }
+  }
+  function writeMessagesFile(data) {
+    ensureMessagesFile();
+    fs.writeFileSync(MESSAGES_FILE, JSON.stringify(data, null, 2), 'utf8');
+  }
+  const MESSAGE_SELECT_SQL = `id, text, anonymous, sender_name as "senderName", sender_email as "senderEmail",
+    read, created_at as "createdAt"`;
+
+  async function createMessage({ text, anonymous, senderName, senderEmail }) {
+    const client = await getDbClient();
+    const createdAt = new Date().toISOString();
+    if (client) {
+      const result = await client.query(
+        `insert into public.messages (text, anonymous, sender_name, sender_email, created_at)
+         values ($1,$2,$3,$4,$5) returning ${MESSAGE_SELECT_SQL}`,
+        [text, anonymous, senderName, senderEmail, createdAt]
+      );
+      return result.rows[0];
+    }
+    const data = readMessagesFile();
+    const message = { id: data.nextId, text, anonymous, senderName, senderEmail, read: false, createdAt };
+    data.messages.push(message);
+    data.nextId += 1;
+    writeMessagesFile(data);
+    return message;
+  }
+
+  async function listAllMessagesAdmin() {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(`select ${MESSAGE_SELECT_SQL} from public.messages order by created_at desc`);
+      return result.rows;
+    }
+    const data = readMessagesFile();
+    return data.messages.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  async function setMessageRead(id, read) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `update public.messages set read=$2 where id=$1 returning ${MESSAGE_SELECT_SQL}`,
+        [id, read]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readMessagesFile();
+    const message = data.messages.find((m) => m.id === id);
+    if (!message) return null;
+    message.read = read;
+    writeMessagesFile(data);
+    return message;
+  }
+
+  async function deleteMessage(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(`delete from public.messages where id=$1 returning id`, [id]);
+      return result.rows[0] || null;
+    }
+    const data = readMessagesFile();
+    const idx = data.messages.findIndex((m) => m.id === id);
+    if (idx === -1) return null;
+    data.messages.splice(idx, 1);
+    writeMessagesFile(data);
+    return { id };
+  }
+
   async function listUsersFromDb() {
     const client = await getDbClient();
     if (!client) return readUsers().map(sanitizeUser);
@@ -2111,6 +2210,48 @@ function createApp(overrides = {}) {
     return res.redirect(302, data.publicUrl);
   });
 
+  // ---- Anonymous messages ("send Kunga a message", Tellonym-style): no
+  //      account needed to send, and no public read endpoint exists at all
+  //      -- only the admin-key-gated inbox below can ever list these, so a
+  //      sender's choice to stay anonymous can't be undone by some other
+  //      route reading the data back out. --------------------------------
+  const MESSAGE_MAX_LEN = 1000;
+  app.post('/api/messages/send', async (req, res) => {
+    const body = req.body || {};
+    const text = String(body.text || '').trim().slice(0, MESSAGE_MAX_LEN);
+    const anonymous = body.anonymous !== false;
+    if (!text) return res.status(400).json({ error: 'Write something first.' });
+    const senderName = anonymous ? null : String(body.senderName || '').trim().slice(0, 80) || null;
+    const senderEmail = anonymous ? null : String(body.senderEmail || '').trim().slice(0, 200) || null;
+    const message = await createMessage({ text, anonymous, senderName, senderEmail });
+    return res.json({ ok: true, id: message.id });
+  });
+
+  app.get('/api/messages/admin', async (req, res) => {
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const messages = await listAllMessagesAdmin();
+    return res.json({ messages });
+  });
+
+  app.post('/api/messages/admin/mark-read', async (req, res) => {
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const id = Number(req.body && req.body.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const read = req.body && req.body.read !== false;
+    const message = await setMessageRead(id, read);
+    if (!message) return res.status(404).json({ error: 'Message not found.' });
+    return res.json({ message });
+  });
+
+  app.post('/api/messages/admin/delete', async (req, res) => {
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const id = Number(req.body && req.body.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const removed = await deleteMessage(id);
+    if (!removed) return res.status(404).json({ error: 'Message not found.' });
+    return res.json({ ok: true });
+  });
+
   // ---- notebook (kunga-notebook.html / /notebook): free-form notes, synced
   //      to the account when the visitor is logged in on the main site (same
   //      username-trust model as the rest of this file — no session token,
@@ -2622,6 +2763,22 @@ function createApp(overrides = {}) {
 
   app.get('/store/admin.html', (req, res) => {
     return res.sendFile(path.join(__dirname, 'store-admin.html'));
+  });
+
+  app.get('/messages', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'messages.html'));
+  });
+
+  app.get('/messages.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'messages.html'));
+  });
+
+  app.get('/messages/admin', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'messages-admin.html'));
+  });
+
+  app.get('/messages/admin.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'messages-admin.html'));
   });
 
   app.get('/poker', (req, res) => {
