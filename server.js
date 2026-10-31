@@ -218,6 +218,7 @@ function createApp(overrides = {}) {
   const STORE_PRODUCTS_FILE = overrides.storeProductsFile || path.join(__dirname, 'data', 'store-products.json');
   const STORE_ORDERS_FILE = overrides.storeOrdersFile || path.join(__dirname, 'data', 'store-orders.json');
   const MESSAGES_FILE = overrides.messagesFile || path.join(__dirname, 'data', 'messages.json');
+  const CLIPS_FILE = overrides.clipsFile || path.join(__dirname, 'data', 'clips.json');
   const ADMIN_KEY = overrides.adminKey || process.env.ADMIN_KEY || 'sangwa-admin-key';
   const DATABASE_URL = overrides.databaseUrl || process.env.DATABASE_URL || null;
   const SUPABASE_URL = process.env.SUPABASE_URL || null;
@@ -399,6 +400,7 @@ function createApp(overrides = {}) {
   const AVATAR_BUCKET = 'avatars';
   const NEWS_BUCKET = 'news-photos';
   const STORE_BUCKET = 'store-photos';
+  const CLIPS_BUCKET = 'clips';
   const supabaseAdmin = (SUPABASE_PROJECT_URL && SUPABASE_SERVICE_ROLE_KEY)
     ? createClient(SUPABASE_PROJECT_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
     : null;
@@ -420,6 +422,7 @@ function createApp(overrides = {}) {
   const ensureAvatarBucket = () => ensureBucket(AVATAR_BUCKET);
   const ensureNewsBucket = () => ensureBucket(NEWS_BUCKET);
   const ensureStoreBucket = () => ensureBucket(STORE_BUCKET);
+  const ensureClipsBucket = () => ensureBucket(CLIPS_BUCKET);
 
   // High-quality neural voices: British English + Beijing-standard Mandarin, one
   // male and one female each. Mandarin uses Azure's newer "Multilingual" neural
@@ -593,6 +596,17 @@ function createApp(overrides = {}) {
         sender_name text,
         sender_email text,
         read boolean not null default false,
+        created_at timestamptz default now()
+      );
+    `);
+    await client.query(`
+      create table if not exists public.clips (
+        id serial primary key,
+        username text not null,
+        caption text,
+        video_path text,
+        video_mime text,
+        thumb_path text,
         created_at timestamptz default now()
       );
     `);
@@ -1466,6 +1480,130 @@ function createApp(overrides = {}) {
     return { id };
   }
 
+  // Kunga's Clips: a TikTok/YouTube-style video feed. Uploading needs a
+  // real kunga.me login (not anonymous like the message box or tip jar) --
+  // every clip is tied to the uploader's username, which is also what
+  // makes self-serve deletion and takedowns possible. A clip only ever
+  // shows up in the public feed once it has a video attached (listClips
+  // filters on video_path is not null), so an abandoned two-step upload
+  // (metadata created, video never finished uploading) never appears as a
+  // broken entry. Any visitor can watch without an account; only the
+  // uploader or an admin-key holder can delete a given clip.
+  function ensureClipsFile() {
+    const dir = path.dirname(CLIPS_FILE);
+    fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(CLIPS_FILE)) {
+      fs.writeFileSync(CLIPS_FILE, JSON.stringify({ nextId: 1, clips: [] }, null, 2), 'utf8');
+    }
+  }
+  function readClipsFile() {
+    ensureClipsFile();
+    try {
+      const parsed = JSON.parse(fs.readFileSync(CLIPS_FILE, 'utf8'));
+      return { nextId: parsed.nextId || 1, clips: Array.isArray(parsed.clips) ? parsed.clips : [] };
+    } catch (error) {
+      return { nextId: 1, clips: [] };
+    }
+  }
+  function writeClipsFile(data) {
+    ensureClipsFile();
+    fs.writeFileSync(CLIPS_FILE, JSON.stringify(data, null, 2), 'utf8');
+  }
+  const CLIP_SELECT_SQL = `id, username, caption, video_path as "videoPath", video_mime as "videoMime",
+    thumb_path as "thumbPath", created_at as "createdAt"`;
+
+  async function createClip({ username, caption }) {
+    const client = await getDbClient();
+    const createdAt = new Date().toISOString();
+    if (client) {
+      const result = await client.query(
+        `insert into public.clips (username, caption, created_at) values ($1,$2,$3) returning ${CLIP_SELECT_SQL}`,
+        [username, caption, createdAt]
+      );
+      return result.rows[0];
+    }
+    const data = readClipsFile();
+    const clip = { id: data.nextId, username, caption, videoPath: null, videoMime: null, thumbPath: null, createdAt };
+    data.clips.push(clip);
+    data.nextId += 1;
+    writeClipsFile(data);
+    return clip;
+  }
+
+  async function getClipById(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(`select ${CLIP_SELECT_SQL} from public.clips where id=$1`, [id]);
+      return result.rows[0] || null;
+    }
+    const data = readClipsFile();
+    return data.clips.find((c) => c.id === id) || null;
+  }
+
+  async function listClips() {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select ${CLIP_SELECT_SQL} from public.clips where video_path is not null order by created_at desc`
+      );
+      return result.rows;
+    }
+    const data = readClipsFile();
+    return data.clips.filter((c) => c.videoPath).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  async function setClipVideo(id, { videoPath, videoMime }) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `update public.clips set video_path=$1, video_mime=$2 where id=$3 and video_path is null returning ${CLIP_SELECT_SQL}`,
+        [videoPath, videoMime, id]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readClipsFile();
+    const clip = data.clips.find((c) => c.id === id);
+    if (!clip || clip.videoPath) return null;
+    clip.videoPath = videoPath;
+    clip.videoMime = videoMime;
+    writeClipsFile(data);
+    return clip;
+  }
+
+  async function setClipThumb(id, { thumbPath }) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `update public.clips set thumb_path=$1 where id=$2 and thumb_path is null returning ${CLIP_SELECT_SQL}`,
+        [thumbPath, id]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readClipsFile();
+    const clip = data.clips.find((c) => c.id === id);
+    if (!clip || clip.thumbPath) return null;
+    clip.thumbPath = thumbPath;
+    writeClipsFile(data);
+    return clip;
+  }
+
+  async function deleteClip(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `delete from public.clips where id=$1 returning video_path as "videoPath", thumb_path as "thumbPath"`,
+        [id]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readClipsFile();
+    const idx = data.clips.findIndex((c) => c.id === id);
+    if (idx === -1) return null;
+    const [removed] = data.clips.splice(idx, 1);
+    writeClipsFile(data);
+    return { videoPath: removed.videoPath, thumbPath: removed.thumbPath };
+  }
+
   async function listUsersFromDb() {
     const client = await getDbClient();
     if (!client) return readUsers().map(sanitizeUser);
@@ -2292,6 +2430,104 @@ function createApp(overrides = {}) {
     return res.json({ ok: true });
   });
 
+  // ---- Kunga's Clips: a video feed anyone can watch, but only a logged-in
+  //      kunga.me account can upload to -- every clip is tied to a real
+  //      username (not anonymous) so self-serve delete and admin takedowns
+  //      both have something to check against. Two-step upload (create the
+  //      metadata row, then attach the video/thumbnail binaries) mirrors
+  //      the store-product and avatar-photo pattern already in this file.
+  const CLIP_CAPTION_MAX = 300;
+  const CLIP_VIDEO_MIME_EXT = { 'video/mp4': 'mp4', 'video/quicktime': 'mov', 'video/webm': 'webm' };
+  const CLIP_THUMB_MIME_EXT = { 'image/jpeg': 'jpg' };
+
+  app.get('/api/clips', async (req, res) => {
+    const clips = await listClips();
+    return res.json({ clips });
+  });
+
+  app.post('/api/clips', async (req, res) => {
+    const { username, caption } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'Log in on kunga.me first to upload.' });
+    const cleanCaption = String(caption || '').trim().slice(0, CLIP_CAPTION_MAX);
+    const clip = await createClip({ username: user.username, caption: cleanCaption });
+    return res.json({ clip });
+  });
+
+  app.post('/api/clips/:id/video', express.raw({ type: '*/*', limit: '50mb' }), async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    if (!supabaseAdmin) return res.status(503).json({ error: 'Video storage is not configured on this server yet.' });
+    const clip = await getClipById(id);
+    if (!clip) return res.status(404).json({ error: 'Clip not found.' });
+    if (clip.videoPath) return res.status(409).json({ error: 'This clip already has a video.' });
+    const contentType = (req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+    const ext = CLIP_VIDEO_MIME_EXT[contentType];
+    if (!ext) return res.status(400).json({ error: 'Only MP4, MOV or WebM videos are accepted.' });
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) return res.status(400).json({ error: 'No video data received.' });
+    const objectPath = id + '.' + ext;
+    const { error } = await supabaseAdmin.storage.from(CLIPS_BUCKET).upload(objectPath, req.body, { contentType, upsert: true });
+    if (error) return res.status(502).json({ error: 'Upload to storage failed.', details: error.message });
+    const updated = await setClipVideo(id, { videoPath: objectPath, videoMime: contentType });
+    if (!updated) return res.status(409).json({ error: 'This clip already has a video.' });
+    return res.json({ clip: updated });
+  });
+
+  app.post('/api/clips/:id/thumbnail', express.raw({ type: '*/*', limit: '4mb' }), async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    if (!supabaseAdmin) return res.status(503).json({ error: 'Image storage is not configured on this server yet.' });
+    const clip = await getClipById(id);
+    if (!clip) return res.status(404).json({ error: 'Clip not found.' });
+    const contentType = (req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+    const ext = CLIP_THUMB_MIME_EXT[contentType];
+    if (!ext) return res.status(400).json({ error: 'Thumbnail must be a JPEG image.' });
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) return res.status(400).json({ error: 'No thumbnail data received.' });
+    const objectPath = id + '-thumb.' + ext;
+    const { error } = await supabaseAdmin.storage.from(CLIPS_BUCKET).upload(objectPath, req.body, { contentType, upsert: true });
+    if (error) return res.status(502).json({ error: 'Upload to storage failed.', details: error.message });
+    const updated = await setClipThumb(id, { thumbPath: objectPath });
+    return res.json({ clip: updated || clip });
+  });
+
+  app.post('/api/clips/:id/delete', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const clip = await getClipById(id);
+    if (!clip) return res.status(404).json({ error: 'Clip not found.' });
+    const { username } = req.body || {};
+    const isOwner = username && String(username).toLowerCase() === String(clip.username).toLowerCase();
+    const isAdmin = req.headers['x-admin-key'] === ADMIN_KEY;
+    if (!isOwner && !isAdmin) return res.status(403).json({ error: 'Only the uploader or an admin can delete this clip.' });
+    const removed = await deleteClip(id);
+    if (removed && supabaseAdmin) {
+      const paths = [removed.videoPath, removed.thumbPath].filter(Boolean);
+      if (paths.length) await supabaseAdmin.storage.from(CLIPS_BUCKET).remove(paths).catch(() => {});
+    }
+    return res.json({ ok: true });
+  });
+
+  // Same redirect-to-Storage pattern as /store-photo and /news-photo.
+  app.get('/clip-video/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).end();
+    if (!supabaseAdmin) return res.status(503).end();
+    const clip = await getClipById(id);
+    if (!clip || !clip.videoPath) return res.status(404).end();
+    const { data } = supabaseAdmin.storage.from(CLIPS_BUCKET).getPublicUrl(clip.videoPath);
+    return res.redirect(302, data.publicUrl);
+  });
+
+  app.get('/clip-thumb/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).end();
+    if (!supabaseAdmin) return res.status(503).end();
+    const clip = await getClipById(id);
+    if (!clip || !clip.thumbPath) return res.status(404).end();
+    const { data } = supabaseAdmin.storage.from(CLIPS_BUCKET).getPublicUrl(clip.thumbPath);
+    return res.redirect(302, data.publicUrl);
+  });
+
   // ---- notebook (kunga-notebook.html / /notebook): free-form notes, synced
   //      to the account when the visitor is logged in on the main site (same
   //      username-trust model as the rest of this file — no session token,
@@ -2829,6 +3065,14 @@ function createApp(overrides = {}) {
     return res.sendFile(path.join(__dirname, 'camera.html'));
   });
 
+  app.get('/clips', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'clips.html'));
+  });
+
+  app.get('/clips.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'clips.html'));
+  });
+
   app.get('/poker', (req, res) => {
     return res.sendFile(path.join(__dirname, 'poker.html'));
   });
@@ -3079,6 +3323,7 @@ function createApp(overrides = {}) {
     ensureAvatarBucket,
     ensureNewsBucket,
     ensureStoreBucket,
+    ensureClipsBucket,
     ensureStripeProduct,
     ensureDiaryStripeProduct,
   };
@@ -3102,6 +3347,10 @@ if (require.main === module) {
   appState.ensureStoreBucket().then((bucketStatus) => {
     if (bucketStatus.ok) console.log('Supabase Storage: store-photos bucket ready.');
     else console.log('Supabase Storage not active for store photos (' + bucketStatus.reason + ') — product photos would not persist.');
+  });
+  appState.ensureClipsBucket().then((bucketStatus) => {
+    if (bucketStatus.ok) console.log('Supabase Storage: clips bucket ready.');
+    else console.log('Supabase Storage not active for clips (' + bucketStatus.reason + ') — video uploads would not persist.');
   });
   appState.ensureStripeProduct().then((stripeStatus) => {
     if (stripeStatus.ok) console.log('Stripe: Premium product/prices ready.');

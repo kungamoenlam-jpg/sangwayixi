@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kunga's Clips</title>
+<meta name="description" content="A video feed anyone can watch — and anyone with a kunga.me account can upload to.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#fff;--muted:#c7c9d1;--accent:#ff3b5c;--good:#3FAE72;--bad:#ff5c5c;
+  --font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:var(--font-body);background:#000;color:var(--ink);overflow:hidden}
+
+.topBar{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;justify-content:space-between;align-items:center;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px;background:linear-gradient(180deg,rgba(0,0,0,.55),transparent)}
+.brand{font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--ink);text-decoration:none;text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.adminLink{all:unset;cursor:pointer;font-size:12px;color:var(--muted);text-shadow:0 1px 3px rgba(0,0,0,.5)}
+.adminLink.on{color:#ffd24d}
+
+.feed{height:100%;overflow-y:scroll;scroll-snap-type:y mandatory;-webkit-overflow-scrolling:touch}
+.feed::-webkit-scrollbar{display:none}
+.slide{position:relative;height:100%;width:100%;scroll-snap-align:start;display:flex;align-items:center;justify-content:center;background:#000}
+.slide video{width:100%;height:100%;object-fit:contain;background:#000}
+
+.slideOverlay{position:absolute;left:0;right:0;bottom:0;padding:18px 70px 28px 18px;background:linear-gradient(0deg,rgba(0,0,0,.65),transparent);padding-bottom:calc(28px + env(safe-area-inset-bottom,0px))}
+.slideUser{font-family:var(--font-display);font-weight:700;font-size:15px;margin-bottom:4px}
+.slideCaption{font-size:13.5px;color:var(--muted);line-height:1.5;max-width:70ch;overflow-wrap:anywhere}
+
+.sideControls{position:absolute;right:10px;bottom:90px;display:flex;flex-direction:column;align-items:center;gap:18px}
+.sideBtn{all:unset;cursor:pointer;width:46px;height:46px;display:grid;place-items:center;border-radius:50%;background:rgba(255,255,255,.12);font-size:20px}
+.sideBtn.danger{background:rgba(255,92,92,.25);color:var(--bad)}
+
+.emptyState,.loadingState{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:30px;color:var(--muted)}
+.emptyState .glyph,.loadingState .glyph{font-size:44px}
+
+.fab{all:unset;position:fixed;right:18px;bottom:calc(22px + env(safe-area-inset-bottom,0px));z-index:30;cursor:pointer;width:58px;height:58px;border-radius:50%;background:var(--accent);display:grid;place-items:center;font-size:26px;box-shadow:0 6px 20px rgba(255,59,92,.4)}
+
+.modalOverlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.modalOverlay.open{display:flex}
+.modalCard{width:100%;max-width:480px;background:#15151b;border-radius:20px 20px 0 0;padding:22px 20px calc(26px + env(safe-area-inset-bottom,0px));max-height:85vh;overflow-y:auto}
+.modalHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.modalHead h2{font-family:var(--font-display);font-size:17px;margin:0}
+.closeBtn{all:unset;cursor:pointer;font-size:20px;color:var(--muted);padding:4px}
+label.fieldLabel{display:block;font-size:12px;color:var(--muted);margin:0 0 6px;font-weight:600}
+.fileDrop{border:1.5px dashed rgba(255,255,255,.2);border-radius:14px;padding:22px;text-align:center;cursor:pointer;margin-bottom:14px}
+.fileDrop.has{border-style:solid;border-color:var(--accent)}
+.fileDrop input{display:none}
+.fileDrop .hint{font-size:12.5px;color:var(--muted);margin-top:6px}
+textarea{width:100%;font-family:var(--font-body);font-size:14px;padding:12px 14px;border-radius:12px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);outline:none;resize:vertical;margin-bottom:6px}
+textarea:focus{border-color:var(--accent)}
+.charCount{text-align:right;font-size:11px;color:var(--muted);margin-bottom:14px}
+.previewVideo{width:100%;max-height:220px;border-radius:12px;background:#000;margin-bottom:14px;display:block}
+button.uploadBtn{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:100%;text-align:center;font-family:var(--font-display);font-weight:700;font-size:15px;padding:14px;border-radius:14px;background:var(--accent);color:#fff}
+button.uploadBtn:disabled{opacity:.5;cursor:default}
+.errorBox{background:rgba(255,92,92,.14);border:1px solid rgba(255,92,92,.35);color:#ffb0b0;padding:10px 14px;border-radius:10px;font-size:13px;margin-top:12px;text-align:center}
+.loginNudge{text-align:center;color:var(--muted);font-size:13.5px;padding:30px 10px;line-height:1.7}
+.loginNudge a{color:var(--accent);font-weight:600}
+.adminPanel{padding:4px 2px 14px}
+.adminPanel input{width:100%;font-size:14px;padding:11px 13px;border-radius:10px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);outline:none;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<div class="topBar">
+  <a class="brand" href="/">← kunga.me</a>
+  <button class="adminLink" id="adminLink">Admin</button>
+</div>
+
+<div class="feed" id="feed">
+  <div class="loadingState" id="loadingState"><div class="glyph">🎬</div><p>Loading clips…</p></div>
+</div>
+
+<button class="fab" id="fabBtn" title="Upload a clip">+</button>
+
+<div class="modalOverlay" id="uploadOverlay">
+  <div class="modalCard">
+    <div class="modalHead"><h2>Upload a clip</h2><button class="closeBtn" id="closeUpload">×</button></div>
+    <div id="uploadBody"></div>
+  </div>
+</div>
+
+<div class="modalOverlay" id="adminOverlay">
+  <div class="modalCard">
+    <div class="modalHead"><h2>Admin</h2><button class="closeBtn" id="closeAdmin">×</button></div>
+    <div class="adminPanel">
+      <label class="fieldLabel" for="adminKeyInput">Admin key</label>
+      <input type="password" id="adminKeyInput" placeholder="Admin key">
+      <button class="uploadBtn" id="adminUnlockBtn">Unlock moderation</button>
+      <div class="errorBox" id="adminErrorBox" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SESSION_KEY = 'sangwa_session_v1';
+function currentUser(){
+  try{
+    const s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+    return (s && s.currentUser) ? String(s.currentUser) : null;
+  }catch(e){ return null; }
+}
+function esc(s){ return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+let clips = [];
+let soundOn = false;
+let adminKey = sessionStorage.getItem('clipsAdminKey') || '';
+
+const feed = document.getElementById('feed');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    const video = entry.target.querySelector('video');
+    if(!video) return;
+    if(entry.isIntersecting && entry.intersectionRatio > 0.6){
+      video.muted = !soundOn;
+      video.play().catch(() => {});
+    } else {
+      video.pause();
+    }
+  });
+}, { threshold: [0, 0.6, 1] });
+
+async function loadClips(){
+  try{
+    const resp = await fetch('/api/clips');
+    const data = await resp.json();
+    clips = data.clips || [];
+    renderFeed();
+  }catch(e){
+    feed.innerHTML = `<div class="emptyState"><div class="glyph">⚠️</div><p>Couldn't load clips. Try again shortly.</p></div>`;
+  }
+}
+
+function renderFeed(){
+  if(!clips.length){
+    feed.innerHTML = `<div class="emptyState"><div class="glyph">🎬</div><p>No clips yet — be the first to upload one.</p></div>`;
+    return;
+  }
+  const isAdmin = !!adminKey;
+  feed.innerHTML = clips.map(c => {
+    const user = currentUser();
+    const canDelete = isAdmin || (user && user.toLowerCase() === c.username.toLowerCase());
+    return `
+    <div class="slide" data-id="${c.id}">
+      <video src="/clip-video/${c.id}" poster="${c.thumbPath ? '/clip-thumb/'+c.id : ''}" loop playsinline muted preload="metadata"></video>
+      <div class="slideOverlay">
+        <div class="slideUser">@${esc(c.username)}</div>
+        ${c.caption ? `<div class="slideCaption">${esc(c.caption)}</div>` : ''}
+      </div>
+      <div class="sideControls">
+        <button class="sideBtn" data-mute="${c.id}">${soundOn ? '🔊' : '🔇'}</button>
+        ${canDelete ? `<button class="sideBtn danger" data-delete="${c.id}">🗑️</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  feed.querySelectorAll('.slide').forEach(el => observer.observe(el));
+  feed.querySelectorAll('[data-mute]').forEach(btn => {
+    btn.onclick = () => {
+      soundOn = !soundOn;
+      feed.querySelectorAll('video').forEach(v => v.muted = !soundOn);
+      feed.querySelectorAll('[data-mute]').forEach(b => b.textContent = soundOn ? '🔊' : '🔇');
+    };
+  });
+  feed.querySelectorAll('[data-delete]').forEach(btn => {
+    btn.onclick = () => deleteClip(Number(btn.dataset.delete));
+  });
+}
+
+async function deleteClip(id){
+  if(!confirm('Delete this clip? This cannot be undone.')) return;
+  const headers = { 'Content-Type': 'application/json' };
+  if(adminKey) headers['x-admin-key'] = adminKey;
+  const resp = await fetch('/api/clips/' + id + '/delete', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ username: currentUser() }),
+  });
+  if(!resp.ok){
+    const data = await resp.json().catch(() => ({}));
+    alert(data.error || 'Could not delete clip.');
+    return;
+  }
+  clips = clips.filter(c => c.id !== id);
+  renderFeed();
+}
+
+// ---- Upload flow ----
+const uploadOverlay = document.getElementById('uploadOverlay');
+const fabBtn = document.getElementById('fabBtn');
+fabBtn.onclick = () => { renderUploadBody(); uploadOverlay.classList.add('open'); };
+document.getElementById('closeUpload').onclick = () => uploadOverlay.classList.remove('open');
+uploadOverlay.onclick = (e) => { if(e.target === uploadOverlay) uploadOverlay.classList.remove('open'); };
+
+let selectedFile = null;
+
+function renderUploadBody(){
+  const user = currentUser();
+  const body = document.getElementById('uploadBody');
+  if(!user){
+    body.innerHTML = `<div class="loginNudge">Log in on <a href="/">kunga.me</a> first, then come back to upload.</div>`;
+    return;
+  }
+  selectedFile = null;
+  body.innerHTML = `
+    <label class="fieldLabel">Video (MP4, MOV or WebM, up to 50MB)</label>
+    <div class="fileDrop" id="fileDrop">
+      <div id="fileDropText">Tap to choose a video</div>
+      <div class="hint">Short clips work best.</div>
+      <input type="file" id="fileInput" accept="video/mp4,video/quicktime,video/webm">
+    </div>
+    <video class="previewVideo" id="previewVideo" style="display:none" muted playsinline controls></video>
+    <label class="fieldLabel" for="captionInput">Caption (optional)</label>
+    <textarea id="captionInput" rows="3" maxlength="300" placeholder="Say something about it…"></textarea>
+    <div class="charCount" id="charCount">0 / 300</div>
+    <button class="uploadBtn" id="submitUploadBtn" disabled>Choose a video first</button>
+    <div id="uploadErrorBox"></div>
+  `;
+  const fileDrop = document.getElementById('fileDrop');
+  const fileInput = document.getElementById('fileInput');
+  fileDrop.onclick = () => fileInput.click();
+  fileInput.addEventListener('change', onFilePicked);
+  document.getElementById('captionInput').addEventListener('input', (e) => {
+    document.getElementById('charCount').textContent = e.target.value.length + ' / 300';
+  });
+  document.getElementById('submitUploadBtn').onclick = submitUpload;
+}
+
+function onFilePicked(e){
+  const file = e.target.files[0];
+  const errorBox = document.getElementById('uploadErrorBox');
+  errorBox.innerHTML = '';
+  if(!file) return;
+  if(file.size > 50 * 1024 * 1024){
+    errorBox.innerHTML = `<div class="errorBox">That file is over the 50MB limit.</div>`;
+    return;
+  }
+  selectedFile = file;
+  document.getElementById('fileDrop').classList.add('has');
+  document.getElementById('fileDropText').textContent = file.name;
+  const preview = document.getElementById('previewVideo');
+  preview.src = URL.createObjectURL(file);
+  preview.style.display = 'block';
+  const btn = document.getElementById('submitUploadBtn');
+  btn.disabled = false;
+  btn.textContent = 'Upload clip';
+}
+
+function captureThumbnail(file){
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.src = URL.createObjectURL(file);
+    video.muted = true;
+    video.playsInline = true;
+    video.addEventListener('loadeddata', () => {
+      video.currentTime = Math.min(0.5, (video.duration || 1) * 0.1);
+    });
+    video.addEventListener('seeked', () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 320;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => { URL.revokeObjectURL(video.src); resolve(blob); }, 'image/jpeg', 0.8);
+    });
+    video.addEventListener('error', () => resolve(null));
+    setTimeout(() => resolve(null), 6000); // don't hang forever on an odd file
+  });
+}
+
+async function submitUpload(){
+  if(!selectedFile) return;
+  const errorBox = document.getElementById('uploadErrorBox');
+  errorBox.innerHTML = '';
+  const caption = document.getElementById('captionInput').value.trim();
+  const btn = document.getElementById('submitUploadBtn');
+  btn.disabled = true;
+  btn.textContent = 'Uploading…';
+
+  try{
+    const createResp = await fetch('/api/clips', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: currentUser(), caption }),
+    });
+    const createData = await createResp.json();
+    if(!createResp.ok){
+      errorBox.innerHTML = `<div class="errorBox">${esc(createData.error || 'Something went wrong.')}</div>`;
+      btn.disabled = false; btn.textContent = 'Upload clip';
+      return;
+    }
+    const id = createData.clip.id;
+
+    btn.textContent = 'Uploading video…';
+    const videoBuf = await selectedFile.arrayBuffer();
+    const videoResp = await fetch('/api/clips/' + id + '/video', {
+      method: 'POST',
+      headers: { 'Content-Type': selectedFile.type },
+      body: videoBuf,
+    });
+    if(!videoResp.ok){
+      const videoData = await videoResp.json().catch(() => ({}));
+      errorBox.innerHTML = `<div class="errorBox">${esc(videoData.error || 'Video upload failed.')}</div>`;
+      btn.disabled = false; btn.textContent = 'Upload clip';
+      return;
+    }
+
+    btn.textContent = 'Generating thumbnail…';
+    const thumbBlob = await captureThumbnail(selectedFile);
+    if(thumbBlob){
+      const thumbBuf = await thumbBlob.arrayBuffer();
+      await fetch('/api/clips/' + id + '/thumbnail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'image/jpeg' },
+        body: thumbBuf,
+      }).catch(() => {});
+    }
+
+    uploadOverlay.classList.remove('open');
+    await loadClips();
+  }catch(e){
+    errorBox.innerHTML = `<div class="errorBox">Network error — try again.</div>`;
+    btn.disabled = false; btn.textContent = 'Upload clip';
+  }
+}
+
+// ---- Admin unlock ----
+const adminOverlay = document.getElementById('adminOverlay');
+const adminLink = document.getElementById('adminLink');
+function updateAdminLink(){ adminLink.classList.toggle('on', !!adminKey); adminLink.textContent = adminKey ? 'Admin ✓' : 'Admin'; }
+updateAdminLink();
+adminLink.onclick = () => {
+  if(adminKey){
+    if(confirm('Lock moderation mode?')){ adminKey = ''; sessionStorage.removeItem('clipsAdminKey'); updateAdminLink(); renderFeed(); }
+    return;
+  }
+  adminOverlay.classList.add('open');
+};
+document.getElementById('closeAdmin').onclick = () => adminOverlay.classList.remove('open');
+adminOverlay.onclick = (e) => { if(e.target === adminOverlay) adminOverlay.classList.remove('open'); };
+document.getElementById('adminUnlockBtn').onclick = async () => {
+  const key = document.getElementById('adminKeyInput').value.trim();
+  const errBox = document.getElementById('adminErrorBox');
+  errBox.style.display = 'none';
+  if(!key) return;
+  const resp = await fetch('/api/messages/admin', { headers: { 'x-admin-key': key } });
+  if(resp.status === 401){
+    errBox.textContent = 'Incorrect admin key.';
+    errBox.style.display = 'block';
+    return;
+  }
+  adminKey = key;
+  sessionStorage.setItem('clipsAdminKey', key);
+  updateAdminLink();
+  adminOverlay.classList.remove('open');
+  renderFeed();
+};
+
+loadClips();
+</script>
+</body>
+</html>
