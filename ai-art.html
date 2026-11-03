@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kunga's AI Art</title>
+<meta name="description" content="Type a prompt, get an AI-generated picture — powered by Pollinations.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0d16;--card:#17172406;--ink:#fff;--muted:#a9abc0;--accent:#7c5cff;--accent2:#2563eb;
+  --good:#3FAE72;--bad:#ff6a6a;--font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 20% 0%,#201a3d,#0d0d16 55%);color:var(--ink);font-family:var(--font-body)}
+.topBar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:calc(14px + env(safe-area-inset-top,0px)) 18px 14px;backdrop-filter:blur(8px);background:rgba(13,13,22,.6)}
+.brand{font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--ink);text-decoration:none}
+.pageTitle{font-family:var(--font-display);font-weight:800;font-size:13px;letter-spacing:.04em;color:var(--muted);text-transform:uppercase}
+
+.wrap{max-width:560px;margin:0 auto;padding:10px 18px calc(50px + env(safe-area-inset-bottom,0px))}
+h1{font-family:var(--font-display);font-weight:800;font-size:26px;margin:14px 0 4px;background:linear-gradient(90deg,#b79bff,#7c5cff 60%,#2563eb);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--muted);font-size:14px;line-height:1.5;margin:0 0 20px}
+.sub a{color:#b79bff}
+
+label.fieldLabel{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:0 0 8px}
+textarea#promptInput{width:100%;font-family:var(--font-body);font-size:15px;padding:14px;border-radius:14px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:var(--ink);outline:none;resize:vertical;min-height:72px}
+textarea#promptInput:focus{border-color:var(--accent)}
+
+.chipRow{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 18px}
+.chip{all:unset;cursor:pointer;font-size:12.5px;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.07);color:var(--muted);border:1px solid rgba(255,255,255,.1)}
+.chip:hover{color:var(--ink);border-color:var(--accent)}
+
+.optsGrid{display:flex;flex-direction:column;gap:16px;margin-bottom:18px}
+.optsCol{width:100%}
+.sizeRow{display:flex;gap:6px}
+.sizeBtn{all:unset;box-sizing:border-box;cursor:pointer;flex:1;min-width:0;text-align:center;font-size:12.5px;padding:10px 4px;border-radius:10px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sizeBtn.active{background:rgba(124,92,255,.18);border-color:var(--accent);color:var(--ink)}
+.seedRow{display:flex;gap:6px}
+.seedRow input{flex:1;min-width:0;font-size:13px;padding:9px 10px;border-radius:10px;border:1.5px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:var(--ink);outline:none}
+.diceBtn{all:unset;cursor:pointer;width:38px;height:38px;display:grid;place-items:center;border-radius:10px;background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.1);font-size:16px}
+
+button#generateBtn{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:100%;text-align:center;font-family:var(--font-display);font-weight:700;font-size:16px;padding:16px;border-radius:14px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff}
+button#generateBtn:disabled{opacity:.45;cursor:default}
+
+.statusLine{text-align:center;font-size:13px;color:var(--muted);margin-top:10px;min-height:18px}
+.statusLine.err{color:var(--bad)}
+
+.resultCard{margin-top:26px}
+.resultImgWrap{position:relative;border-radius:18px;overflow:hidden;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);aspect-ratio:1/1;display:flex;align-items:center;justify-content:center}
+.resultImgWrap.loading::after{content:'';width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.15);border-top-color:var(--accent);animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#resultImg{width:100%;height:100%;object-fit:cover;display:none}
+#resultImg.show{display:block}
+.resultActions{display:flex;gap:10px;margin-top:12px}
+.actionBtn{all:unset;cursor:pointer;flex:1;text-align:center;font-size:13.5px;font-weight:600;padding:12px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:var(--ink)}
+.actionBtn:disabled{opacity:.4;cursor:default}
+
+.historySection{margin-top:34px}
+.historyHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.historyHead h2{font-family:var(--font-display);font-size:14px;margin:0;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.clearLink{all:unset;cursor:pointer;font-size:12px;color:var(--muted);text-decoration:underline}
+.historyGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.historyThumb{all:unset;cursor:pointer;aspect-ratio:1/1;border-radius:10px;overflow:hidden;background:rgba(255,255,255,.05)}
+.historyThumb img{width:100%;height:100%;object-fit:cover;display:block}
+.emptyHistory{color:var(--muted);font-size:13px;text-align:center;padding:16px}
+</style>
+</head>
+<body>
+
+<div class="topBar">
+  <a class="brand" href="/">← kunga.me</a>
+  <span class="pageTitle">AI Art</span>
+</div>
+
+<div class="wrap">
+  <h1>Kunga's AI Art</h1>
+  <p class="sub">Type anything and get a picture made for you, powered by <a href="https://pollinations.ai" target="_blank" rel="noopener">Pollinations</a> — free, no account needed. The free tier allows one new image about every 45 seconds, so there's a short wait between pictures.</p>
+
+  <label class="fieldLabel" for="promptInput">What should the picture show?</label>
+  <textarea id="promptInput" placeholder="a cosy mountain village in Tibet at sunrise, warm light, watercolor style" maxlength="500"></textarea>
+  <div class="chipRow" id="chipRow"></div>
+
+  <div class="optsGrid">
+    <div class="optsCol">
+      <label class="fieldLabel">Shape</label>
+      <div class="sizeRow" id="sizeRow"></div>
+    </div>
+    <div class="optsCol">
+      <label class="fieldLabel">Seed</label>
+      <div class="seedRow">
+        <input type="text" id="seedInput" inputmode="numeric">
+        <button class="diceBtn" id="diceBtn" title="Random seed">🎲</button>
+      </div>
+    </div>
+  </div>
+
+  <button id="generateBtn">Generate picture</button>
+  <div class="statusLine" id="statusLine"></div>
+
+  <div class="resultCard" id="resultCard" style="display:none">
+    <div class="resultImgWrap" id="resultImgWrap">
+      <img id="resultImg" alt="">
+    </div>
+    <div class="resultActions">
+      <button class="actionBtn" id="downloadBtn">⬇ Download</button>
+      <button class="actionBtn" id="shuffleBtn">🎲 New version</button>
+    </div>
+  </div>
+
+  <div class="historySection">
+    <div class="historyHead">
+      <h2>This session</h2>
+      <button class="clearLink" id="clearHistoryBtn">Clear</button>
+    </div>
+    <div id="historyGrid"></div>
+  </div>
+</div>
+
+<script>
+const SIZES = [
+  { key:'square', label:'Square', width:1024, height:1024 },
+  { key:'portrait', label:'Portrait', width:832, height:1216 },
+  { key:'landscape', label:'Landscape', width:1216, height:832 },
+  { key:'wide', label:'Wide', width:1344, height:756 },
+];
+const EXAMPLE_PROMPTS = [
+  'a cosy mountain village in Tibet at sunrise, warm light, watercolor style',
+  'a fluffy red panda wearing tiny round glasses, studio portrait',
+  'a neon-lit night market street in a futuristic city, rain reflections',
+  'a cup of butter tea on a wooden table, soft morning light, photorealistic',
+  'a dragon made of clouds flying over snowy mountains, fantasy art',
+  'a cute robot watering flowers in a greenhouse, pixar style',
+];
+const HISTORY_KEY = 'kungaAiArtHistory_v1';
+const COOLDOWN_MS = 45000;
+
+let selectedSize = SIZES[0];
+let generating = false;
+let cooldownTimer = null;
+let currentBlobUrl = null;
+let currentDownloadName = 'kunga-ai-art.jpg';
+let currentIsFresh = false;
+
+const promptInput = document.getElementById('promptInput');
+const seedInput = document.getElementById('seedInput');
+const generateBtn = document.getElementById('generateBtn');
+const statusLine = document.getElementById('statusLine');
+const resultCard = document.getElementById('resultCard');
+const resultImgWrap = document.getElementById('resultImgWrap');
+const resultImg = document.getElementById('resultImg');
+const downloadBtn = document.getElementById('downloadBtn');
+const shuffleBtn = document.getElementById('shuffleBtn');
+const historyGrid = document.getElementById('historyGrid');
+
+function randomSeed(){ return Math.floor(Math.random() * 1000000); }
+seedInput.value = randomSeed();
+
+const chipRow = document.getElementById('chipRow');
+EXAMPLE_PROMPTS.forEach(p => {
+  const btn = document.createElement('button');
+  btn.className = 'chip';
+  btn.textContent = p.length > 28 ? p.slice(0, 28) + '…' : p;
+  btn.title = p;
+  btn.onclick = () => { promptInput.value = p; promptInput.focus(); };
+  chipRow.appendChild(btn);
+});
+
+const sizeRow = document.getElementById('sizeRow');
+function renderSizeButtons(){
+  sizeRow.innerHTML = '';
+  SIZES.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'sizeBtn' + (s.key === selectedSize.key ? ' active' : '');
+    btn.textContent = s.label;
+    btn.onclick = () => { selectedSize = s; renderSizeButtons(); };
+    sizeRow.appendChild(btn);
+  });
+}
+renderSizeButtons();
+
+document.getElementById('diceBtn').onclick = () => { seedInput.value = randomSeed(); };
+
+function slugify(text){
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 60) || 'kunga-ai-art';
+}
+
+function loadHistory(){
+  try{ return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }catch(e){ return []; }
+}
+function saveHistory(list){
+  try{ localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, 16))); }catch(e){}
+}
+function renderHistory(){
+  const list = loadHistory();
+  if(!list.length){
+    historyGrid.innerHTML = '<div class="emptyHistory">Your generated pictures will show up here.</div>';
+    historyGrid.style.display = 'block';
+    return;
+  }
+  historyGrid.style.display = 'grid';
+  historyGrid.className = 'historyGrid';
+  historyGrid.innerHTML = '';
+  list.forEach(item => {
+    const btn = document.createElement('button');
+    btn.className = 'historyThumb';
+    const img = document.createElement('img');
+    img.src = item.url;
+    img.alt = item.prompt;
+    img.loading = 'lazy';
+    btn.appendChild(img);
+    btn.title = item.prompt;
+    btn.onclick = () => { promptInput.value = item.prompt; showResult(item.url, item.prompt, false); };
+    historyGrid.appendChild(btn);
+  });
+}
+function addToHistory(url, prompt){
+  const list = loadHistory();
+  list.unshift({ url, prompt, at: Date.now() });
+  saveHistory(list);
+  renderHistory();
+}
+document.getElementById('clearHistoryBtn').onclick = () => {
+  if(!confirm('Clear your picture history on this device?')) return;
+  saveHistory([]);
+  renderHistory();
+};
+renderHistory();
+
+function setStatus(msg, isError){
+  statusLine.textContent = msg || '';
+  statusLine.classList.toggle('err', !!isError);
+}
+
+function startCooldown(seconds){
+  clearInterval(cooldownTimer);
+  let remaining = Math.ceil(seconds);
+  const tick = () => {
+    if(remaining <= 0){
+      clearInterval(cooldownTimer);
+      generateBtn.disabled = false;
+      generateBtn.textContent = 'Generate picture';
+      return;
+    }
+    generateBtn.disabled = true;
+    generateBtn.textContent = `Next picture in ${remaining}s…`;
+    remaining -= 1;
+  };
+  tick();
+  cooldownTimer = setInterval(tick, 1000);
+}
+
+function showResult(url, prompt, isFresh){
+  resultCard.style.display = 'block';
+  resultImg.classList.remove('show');
+  resultImg.src = url;
+  resultImg.onload = () => resultImg.classList.add('show');
+  currentDownloadName = slugify(prompt) + '.jpg';
+  currentIsFresh = isFresh;
+  // History thumbnails point straight at Pollinations (not a blob we hold),
+  // so there's nothing to feed a same-origin download link — offer to open
+  // it full-size instead, which still lets you long-press/right-click save it.
+  downloadBtn.textContent = isFresh ? '⬇ Download' : '↗ Open full size';
+}
+
+async function generate(){
+  if(generating) return;
+  const prompt = promptInput.value.trim();
+  if(!prompt){
+    setStatus('Type something first — even a couple of words works.', true);
+    promptInput.focus();
+    return;
+  }
+  const seed = (parseInt(seedInput.value, 10) || 0) || randomSeed();
+  seedInput.value = seed;
+
+  generating = true;
+  generateBtn.disabled = true;
+  resultCard.style.display = 'block';
+  resultImgWrap.classList.add('loading');
+  resultImg.classList.remove('show');
+  setStatus('Generating — this can take up to 30 seconds…');
+
+  try{
+    const resp = await fetch('/api/ai-art/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, size: selectedSize.key, seed }),
+    });
+    if(!resp.ok){
+      const body = await resp.json().catch(() => null);
+      setStatus((body && body.error) || 'Something went wrong generating that picture. Try again in a moment.', true);
+      startCooldown((body && body.retryAfter) || COOLDOWN_MS / 1000);
+      return;
+    }
+    const sourceUrl = resp.headers.get('x-image-source-url');
+    const blob = await resp.blob();
+    if(currentBlobUrl) URL.revokeObjectURL(currentBlobUrl);
+    currentBlobUrl = URL.createObjectURL(blob);
+    showResult(currentBlobUrl, prompt, true);
+    if(sourceUrl) addToHistory(sourceUrl, prompt);
+    setStatus('Done — want another? Wait for the cooldown below.');
+    startCooldown(COOLDOWN_MS / 1000);
+  }catch(e){
+    setStatus('Network error — check your connection and try again.', true);
+    generateBtn.disabled = false;
+  }finally{
+    resultImgWrap.classList.remove('loading');
+    generating = false;
+  }
+}
+
+generateBtn.onclick = generate;
+shuffleBtn.onclick = () => { seedInput.value = randomSeed(); generate(); };
+downloadBtn.onclick = () => {
+  if(currentIsFresh){
+    if(!currentBlobUrl) return;
+    const a = document.createElement('a');
+    a.href = currentBlobUrl;
+    a.download = currentDownloadName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  } else {
+    window.open(resultImg.src, '_blank', 'noopener');
+  }
+};
+
+promptInput.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter' && (e.metaKey || e.ctrlKey)) generate();
+});
+</script>
+</body>
+</html>

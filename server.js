@@ -2870,6 +2870,68 @@ function createApp(overrides = {}) {
     return res.json({ avatar: result.avatar });
   });
 
+  // ---- Kunga's AI Art (Pollinations): free-text prompt, unlike the avatar
+  // picker above. Routed through the server (not a client-side fetch)
+  // because Pollinations blocks cross-origin fetch()/crossOrigin<img> calls
+  // with a Turnstile challenge, while a plain server-to-server request works
+  // fine -- this mirrors fetchAvatarImage's retry handling. `safe=true` is
+  // always forced server-side since the prompt is free text.
+  const AI_ART_PROMPT_MAX = 500;
+  const AI_ART_SIZES = {
+    square: { width: 1024, height: 1024 },
+    portrait: { width: 832, height: 1216 },
+    landscape: { width: 1216, height: 832 },
+    wide: { width: 1344, height: 756 },
+  };
+  async function fetchAiArtImage(url) {
+    let lastError;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, 3000));
+      try {
+        const genRes = await fetch(url, { signal: AbortSignal.timeout(45000) });
+        if (!genRes.ok) {
+          const body = await genRes.text().catch(() => '');
+          const err = new Error('Pollinations request failed: ' + genRes.status);
+          err.status = genRes.status;
+          err.retryAfter = genRes.headers.get('retry-after');
+          err.body = body;
+          throw err;
+        }
+        const buffer = Buffer.from(await genRes.arrayBuffer());
+        if (buffer.length < 2000) throw new Error('Generated image looked invalid.');
+        return buffer;
+      } catch (error) {
+        lastError = error;
+        if (error.status === 402) break; // rate-limited -- retrying immediately won't help
+      }
+    }
+    throw lastError;
+  }
+  app.post('/api/ai-art/generate', async (req, res) => {
+    const { prompt, size, seed } = req.body || {};
+    const cleanPrompt = String(prompt || '').trim().slice(0, AI_ART_PROMPT_MAX);
+    if (!cleanPrompt) return res.status(400).json({ error: 'Type a prompt first.' });
+    const dims = AI_ART_SIZES[size] || AI_ART_SIZES.square;
+    const safeSeed = Number.isFinite(Number(seed)) ? Math.floor(Number(seed)) % 1e9 : Math.floor(Math.random() * 1e9);
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=${dims.width}&height=${dims.height}&seed=${safeSeed}&nologo=true&safe=true`;
+
+    try {
+      const buffer = await fetchAiArtImage(url);
+      res.set('X-Image-Source-Url', url);
+      res.set('Access-Control-Expose-Headers', 'X-Image-Source-Url');
+      res.type('jpg');
+      return res.send(buffer);
+    } catch (error) {
+      if (error.status === 402) {
+        return res.status(429).json({
+          error: "Pollinations' free tier allows about one picture every 45 seconds. Please wait and try again.",
+          retryAfter: error.retryAfter || 45,
+        });
+      }
+      return res.status(502).json({ error: 'Picture generation failed. Try again in a moment.', details: error.message });
+    }
+  });
+
   // ---- Daily News: user-submitted newspaper clippings, typed out exactly ----
   const NEWS_TITLE_MAX = 140;
   const NEWS_BODY_MAX = 4000;
@@ -3071,6 +3133,14 @@ function createApp(overrides = {}) {
 
   app.get('/clips.html', (req, res) => {
     return res.sendFile(path.join(__dirname, 'clips.html'));
+  });
+
+  app.get('/ai-art', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'ai-art.html'));
+  });
+
+  app.get('/ai-art.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'ai-art.html'));
   });
 
   app.get('/poker', (req, res) => {
