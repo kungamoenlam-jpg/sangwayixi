@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Kunga's AI Art</title>
-<meta name="description" content="Type a prompt, get an AI-generated picture — powered by Pollinations.">
+<meta name="description" content="Type a prompt and get an AI-generated picture.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -76,7 +76,7 @@ button#generateBtn:disabled{opacity:.45;cursor:default}
 
 <div class="wrap">
   <h1>Kunga's AI Art</h1>
-  <p class="sub">Type anything and get a picture made for you, powered by <a href="https://pollinations.ai" target="_blank" rel="noopener">Pollinations</a> — free, no account needed. The free tier allows one new image about every 45 seconds, so there's a short wait between pictures.</p>
+  <p class="sub">Type anything and get a picture made for you — free, no account needed. There's about a 45-second wait between pictures.</p>
 
   <label class="fieldLabel" for="promptInput">What should the picture show?</label>
   <textarea id="promptInput" placeholder="a cosy mountain village in Tibet at sunrise, warm light, watercolor style" maxlength="500"></textarea>
@@ -186,6 +186,10 @@ function slugify(text){
   return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '').slice(0, 60) || 'kunga-ai-art';
 }
 
+function proxiedImageUrl(url){
+  return '/api/ai-art/image?url=' + encodeURIComponent(url);
+}
+
 function loadHistory(){
   try{ return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }catch(e){ return []; }
 }
@@ -206,7 +210,7 @@ function renderHistory(){
     const btn = document.createElement('button');
     btn.className = 'historyThumb';
     const img = document.createElement('img');
-    img.src = item.url;
+    img.src = proxiedImageUrl(item.url);
     img.alt = item.prompt;
     img.loading = 'lazy';
     btn.appendChild(img);
@@ -254,13 +258,13 @@ function startCooldown(seconds){
 function showResult(url, prompt, isFresh){
   resultCard.style.display = 'block';
   resultImg.classList.remove('show');
-  resultImg.src = url;
+  resultImg.src = isFresh ? url : proxiedImageUrl(url);
   resultImg.onload = () => resultImg.classList.add('show');
   currentDownloadName = slugify(prompt) + '.jpg';
   currentIsFresh = isFresh;
-  // History thumbnails point straight at Pollinations (not a blob we hold),
-  // so there's nothing to feed a same-origin download link — offer to open
-  // it full-size instead, which still lets you long-press/right-click save it.
+  // History items aren't a blob we hold, so there's nothing to feed a
+  // same-origin download link — offer to open it full-size instead, which
+  // still lets you long-press/right-click save it.
   downloadBtn.textContent = isFresh ? '⬇ Download' : '↗ Open full size';
 }
 

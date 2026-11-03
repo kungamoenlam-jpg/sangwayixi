@@ -2924,11 +2924,33 @@ function createApp(overrides = {}) {
     } catch (error) {
       if (error.status === 402) {
         return res.status(429).json({
-          error: "Pollinations' free tier allows about one picture every 45 seconds. Please wait and try again.",
+          error: 'Only about one new picture every 45 seconds is allowed right now. Please wait and try again.',
           retryAfter: error.retryAfter || 45,
         });
       }
-      return res.status(502).json({ error: 'Picture generation failed. Try again in a moment.', details: error.message });
+      return res.status(502).json({ error: 'Picture generation failed. Try again in a moment.' });
+    }
+  });
+
+  // Lets history thumbnails and "open full size" load through kunga.me
+  // instead of linking straight to image.pollinations.ai -- same validate
+  // + server-side fetch pattern as generation above, just a passthrough.
+  app.get('/api/ai-art/image', async (req, res) => {
+    const sourceUrl = String(req.query.url || '');
+    let parsed;
+    try { parsed = new URL(sourceUrl); } catch (e) { return res.status(400).end(); }
+    if (parsed.hostname !== 'image.pollinations.ai' || !parsed.pathname.startsWith('/prompt/')) {
+      return res.status(400).end();
+    }
+    try {
+      const imgRes = await fetch(sourceUrl, { signal: AbortSignal.timeout(20000) });
+      if (!imgRes.ok) return res.status(502).end();
+      const buffer = Buffer.from(await imgRes.arrayBuffer());
+      res.set('Cache-Control', 'public, max-age=31536000, immutable');
+      res.type('jpg');
+      return res.send(buffer);
+    } catch (error) {
+      return res.status(502).end();
     }
   });
 
