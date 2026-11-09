@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kunga's Spreadsheets</title>
+<meta name="description" content="Upload Excel or CSV files and browse them right in the browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#0c1210;--ink:#f1f5f2;--muted:#9fb0a6;--accent:#1f9d55;--accent2:#0f6b39;
+  --good:#3FAE72;--bad:#ff6a6a;--font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:var(--font-body)}
+.topBar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:calc(14px + env(safe-area-inset-top,0px)) 18px 14px;background:rgba(12,18,16,.88);backdrop-filter:blur(8px)}
+.brand{font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--ink);text-decoration:none}
+.adminLink{all:unset;cursor:pointer;font-size:12px;color:var(--muted)}
+.adminLink.on{color:#ffd24d}
+
+.wrap{max-width:600px;margin:0 auto;padding:10px 18px calc(50px + env(safe-area-inset-bottom,0px))}
+h1{font-family:var(--font-display);font-weight:800;font-size:26px;margin:14px 0 4px;background:linear-gradient(90deg,#4ade80,var(--accent) 60%,var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--muted);font-size:14px;line-height:1.5;margin:0 0 20px}
+.uploadBtn{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-family:var(--font-display);font-weight:700;font-size:16px;padding:16px;border-radius:14px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;margin-bottom:24px}
+
+.sheetList{display:flex;flex-direction:column;gap:10px}
+.sheetCard{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+.sheetIcon{flex:0 0 auto;width:42px;height:42px;border-radius:10px;background:rgba(31,157,85,.18);display:grid;place-items:center;font-size:20px}
+.sheetInfo{flex:1;min-width:0}
+.sheetTitle{all:unset;cursor:pointer;display:block;width:100%;font-size:14.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sheetMeta{font-size:11.5px;color:var(--muted);margin-top:2px}
+.sheetActions{flex:0 0 auto;display:flex;gap:6px}
+.iconBtn{all:unset;cursor:pointer;width:32px;height:32px;display:grid;place-items:center;border-radius:8px;background:rgba(255,255,255,.07);font-size:14px}
+.iconBtn.danger{background:rgba(255,92,92,.18);color:var(--bad)}
+.emptyState{text-align:center;color:var(--muted);font-size:13.5px;padding:40px 10px}
+.emptyState .glyph{font-size:36px;display:block;margin-bottom:8px}
+
+.modalOverlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.modalOverlay.open{display:flex}
+.modalCard{width:100%;max-width:520px;background:#101915;border-radius:20px 20px 0 0;padding:22px 20px calc(26px + env(safe-area-inset-bottom,0px));max-height:88vh;overflow-y:auto}
+.modalHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.modalHead h2{font-family:var(--font-display);font-size:17px;margin:0}
+.closeBtn{all:unset;cursor:pointer;font-size:20px;color:var(--muted);padding:4px}
+label.fieldLabel{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:0 0 8px}
+input#titleInput{width:100%;font-family:var(--font-body);font-size:15px;padding:12px 14px;border-radius:12px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);outline:none;margin-bottom:16px}
+.fileDrop{border:1.5px dashed rgba(255,255,255,.2);border-radius:14px;padding:22px;text-align:center;cursor:pointer;margin-bottom:16px}
+.fileDrop.has{border-style:solid;border-color:var(--accent)}
+.fileDrop input{display:none}
+.fileDrop .hint{font-size:12.5px;color:var(--muted);margin-top:6px}
+.loginNudge{text-align:center;color:var(--muted);font-size:13.5px;padding:30px 10px;line-height:1.7}
+.loginNudge a{color:var(--accent);font-weight:600}
+.primaryBtn{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:100%;text-align:center;font-family:var(--font-display);font-weight:700;font-size:15px;padding:14px;border-radius:14px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff}
+.primaryBtn:disabled{opacity:.5;cursor:default}
+.errorBox{background:rgba(255,92,92,.14);border:1px solid rgba(255,92,92,.35);color:#ffb0b0;padding:10px 14px;border-radius:10px;font-size:13px;margin-top:12px;text-align:center}
+.adminPanel input{width:100%;font-size:14px;padding:11px 13px;border-radius:10px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);outline:none;margin-bottom:10px}
+
+/* ---- Preview overlay ---- */
+.previewOverlay{position:fixed;inset:0;background:var(--bg);z-index:60;display:none;flex-direction:column}
+.previewOverlay.open{display:flex}
+.previewTop{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
+.previewTitle{font-size:14.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.previewActions{display:flex;gap:8px;flex:0 0 auto}
+.previewClose{all:unset;cursor:pointer;font-size:20px;color:var(--muted);padding:4px}
+.downloadLink{all:unset;cursor:pointer;font-size:12.5px;font-weight:600;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.08);color:var(--ink)}
+.sheetTabs{display:flex;gap:6px;overflow-x:auto;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sheetTab{all:unset;cursor:pointer;flex:0 0 auto;font-size:12.5px;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.06);color:var(--muted)}
+.sheetTab.active{background:rgba(31,157,85,.25);color:#fff}
+.previewBody{flex:1;overflow:auto;padding:0 0 30px}
+.previewNote{padding:10px 16px;font-size:12px;color:var(--muted)}
+table.dataTable{border-collapse:collapse;font-size:12.5px;white-space:nowrap}
+table.dataTable td,table.dataTable th{border:1px solid rgba(255,255,255,.08);padding:6px 10px;text-align:left}
+table.dataTable th{background:rgba(255,255,255,.04);position:sticky;top:0;color:var(--muted);font-weight:600}
+.previewState{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);text-align:center;padding:30px}
+.previewState .glyph{font-size:40px}
+</style>
+</head>
+<body>
+
+<div class="topBar">
+  <a class="brand" href="/">← kunga.me</a>
+  <button class="adminLink" id="adminLink">Admin</button>
+</div>
+
+<div class="wrap">
+  <h1>Kunga's Spreadsheets</h1>
+  <p class="sub">Upload an Excel or CSV file — anyone can browse it as a table right here, no Excel needed.</p>
+  <button class="uploadBtn" id="uploadBtn">📊 Upload a spreadsheet</button>
+  <div class="sheetList" id="sheetList"></div>
+</div>
+
+<div class="modalOverlay" id="uploadOverlay">
+  <div class="modalCard">
+    <div class="modalHead"><h2>Upload a spreadsheet</h2><button class="closeBtn" id="closeUpload">×</button></div>
+    <div id="uploadBody"></div>
+  </div>
+</div>
+
+<div class="modalOverlay" id="adminOverlay">
+  <div class="modalCard">
+    <div class="modalHead"><h2>Admin</h2><button class="closeBtn" id="closeAdmin">×</button></div>
+    <div class="adminPanel">
+      <label class="fieldLabel" for="adminKeyInput">Admin key</label>
+      <input type="password" id="adminKeyInput" placeholder="Admin key">
+      <button class="primaryBtn" id="adminUnlockBtn">Unlock moderation</button>
+      <div class="errorBox" id="adminErrorBox" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<div class="previewOverlay" id="previewOverlay">
+  <div class="previewTop">
+    <span class="previewTitle" id="previewTitleLabel"></span>
+    <div class="previewActions">
+      <a class="downloadLink" id="previewDownloadLink" target="_blank">⬇ Download</a>
+      <button class="previewClose" id="previewCloseBtn">×</button>
+    </div>
+  </div>
+  <div class="sheetTabs" id="sheetTabs" style="display:none"></div>
+  <div class="previewBody" id="previewBody"></div>
+</div>
+
+<script>
+const SESSION_KEY = 'sangwa_session_v1';
+function currentUser(){
+  try{
+    const s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+    return (s && s.currentUser) ? String(s.currentUser) : null;
+  }catch(e){ return null; }
+}
+function esc(s){ return String(s === undefined || s === null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(iso){
+  try{ return new Date(iso).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' }); }catch(e){ return ''; }
+}
+
+let sheets = [];
+let adminKey = sessionStorage.getItem('sheetsAdminKey') || '';
+const sheetList = document.getElementById('sheetList');
+
+async function loadSheets(){
+  try{
+    const resp = await fetch('/api/spreadsheets');
+    const data = await resp.json();
+    sheets = data.spreadsheets || [];
+    renderList();
+  }catch(e){
+    sheetList.innerHTML = `<div class="emptyState"><div class="glyph">⚠️</div>Couldn't load spreadsheets. Try again shortly.</div>`;
+  }
+}
+function extBadge(fileName){
+  const ext = (fileName || '').split('.').pop().toUpperCase();
+  return ext || 'FILE';
+}
+function renderList(){
+  if(!sheets.length){
+    sheetList.innerHTML = `<div class="emptyState"><div class="glyph">📊</div>No spreadsheets yet — be the first to upload one.</div>`;
+    return;
+  }
+  const isAdmin = !!adminKey;
+  const user = currentUser();
+  sheetList.innerHTML = sheets.map((s, i) => {
+    const canDelete = isAdmin || (user && user.toLowerCase() === s.username.toLowerCase());
+    return `
+    <div class="sheetCard">
+      <div class="sheetIcon">📄</div>
+      <div class="sheetInfo">
+        <button class="sheetTitle" data-open="${i}">${esc(s.title)}</button>
+        <div class="sheetMeta">@${esc(s.username)} · ${fmtDate(s.createdAt)} · ${extBadge(s.fileName)}</div>
+      </div>
+      <div class="sheetActions">
+        ${canDelete ? `<button class="iconBtn danger" data-delete="${s.id}">🗑️</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  sheetList.querySelectorAll('[data-open]').forEach(btn => {
+    btn.onclick = () => openPreview(sheets[Number(btn.dataset.open)]);
+  });
+  sheetList.querySelectorAll('[data-delete]').forEach(btn => {
+    btn.onclick = () => deleteSheet(Number(btn.dataset.delete));
+  });
+}
+
+async function deleteSheet(id){
+  if(!confirm('Delete this spreadsheet? This cannot be undone.')) return;
+  const headers = { 'Content-Type': 'application/json' };
+  if(adminKey) headers['x-admin-key'] = adminKey;
+  const resp = await fetch('/api/spreadsheets/' + id + '/delete', {
+    method: 'POST', headers, body: JSON.stringify({ username: currentUser() }),
+  });
+  if(!resp.ok){
+    const data = await resp.json().catch(() => ({}));
+    alert(data.error || 'Could not delete.');
+    return;
+  }
+  sheets = sheets.filter(s => s.id !== id);
+  renderList();
+}
+
+// ---- Upload flow ----
+const uploadOverlay = document.getElementById('uploadOverlay');
+document.getElementById('uploadBtn').onclick = openUpload;
+document.getElementById('closeUpload').onclick = () => uploadOverlay.classList.remove('open');
+uploadOverlay.onclick = (e) => { if(e.target === uploadOverlay) uploadOverlay.classList.remove('open'); };
+
+let selectedFile = null;
+
+function openUpload(){
+  uploadOverlay.classList.add('open');
+  const user = currentUser();
+  const body = document.getElementById('uploadBody');
+  if(!user){
+    body.innerHTML = `<div class="loginNudge">Log in on <a href="/">kunga.me</a> first, then come back to upload.</div>`;
+    return;
+  }
+  selectedFile = null;
+  body.innerHTML = `
+    <label class="fieldLabel" for="titleInput">Title</label>
+    <input type="text" id="titleInput" maxlength="120" placeholder="What's in this spreadsheet?">
+    <label class="fieldLabel">File (.xlsx, .xls or .csv, up to 20MB)</label>
+    <div class="fileDrop" id="fileDrop">
+      <div id="fileDropText">Tap to choose a file</div>
+      <div class="hint">Excel or CSV only.</div>
+      <input type="file" id="fileInput" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv">
+    </div>
+    <button class="primaryBtn" id="submitUploadBtn" disabled>Choose a file first</button>
+    <div id="uploadErrorBox"></div>
+  `;
+  const fileDrop = document.getElementById('fileDrop');
+  const fileInput = document.getElementById('fileInput');
+  fileDrop.onclick = () => fileInput.click();
+  fileInput.addEventListener('change', onFilePicked);
+  document.getElementById('submitUploadBtn').onclick = submitUpload;
+}
+
+function onFilePicked(e){
+  const file = e.target.files[0];
+  const errorBox = document.getElementById('uploadErrorBox');
+  errorBox.innerHTML = '';
+  if(!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  if(!['xlsx','xls','csv'].includes(ext)){
+    errorBox.innerHTML = `<div class="errorBox">Please choose an .xlsx, .xls or .csv file.</div>`;
+    return;
+  }
+  if(file.size > 20 * 1024 * 1024){
+    errorBox.innerHTML = `<div class="errorBox">That file is over the 20MB limit.</div>`;
+    return;
+  }
+  selectedFile = file;
+  document.getElementById('fileDrop').classList.add('has');
+  document.getElementById('fileDropText').textContent = file.name;
+  const titleInput = document.getElementById('titleInput');
+  if(!titleInput.value.trim()) titleInput.value = file.name.replace(/\.[^.]+$/, '');
+  const btn = document.getElementById('submitUploadBtn');
+  btn.disabled = false;
+  btn.textContent = 'Upload';
+}
+
+async function submitUpload(){
+  if(!selectedFile) return;
+  const title = document.getElementById('titleInput').value.trim();
+  const errorBox = document.getElementById('uploadErrorBox');
+  errorBox.innerHTML = '';
+  if(!title){
+    errorBox.innerHTML = `<div class="errorBox">Give it a title first.</div>`;
+    return;
+  }
+  const btn = document.getElementById('submitUploadBtn');
+  btn.disabled = true;
+  btn.textContent = 'Uploading…';
+
+  try{
+    const createResp = await fetch('/api/spreadsheets', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: currentUser(), title }),
+    });
+    const createData = await createResp.json();
+    if(!createResp.ok){
+      errorBox.innerHTML = `<div class="errorBox">${esc(createData.error || 'Something went wrong.')}</div>`;
+      btn.disabled = false; btn.textContent = 'Upload';
+      return;
+    }
+    const id = createData.spreadsheet.id;
+    const fileBuf = await selectedFile.arrayBuffer();
+    const fileResp = await fetch('/api/spreadsheets/' + id + '/file', {
+      method: 'POST',
+      headers: { 'Content-Type': selectedFile.type || 'application/octet-stream', 'X-File-Name': encodeURIComponent(selectedFile.name) },
+      body: fileBuf,
+    });
+    if(!fileResp.ok){
+      const fileData = await fileResp.json().catch(() => ({}));
+      errorBox.innerHTML = `<div class="errorBox">${esc(fileData.error || 'File upload failed.')}</div>`;
+      btn.disabled = false; btn.textContent = 'Upload';
+      return;
+    }
+    uploadOverlay.classList.remove('open');
+    await loadSheets();
+  }catch(e){
+    errorBox.innerHTML = `<div class="errorBox">Network error — try again.</div>`;
+    btn.disabled = false; btn.textContent = 'Upload';
+  }
+}
+
+// ---- Preview ----
+const previewOverlay = document.getElementById('previewOverlay');
+const previewBody = document.getElementById('previewBody');
+const sheetTabs = document.getElementById('sheetTabs');
+let workbook = null;
+const MAX_PREVIEW_ROWS = 500;
+
+async function openPreview(sheet){
+  previewOverlay.classList.add('open');
+  document.getElementById('previewTitleLabel').textContent = sheet.title;
+  document.getElementById('previewDownloadLink').href = '/spreadsheet-file/' + sheet.id;
+  document.getElementById('previewDownloadLink').download = sheet.fileName || sheet.title;
+  sheetTabs.style.display = 'none';
+  sheetTabs.innerHTML = '';
+  previewBody.innerHTML = `<div class="previewState"><div class="glyph">⏳</div>Loading…</div>`;
+
+  try{
+    const resp = await fetch('/spreadsheet-file/' + sheet.id);
+    if(!resp.ok) throw new Error('Could not load the file.');
+    const buf = await resp.arrayBuffer();
+    workbook = XLSX.read(buf, { type: 'array' });
+    if(!workbook.SheetNames.length) throw new Error('This file has no sheets.');
+    renderSheetTabs();
+    renderActiveSheet(workbook.SheetNames[0]);
+  }catch(e){
+    previewBody.innerHTML = `<div class="previewState"><div class="glyph">⚠️</div>Couldn't preview this file. You can still download it.</div>`;
+  }
+}
+function renderSheetTabs(){
+  if(workbook.SheetNames.length < 2){ sheetTabs.style.display = 'none'; return; }
+  sheetTabs.style.display = 'flex';
+  sheetTabs.innerHTML = workbook.SheetNames.map((name, i) => `<button class="sheetTab${i===0?' active':''}" data-sheet="${esc(name)}">${esc(name)}</button>`).join('');
+  sheetTabs.querySelectorAll('[data-sheet]').forEach(btn => {
+    btn.onclick = () => {
+      sheetTabs.querySelectorAll('.sheetTab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      renderActiveSheet(btn.dataset.sheet);
+    };
+  });
+}
+function renderActiveSheet(name){
+  const ws = workbook.Sheets[name];
+  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false, defval: '' });
+  if(!rows.length){
+    previewBody.innerHTML = `<div class="previewState"><div class="glyph">📄</div>This sheet is empty.</div>`;
+    return;
+  }
+  const truncated = rows.length > MAX_PREVIEW_ROWS;
+  const shown = rows.slice(0, MAX_PREVIEW_ROWS);
+  const colCount = Math.max(...shown.map(r => r.length));
+  let html = '<table class="dataTable"><thead><tr>';
+  for(let c = 0; c < colCount; c++) html += `<th>${esc(shown[0][c])}</th>`;
+  html += '</tr></thead><tbody>';
+  for(let r = 1; r < shown.length; r++){
+    html += '<tr>';
+    for(let c = 0; c < colCount; c++) html += `<td>${esc(shown[r][c])}</td>`;
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+  previewBody.innerHTML = (truncated ? `<div class="previewNote">Showing the first ${MAX_PREVIEW_ROWS} rows of ${rows.length}.</div>` : '') + html;
+}
+document.getElementById('previewCloseBtn').onclick = () => { previewOverlay.classList.remove('open'); workbook = null; };
+
+// ---- Admin unlock ----
+const adminOverlay = document.getElementById('adminOverlay');
+const adminLink = document.getElementById('adminLink');
+function updateAdminLink(){ adminLink.classList.toggle('on', !!adminKey); adminLink.textContent = adminKey ? 'Admin ✓' : 'Admin'; }
+updateAdminLink();
+adminLink.onclick = () => {
+  if(adminKey){
+    if(confirm('Lock moderation mode?')){ adminKey = ''; sessionStorage.removeItem('sheetsAdminKey'); updateAdminLink(); renderList(); }
+    return;
+  }
+  adminOverlay.classList.add('open');
+};
+document.getElementById('closeAdmin').onclick = () => adminOverlay.classList.remove('open');
+adminOverlay.onclick = (e) => { if(e.target === adminOverlay) adminOverlay.classList.remove('open'); };
+document.getElementById('adminUnlockBtn').onclick = async () => {
+  const key = document.getElementById('adminKeyInput').value.trim();
+  const errBox = document.getElementById('adminErrorBox');
+  errBox.style.display = 'none';
+  if(!key) return;
+  const resp = await fetch('/api/messages/admin', { headers: { 'x-admin-key': key } });
+  if(resp.status === 401){
+    errBox.textContent = 'Incorrect admin key.';
+    errBox.style.display = 'block';
+    return;
+  }
+  adminKey = key;
+  sessionStorage.setItem('sheetsAdminKey', key);
+  updateAdminLink();
+  adminOverlay.classList.remove('open');
+  renderList();
+};
+
+loadSheets();
+</script>
+</body>
+</html>

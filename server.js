@@ -220,6 +220,7 @@ function createApp(overrides = {}) {
   const STORE_ORDERS_FILE = overrides.storeOrdersFile || path.join(__dirname, 'data', 'store-orders.json');
   const MESSAGES_FILE = overrides.messagesFile || path.join(__dirname, 'data', 'messages.json');
   const CLIPS_FILE = overrides.clipsFile || path.join(__dirname, 'data', 'clips.json');
+  const SPREADSHEETS_FILE = overrides.spreadsheetsFile || path.join(__dirname, 'data', 'spreadsheets.json');
   const ADMIN_KEY = overrides.adminKey || process.env.ADMIN_KEY || 'sangwa-admin-key';
   const DATABASE_URL = overrides.databaseUrl || process.env.DATABASE_URL || null;
   const SUPABASE_URL = process.env.SUPABASE_URL || null;
@@ -403,6 +404,7 @@ function createApp(overrides = {}) {
   const NEWS_BUCKET = 'news-photos';
   const STORE_BUCKET = 'store-photos';
   const CLIPS_BUCKET = 'clips';
+  const SPREADSHEETS_BUCKET = 'spreadsheets';
   const supabaseAdmin = (SUPABASE_PROJECT_URL && SUPABASE_SERVICE_ROLE_KEY)
     ? createClient(SUPABASE_PROJECT_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
     : null;
@@ -425,6 +427,7 @@ function createApp(overrides = {}) {
   const ensureNewsBucket = () => ensureBucket(NEWS_BUCKET);
   const ensureStoreBucket = () => ensureBucket(STORE_BUCKET);
   const ensureClipsBucket = () => ensureBucket(CLIPS_BUCKET);
+  const ensureSpreadsheetsBucket = () => ensureBucket(SPREADSHEETS_BUCKET);
 
   // High-quality neural voices: British English + Beijing-standard Mandarin, one
   // male and one female each. Mandarin uses Azure's newer "Multilingual" neural
@@ -609,6 +612,17 @@ function createApp(overrides = {}) {
         video_path text,
         video_mime text,
         thumb_path text,
+        created_at timestamptz default now()
+      );
+    `);
+    await client.query(`
+      create table if not exists public.spreadsheets (
+        id serial primary key,
+        username text not null,
+        title text not null,
+        file_path text,
+        file_mime text,
+        file_name text,
         created_at timestamptz default now()
       );
     `);
@@ -1604,6 +1618,109 @@ function createApp(overrides = {}) {
     const [removed] = data.clips.splice(idx, 1);
     writeClipsFile(data);
     return { videoPath: removed.videoPath, thumbPath: removed.thumbPath };
+  }
+
+  // ---- Kunga's Spreadsheets: upload an Excel file, browse it as a table in
+  // the browser (parsed client-side -- nothing here reads the file's
+  // contents server-side). Same two-step upload / dual-mode data layer as
+  // Clips, just one file instead of a video+thumbnail pair.
+  function ensureSpreadsheetsFile() {
+    const dir = path.dirname(SPREADSHEETS_FILE);
+    fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(SPREADSHEETS_FILE)) {
+      fs.writeFileSync(SPREADSHEETS_FILE, JSON.stringify({ nextId: 1, spreadsheets: [] }, null, 2), 'utf8');
+    }
+  }
+  function readSpreadsheetsFile() {
+    ensureSpreadsheetsFile();
+    try {
+      const parsed = JSON.parse(fs.readFileSync(SPREADSHEETS_FILE, 'utf8'));
+      return { nextId: parsed.nextId || 1, spreadsheets: Array.isArray(parsed.spreadsheets) ? parsed.spreadsheets : [] };
+    } catch (error) {
+      return { nextId: 1, spreadsheets: [] };
+    }
+  }
+  function writeSpreadsheetsFile(data) {
+    ensureSpreadsheetsFile();
+    fs.writeFileSync(SPREADSHEETS_FILE, JSON.stringify(data, null, 2), 'utf8');
+  }
+  const SHEET_SELECT_SQL = `id, username, title, file_path as "filePath", file_mime as "fileMime",
+    file_name as "fileName", created_at as "createdAt"`;
+
+  async function createSpreadsheet({ username, title }) {
+    const client = await getDbClient();
+    const createdAt = new Date().toISOString();
+    if (client) {
+      const result = await client.query(
+        `insert into public.spreadsheets (username, title, created_at) values ($1,$2,$3) returning ${SHEET_SELECT_SQL}`,
+        [username, title, createdAt]
+      );
+      return result.rows[0];
+    }
+    const data = readSpreadsheetsFile();
+    const sheet = { id: data.nextId, username, title, filePath: null, fileMime: null, fileName: null, createdAt };
+    data.spreadsheets.push(sheet);
+    data.nextId += 1;
+    writeSpreadsheetsFile(data);
+    return sheet;
+  }
+
+  async function getSpreadsheetById(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(`select ${SHEET_SELECT_SQL} from public.spreadsheets where id=$1`, [id]);
+      return result.rows[0] || null;
+    }
+    const data = readSpreadsheetsFile();
+    return data.spreadsheets.find((s) => s.id === id) || null;
+  }
+
+  async function listSpreadsheets() {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select ${SHEET_SELECT_SQL} from public.spreadsheets where file_path is not null order by created_at desc`
+      );
+      return result.rows;
+    }
+    const data = readSpreadsheetsFile();
+    return data.spreadsheets.filter((s) => s.filePath).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  async function setSpreadsheetFile(id, { filePath, fileMime, fileName }) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `update public.spreadsheets set file_path=$1, file_mime=$2, file_name=$3 where id=$4 and file_path is null returning ${SHEET_SELECT_SQL}`,
+        [filePath, fileMime, fileName, id]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readSpreadsheetsFile();
+    const sheet = data.spreadsheets.find((s) => s.id === id);
+    if (!sheet || sheet.filePath) return null;
+    sheet.filePath = filePath;
+    sheet.fileMime = fileMime;
+    sheet.fileName = fileName;
+    writeSpreadsheetsFile(data);
+    return sheet;
+  }
+
+  async function deleteSpreadsheet(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `delete from public.spreadsheets where id=$1 returning file_path as "filePath"`,
+        [id]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readSpreadsheetsFile();
+    const idx = data.spreadsheets.findIndex((s) => s.id === id);
+    if (idx === -1) return null;
+    const [removed] = data.spreadsheets.splice(idx, 1);
+    writeSpreadsheetsFile(data);
+    return { filePath: removed.filePath };
   }
 
   async function listUsersFromDb() {
@@ -2662,6 +2779,87 @@ function createApp(overrides = {}) {
     return res.redirect(302, data.publicUrl);
   });
 
+  // ---- Kunga's Spreadsheets: upload an Excel/CSV file, anyone can browse
+  // and download it. Same login-to-upload, anyone-can-watch shape as Clips.
+  // Browsers report inconsistent (sometimes generic/octet-stream) content
+  // types for spreadsheet files, so this also accepts the upload based on
+  // the original filename's extension when the content type isn't one of
+  // the known-good ones, rather than rejecting a real .xlsx outright.
+  const SHEET_TITLE_MAX = 120;
+  const SHEET_MIME_EXT = {
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+    'application/vnd.ms-excel': 'xls',
+    'text/csv': 'csv',
+    'application/csv': 'csv',
+  };
+  const SHEET_EXT_MIME = { xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', xls: 'application/vnd.ms-excel', csv: 'text/csv' };
+
+  app.get('/api/spreadsheets', async (req, res) => {
+    const spreadsheets = await listSpreadsheets();
+    return res.json({ spreadsheets });
+  });
+
+  app.post('/api/spreadsheets', async (req, res) => {
+    const { username, title } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'Log in on kunga.me first to upload.' });
+    const cleanTitle = String(title || '').trim().slice(0, SHEET_TITLE_MAX);
+    if (!cleanTitle) return res.status(400).json({ error: 'Give it a title first.' });
+    const sheet = await createSpreadsheet({ username: user.username, title: cleanTitle });
+    return res.json({ spreadsheet: sheet });
+  });
+
+  app.post('/api/spreadsheets/:id/file', express.raw({ type: '*/*', limit: '20mb' }), async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    if (!supabaseAdmin) return res.status(503).json({ error: 'File storage is not configured on this server yet.' });
+    const sheet = await getSpreadsheetById(id);
+    if (!sheet) return res.status(404).json({ error: 'Spreadsheet not found.' });
+    if (sheet.filePath) return res.status(409).json({ error: 'This spreadsheet already has a file.' });
+    const contentType = (req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+    let originalName = '';
+    try { originalName = decodeURIComponent(String(req.headers['x-file-name'] || '')).trim().slice(0, 200); } catch (e) { originalName = ''; }
+    const nameExt = originalName.includes('.') ? originalName.split('.').pop().toLowerCase() : '';
+    const ext = SHEET_MIME_EXT[contentType] || (SHEET_EXT_MIME[nameExt] ? nameExt : null);
+    if (!ext) return res.status(400).json({ error: 'Only .xlsx, .xls or .csv files are accepted.' });
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) return res.status(400).json({ error: 'No file data received.' });
+    const effectiveContentType = SHEET_MIME_EXT[contentType] ? contentType : SHEET_EXT_MIME[ext];
+    const objectPath = id + '.' + ext;
+    const { error } = await supabaseAdmin.storage.from(SPREADSHEETS_BUCKET).upload(objectPath, req.body, { contentType: effectiveContentType, upsert: true });
+    if (error) return res.status(502).json({ error: 'Upload to storage failed.', details: error.message });
+    const updated = await setSpreadsheetFile(id, { filePath: objectPath, fileMime: effectiveContentType, fileName: originalName || `spreadsheet.${ext}` });
+    if (!updated) return res.status(409).json({ error: 'This spreadsheet already has a file.' });
+    return res.json({ spreadsheet: updated });
+  });
+
+  app.post('/api/spreadsheets/:id/delete', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const sheet = await getSpreadsheetById(id);
+    if (!sheet) return res.status(404).json({ error: 'Spreadsheet not found.' });
+    const { username } = req.body || {};
+    const isOwner = username && String(username).toLowerCase() === String(sheet.username).toLowerCase();
+    const isAdmin = req.headers['x-admin-key'] === ADMIN_KEY;
+    if (!isOwner && !isAdmin) return res.status(403).json({ error: 'Only the uploader or an admin can delete this.' });
+    const removed = await deleteSpreadsheet(id);
+    if (removed && removed.filePath && supabaseAdmin) {
+      await supabaseAdmin.storage.from(SPREADSHEETS_BUCKET).remove([removed.filePath]).catch(() => {});
+    }
+    return res.json({ ok: true });
+  });
+
+  // Same redirect-to-Storage pattern as /clip-video etc. -- used both for
+  // the client-side SheetJS preview fetch and the plain download link.
+  app.get('/spreadsheet-file/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).end();
+    if (!supabaseAdmin) return res.status(503).end();
+    const sheet = await getSpreadsheetById(id);
+    if (!sheet || !sheet.filePath) return res.status(404).end();
+    const { data } = supabaseAdmin.storage.from(SPREADSHEETS_BUCKET).getPublicUrl(sheet.filePath);
+    return res.redirect(302, data.publicUrl);
+  });
+
   // ---- Kunga's Live: REST side of the live-streaming hub defined above
   // (the WebSocket side handles signaling + the lobby's real-time counts).
   // Going live requires a real kunga.me account (so there's someone to hold
@@ -3385,6 +3583,14 @@ function createApp(overrides = {}) {
     return res.sendFile(path.join(__dirname, 'live.html'));
   });
 
+  app.get('/spreadsheets', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'spreadsheets.html'));
+  });
+
+  app.get('/spreadsheets.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'spreadsheets.html'));
+  });
+
   app.get('/poker', (req, res) => {
     return res.sendFile(path.join(__dirname, 'poker.html'));
   });
@@ -3638,6 +3844,7 @@ function createApp(overrides = {}) {
     ensureNewsBucket,
     ensureStoreBucket,
     ensureClipsBucket,
+    ensureSpreadsheetsBucket,
     ensureStripeProduct,
     ensureDiaryStripeProduct,
   };
@@ -3665,6 +3872,10 @@ if (require.main === module) {
   appState.ensureClipsBucket().then((bucketStatus) => {
     if (bucketStatus.ok) console.log('Supabase Storage: clips bucket ready.');
     else console.log('Supabase Storage not active for clips (' + bucketStatus.reason + ') — video uploads would not persist.');
+  });
+  appState.ensureSpreadsheetsBucket().then((bucketStatus) => {
+    if (bucketStatus.ok) console.log('Supabase Storage: spreadsheets bucket ready.');
+    else console.log('Supabase Storage not active for spreadsheets (' + bucketStatus.reason + ') — uploads would not persist.');
   });
   appState.ensureStripeProduct().then((stripeStatus) => {
     if (stripeStatus.ok) console.log('Stripe: Premium product/prices ready.');
