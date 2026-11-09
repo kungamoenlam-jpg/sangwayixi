@@ -10,6 +10,7 @@ const Stripe = require('stripe');
 const { createAvatar } = require('@dicebear/core');
 const { avataaars } = require('@dicebear/collection');
 const sanitizeHtml = require('sanitize-html');
+const { WebSocketServer } = require('ws');
 
 // Safety net: an Express async route handler that throws without its own
 // try/catch produces a genuinely unhandled promise rejection at the Node
@@ -341,6 +342,7 @@ function createApp(overrides = {}) {
   const DIARY_PRODUCT_METADATA_KEY = 'yeshe_diary';
   const BOOKING_PRODUCT_METADATA_KEY = 'yeshe_call_booking';
   const STORE_PRODUCT_METADATA_KEY = 'yeshe_store';
+  const LIVE_GIFT_PRODUCT_METADATA_KEY = 'yeshe_live_gift';
   let diaryPriceId = null;
   let diaryStripeReady = false;
 
@@ -1619,6 +1621,115 @@ function createApp(overrides = {}) {
     }));
   }
 
+  // ---- Kunga's Live: in-process broadcast hub for live streaming + gifts.
+  // Sessions live only in memory (a Map, not Supabase/the file store) --
+  // a live stream is inherently ephemeral, so there's nothing worth
+  // persisting past a server restart, same reasoning as not storing chat
+  // history anywhere. Video itself never touches this server: it's
+  // peer-to-peer WebRTC between the broadcaster's browser and each
+  // viewer's browser (a small mesh, fine for a handful of concurrent
+  // viewers per stream -- this is not an SFU and won't scale to a crowd).
+  // This object only relays WebRTC *signaling* (SDP offers/answers, ICE
+  // candidates) over WebSocket, plus broadcasts gift events confirmed by
+  // the Stripe webhook below.
+  const LIVE_GIFTS = {
+    rose: { label: 'Rose', emoji: '🌹', amountCents: 100 },
+    heart: { label: 'Heart', emoji: '💖', amountCents: 200 },
+    popcorn: { label: 'Popcorn', emoji: '🍿', amountCents: 500 },
+    rocket: { label: 'Rocket', emoji: '🚀', amountCents: 1000 },
+    crown: { label: 'Crown', emoji: '👑', amountCents: 5000 },
+  };
+  const liveSessions = new Map(); // id -> { id, username, title, startedAt, hostWs, viewers: Map(viewerId -> ws) }
+
+  function liveSessionSummary(session) {
+    return { id: session.id, username: session.username, title: session.title, startedAt: session.startedAt, viewerCount: session.viewers.size };
+  }
+  function wsSend(ws, payload) {
+    if (ws && ws.readyState === 1) ws.send(JSON.stringify(payload));
+  }
+  function broadcastToLive(session, payload) {
+    wsSend(session.hostWs, payload);
+    for (const viewerWs of session.viewers.values()) wsSend(viewerWs, payload);
+  }
+  function endLiveSession(id, reason) {
+    const session = liveSessions.get(id);
+    if (!session) return;
+    broadcastToLive(session, { type: 'stream-ended', reason: reason || 'ended' });
+    for (const viewerWs of session.viewers.values()) {
+      if (viewerWs.readyState === 1) viewerWs.close();
+    }
+    if (session.hostWs && session.hostWs.readyState === 1) session.hostWs.close();
+    liveSessions.delete(id);
+  }
+
+  function attachLiveWebSocketServer(httpServer) {
+    const wss = new WebSocketServer({ server: httpServer, path: '/ws/live' });
+    wss.on('connection', (ws) => {
+      let role = null; // 'host' | 'viewer'
+      let liveId = null;
+      let viewerId = null;
+
+      ws.on('message', (raw) => {
+        let msg;
+        try { msg = JSON.parse(raw); } catch (e) { return; }
+        if (!msg || typeof msg !== 'object') return;
+
+        if (msg.type === 'host-join') {
+          const session = liveSessions.get(msg.liveId);
+          if (!session || session.hostWs) return; // unknown id, or already has a live host socket
+          role = 'host';
+          liveId = msg.liveId;
+          session.hostWs = ws;
+          return;
+        }
+
+        if (msg.type === 'viewer-join') {
+          const session = liveSessions.get(msg.liveId);
+          if (!session || !msg.viewerId) { wsSend(ws, { type: 'stream-ended', reason: 'not-found' }); return; }
+          role = 'viewer';
+          liveId = msg.liveId;
+          viewerId = msg.viewerId;
+          session.viewers.set(viewerId, ws);
+          wsSend(session.hostWs, { type: 'viewer-joined', viewerId });
+          broadcastToLive(session, { type: 'viewer-count', count: session.viewers.size });
+          return;
+        }
+
+        // Everything past this point is signaling relay between one host and
+        // one specific viewer -- the server never looks inside the SDP/ICE
+        // payloads, it just forwards them to the right socket.
+        const session = liveSessions.get(msg.liveId || liveId);
+        if (!session) return;
+
+        if (msg.type === 'offer' && role === 'host') {
+          wsSend(session.viewers.get(msg.viewerId), { type: 'offer', sdp: msg.sdp });
+        } else if (msg.type === 'answer' && role === 'viewer') {
+          wsSend(session.hostWs, { type: 'answer', viewerId, sdp: msg.sdp });
+        } else if (msg.type === 'ice-candidate' && role === 'host') {
+          wsSend(session.viewers.get(msg.viewerId), { type: 'ice-candidate', candidate: msg.candidate, from: 'host' });
+        } else if (msg.type === 'ice-candidate' && role === 'viewer') {
+          wsSend(session.hostWs, { type: 'ice-candidate', viewerId, candidate: msg.candidate, from: 'viewer' });
+        } else if (msg.type === 'end-stream' && role === 'host') {
+          endLiveSession(liveId, 'ended');
+        }
+      });
+
+      ws.on('close', () => {
+        if (!liveId) return;
+        const session = liveSessions.get(liveId);
+        if (!session) return;
+        if (role === 'host' && session.hostWs === ws) {
+          endLiveSession(liveId, 'host-disconnected');
+        } else if (role === 'viewer' && viewerId) {
+          session.viewers.delete(viewerId);
+          wsSend(session.hostWs, { type: 'viewer-left', viewerId });
+          broadcastToLive(session, { type: 'viewer-count', count: session.viewers.size });
+        }
+      });
+    });
+    return wss;
+  }
+
   // Stripe webhook needs the raw request body to verify the signature, so it
   // must be registered (with its own raw-body parser) before the global
   // express.json() below, which would otherwise consume and parse it first.
@@ -1700,6 +1811,27 @@ function createApp(overrides = {}) {
       });
     }
 
+    // A live gift's "fulfillment" is just the real-time broadcast -- money
+    // already went to Kunga's Stripe account like the tip jar, there's no
+    // per-streamer payout and nothing to write to a database. If the stream
+    // already ended by the time payment confirms, there's simply no one
+    // left to broadcast to; the payment still succeeded regardless.
+    function fulfillLiveGiftFromSession(session) {
+      if (session.payment_status === 'unpaid') return;
+      const meta = session.metadata || {};
+      const gift = LIVE_GIFTS[meta.giftKey];
+      const live = liveSessions.get(meta.liveId);
+      if (!gift || !live) return;
+      broadcastToLive(live, {
+        type: 'gift',
+        giftKey: meta.giftKey,
+        label: gift.label,
+        emoji: gift.emoji,
+        amountCents: gift.amountCents,
+        senderName: meta.senderName || 'Someone',
+      });
+    }
+
     try {
       if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
         const session = event.data.object;
@@ -1707,6 +1839,8 @@ function createApp(overrides = {}) {
           await finalizeBookingFromSession(session);
         } else if (session.metadata && session.metadata.app === STORE_PRODUCT_METADATA_KEY) {
           await finalizeStoreOrderFromSession(session);
+        } else if (session.metadata && session.metadata.app === LIVE_GIFT_PRODUCT_METADATA_KEY) {
+          fulfillLiveGiftFromSession(session);
         } else {
           await activateFromSession(session);
         }
@@ -2528,6 +2662,84 @@ function createApp(overrides = {}) {
     return res.redirect(302, data.publicUrl);
   });
 
+  // ---- Kunga's Live: REST side of the live-streaming hub defined above
+  // (the WebSocket side handles signaling + the lobby's real-time counts).
+  // Going live requires a real kunga.me account (so there's someone to hold
+  // accountable and something for an end-stream request to match against);
+  // watching and sending gifts don't, matching the tip jar's no-login
+  // pattern -- a gift is just a payment with a note attached.
+  const LIVE_TITLE_MAX = 80;
+
+  app.get('/api/live', (req, res) => {
+    const sessions = [...liveSessions.values()].map(liveSessionSummary);
+    sessions.sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+    return res.json({ sessions, gifts: LIVE_GIFTS });
+  });
+
+  app.post('/api/live/start', async (req, res) => {
+    const { username, title } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'Log in on kunga.me first to go live.' });
+    for (const session of liveSessions.values()) {
+      if (session.username.toLowerCase() === user.username.toLowerCase()) {
+        return res.status(409).json({ error: "You're already live." });
+      }
+    }
+    const id = 'live_' + randomLetters(12);
+    const cleanTitle = String(title || '').trim().slice(0, LIVE_TITLE_MAX) || `${user.username}'s stream`;
+    liveSessions.set(id, {
+      id,
+      username: user.username,
+      title: cleanTitle,
+      startedAt: new Date().toISOString(),
+      hostWs: null,
+      viewers: new Map(),
+    });
+    return res.json({ id });
+  });
+
+  app.post('/api/live/:id/end', async (req, res) => {
+    const session = liveSessions.get(req.params.id);
+    if (!session) return res.status(404).json({ error: 'That stream is not live.' });
+    const { username } = req.body || {};
+    const isOwner = username && String(username).toLowerCase() === session.username.toLowerCase();
+    const isAdmin = req.headers['x-admin-key'] === ADMIN_KEY;
+    if (!isOwner && !isAdmin) return res.status(403).json({ error: 'Only the streamer or an admin can end this stream.' });
+    endLiveSession(session.id, 'ended');
+    return res.json({ ok: true });
+  });
+
+  app.post('/api/live/:id/gift/checkout', async (req, res) => {
+    if (!stripe) return res.status(503).json({ error: 'Payments are not configured on this server yet.' });
+    const session = liveSessions.get(req.params.id);
+    if (!session) return res.status(404).json({ error: 'That stream is not live.' });
+    const gift = LIVE_GIFTS[req.body && req.body.giftKey];
+    if (!gift) return res.status(400).json({ error: 'Unknown gift.' });
+    const senderName = String((req.body && req.body.senderName) || '').trim().slice(0, 40).replace(/[<>]/g, '') || 'Someone';
+
+    try {
+      const checkout = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        submit_type: 'donate',
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: { name: `${gift.emoji} ${gift.label} for ${session.username}'s stream, from ${senderName}` },
+            unit_amount: gift.amountCents,
+          },
+          quantity: 1,
+        }],
+        metadata: { app: LIVE_GIFT_PRODUCT_METADATA_KEY, liveId: session.id, giftKey: req.body.giftKey, senderName },
+        success_url: `${APP_BASE_URL}/live?watch=${session.id}&gift=success`,
+        cancel_url: `${APP_BASE_URL}/live?watch=${session.id}&gift=cancel`,
+        integration_identifier: 'kungalivegift' + randomLetters(8),
+      });
+      return res.json({ url: checkout.url });
+    } catch (error) {
+      return res.status(500).json({ error: 'Could not start checkout.', details: error.message });
+    }
+  });
+
   // ---- notebook (kunga-notebook.html / /notebook): free-form notes, synced
   //      to the account when the visitor is logged in on the main site (same
   //      username-trust model as the rest of this file — no session token,
@@ -3165,6 +3377,14 @@ function createApp(overrides = {}) {
     return res.sendFile(path.join(__dirname, 'ai-art.html'));
   });
 
+  app.get('/live', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'live.html'));
+  });
+
+  app.get('/live.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'live.html'));
+  });
+
   app.get('/poker', (req, res) => {
     return res.sendFile(path.join(__dirname, 'poker.html'));
   });
@@ -3398,7 +3618,9 @@ function createApp(overrides = {}) {
   });
 
   app.listen = function listen(...args) {
-    return express.application.listen.call(this, ...args);
+    const httpServer = express.application.listen.call(this, ...args);
+    attachLiveWebSocketServer(httpServer);
+    return httpServer;
   };
 
   return {
