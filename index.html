@@ -1221,7 +1221,7 @@ const I18N = {
     heroSub: "Create an account to save your progress across devices.",
     phoneHomeSub: "Tap an app to get started.",
     appNotebook: "Kunga's Notebook", appPoker: "Kunga's Poker", appMaths: "Kunga's Maths", appYeshe: "Yeshe",
-    appOptimism: "Daily Optimism", appNews: "Daily News", appDiary: "Kunga's Diary", appTip: "Send Money", appCalendar: "Book a Call", appTurkey: "Turkey", appStore: "Yeshe Store", appMessages: "Message Kunga", appCamera: "Kunga's Camera", appClips: "Kunga's Clips", appAiArt: "Kunga's AI Art", appLive: "Kunga's Live", appSpreadsheets: "Kunga's Spreadsheets",
+    appOptimism: "Daily Optimism", appNews: "Daily News", appDiary: "Kunga's Diary", appTip: "Send Money", appCalendar: "Book a Call", appTurkey: "Turkey", appStore: "Yeshe Store", appMessages: "Message Kunga", appCamera: "Kunga's Camera", appClips: "Kunga's Clips", appAiArt: "Kunga's AI Art", appLive: "Kunga's Live", appSpreadsheets: "Kunga's Spreadsheets", appMovies: "Kunga's Movies",
     backToHomeScreen: "Back to home screen",
     guestMathSub: "Mental math, algebra, calculus, linear algebra and more — free, no account needed.",
     guestMathSignupNudge: "Create a free account to save your progress and come back to it on any device.",
@@ -5198,6 +5198,7 @@ const HOME_APPS = [
   {key:'aiart', nameKey:'appAiArt', icon:'🎨', bg:'linear-gradient(145deg,#7c5cff,#2563eb)', action:"window.location.href='/ai-art'"},
   {key:'live', nameKey:'appLive', icon:'🔴', bg:'linear-gradient(145deg,#ff2d75,#7c3aed)', action:"window.location.href='/live'"},
   {key:'spreadsheets', nameKey:'appSpreadsheets', icon:'📊', bg:'linear-gradient(145deg,#4ade80,#0f6b39)', action:"window.location.href='/spreadsheets'"},
+  {key:'movies', nameKey:'appMovies', icon:'🎬', bg:'linear-gradient(145deg,#e3b23c,#8a1f1f)', action:"window.location.href='/movies'"},
 ];
 function openHomeApp(view){ state.homeView=view; if(view==='auth') state.authMode='signup'; render(); }
 // Setting screen (not just homeView) makes this safe to call from any

@@ -221,6 +221,7 @@ function createApp(overrides = {}) {
   const MESSAGES_FILE = overrides.messagesFile || path.join(__dirname, 'data', 'messages.json');
   const CLIPS_FILE = overrides.clipsFile || path.join(__dirname, 'data', 'clips.json');
   const SPREADSHEETS_FILE = overrides.spreadsheetsFile || path.join(__dirname, 'data', 'spreadsheets.json');
+  const MOVIES_FILE = overrides.moviesFile || path.join(__dirname, 'data', 'movies.json');
   const ADMIN_KEY = overrides.adminKey || process.env.ADMIN_KEY || 'sangwa-admin-key';
   const DATABASE_URL = overrides.databaseUrl || process.env.DATABASE_URL || null;
   const SUPABASE_URL = process.env.SUPABASE_URL || null;
@@ -405,6 +406,7 @@ function createApp(overrides = {}) {
   const STORE_BUCKET = 'store-photos';
   const CLIPS_BUCKET = 'clips';
   const SPREADSHEETS_BUCKET = 'spreadsheets';
+  const MOVIES_BUCKET = 'movies';
   const supabaseAdmin = (SUPABASE_PROJECT_URL && SUPABASE_SERVICE_ROLE_KEY)
     ? createClient(SUPABASE_PROJECT_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
     : null;
@@ -428,6 +430,7 @@ function createApp(overrides = {}) {
   const ensureStoreBucket = () => ensureBucket(STORE_BUCKET);
   const ensureClipsBucket = () => ensureBucket(CLIPS_BUCKET);
   const ensureSpreadsheetsBucket = () => ensureBucket(SPREADSHEETS_BUCKET);
+  const ensureMoviesBucket = () => ensureBucket(MOVIES_BUCKET);
 
   // High-quality neural voices: British English + Beijing-standard Mandarin, one
   // male and one female each. Mandarin uses Azure's newer "Multilingual" neural
@@ -623,6 +626,19 @@ function createApp(overrides = {}) {
         file_path text,
         file_mime text,
         file_name text,
+        created_at timestamptz default now()
+      );
+    `);
+    await client.query(`
+      create table if not exists public.movies (
+        id serial primary key,
+        username text not null,
+        title text not null,
+        description text,
+        duration_seconds integer,
+        video_path text,
+        video_mime text,
+        poster_path text,
         created_at timestamptz default now()
       );
     `);
@@ -1721,6 +1737,125 @@ function createApp(overrides = {}) {
     const [removed] = data.spreadsheets.splice(idx, 1);
     writeSpreadsheetsFile(data);
     return { filePath: removed.filePath };
+  }
+
+  // ---- Kunga's Movies: a poster-grid library for longer, original
+  // (AI-made, not uploaded third-party films) videos -- same shape as
+  // Clips' two-file (video + poster) upload, plus a title/description/
+  // duration a short-form clip doesn't need.
+  function ensureMoviesFile() {
+    const dir = path.dirname(MOVIES_FILE);
+    fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(MOVIES_FILE)) {
+      fs.writeFileSync(MOVIES_FILE, JSON.stringify({ nextId: 1, movies: [] }, null, 2), 'utf8');
+    }
+  }
+  function readMoviesFile() {
+    ensureMoviesFile();
+    try {
+      const parsed = JSON.parse(fs.readFileSync(MOVIES_FILE, 'utf8'));
+      return { nextId: parsed.nextId || 1, movies: Array.isArray(parsed.movies) ? parsed.movies : [] };
+    } catch (error) {
+      return { nextId: 1, movies: [] };
+    }
+  }
+  function writeMoviesFile(data) {
+    ensureMoviesFile();
+    fs.writeFileSync(MOVIES_FILE, JSON.stringify(data, null, 2), 'utf8');
+  }
+  const MOVIE_SELECT_SQL = `id, username, title, description, duration_seconds as "durationSeconds",
+    video_path as "videoPath", video_mime as "videoMime", poster_path as "posterPath", created_at as "createdAt"`;
+
+  async function createMovie({ username, title, description, durationSeconds }) {
+    const client = await getDbClient();
+    const createdAt = new Date().toISOString();
+    if (client) {
+      const result = await client.query(
+        `insert into public.movies (username, title, description, duration_seconds, created_at) values ($1,$2,$3,$4,$5) returning ${MOVIE_SELECT_SQL}`,
+        [username, title, description, durationSeconds, createdAt]
+      );
+      return result.rows[0];
+    }
+    const data = readMoviesFile();
+    const movie = { id: data.nextId, username, title, description, durationSeconds, videoPath: null, videoMime: null, posterPath: null, createdAt };
+    data.movies.push(movie);
+    data.nextId += 1;
+    writeMoviesFile(data);
+    return movie;
+  }
+
+  async function getMovieById(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(`select ${MOVIE_SELECT_SQL} from public.movies where id=$1`, [id]);
+      return result.rows[0] || null;
+    }
+    const data = readMoviesFile();
+    return data.movies.find((m) => m.id === id) || null;
+  }
+
+  async function listMovies() {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select ${MOVIE_SELECT_SQL} from public.movies where video_path is not null order by created_at desc`
+      );
+      return result.rows;
+    }
+    const data = readMoviesFile();
+    return data.movies.filter((m) => m.videoPath).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  async function setMovieVideo(id, { videoPath, videoMime }) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `update public.movies set video_path=$1, video_mime=$2 where id=$3 and video_path is null returning ${MOVIE_SELECT_SQL}`,
+        [videoPath, videoMime, id]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readMoviesFile();
+    const movie = data.movies.find((m) => m.id === id);
+    if (!movie || movie.videoPath) return null;
+    movie.videoPath = videoPath;
+    movie.videoMime = videoMime;
+    writeMoviesFile(data);
+    return movie;
+  }
+
+  async function setMoviePoster(id, { posterPath }) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `update public.movies set poster_path=$1 where id=$2 and poster_path is null returning ${MOVIE_SELECT_SQL}`,
+        [posterPath, id]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readMoviesFile();
+    const movie = data.movies.find((m) => m.id === id);
+    if (!movie || movie.posterPath) return null;
+    movie.posterPath = posterPath;
+    writeMoviesFile(data);
+    return movie;
+  }
+
+  async function deleteMovie(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `delete from public.movies where id=$1 returning video_path as "videoPath", poster_path as "posterPath"`,
+        [id]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readMoviesFile();
+    const idx = data.movies.findIndex((m) => m.id === id);
+    if (idx === -1) return null;
+    const [removed] = data.movies.splice(idx, 1);
+    writeMoviesFile(data);
+    return { videoPath: removed.videoPath, posterPath: removed.posterPath };
   }
 
   async function listUsersFromDb() {
@@ -2860,6 +2995,105 @@ function createApp(overrides = {}) {
     return res.redirect(302, data.publicUrl);
   });
 
+  // ---- Kunga's Movies: same login-to-upload / anyone-can-watch shape and
+  // two-step (metadata, then video + poster binaries) upload as Clips, just
+  // with a much larger size cap since these are full short films, not
+  // 15-second clips -- and a title/description/duration a clip doesn't need.
+  const MOVIE_TITLE_MAX = 120;
+  const MOVIE_DESCRIPTION_MAX = 2000;
+  const MOVIE_VIDEO_MIME_EXT = { 'video/mp4': 'mp4', 'video/quicktime': 'mov', 'video/webm': 'webm' };
+  const MOVIE_POSTER_MIME_EXT = { 'image/jpeg': 'jpg' };
+
+  app.get('/api/movies', async (req, res) => {
+    const movies = await listMovies();
+    return res.json({ movies });
+  });
+
+  app.post('/api/movies', async (req, res) => {
+    const { username, title, description, durationSeconds } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'Log in on kunga.me first to upload.' });
+    const cleanTitle = String(title || '').trim().slice(0, MOVIE_TITLE_MAX);
+    if (!cleanTitle) return res.status(400).json({ error: 'Give your movie a title first.' });
+    const cleanDescription = String(description || '').trim().slice(0, MOVIE_DESCRIPTION_MAX);
+    const cleanDuration = Number.isFinite(Number(durationSeconds)) ? Math.round(Number(durationSeconds)) : null;
+    const movie = await createMovie({ username: user.username, title: cleanTitle, description: cleanDescription, durationSeconds: cleanDuration });
+    return res.json({ movie });
+  });
+
+  app.post('/api/movies/:id/video', express.raw({ type: '*/*', limit: '300mb' }), async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    if (!supabaseAdmin) return res.status(503).json({ error: 'Video storage is not configured on this server yet.' });
+    const movie = await getMovieById(id);
+    if (!movie) return res.status(404).json({ error: 'Movie not found.' });
+    if (movie.videoPath) return res.status(409).json({ error: 'This movie already has a video.' });
+    const contentType = (req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+    const ext = MOVIE_VIDEO_MIME_EXT[contentType];
+    if (!ext) return res.status(400).json({ error: 'Only MP4, MOV or WebM videos are accepted.' });
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) return res.status(400).json({ error: 'No video data received.' });
+    const objectPath = id + '.' + ext;
+    const { error } = await supabaseAdmin.storage.from(MOVIES_BUCKET).upload(objectPath, req.body, { contentType, upsert: true });
+    if (error) return res.status(502).json({ error: 'Upload to storage failed.', details: error.message });
+    const updated = await setMovieVideo(id, { videoPath: objectPath, videoMime: contentType });
+    if (!updated) return res.status(409).json({ error: 'This movie already has a video.' });
+    return res.json({ movie: updated });
+  });
+
+  app.post('/api/movies/:id/poster', express.raw({ type: '*/*', limit: '4mb' }), async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    if (!supabaseAdmin) return res.status(503).json({ error: 'Image storage is not configured on this server yet.' });
+    const movie = await getMovieById(id);
+    if (!movie) return res.status(404).json({ error: 'Movie not found.' });
+    const contentType = (req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+    const ext = MOVIE_POSTER_MIME_EXT[contentType];
+    if (!ext) return res.status(400).json({ error: 'Poster must be a JPEG image.' });
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) return res.status(400).json({ error: 'No poster data received.' });
+    const objectPath = id + '-poster.' + ext;
+    const { error } = await supabaseAdmin.storage.from(MOVIES_BUCKET).upload(objectPath, req.body, { contentType, upsert: true });
+    if (error) return res.status(502).json({ error: 'Upload to storage failed.', details: error.message });
+    const updated = await setMoviePoster(id, { posterPath: objectPath });
+    return res.json({ movie: updated || movie });
+  });
+
+  app.post('/api/movies/:id/delete', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const movie = await getMovieById(id);
+    if (!movie) return res.status(404).json({ error: 'Movie not found.' });
+    const { username } = req.body || {};
+    const isOwner = username && String(username).toLowerCase() === String(movie.username).toLowerCase();
+    const isAdmin = req.headers['x-admin-key'] === ADMIN_KEY;
+    if (!isOwner && !isAdmin) return res.status(403).json({ error: 'Only the uploader or an admin can delete this movie.' });
+    const removed = await deleteMovie(id);
+    if (removed && supabaseAdmin) {
+      const paths = [removed.videoPath, removed.posterPath].filter(Boolean);
+      if (paths.length) await supabaseAdmin.storage.from(MOVIES_BUCKET).remove(paths).catch(() => {});
+    }
+    return res.json({ ok: true });
+  });
+
+  app.get('/movie-video/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).end();
+    if (!supabaseAdmin) return res.status(503).end();
+    const movie = await getMovieById(id);
+    if (!movie || !movie.videoPath) return res.status(404).end();
+    const { data } = supabaseAdmin.storage.from(MOVIES_BUCKET).getPublicUrl(movie.videoPath);
+    return res.redirect(302, data.publicUrl);
+  });
+
+  app.get('/movie-poster/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).end();
+    if (!supabaseAdmin) return res.status(503).end();
+    const movie = await getMovieById(id);
+    if (!movie || !movie.posterPath) return res.status(404).end();
+    const { data } = supabaseAdmin.storage.from(MOVIES_BUCKET).getPublicUrl(movie.posterPath);
+    return res.redirect(302, data.publicUrl);
+  });
+
   // ---- Kunga's Live: REST side of the live-streaming hub defined above
   // (the WebSocket side handles signaling + the lobby's real-time counts).
   // Going live requires a real kunga.me account (so there's someone to hold
@@ -3591,6 +3825,14 @@ function createApp(overrides = {}) {
     return res.sendFile(path.join(__dirname, 'spreadsheets.html'));
   });
 
+  app.get('/movies', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'movies.html'));
+  });
+
+  app.get('/movies.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'movies.html'));
+  });
+
   app.get('/poker', (req, res) => {
     return res.sendFile(path.join(__dirname, 'poker.html'));
   });
@@ -3845,6 +4087,7 @@ function createApp(overrides = {}) {
     ensureStoreBucket,
     ensureClipsBucket,
     ensureSpreadsheetsBucket,
+    ensureMoviesBucket,
     ensureStripeProduct,
     ensureDiaryStripeProduct,
   };
@@ -3876,6 +4119,10 @@ if (require.main === module) {
   appState.ensureSpreadsheetsBucket().then((bucketStatus) => {
     if (bucketStatus.ok) console.log('Supabase Storage: spreadsheets bucket ready.');
     else console.log('Supabase Storage not active for spreadsheets (' + bucketStatus.reason + ') — uploads would not persist.');
+  });
+  appState.ensureMoviesBucket().then((bucketStatus) => {
+    if (bucketStatus.ok) console.log('Supabase Storage: movies bucket ready.');
+    else console.log('Supabase Storage not active for movies (' + bucketStatus.reason + ') — video uploads would not persist.');
   });
   appState.ensureStripeProduct().then((stripeStatus) => {
     if (stripeStatus.ok) console.log('Stripe: Premium product/prices ready.');

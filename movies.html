@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kunga's Movies</title>
+<meta name="description" content="A library of original AI-made short films — watch, or upload your own.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0806;--ink:#f5efe6;--muted:#a79a8a;--accent:#e3b23c;--accent2:#8a1f1f;
+  --good:#3FAE72;--bad:#ff6a6a;--font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0%,#1c1309,#0a0806 60%);color:var(--ink);font-family:var(--font-body)}
+.topBar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:calc(14px + env(safe-area-inset-top,0px)) 18px 14px;background:rgba(10,8,6,.85);backdrop-filter:blur(8px)}
+.brand{font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--ink);text-decoration:none}
+.adminLink{all:unset;cursor:pointer;font-size:12px;color:var(--muted)}
+.adminLink.on{color:var(--accent)}
+
+.wrap{max-width:640px;margin:0 auto;padding:10px 18px calc(50px + env(safe-area-inset-bottom,0px))}
+h1{font-family:var(--font-display);font-weight:800;font-size:27px;margin:14px 0 4px;background:linear-gradient(90deg,#f6d87a,var(--accent) 55%,#b9791f);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--muted);font-size:14px;line-height:1.5;margin:0 0 20px}
+.uploadBtn{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-family:var(--font-display);font-weight:700;font-size:16px;padding:16px;border-radius:14px;background:linear-gradient(90deg,var(--accent),#b9791f);color:#1a1205;margin-bottom:24px}
+
+.posterGrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.posterCard{all:unset;cursor:pointer;display:block;border-radius:12px;overflow:hidden;background:#151008;border:1px solid rgba(255,255,255,.08)}
+.posterImgWrap{position:relative;aspect-ratio:2/3;background:linear-gradient(145deg,#2a1d0c,#120d07);display:flex;align-items:center;justify-content:center}
+.posterImgWrap img{width:100%;height:100%;object-fit:cover;display:block}
+.durationBadge{position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,.6);font-size:10.5px;padding:3px 7px;border-radius:5px}
+.posterMeta{padding:9px 10px}
+.posterTitle{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.posterUser{font-size:11px;color:var(--muted);margin-top:2px}
+.emptyState{grid-column:1/-1;text-align:center;color:var(--muted);font-size:13.5px;padding:40px 10px}
+.emptyState .glyph{font-size:36px;display:block;margin-bottom:8px}
+
+.modalOverlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.modalOverlay.open{display:flex}
+.modalCard{width:100%;max-width:520px;background:#141009;border-radius:20px 20px 0 0;padding:22px 20px calc(26px + env(safe-area-inset-bottom,0px));max-height:88vh;overflow-y:auto}
+.modalHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.modalHead h2{font-family:var(--font-display);font-size:17px;margin:0}
+.closeBtn{all:unset;cursor:pointer;font-size:20px;color:var(--muted);padding:4px}
+label.fieldLabel{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:0 0 8px}
+input#titleInput,textarea#descInput{width:100%;font-family:var(--font-body);font-size:15px;padding:12px 14px;border-radius:12px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);outline:none;margin-bottom:16px}
+textarea#descInput{resize:vertical;min-height:70px}
+.fileDrop{border:1.5px dashed rgba(255,255,255,.2);border-radius:14px;padding:22px;text-align:center;cursor:pointer;margin-bottom:14px}
+.fileDrop.has{border-style:solid;border-color:var(--accent)}
+.fileDrop input{display:none}
+.fileDrop .hint{font-size:12.5px;color:var(--muted);margin-top:6px}
+.previewVideo{width:100%;max-height:220px;border-radius:12px;background:#000;margin-bottom:14px;display:block}
+.loginNudge{text-align:center;color:var(--muted);font-size:13.5px;padding:30px 10px;line-height:1.7}
+.loginNudge a{color:var(--accent);font-weight:600}
+.primaryBtn{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:100%;text-align:center;font-family:var(--font-display);font-weight:700;font-size:15px;padding:14px;border-radius:14px;background:linear-gradient(90deg,var(--accent),#b9791f);color:#1a1205}
+.primaryBtn:disabled{opacity:.5;cursor:default}
+.errorBox{background:rgba(255,92,92,.14);border:1px solid rgba(255,92,92,.35);color:#ffb0b0;padding:10px 14px;border-radius:10px;font-size:13px;margin-top:12px;text-align:center}
+.adminPanel input{width:100%;font-size:14px;padding:11px 13px;border-radius:10px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);outline:none;margin-bottom:10px}
+
+/* ---- Watch overlay ---- */
+.watchOverlay{position:fixed;inset:0;background:var(--bg);z-index:60;display:none;flex-direction:column;overflow-y:auto}
+.watchOverlay.open{display:flex}
+.watchTop{display:flex;justify-content:space-between;align-items:center;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 10px}
+.watchCloseBtn{all:unset;cursor:pointer;font-size:20px;color:var(--muted);padding:4px}
+.watchVideoWrap{width:100%;aspect-ratio:16/9;background:#000}
+.watchVideoWrap video{width:100%;height:100%}
+.watchInfo{padding:16px 18px calc(30px + env(safe-area-inset-bottom,0px))}
+.watchTitle{font-family:var(--font-display);font-weight:800;font-size:20px;margin:0 0 6px}
+.watchMeta{font-size:12.5px;color:var(--muted);margin-bottom:14px}
+.watchDesc{font-size:14px;line-height:1.6;color:#ddd2c2;white-space:pre-wrap}
+.watchActions{display:flex;gap:10px;margin-top:18px}
+.actionBtn{all:unset;cursor:pointer;flex:1;text-align:center;font-size:13.5px;font-weight:600;padding:12px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:var(--ink)}
+.actionBtn.danger{background:rgba(255,92,92,.14);border-color:rgba(255,92,92,.3);color:var(--bad)}
+</style>
+</head>
+<body>
+
+<div class="topBar">
+  <a class="brand" href="/">← kunga.me</a>
+  <button class="adminLink" id="adminLink">Admin</button>
+</div>
+
+<div class="wrap">
+  <h1>Kunga's Movies</h1>
+  <p class="sub">A library of original AI-made short films. Upload your own, or watch what's here.</p>
+  <button class="uploadBtn" id="uploadBtn">🎬 Upload a movie</button>
+  <div class="posterGrid" id="posterGrid"></div>
+</div>
+
+<div class="modalOverlay" id="uploadOverlay">
+  <div class="modalCard">
+    <div class="modalHead"><h2>Upload a movie</h2><button class="closeBtn" id="closeUpload">×</button></div>
+    <div id="uploadBody"></div>
+  </div>
+</div>
+
+<div class="modalOverlay" id="adminOverlay">
+  <div class="modalCard">
+    <div class="modalHead"><h2>Admin</h2><button class="closeBtn" id="closeAdmin">×</button></div>
+    <div class="adminPanel">
+      <label class="fieldLabel" for="adminKeyInput">Admin key</label>
+      <input type="password" id="adminKeyInput" placeholder="Admin key">
+      <button class="primaryBtn" id="adminUnlockBtn">Unlock moderation</button>
+      <div class="errorBox" id="adminErrorBox" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<div class="watchOverlay" id="watchOverlay">
+  <div class="watchTop">
+    <span></span>
+    <button class="watchCloseBtn" id="watchCloseBtn">×</button>
+  </div>
+  <div class="watchVideoWrap"><video id="watchVideo" controls playsinline></video></div>
+  <div class="watchInfo">
+    <h2 class="watchTitle" id="watchTitle"></h2>
+    <div class="watchMeta" id="watchMeta"></div>
+    <div class="watchDesc" id="watchDesc"></div>
+    <div class="watchActions" id="watchActions"></div>
+  </div>
+</div>
+
+<script>
+const SESSION_KEY = 'sangwa_session_v1';
+function currentUser(){
+  try{
+    const s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+    return (s && s.currentUser) ? String(s.currentUser) : null;
+  }catch(e){ return null; }
+}
+function esc(s){ return String(s === undefined || s === null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDuration(sec){
+  if(!sec && sec !== 0) return '';
+  const m = Math.floor(sec / 60), s = Math.round(sec % 60);
+  return m + ':' + String(s).padStart(2, '0');
+}
+function fmtDate(iso){
+  try{ return new Date(iso).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' }); }catch(e){ return ''; }
+}
+
+let movies = [];
+let adminKey = sessionStorage.getItem('moviesAdminKey') || '';
+const posterGrid = document.getElementById('posterGrid');
+
+async function loadMovies(){
+  try{
+    const resp = await fetch('/api/movies');
+    const data = await resp.json();
+    movies = data.movies || [];
+    renderGrid();
+  }catch(e){
+    posterGrid.innerHTML = `<div class="emptyState"><div class="glyph">⚠️</div>Couldn't load movies. Try again shortly.</div>`;
+  }
+}
+function renderGrid(){
+  if(!movies.length){
+    posterGrid.innerHTML = `<div class="emptyState"><div class="glyph">🎬</div>No movies yet — be the first to upload one.</div>`;
+    return;
+  }
+  posterGrid.innerHTML = movies.map((m, i) => `
+    <button class="posterCard" data-open="${i}">
+      <div class="posterImgWrap">
+        ${m.posterPath ? `<img src="/movie-poster/${m.id}" alt="">` : '<span style="font-size:34px">🎬</span>'}
+        ${m.durationSeconds ? `<div class="durationBadge">${fmtDuration(m.durationSeconds)}</div>` : ''}
+      </div>
+      <div class="posterMeta">
+        <div class="posterTitle">${esc(m.title)}</div>
+        <div class="posterUser">@${esc(m.username)}</div>
+      </div>
+    </button>
+  `).join('');
+  posterGrid.querySelectorAll('[data-open]').forEach(btn => {
+    btn.onclick = () => openWatch(movies[Number(btn.dataset.open)]);
+  });
+}
+
+// ---- Watch ----
+const watchOverlay = document.getElementById('watchOverlay');
+function openWatch(movie){
+  watchOverlay.classList.add('open');
+  const video = document.getElementById('watchVideo');
+  video.src = '/movie-video/' + movie.id;
+  document.getElementById('watchTitle').textContent = movie.title;
+  document.getElementById('watchMeta').textContent = `@${movie.username} · ${fmtDate(movie.createdAt)}${movie.durationSeconds ? ' · ' + fmtDuration(movie.durationSeconds) : ''}`;
+  document.getElementById('watchDesc').textContent = movie.description || '';
+
+  const user = currentUser();
+  const canDelete = !!adminKey || (user && user.toLowerCase() === movie.username.toLowerCase());
+  const actions = document.getElementById('watchActions');
+  actions.innerHTML = canDelete ? `<button class="actionBtn danger" id="deleteMovieBtn">🗑️ Delete</button>` : '';
+  if(canDelete) document.getElementById('deleteMovieBtn').onclick = () => deleteMovie(movie.id);
+}
+document.getElementById('watchCloseBtn').onclick = () => {
+  watchOverlay.classList.remove('open');
+  const video = document.getElementById('watchVideo');
+  video.pause();
+  video.removeAttribute('src');
+  video.load();
+};
+
+async function deleteMovie(id){
+  if(!confirm('Delete this movie? This cannot be undone.')) return;
+  const headers = { 'Content-Type': 'application/json' };
+  if(adminKey) headers['x-admin-key'] = adminKey;
+  const resp = await fetch('/api/movies/' + id + '/delete', {
+    method: 'POST', headers, body: JSON.stringify({ username: currentUser() }),
+  });
+  if(!resp.ok){
+    const data = await resp.json().catch(() => ({}));
+    alert(data.error || 'Could not delete.');
+    return;
+  }
+  movies = movies.filter(m => m.id !== id);
+  document.getElementById('watchCloseBtn').click();
+  renderGrid();
+}
+
+// ---- Upload flow ----
+const uploadOverlay = document.getElementById('uploadOverlay');
+document.getElementById('uploadBtn').onclick = openUpload;
+document.getElementById('closeUpload').onclick = () => uploadOverlay.classList.remove('open');
+uploadOverlay.onclick = (e) => { if(e.target === uploadOverlay) uploadOverlay.classList.remove('open'); };
+
+let selectedFile = null;
+let selectedDuration = null;
+
+function openUpload(){
+  uploadOverlay.classList.add('open');
+  const user = currentUser();
+  const body = document.getElementById('uploadBody');
+  if(!user){
+    body.innerHTML = `<div class="loginNudge">Log in on <a href="/">kunga.me</a> first, then come back to upload.</div>`;
+    return;
+  }
+  selectedFile = null;
+  selectedDuration = null;
+  body.innerHTML = `
+    <label class="fieldLabel" for="titleInput">Title</label>
+    <input type="text" id="titleInput" maxlength="120" placeholder="The name of your film">
+    <label class="fieldLabel" for="descInput">Description (optional)</label>
+    <textarea id="descInput" maxlength="2000" placeholder="What's it about?"></textarea>
+    <label class="fieldLabel">Video (MP4, MOV or WebM, up to 300MB)</label>
+    <div class="fileDrop" id="fileDrop">
+      <div id="fileDropText">Tap to choose a video</div>
+      <div class="hint">Your own AI-made film.</div>
+      <input type="file" id="fileInput" accept="video/mp4,video/quicktime,video/webm">
+    </div>
+    <video class="previewVideo" id="previewVideo" style="display:none" muted playsinline controls></video>
+    <button class="primaryBtn" id="submitUploadBtn" disabled>Choose a video first</button>
+    <div id="uploadErrorBox"></div>
+  `;
+  const fileDrop = document.getElementById('fileDrop');
+  const fileInput = document.getElementById('fileInput');
+  fileDrop.onclick = () => fileInput.click();
+  fileInput.addEventListener('change', onFilePicked);
+  document.getElementById('submitUploadBtn').onclick = submitUpload;
+}
+
+function onFilePicked(e){
+  const file = e.target.files[0];
+  const errorBox = document.getElementById('uploadErrorBox');
+  errorBox.innerHTML = '';
+  if(!file) return;
+  if(file.size > 300 * 1024 * 1024){
+    errorBox.innerHTML = `<div class="errorBox">That file is over the 300MB limit.</div>`;
+    return;
+  }
+  selectedFile = file;
+  document.getElementById('fileDrop').classList.add('has');
+  document.getElementById('fileDropText').textContent = file.name;
+  const titleInput = document.getElementById('titleInput');
+  if(!titleInput.value.trim()) titleInput.value = file.name.replace(/\.[^.]+$/, '');
+  const preview = document.getElementById('previewVideo');
+  preview.src = URL.createObjectURL(file);
+  preview.style.display = 'block';
+  preview.addEventListener('loadedmetadata', () => { selectedDuration = preview.duration; }, { once: true });
+  const btn = document.getElementById('submitUploadBtn');
+  btn.disabled = false;
+  btn.textContent = 'Upload movie';
+}
+
+function capturePoster(file){
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.src = URL.createObjectURL(file);
+    video.muted = true;
+    video.playsInline = true;
+    video.addEventListener('loadeddata', () => {
+      video.currentTime = Math.min(1, (video.duration || 1) * 0.1);
+    });
+    video.addEventListener('seeked', () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 360;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => { URL.revokeObjectURL(video.src); resolve(blob); }, 'image/jpeg', 0.85);
+    });
+    video.addEventListener('error', () => resolve(null));
+    setTimeout(() => resolve(null), 8000);
+  });
+}
+
+async function submitUpload(){
+  if(!selectedFile) return;
+  const title = document.getElementById('titleInput').value.trim();
+  const description = document.getElementById('descInput').value.trim();
+  const errorBox = document.getElementById('uploadErrorBox');
+  errorBox.innerHTML = '';
+  if(!title){
+    errorBox.innerHTML = `<div class="errorBox">Give your movie a title first.</div>`;
+    return;
+  }
+  const btn = document.getElementById('submitUploadBtn');
+  btn.disabled = true;
+  btn.textContent = 'Creating…';
+
+  try{
+    const createResp = await fetch('/api/movies', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: currentUser(), title, description, durationSeconds: selectedDuration }),
+    });
+    const createData = await createResp.json();
+    if(!createResp.ok){
+      errorBox.innerHTML = `<div class="errorBox">${esc(createData.error || 'Something went wrong.')}</div>`;
+      btn.disabled = false; btn.textContent = 'Upload movie';
+      return;
+    }
+    const id = createData.movie.id;
+
+    btn.textContent = 'Uploading video…';
+    const videoBuf = await selectedFile.arrayBuffer();
+    const videoResp = await fetch('/api/movies/' + id + '/video', {
+      method: 'POST', headers: { 'Content-Type': selectedFile.type || 'video/mp4' }, body: videoBuf,
+    });
+    if(!videoResp.ok){
+      const videoData = await videoResp.json().catch(() => ({}));
+      errorBox.innerHTML = `<div class="errorBox">${esc(videoData.error || 'Video upload failed.')}</div>`;
+      btn.disabled = false; btn.textContent = 'Upload movie';
+      return;
+    }
+
+    btn.textContent = 'Generating poster…';
+    const posterBlob = await capturePoster(selectedFile);
+    if(posterBlob){
+      const posterBuf = await posterBlob.arrayBuffer();
+      await fetch('/api/movies/' + id + '/poster', {
+        method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: posterBuf,
+      }).catch(() => {});
+    }
+
+    uploadOverlay.classList.remove('open');
+    await loadMovies();
+  }catch(e){
+    errorBox.innerHTML = `<div class="errorBox">Network error — try again.</div>`;
+    btn.disabled = false; btn.textContent = 'Upload movie';
+  }
+}
+
+// ---- Admin unlock ----
+const adminOverlay = document.getElementById('adminOverlay');
+const adminLink = document.getElementById('adminLink');
+function updateAdminLink(){ adminLink.classList.toggle('on', !!adminKey); adminLink.textContent = adminKey ? 'Admin ✓' : 'Admin'; }
+updateAdminLink();
+adminLink.onclick = () => {
+  if(adminKey){
+    if(confirm('Lock moderation mode?')){ adminKey = ''; sessionStorage.removeItem('moviesAdminKey'); updateAdminLink(); renderGrid(); }
+    return;
+  }
+  adminOverlay.classList.add('open');
+};
+document.getElementById('closeAdmin').onclick = () => adminOverlay.classList.remove('open');
+adminOverlay.onclick = (e) => { if(e.target === adminOverlay) adminOverlay.classList.remove('open'); };
+document.getElementById('adminUnlockBtn').onclick = async () => {
+  const key = document.getElementById('adminKeyInput').value.trim();
+  const errBox = document.getElementById('adminErrorBox');
+  errBox.style.display = 'none';
+  if(!key) return;
+  const resp = await fetch('/api/messages/admin', { headers: { 'x-admin-key': key } });
+  if(resp.status === 401){
+    errBox.textContent = 'Incorrect admin key.';
+    errBox.style.display = 'block';
+    return;
+  }
+  adminKey = key;
+  sessionStorage.setItem('moviesAdminKey', key);
+  updateAdminLink();
+  adminOverlay.classList.remove('open');
+  renderGrid();
+};
+
+loadMovies();
+</script>
+</body>
+</html>
