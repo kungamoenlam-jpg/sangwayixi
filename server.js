@@ -222,6 +222,7 @@ function createApp(overrides = {}) {
   const CLIPS_FILE = overrides.clipsFile || path.join(__dirname, 'data', 'clips.json');
   const SPREADSHEETS_FILE = overrides.spreadsheetsFile || path.join(__dirname, 'data', 'spreadsheets.json');
   const MOVIES_FILE = overrides.moviesFile || path.join(__dirname, 'data', 'movies.json');
+  const ANIME_PORTRAITS_FILE = overrides.animePortraitsFile || path.join(__dirname, 'data', 'anime-portraits.json');
   const ADMIN_KEY = overrides.adminKey || process.env.ADMIN_KEY || 'sangwa-admin-key';
   const DATABASE_URL = overrides.databaseUrl || process.env.DATABASE_URL || null;
   const SUPABASE_URL = process.env.SUPABASE_URL || null;
@@ -345,6 +346,7 @@ function createApp(overrides = {}) {
   const BOOKING_PRODUCT_METADATA_KEY = 'yeshe_call_booking';
   const STORE_PRODUCT_METADATA_KEY = 'yeshe_store';
   const LIVE_GIFT_PRODUCT_METADATA_KEY = 'yeshe_live_gift';
+  const ANIME_PORTRAIT_PRODUCT_METADATA_KEY = 'yeshe_anime_portrait';
   let diaryPriceId = null;
   let diaryStripeReady = false;
 
@@ -407,6 +409,7 @@ function createApp(overrides = {}) {
   const CLIPS_BUCKET = 'clips';
   const SPREADSHEETS_BUCKET = 'spreadsheets';
   const MOVIES_BUCKET = 'movies';
+  const ANIME_BUCKET = 'anime-portraits';
   const supabaseAdmin = (SUPABASE_PROJECT_URL && SUPABASE_SERVICE_ROLE_KEY)
     ? createClient(SUPABASE_PROJECT_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
     : null;
@@ -431,6 +434,7 @@ function createApp(overrides = {}) {
   const ensureClipsBucket = () => ensureBucket(CLIPS_BUCKET);
   const ensureSpreadsheetsBucket = () => ensureBucket(SPREADSHEETS_BUCKET);
   const ensureMoviesBucket = () => ensureBucket(MOVIES_BUCKET);
+  const ensureAnimeBucket = () => ensureBucket(ANIME_BUCKET);
 
   // High-quality neural voices: British English + Beijing-standard Mandarin, one
   // male and one female each. Mandarin uses Azure's newer "Multilingual" neural
@@ -639,6 +643,19 @@ function createApp(overrides = {}) {
         video_path text,
         video_mime text,
         poster_path text,
+        created_at timestamptz default now()
+      );
+    `);
+    await client.query(`
+      create table if not exists public.anime_portraits (
+        id serial primary key,
+        username text not null,
+        description text,
+        style_key text not null,
+        paid boolean not null default false,
+        photo_path text,
+        photo_mime text,
+        result_path text,
         created_at timestamptz default now()
       );
     `);
@@ -1858,6 +1875,144 @@ function createApp(overrides = {}) {
     return { videoPath: removed.videoPath, posterPath: removed.posterPath };
   }
 
+  // ---- Anime Me: each row is one generation request. `paid` marks whether
+  // it was a $2 Stripe-confirmed generation rather than someone's one-time
+  // free first portrait; `resultPath` stays null until the Pollinations
+  // image actually comes back (immediately for a free one, or from the
+  // Stripe webhook for a paid one) -- see the endpoints below for why free
+  // eligibility is decided here, server-side, from prior rows, never from
+  // anything the client claims.
+  function ensureAnimePortraitsFile() {
+    const dir = path.dirname(ANIME_PORTRAITS_FILE);
+    fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(ANIME_PORTRAITS_FILE)) {
+      fs.writeFileSync(ANIME_PORTRAITS_FILE, JSON.stringify({ nextId: 1, portraits: [] }, null, 2), 'utf8');
+    }
+  }
+  function readAnimePortraitsFile() {
+    ensureAnimePortraitsFile();
+    try {
+      const parsed = JSON.parse(fs.readFileSync(ANIME_PORTRAITS_FILE, 'utf8'));
+      return { nextId: parsed.nextId || 1, portraits: Array.isArray(parsed.portraits) ? parsed.portraits : [] };
+    } catch (error) {
+      return { nextId: 1, portraits: [] };
+    }
+  }
+  function writeAnimePortraitsFile(data) {
+    ensureAnimePortraitsFile();
+    fs.writeFileSync(ANIME_PORTRAITS_FILE, JSON.stringify(data, null, 2), 'utf8');
+  }
+  const ANIME_SELECT_SQL = `id, username, description, style_key as "styleKey", paid,
+    photo_path as "photoPath", photo_mime as "photoMime", result_path as "resultPath", created_at as "createdAt"`;
+
+  async function createAnimePortrait({ username, description, styleKey, paid }) {
+    const client = await getDbClient();
+    const createdAt = new Date().toISOString();
+    if (client) {
+      const result = await client.query(
+        `insert into public.anime_portraits (username, description, style_key, paid, created_at) values ($1,$2,$3,$4,$5) returning ${ANIME_SELECT_SQL}`,
+        [username, description, styleKey, paid, createdAt]
+      );
+      return result.rows[0];
+    }
+    const data = readAnimePortraitsFile();
+    const portrait = { id: data.nextId, username, description, styleKey, paid, photoPath: null, photoMime: null, resultPath: null, createdAt };
+    data.portraits.push(portrait);
+    data.nextId += 1;
+    writeAnimePortraitsFile(data);
+    return portrait;
+  }
+
+  async function getAnimePortraitById(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(`select ${ANIME_SELECT_SQL} from public.anime_portraits where id=$1`, [id]);
+      return result.rows[0] || null;
+    }
+    const data = readAnimePortraitsFile();
+    return data.portraits.find((p) => p.id === id) || null;
+  }
+
+  async function countFulfilledAnimePortraitsByUsername(username) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select count(*)::int as count from public.anime_portraits where lower(username)=lower($1) and result_path is not null`,
+        [username]
+      );
+      return result.rows[0].count;
+    }
+    const data = readAnimePortraitsFile();
+    return data.portraits.filter((p) => p.username.toLowerCase() === username.toLowerCase() && p.resultPath).length;
+  }
+
+  async function listAnimePortraitsByUsername(username) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select ${ANIME_SELECT_SQL} from public.anime_portraits where lower(username)=lower($1) and result_path is not null order by created_at desc`,
+        [username]
+      );
+      return result.rows;
+    }
+    const data = readAnimePortraitsFile();
+    return data.portraits
+      .filter((p) => p.username.toLowerCase() === username.toLowerCase() && p.resultPath)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  async function setAnimePortraitPhoto(id, { photoPath, photoMime }) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `update public.anime_portraits set photo_path=$1, photo_mime=$2 where id=$3 and photo_path is null returning ${ANIME_SELECT_SQL}`,
+        [photoPath, photoMime, id]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readAnimePortraitsFile();
+    const portrait = data.portraits.find((p) => p.id === id);
+    if (!portrait || portrait.photoPath) return null;
+    portrait.photoPath = photoPath;
+    portrait.photoMime = photoMime;
+    writeAnimePortraitsFile(data);
+    return portrait;
+  }
+
+  async function setAnimePortraitResult(id, { resultPath }) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `update public.anime_portraits set result_path=$1 where id=$2 and result_path is null returning ${ANIME_SELECT_SQL}`,
+        [resultPath, id]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readAnimePortraitsFile();
+    const portrait = data.portraits.find((p) => p.id === id);
+    if (!portrait || portrait.resultPath) return null;
+    portrait.resultPath = resultPath;
+    writeAnimePortraitsFile(data);
+    return portrait;
+  }
+
+  async function deleteAnimePortrait(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `delete from public.anime_portraits where id=$1 returning photo_path as "photoPath", result_path as "resultPath"`,
+        [id]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readAnimePortraitsFile();
+    const idx = data.portraits.findIndex((p) => p.id === id);
+    if (idx === -1) return null;
+    const [removed] = data.portraits.splice(idx, 1);
+    writeAnimePortraitsFile(data);
+    return { photoPath: removed.photoPath, resultPath: removed.resultPath };
+  }
+
   async function listUsersFromDb() {
     const client = await getDbClient();
     if (!client) return readUsers().map(sanitizeUser);
@@ -1982,6 +2137,68 @@ function createApp(overrides = {}) {
     return wss;
   }
 
+  // ---- Anime Me: generation happens here (shared by the free-first-portrait
+  // endpoint and the paid webhook below) rather than inline in either caller.
+  // Pollinations is text-to-image only -- there's no free image-to-image/
+  // vision model, so this can't actually transform the uploaded photo; the
+  // photo is kept purely as a "before" reference shown next to the AI
+  // portrait, and the user's own typed description drives the generation.
+  // That limitation is disclosed in the UI rather than left implicit.
+  const ANIME_STYLES = {
+    classic: { label: 'Classic Anime', promptStyle: 'vibrant modern anime style, clean linework, cel shading' },
+    ghibli: { label: 'Ghibli-esque', promptStyle: 'Studio-Ghibli-inspired anime style, soft painterly backgrounds, gentle warm lighting' },
+    shonen: { label: 'Shonen Action', promptStyle: 'shonen anime style, dynamic speed lines, bold saturated colors, dramatic lighting' },
+    chibi: { label: 'Chibi', promptStyle: 'cute chibi anime style, oversized eyes, small body proportions, soft pastel colors' },
+    watercolor: { label: 'Watercolor Anime', promptStyle: 'delicate watercolor anime illustration, soft edges, dreamy atmosphere' },
+    cyberpunk: { label: 'Cyberpunk Anime', promptStyle: 'cyberpunk anime style, neon lighting, futuristic city backdrop' },
+  };
+  const ANIME_PORTRAIT_PRICE_CENTS = 200;
+
+  async function fetchAnimePortraitImage(url) {
+    let lastError;
+    let waitMs = 3000;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, waitMs));
+      try {
+        const genRes = await fetch(url, { signal: AbortSignal.timeout(45000) });
+        if (!genRes.ok) {
+          const err = new Error('Pollinations request failed: ' + genRes.status);
+          err.status = genRes.status;
+          err.retryAfterSeconds = Number(genRes.headers.get('retry-after'));
+          throw err;
+        }
+        const buffer = Buffer.from(await genRes.arrayBuffer());
+        if (buffer.length < 2000) throw new Error('Generated image looked invalid.');
+        return buffer;
+      } catch (error) {
+        lastError = error;
+        if (error.status === 402) {
+          // The free-then-immediately-buy-another case runs straight into
+          // Pollinations' real "one image per ~45s per IP" limit -- worth a
+          // real wait-it-out retry here (unlike the free path's fail-fast),
+          // since a paid generation already has money behind it.
+          waitMs = (Number.isFinite(error.retryAfterSeconds) ? error.retryAfterSeconds : 45) * 1000 + 1000;
+        }
+      }
+    }
+    throw lastError;
+  }
+
+  async function fulfillAnimePortrait(id) {
+    const portrait = await getAnimePortraitById(id);
+    if (!portrait || portrait.resultPath) return portrait;
+    const style = ANIME_STYLES[portrait.styleKey] || ANIME_STYLES.classic;
+    const prompt = `${portrait.description}, ${style.promptStyle}, anime character portrait, detailed illustration`;
+    const seed = Math.floor(Math.random() * 1e9);
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=832&height=1216&seed=${seed}&nologo=true&safe=true`;
+    const buffer = await fetchAnimePortraitImage(url);
+    if (!supabaseAdmin) throw new Error('Image storage is not configured on this server yet.');
+    const objectPath = id + '-result.jpg';
+    const { error } = await supabaseAdmin.storage.from(ANIME_BUCKET).upload(objectPath, buffer, { contentType: 'image/jpeg', upsert: true });
+    if (error) throw error;
+    return setAnimePortraitResult(id, { resultPath: objectPath });
+  }
+
   // Stripe webhook needs the raw request body to verify the signature, so it
   // must be registered (with its own raw-body parser) before the global
   // express.json() below, which would otherwise consume and parse it first.
@@ -2084,6 +2301,27 @@ function createApp(overrides = {}) {
       });
     }
 
+    // A paid Anime Me portrait is generated only now, from a confirmed
+    // payment -- never at checkout-creation time -- same "don't do the work
+    // until money has actually moved" rule as the booking/store fulfillment
+    // above. Deliberately NOT awaited where this is called below: generation
+    // can take tens of seconds (more if it collides with Pollinations' rate
+    // limit right after someone's free portrait), and a webhook handler is
+    // supposed to acknowledge fast -- Stripe has its own delivery timeout and
+    // will treat a slow response as a failed delivery. The client already
+    // polls for the result independently of when this finishes.
+    async function fulfillAnimePortraitFromSession(session) {
+      if (session.payment_status === 'unpaid') return;
+      const meta = session.metadata || {};
+      const id = Number(meta.portraitId);
+      if (!Number.isInteger(id)) return;
+      try {
+        await fulfillAnimePortrait(id);
+      } catch (error) {
+        console.error('Anime portrait generation failed after payment for portrait', id, error);
+      }
+    }
+
     try {
       if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') {
         const session = event.data.object;
@@ -2093,6 +2331,8 @@ function createApp(overrides = {}) {
           await finalizeStoreOrderFromSession(session);
         } else if (session.metadata && session.metadata.app === LIVE_GIFT_PRODUCT_METADATA_KEY) {
           fulfillLiveGiftFromSession(session);
+        } else if (session.metadata && session.metadata.app === ANIME_PORTRAIT_PRODUCT_METADATA_KEY) {
+          fulfillAnimePortraitFromSession(session);
         } else {
           await activateFromSession(session);
         }
@@ -3094,6 +3334,154 @@ function createApp(overrides = {}) {
     return res.redirect(302, data.publicUrl);
   });
 
+  // ---- Anime Me: requires a real kunga.me account (so there's something a
+  // free-eligibility check and a delete request can both be tied to) and is
+  // private to the uploader -- this is someone's own photo plus a $2
+  // purchase, not public content like Clips/Movies.
+  const ANIME_DESCRIPTION_MAX = 500;
+  const ANIME_PHOTO_MIME_EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+
+  app.get('/api/anime/styles', (req, res) => {
+    return res.json({ styles: ANIME_STYLES, priceCents: ANIME_PORTRAIT_PRICE_CENTS });
+  });
+
+  app.get('/api/anime/mine', async (req, res) => {
+    const username = String(req.query.username || '');
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    const portraits = await listAnimePortraitsByUsername(user.username);
+    return res.json({ portraits });
+  });
+
+  // Used to poll a single portrait's status after returning from Stripe
+  // Checkout, while the webhook-triggered generation finishes.
+  app.get('/api/anime/portraits/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const portrait = await getAnimePortraitById(id);
+    if (!portrait) return res.status(404).json({ error: 'Not found.' });
+    const username = String(req.query.username || '');
+    if (username.toLowerCase() !== portrait.username.toLowerCase()) return res.status(403).json({ error: 'Not yours.' });
+    return res.json({ portrait });
+  });
+
+  app.post('/api/anime/portraits', async (req, res) => {
+    const { username, description, styleKey } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'Log in on kunga.me first.' });
+    const cleanDescription = String(description || '').trim().slice(0, ANIME_DESCRIPTION_MAX);
+    if (!cleanDescription) return res.status(400).json({ error: 'Describe how you look first.' });
+    const cleanStyle = ANIME_STYLES[styleKey] ? styleKey : 'classic';
+    const portrait = await createAnimePortrait({ username: user.username, description: cleanDescription, styleKey: cleanStyle, paid: false });
+    return res.json({ portrait });
+  });
+
+  app.post('/api/anime/portraits/:id/photo', express.raw({ type: '*/*', limit: '10mb' }), async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    if (!supabaseAdmin) return res.status(503).json({ error: 'Photo storage is not configured on this server yet.' });
+    const portrait = await getAnimePortraitById(id);
+    if (!portrait) return res.status(404).json({ error: 'Not found.' });
+    if (portrait.photoPath) return res.status(409).json({ error: 'This already has a photo.' });
+    const contentType = (req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+    const ext = ANIME_PHOTO_MIME_EXT[contentType];
+    if (!ext) return res.status(400).json({ error: 'Only JPEG, PNG or WebP photos are accepted.' });
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) return res.status(400).json({ error: 'No photo data received.' });
+    const objectPath = id + '-photo.' + ext;
+    const { error } = await supabaseAdmin.storage.from(ANIME_BUCKET).upload(objectPath, req.body, { contentType, upsert: true });
+    if (error) return res.status(502).json({ error: 'Upload to storage failed.', details: error.message });
+    const updated = await setAnimePortraitPhoto(id, { photoPath: objectPath, photoMime: contentType });
+    return res.json({ portrait: updated || portrait });
+  });
+
+  // Tries the free path first; the server (never the client) decides
+  // eligibility from this user's own fulfilled-portrait history.
+  app.post('/api/anime/portraits/:id/generate', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const portrait = await getAnimePortraitById(id);
+    if (!portrait) return res.status(404).json({ error: 'Not found.' });
+    if (portrait.resultPath) return res.status(409).json({ error: 'This one is already generated.' });
+    const priorCount = await countFulfilledAnimePortraitsByUsername(portrait.username);
+    if (priorCount > 0) {
+      return res.status(402).json({ error: 'Your free portrait is already used. Choose a style and pay $2 for another.' });
+    }
+    try {
+      const updated = await fulfillAnimePortrait(id);
+      return res.json({ portrait: updated });
+    } catch (error) {
+      return res.status(502).json({ error: 'Generation failed. Try again in a moment.' });
+    }
+  });
+
+  app.post('/api/anime/portraits/:id/checkout', async (req, res) => {
+    if (!stripe) return res.status(503).json({ error: 'Payments are not configured on this server yet.' });
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const portrait = await getAnimePortraitById(id);
+    if (!portrait) return res.status(404).json({ error: 'Not found.' });
+    if (portrait.resultPath) return res.status(409).json({ error: 'This one is already generated.' });
+    const style = ANIME_STYLES[portrait.styleKey] || ANIME_STYLES.classic;
+
+    try {
+      const checkout = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: { name: `Anime Me portrait (${style.label}) for ${portrait.username}` },
+            unit_amount: ANIME_PORTRAIT_PRICE_CENTS,
+          },
+          quantity: 1,
+        }],
+        metadata: { app: ANIME_PORTRAIT_PRODUCT_METADATA_KEY, portraitId: String(id) },
+        success_url: `${APP_BASE_URL}/anime-me?portrait=${id}&paid=success`,
+        cancel_url: `${APP_BASE_URL}/anime-me?portrait=${id}&paid=cancel`,
+        integration_identifier: 'kungaanimeme' + randomLetters(8),
+      });
+      return res.json({ url: checkout.url });
+    } catch (error) {
+      return res.status(500).json({ error: 'Could not start checkout.', details: error.message });
+    }
+  });
+
+  app.post('/api/anime/portraits/:id/delete', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const portrait = await getAnimePortraitById(id);
+    if (!portrait) return res.status(404).json({ error: 'Not found.' });
+    const { username } = req.body || {};
+    const isOwner = username && String(username).toLowerCase() === String(portrait.username).toLowerCase();
+    const isAdmin = req.headers['x-admin-key'] === ADMIN_KEY;
+    if (!isOwner && !isAdmin) return res.status(403).json({ error: 'Only the owner or an admin can delete this.' });
+    const removed = await deleteAnimePortrait(id);
+    if (removed && supabaseAdmin) {
+      const paths = [removed.photoPath, removed.resultPath].filter(Boolean);
+      if (paths.length) await supabaseAdmin.storage.from(ANIME_BUCKET).remove(paths).catch(() => {});
+    }
+    return res.json({ ok: true });
+  });
+
+  app.get('/anime-photo/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).end();
+    if (!supabaseAdmin) return res.status(503).end();
+    const portrait = await getAnimePortraitById(id);
+    if (!portrait || !portrait.photoPath) return res.status(404).end();
+    const { data } = supabaseAdmin.storage.from(ANIME_BUCKET).getPublicUrl(portrait.photoPath);
+    return res.redirect(302, data.publicUrl);
+  });
+
+  app.get('/anime-result/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).end();
+    if (!supabaseAdmin) return res.status(503).end();
+    const portrait = await getAnimePortraitById(id);
+    if (!portrait || !portrait.resultPath) return res.status(404).end();
+    const { data } = supabaseAdmin.storage.from(ANIME_BUCKET).getPublicUrl(portrait.resultPath);
+    return res.redirect(302, data.publicUrl);
+  });
+
   // ---- Kunga's Live: REST side of the live-streaming hub defined above
   // (the WebSocket side handles signaling + the lobby's real-time counts).
   // Going live requires a real kunga.me account (so there's someone to hold
@@ -3514,89 +3902,6 @@ function createApp(overrides = {}) {
     return res.json({ avatar: result.avatar });
   });
 
-  // ---- Kunga's AI Art (Pollinations): free-text prompt, unlike the avatar
-  // picker above. Routed through the server (not a client-side fetch)
-  // because Pollinations blocks cross-origin fetch()/crossOrigin<img> calls
-  // with a Turnstile challenge, while a plain server-to-server request works
-  // fine -- this mirrors fetchAvatarImage's retry handling. `safe=true` is
-  // always forced server-side since the prompt is free text.
-  const AI_ART_PROMPT_MAX = 500;
-  const AI_ART_SIZES = {
-    square: { width: 1024, height: 1024 },
-    portrait: { width: 832, height: 1216 },
-    landscape: { width: 1216, height: 832 },
-    wide: { width: 1344, height: 756 },
-  };
-  async function fetchAiArtImage(url) {
-    let lastError;
-    for (let attempt = 0; attempt < 2; attempt++) {
-      if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, 3000));
-      try {
-        const genRes = await fetch(url, { signal: AbortSignal.timeout(45000) });
-        if (!genRes.ok) {
-          const body = await genRes.text().catch(() => '');
-          const err = new Error('Pollinations request failed: ' + genRes.status);
-          err.status = genRes.status;
-          err.retryAfter = genRes.headers.get('retry-after');
-          err.body = body;
-          throw err;
-        }
-        const buffer = Buffer.from(await genRes.arrayBuffer());
-        if (buffer.length < 2000) throw new Error('Generated image looked invalid.');
-        return buffer;
-      } catch (error) {
-        lastError = error;
-        if (error.status === 402) break; // rate-limited -- retrying immediately won't help
-      }
-    }
-    throw lastError;
-  }
-  app.post('/api/ai-art/generate', async (req, res) => {
-    const { prompt, size, seed } = req.body || {};
-    const cleanPrompt = String(prompt || '').trim().slice(0, AI_ART_PROMPT_MAX);
-    if (!cleanPrompt) return res.status(400).json({ error: 'Type a prompt first.' });
-    const dims = AI_ART_SIZES[size] || AI_ART_SIZES.square;
-    const safeSeed = Number.isFinite(Number(seed)) ? Math.floor(Number(seed)) % 1e9 : Math.floor(Math.random() * 1e9);
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=${dims.width}&height=${dims.height}&seed=${safeSeed}&nologo=true&safe=true`;
-
-    try {
-      const buffer = await fetchAiArtImage(url);
-      res.set('X-Image-Source-Url', url);
-      res.set('Access-Control-Expose-Headers', 'X-Image-Source-Url');
-      res.type('jpg');
-      return res.send(buffer);
-    } catch (error) {
-      if (error.status === 402) {
-        return res.status(429).json({
-          error: 'Only about one new picture every 45 seconds is allowed right now. Please wait and try again.',
-          retryAfter: error.retryAfter || 45,
-        });
-      }
-      return res.status(502).json({ error: 'Picture generation failed. Try again in a moment.' });
-    }
-  });
-
-  // Lets history thumbnails and "open full size" load through kunga.me
-  // instead of linking straight to image.pollinations.ai -- same validate
-  // + server-side fetch pattern as generation above, just a passthrough.
-  app.get('/api/ai-art/image', async (req, res) => {
-    const sourceUrl = String(req.query.url || '');
-    let parsed;
-    try { parsed = new URL(sourceUrl); } catch (e) { return res.status(400).end(); }
-    if (parsed.hostname !== 'image.pollinations.ai' || !parsed.pathname.startsWith('/prompt/')) {
-      return res.status(400).end();
-    }
-    try {
-      const imgRes = await fetch(sourceUrl, { signal: AbortSignal.timeout(20000) });
-      if (!imgRes.ok) return res.status(502).end();
-      const buffer = Buffer.from(await imgRes.arrayBuffer());
-      res.set('Cache-Control', 'public, max-age=31536000, immutable');
-      res.type('jpg');
-      return res.send(buffer);
-    } catch (error) {
-      return res.status(502).end();
-    }
-  });
 
   // ---- Daily News: user-submitted newspaper clippings, typed out exactly ----
   const NEWS_TITLE_MAX = 140;
@@ -3801,14 +4106,6 @@ function createApp(overrides = {}) {
     return res.sendFile(path.join(__dirname, 'clips.html'));
   });
 
-  app.get('/ai-art', (req, res) => {
-    return res.sendFile(path.join(__dirname, 'ai-art.html'));
-  });
-
-  app.get('/ai-art.html', (req, res) => {
-    return res.sendFile(path.join(__dirname, 'ai-art.html'));
-  });
-
   app.get('/live', (req, res) => {
     return res.sendFile(path.join(__dirname, 'live.html'));
   });
@@ -3831,6 +4128,14 @@ function createApp(overrides = {}) {
 
   app.get('/movies.html', (req, res) => {
     return res.sendFile(path.join(__dirname, 'movies.html'));
+  });
+
+  app.get('/anime-me', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'anime-me.html'));
+  });
+
+  app.get('/anime-me.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'anime-me.html'));
   });
 
   app.get('/poker', (req, res) => {
@@ -4088,6 +4393,7 @@ function createApp(overrides = {}) {
     ensureClipsBucket,
     ensureSpreadsheetsBucket,
     ensureMoviesBucket,
+    ensureAnimeBucket,
     ensureStripeProduct,
     ensureDiaryStripeProduct,
   };
@@ -4123,6 +4429,10 @@ if (require.main === module) {
   appState.ensureMoviesBucket().then((bucketStatus) => {
     if (bucketStatus.ok) console.log('Supabase Storage: movies bucket ready.');
     else console.log('Supabase Storage not active for movies (' + bucketStatus.reason + ') — video uploads would not persist.');
+  });
+  appState.ensureAnimeBucket().then((bucketStatus) => {
+    if (bucketStatus.ok) console.log('Supabase Storage: anime-portraits bucket ready.');
+    else console.log('Supabase Storage not active for anime portraits (' + bucketStatus.reason + ') — uploads would not persist.');
   });
   appState.ensureStripeProduct().then((stripeStatus) => {
     if (stripeStatus.ok) console.log('Stripe: Premium product/prices ready.');

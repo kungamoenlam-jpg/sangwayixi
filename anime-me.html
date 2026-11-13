@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Anime Me!</title>
+<meta name="description" content="Turn yourself into an anime character with AI — first one free.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#1a0f1f;--ink:#fdf3ff;--muted:#c9a8d6;--accent:#ff8fd6;--accent2:#a855f7;
+  --good:#3FAE72;--bad:#ff6a6a;--font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0%,#3a1a45,#1a0f1f 60%);color:var(--ink);font-family:var(--font-body)}
+.topBar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:calc(14px + env(safe-area-inset-top,0px)) 18px 14px;background:rgba(26,15,31,.85);backdrop-filter:blur(8px)}
+.brand{font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--ink);text-decoration:none}
+
+.wrap{max-width:560px;margin:0 auto;padding:10px 18px calc(50px + env(safe-area-inset-bottom,0px))}
+h1{font-family:var(--font-display);font-weight:800;font-size:28px;margin:14px 0 4px;background:linear-gradient(90deg,#ffd6f5,var(--accent) 55%,var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 20px}
+.sub b{color:#fff}
+
+.loginNudge{text-align:center;color:var(--muted);font-size:13.5px;padding:60px 10px;line-height:1.7}
+.loginNudge a{color:var(--accent);font-weight:600}
+
+label.fieldLabel{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:0 0 8px}
+textarea#descInput{width:100%;font-family:var(--font-body);font-size:15px;padding:12px 14px;border-radius:12px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);outline:none;resize:vertical;min-height:80px;margin-bottom:16px}
+.fileDrop{border:1.5px dashed rgba(255,255,255,.2);border-radius:14px;padding:18px;text-align:center;cursor:pointer;margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.fileDrop.has{border-style:solid;border-color:var(--accent)}
+.fileDrop input{display:none}
+.fileDrop .thumb{width:54px;height:54px;border-radius:10px;object-fit:cover;flex:0 0 auto;background:rgba(255,255,255,.06)}
+.fileDrop .label{font-size:13px;color:var(--ink);text-align:left}
+.fileDrop .hint{font-size:12px;color:var(--muted);margin-top:2px}
+
+.styleGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+.styleBtn{all:unset;box-sizing:border-box;cursor:pointer;text-align:center;font-size:12.5px;padding:12px 6px;border-radius:12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:var(--muted)}
+.styleBtn.active{background:rgba(255,143,214,.18);border-color:var(--accent);color:#fff}
+
+.primaryBtn{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:100%;text-align:center;font-family:var(--font-display);font-weight:700;font-size:16px;padding:16px;border-radius:14px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#2a0a30}
+.primaryBtn:disabled{opacity:.5;cursor:default}
+.errorBox{background:rgba(255,92,92,.14);border:1px solid rgba(255,92,92,.35);color:#ffb0b0;padding:10px 14px;border-radius:10px;font-size:13px;margin-top:12px;text-align:center}
+.flashBox{background:rgba(255,143,214,.12);border:1px solid rgba(255,143,214,.3);color:#ffd6f5;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;text-align:center}
+
+.loadingState{text-align:center;color:var(--muted);padding:50px 10px}
+.loadingState .spinner{width:36px;height:36px;border-radius:50%;border:3px solid rgba(255,255,255,.15);border-top-color:var(--accent);animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.resultCard{text-align:center;margin-bottom:24px}
+.resultImages{display:flex;gap:10px;justify-content:center;margin-bottom:10px}
+.resultCol{flex:1;max-width:48%}
+.resultCol img{width:100%;border-radius:14px;aspect-ratio:3/4;object-fit:cover;background:rgba(255,255,255,.05)}
+.resultColLabel{font-size:11px;color:var(--muted);margin-top:6px}
+
+.sectionLabel{font-family:var(--font-display);font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:28px 0 12px}
+.galleryGrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:24px}
+.galleryItem{all:unset;cursor:pointer;aspect-ratio:3/4;border-radius:10px;overflow:hidden;background:rgba(255,255,255,.05);position:relative}
+.galleryItem img{width:100%;height:100%;object-fit:cover;display:block}
+.deleteBtn{all:unset;cursor:pointer;position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.55);font-size:11px;display:grid;place-items:center}
+
+.createAnotherBtn{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;font-family:var(--font-display);font-weight:700;font-size:15px;padding:14px;border-radius:14px;background:rgba(255,255,255,.08);border:1.5px solid rgba(255,143,214,.4);color:#fff;margin-top:6px}
+</style>
+</head>
+<body>
+
+<div class="topBar">
+  <a class="brand" href="/">← kunga.me</a>
+  <span class="brand" style="color:var(--muted);font-weight:600">ANIME ME</span>
+</div>
+
+<div class="wrap" id="wrap">
+  <h1>Anime Me!</h1>
+  <p class="sub">Describe how you look and AI draws you as an anime character. <b>First one's free.</b> Extra portraits or different styles are $2 each.</p>
+  <div id="content"><div class="loadingState"><div class="spinner"></div>Loading…</div></div>
+</div>
+
+<script>
+const SESSION_KEY = 'sangwa_session_v1';
+function currentUser(){
+  try{
+    const s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+    return (s && s.currentUser) ? String(s.currentUser) : null;
+  }catch(e){ return null; }
+}
+function esc(s){ return String(s === undefined || s === null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+const content = document.getElementById('content');
+let STYLES = {};
+let priceCents = 200;
+let selectedPhoto = null;
+let selectedStyle = 'classic';
+
+async function init(){
+  const user = currentUser();
+  if(!user){
+    content.innerHTML = `<div class="loginNudge">Log in on <a href="/">kunga.me</a> first, then come back to try Anime Me.</div>`;
+    return;
+  }
+
+  const stylesResp = await fetch('/api/anime/styles');
+  const stylesData = await stylesResp.json();
+  STYLES = stylesData.styles || {};
+  priceCents = stylesData.priceCents || 200;
+
+  const params = new URLSearchParams(location.search);
+  const watchId = params.get('portrait');
+  const paidStatus = params.get('paid');
+  if(watchId && paidStatus === 'success'){
+    await pollForResult(Number(watchId));
+    return;
+  }
+  if(watchId && paidStatus === 'cancel'){
+    await renderMain(`<div class="errorBox">Payment canceled — nothing was charged.</div>`);
+    return;
+  }
+
+  await renderMain();
+}
+
+async function fetchMine(){
+  const resp = await fetch('/api/anime/mine?username=' + encodeURIComponent(currentUser()));
+  const data = await resp.json();
+  return data.portraits || [];
+}
+
+async function renderMain(flashHtml){
+  const portraits = await fetchMine();
+  if(!portraits.length){
+    renderCreateForm({ isFree: true, flashHtml });
+  } else {
+    renderGallery(portraits, flashHtml);
+  }
+}
+
+function renderGallery(portraits, flashHtml){
+  content.innerHTML = `
+    ${flashHtml || ''}
+    <div class="sectionLabel">Your portraits</div>
+    <div class="galleryGrid" id="galleryGrid"></div>
+    <button class="createAnotherBtn" id="createAnotherBtn">✨ Create another ($${(priceCents/100).toFixed(2)})</button>
+  `;
+  const grid = document.getElementById('galleryGrid');
+  grid.innerHTML = portraits.map((p) => `
+    <div class="galleryItem" data-id="${p.id}">
+      <img src="/anime-result/${p.id}" alt="">
+      <button class="deleteBtn" data-delete="${p.id}">🗑️</button>
+    </div>
+  `).join('');
+  grid.querySelectorAll('[data-delete]').forEach((btn) => {
+    btn.onclick = async (e) => {
+      e.stopPropagation();
+      if(!confirm('Delete this portrait?')) return;
+      await fetch('/api/anime/portraits/' + btn.dataset.delete + '/delete', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: currentUser() }),
+      });
+      renderMain();
+    };
+  });
+  document.getElementById('createAnotherBtn').onclick = () => renderCreateForm({ isFree: false });
+}
+
+function renderCreateForm({ isFree, flashHtml }){
+  selectedPhoto = null;
+  selectedStyle = 'classic';
+  content.innerHTML = `
+    ${flashHtml || ''}
+    <label class="fieldLabel">Your photo (kept as a "before" picture — see note below)</label>
+    <div class="fileDrop" id="fileDrop">
+      <img class="thumb" id="photoThumb" style="display:none">
+      <div>
+        <div class="label" id="fileDropText">Tap to choose a photo</div>
+        <div class="hint">Optional, just for the before/after.</div>
+      </div>
+      <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp">
+    </div>
+    <label class="fieldLabel" for="descInput">Describe how you look</label>
+    <textarea id="descInput" maxlength="500" placeholder="e.g. short black hair, glasses, warm smile, usually wearing a denim jacket"></textarea>
+    ${isFree ? '' : `
+      <label class="fieldLabel">Style ($${(priceCents/100).toFixed(2)} unlocks your pick)</label>
+      <div class="styleGrid" id="styleGrid"></div>
+    `}
+    <button class="primaryBtn" id="generateBtn">${isFree ? '✨ Generate — it\'s free!' : '✨ Generate for $' + (priceCents/100).toFixed(2)}</button>
+    <p class="hint" style="text-align:center;margin-top:10px">Heads up: this can't actually read your photo (no free AI tool can yet) — it draws from your description instead. Your photo just sits alongside the result.</p>
+    <div id="formErrorBox"></div>
+  `;
+  const fileDrop = document.getElementById('fileDrop');
+  const fileInput = document.getElementById('fileInput');
+  fileDrop.onclick = () => fileInput.click();
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    selectedPhoto = file;
+    document.getElementById('fileDrop').classList.add('has');
+    document.getElementById('fileDropText').textContent = file.name;
+    const thumb = document.getElementById('photoThumb');
+    thumb.src = URL.createObjectURL(file);
+    thumb.style.display = 'block';
+  });
+
+  if(!isFree){
+    const styleGrid = document.getElementById('styleGrid');
+    const renderStyles = () => {
+      styleGrid.innerHTML = Object.entries(STYLES).map(([key, s]) => `<button class="styleBtn${key===selectedStyle?' active':''}" data-style="${key}">${esc(s.label)}</button>`).join('');
+      styleGrid.querySelectorAll('[data-style]').forEach((btn) => {
+        btn.onclick = () => { selectedStyle = btn.dataset.style; renderStyles(); };
+      });
+    };
+    renderStyles();
+  }
+
+  document.getElementById('generateBtn').onclick = () => submitCreate(isFree);
+}
+
+async function submitCreate(isFree){
+  const description = document.getElementById('descInput').value.trim();
+  const errorBox = document.getElementById('formErrorBox');
+  errorBox.innerHTML = '';
+  if(!description){
+    errorBox.innerHTML = `<div class="errorBox">Describe how you look first.</div>`;
+    return;
+  }
+  const btn = document.getElementById('generateBtn');
+  btn.disabled = true;
+  btn.textContent = 'Creating…';
+
+  try{
+    const createResp = await fetch('/api/anime/portraits', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: currentUser(), description, styleKey: selectedStyle }),
+    });
+    const createData = await createResp.json();
+    if(!createResp.ok){
+      errorBox.innerHTML = `<div class="errorBox">${esc(createData.error || 'Something went wrong.')}</div>`;
+      btn.disabled = false; btn.textContent = isFree ? "✨ Generate — it's free!" : '✨ Generate for $' + (priceCents/100).toFixed(2);
+      return;
+    }
+    const id = createData.portrait.id;
+
+    if(selectedPhoto){
+      const photoBuf = await selectedPhoto.arrayBuffer();
+      await fetch('/api/anime/portraits/' + id + '/photo', {
+        method: 'POST', headers: { 'Content-Type': selectedPhoto.type || 'image/jpeg' }, body: photoBuf,
+      }).catch(() => {});
+    }
+
+    btn.textContent = 'Generating…';
+    const genResp = await fetch('/api/anime/portraits/' + id + '/generate', { method: 'POST' });
+    const genData = await genResp.json();
+
+    if(genResp.status === 402){
+      // Free tier used up -- send to Stripe for this specific portrait.
+      const checkoutResp = await fetch('/api/anime/portraits/' + id + '/checkout', { method: 'POST' });
+      const checkoutData = await checkoutResp.json();
+      if(!checkoutResp.ok){
+        errorBox.innerHTML = `<div class="errorBox">${esc(checkoutData.error || 'Could not start checkout.')}</div>`;
+        btn.disabled = false; btn.textContent = '✨ Generate for $' + (priceCents/100).toFixed(2);
+        return;
+      }
+      window.location.href = checkoutData.url;
+      return;
+    }
+
+    if(!genResp.ok){
+      errorBox.innerHTML = `<div class="errorBox">${esc(genData.error || 'Generation failed. Try again.')}</div>`;
+      btn.disabled = false; btn.textContent = isFree ? "✨ Generate — it's free!" : '✨ Generate for $' + (priceCents/100).toFixed(2);
+      return;
+    }
+
+    showResult(genData.portrait);
+  }catch(e){
+    errorBox.innerHTML = `<div class="errorBox">Network error — try again.</div>`;
+    btn.disabled = false; btn.textContent = isFree ? "✨ Generate — it's free!" : '✨ Generate for $' + (priceCents/100).toFixed(2);
+  }
+}
+
+function showResult(portrait){
+  content.innerHTML = `
+    <div class="resultCard">
+      <div class="resultImages">
+        ${portrait.photoPath ? `<div class="resultCol"><img src="/anime-photo/${portrait.id}"><div class="resultColLabel">Before</div></div>` : ''}
+        <div class="resultCol"><img src="/anime-result/${portrait.id}"><div class="resultColLabel">Anime Me!</div></div>
+      </div>
+    </div>
+  `;
+  setTimeout(() => renderMain(), 2200);
+}
+
+async function pollForResult(id){
+  content.innerHTML = `<div class="loadingState"><div class="spinner"></div>Finishing up your portrait… this can take a couple of minutes if it's extra busy.</div>`;
+  const deadline = Date.now() + 180000;
+  while(Date.now() < deadline){
+    const resp = await fetch('/api/anime/portraits/' + id + '?username=' + encodeURIComponent(currentUser()));
+    if(resp.ok){
+      const data = await resp.json();
+      if(data.portrait && data.portrait.resultPath){
+        showResult(data.portrait);
+        return;
+      }
+    }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+  await renderMain(`<div class="errorBox">Payment went through, but generation is taking longer than expected. Your portrait will appear below once it's ready — refresh in a bit.</div>`);
+}
+
+init();
+</script>
+</body>
+</html>
