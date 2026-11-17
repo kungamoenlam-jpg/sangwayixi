@@ -71,23 +71,60 @@
   .hero h1{font-size:34px; color:var(--snow);}
   .hero .sub{margin-top:8px; font-size:15px; color:var(--snow-dim); line-height:1.5;}
 
-  /* ---- logged-out landing: a phone home screen of "apps" ---- */
-  .phoneHome{max-width:420px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column;}
-  .statusBar{display:flex; justify-content:space-between; align-items:center; padding:12px 26px 0; font-family:var(--font-display); font-size:13px; font-weight:600; color:var(--snow); opacity:.85;}
-  .phoneHeader{text-align:center; padding:30px 24px 6px;}
+  /* ---- logged-out landing: its own little "OS" -- an iOS-style home
+     screen on phones, a macOS-Launchpad-style launcher on tablets/laptops.
+     One shared markup (see renderPhoneHome()), restyled per breakpoint
+     below rather than branched in JS, so it can't get out of sync with
+     the actual viewport on resize. #app only takes home-shell's width
+     override while this view is showing -- every other screen (lessons,
+     forms, etc.) keeps its normal mobile-friendly reading width even on
+     a wide screen, since stretching paragraphs of lesson text that wide
+     would hurt readability, not help it. */
+  #app.home-shell{max-width:none;}
+  body.home-shell-active{height:100vh; overflow:hidden;}
+  .phoneHome{max-width:420px; margin:0 auto; height:100vh; display:flex; flex-direction:column; overflow:hidden;}
+  .statusBar{display:flex; justify-content:space-between; align-items:center; padding:12px 26px 0; font-family:var(--font-display); font-size:13px; font-weight:600; color:var(--snow); opacity:.85; flex:0 0 auto;}
+  .desktopMenuBar{display:none;}
+  .phoneHeader{text-align:center; padding:22px 24px 4px; flex:0 0 auto;}
   .phoneHeaderTitle{font-family:var(--font-display); font-weight:800; font-size:23px; color:var(--snow);}
   .phoneHeaderSub{font-size:12.5px; color:var(--snow-dim); margin-top:5px; line-height:1.5;}
   .langRow{display:flex; gap:6px; justify-content:center; margin-top:14px;}
   .langChip{all:unset; cursor:pointer; font-size:12px; font-weight:600; padding:6px 12px; border-radius:999px; background:rgba(255,255,255,.08); color:var(--snow-dim);}
   .langChip.on{background:var(--gold); color:var(--ink);}
-  .appGrid{display:grid; grid-template-columns:repeat(4,1fr); gap:20px 10px; padding:28px 18px 0; flex:1;}
+  .launchpadSearchWrap{display:none;}
+  .appGridScroll{flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch;}
+  .appGrid{display:grid; grid-template-columns:repeat(4,1fr); gap:20px 10px; padding:20px 18px 12px;}
   .homeIcon{all:unset; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:7px; text-align:center;}
+  .homeIcon.home-hidden{display:none;}
   .homeIconGlyph{width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:25px; box-shadow:0 5px 12px rgba(0,0,0,.4); transition:transform .12s ease;}
   .homeIcon:active .homeIconGlyph{transform:scale(.9);}
   .homeIconLabel{font-size:10.5px; color:var(--snow); font-weight:600; line-height:1.25; max-width:72px;}
-  .phoneDock{margin-top:auto; display:flex; justify-content:center; padding:20px 0 28px;}
-  .dockBar{background:rgba(255,255,255,.08); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.1); border-radius:26px; padding:12px 26px;}
-  @media (min-width:421px){ .appGrid{grid-template-columns:repeat(4,76px); justify-content:center;} }
+  .phoneDock{flex:0 0 auto; display:flex; justify-content:center; padding:14px 0 max(14px, env(safe-area-inset-bottom,0px));}
+  .dockBar{display:flex; gap:18px; background:rgba(255,255,255,.08); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.1); border-radius:26px; padding:12px 26px;}
+  .dockBar .dockExtra{display:none;}
+  @media (min-width:421px) and (max-width:767px){ .appGrid{grid-template-columns:repeat(4,76px); justify-content:center;} }
+
+  /* ---- desktop/tablet: macOS Launchpad-style launcher ---- */
+  @media (min-width:768px){
+    .phoneHome{max-width:none; width:100%; height:100vh; background:radial-gradient(1400px 700px at 50% -10%, #2a4a80 0%, transparent 55%);}
+    .statusBar{display:none;}
+    .desktopMenuBar{display:flex; justify-content:space-between; align-items:center; padding:9px 24px; flex:0 0 auto; background:rgba(10,18,36,.35); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-bottom:1px solid rgba(255,255,255,.08); font-family:var(--font-display); font-size:13px; font-weight:600;}
+    .menuBarBrand{display:flex; align-items:center; gap:7px; letter-spacing:.02em;}
+    .menuBarClock{color:var(--snow-dim); font-weight:500;}
+    .phoneHeader{padding:28px 24px 2px;}
+    .phoneHeaderTitle{font-size:27px;}
+    .launchpadSearchWrap{display:flex; justify-content:center; padding:18px 0 4px;}
+    .launchpadSearch{all:unset; width:min(320px,80%); text-align:center; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12); border-radius:10px; padding:9px 14px; font-size:13.5px; color:var(--snow);}
+    .launchpadSearch::placeholder{color:var(--snow-dim);}
+    .appGrid{grid-template-columns:repeat(auto-fit,110px); justify-content:center; gap:30px 18px; padding:18px 40px 24px; max-width:1100px; margin:0 auto;}
+    .homeIconGlyph{width:72px; height:72px; border-radius:18px; font-size:32px;}
+    .homeIconLabel{font-size:12px; max-width:100px;}
+    .phoneDock{padding:16px 0 24px;}
+    .dockBar{gap:22px; padding:14px 30px; border-radius:24px;}
+    .dockBar .dockExtra{display:flex;}
+    .dockBar .homeIconGlyph{width:52px; height:52px; border-radius:14px; font-size:22px;}
+    .dockBar .homeIconLabel{display:none;}
+  }
   .track-grid{display:grid; grid-template-columns:1fr; gap:14px;}
   .track-card{
     text-align:left; border:1px solid rgba(255,255,255,.1); border-radius:var(--radius);
@@ -5023,7 +5060,13 @@ function t(key, vars){
 
 // ---- rendering ----------------------------------------------------------------
 const app = document.getElementById('app');
-function render(){ app.innerHTML = screens[state.screen](); if(state.currentUser) saveGame(); }
+function render(){
+  app.innerHTML = screens[state.screen]();
+  const onHomeShell = state.screen==='auth' && state.homeView==='apps';
+  app.classList.toggle('home-shell', onHomeShell);
+  document.body.classList.toggle('home-shell-active', onHomeShell);
+  if(state.currentUser) saveGame();
+}
 
 // Enter key on the mental math / algebra practice screens does whatever the
 // primary button would: submit the typed answer, or (once answered, when
@@ -5209,16 +5252,42 @@ function backToHomeScreen(){ state.screen='auth'; state.homeView='apps'; render(
 function phoneClock(){
   try{ return new Date().toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}); }catch(e){ return ''; }
 }
-function renderPhoneHome(){
-  const cls = appLangClass();
-  const icons = HOME_APPS.map(a=>`
-    <button class="homeIcon" onclick="${a.action}">
+function desktopMenuBarClock(){
+  try{ return new Date().toLocaleString(undefined,{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }catch(e){ return ''; }
+}
+// Favorites pinned in the dock -- on phone only the first (the login/
+// signup icon) shows, matching the one-item dock this already shipped
+// with; the desktop breakpoint reveals all of them, mac-dock style.
+const DOCK_FAVORITE_KEYS = ['notebook','camera','store','clips','messages'];
+function homeIconHtml(a, extraClass){
+  return `
+    <button class="homeIcon${extraClass?' '+extraClass:''}" data-app-label="${t(a.nameKey).toLowerCase()}" onclick="${a.action}">
       <div class="homeIconGlyph" style="background:${a.bg}">${a.icon}</div>
       <div class="homeIconLabel">${t(a.nameKey)}</div>
-    </button>`).join('');
+    </button>`;
+}
+function filterHomeApps(query){
+  const q = query.trim().toLowerCase();
+  document.querySelectorAll('#homeAppGrid .homeIcon').forEach(btn=>{
+    const matches = !q || (btn.dataset.appLabel||'').includes(q);
+    btn.classList.toggle('home-hidden', !matches);
+  });
+}
+function renderPhoneHome(){
+  const cls = appLangClass();
+  const icons = HOME_APPS.map(a=>homeIconHtml(a)).join('');
+  const dockExtras = DOCK_FAVORITE_KEYS
+    .map(key=>HOME_APPS.find(a=>a.key===key))
+    .filter(Boolean)
+    .map(a=>homeIconHtml(a, 'dockExtra'))
+    .join('');
   return `
   <div class="phoneHome ${cls}">
     <div class="statusBar"><span>${phoneClock()}</span><span>●●●●  🛜  🔋</span></div>
+    <div class="desktopMenuBar">
+      <div class="menuBarBrand">⛰️ Yeshe</div>
+      <div class="menuBarClock">${desktopMenuBarClock()}</div>
+    </div>
     <div class="phoneHeader">
       <div class="phoneHeaderTitle">ཡེ་ཤེས་ <span style="color:var(--gold)">Yeshe</span></div>
       <div class="phoneHeaderSub">${t('phoneHomeSub')}</div>
@@ -5228,13 +5297,17 @@ function renderPhoneHome(){
         <button class="langChip lang-bo ${state.appLang==='bo'?'on':''}" onclick="setAppLang('bo')">བོད་སྐད</button>
       </div>
     </div>
-    <div class="appGrid">${icons}</div>
+    <div class="launchpadSearchWrap">
+      <input type="text" id="homeAppSearch" class="launchpadSearch" placeholder="🔍 Search" oninput="filterHomeApps(this.value)">
+    </div>
+    <div class="appGridScroll"><div class="appGrid" id="homeAppGrid">${icons}</div></div>
     <div class="phoneDock">
       <div class="dockBar">
         <button class="homeIcon dock" onclick="openHomeApp('auth')">
           <div class="homeIconGlyph" style="background:linear-gradient(145deg,#4fa8e8,#1b2e52)">⛰️</div>
           <div class="homeIconLabel">${t('appYeshe')}</div>
         </button>
+        ${dockExtras}
       </div>
     </div>
   </div>
