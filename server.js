@@ -223,6 +223,7 @@ function createApp(overrides = {}) {
   const SPREADSHEETS_FILE = overrides.spreadsheetsFile || path.join(__dirname, 'data', 'spreadsheets.json');
   const MOVIES_FILE = overrides.moviesFile || path.join(__dirname, 'data', 'movies.json');
   const ANIME_PORTRAITS_FILE = overrides.animePortraitsFile || path.join(__dirname, 'data', 'anime-portraits.json');
+  const STUDY_BUDDY_FILE = overrides.studyBuddyFile || path.join(__dirname, 'data', 'study-buddy.json');
   const ADMIN_KEY = overrides.adminKey || process.env.ADMIN_KEY || 'sangwa-admin-key';
   const DATABASE_URL = overrides.databaseUrl || process.env.DATABASE_URL || null;
   const SUPABASE_URL = process.env.SUPABASE_URL || null;
@@ -410,6 +411,7 @@ function createApp(overrides = {}) {
   const SPREADSHEETS_BUCKET = 'spreadsheets';
   const MOVIES_BUCKET = 'movies';
   const ANIME_BUCKET = 'anime-portraits';
+  const STUDY_BUDDY_BUCKET = 'study-buddy-photos';
   const supabaseAdmin = (SUPABASE_PROJECT_URL && SUPABASE_SERVICE_ROLE_KEY)
     ? createClient(SUPABASE_PROJECT_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
     : null;
@@ -435,6 +437,7 @@ function createApp(overrides = {}) {
   const ensureSpreadsheetsBucket = () => ensureBucket(SPREADSHEETS_BUCKET);
   const ensureMoviesBucket = () => ensureBucket(MOVIES_BUCKET);
   const ensureAnimeBucket = () => ensureBucket(ANIME_BUCKET);
+  const ensureStudyBuddyBucket = () => ensureBucket(STUDY_BUDDY_BUCKET);
 
   // High-quality neural voices: British English + Beijing-standard Mandarin, one
   // male and one female each. Mandarin uses Azure's newer "Multilingual" neural
@@ -656,6 +659,49 @@ function createApp(overrides = {}) {
         photo_path text,
         photo_mime text,
         result_path text,
+        created_at timestamptz default now()
+      );
+    `);
+    await client.query(`
+      create table if not exists public.study_buddy_profiles (
+        username text primary key,
+        birthdate date not null,
+        bio text,
+        subjects text,
+        campus text,
+        instagram_handle text,
+        photo_path text,
+        photo_mime text,
+        created_at timestamptz default now()
+      );
+    `);
+    await client.query(`
+      create table if not exists public.study_buddy_connections (
+        id serial primary key,
+        requester_username text not null,
+        recipient_username text not null,
+        status text not null default 'pending',
+        created_at timestamptz default now(),
+        updated_at timestamptz default now()
+      );
+    `);
+    await client.query(`
+      create table if not exists public.study_buddy_messages (
+        id serial primary key,
+        connection_id integer not null,
+        sender_username text not null,
+        body text not null,
+        kind text not null default 'text',
+        meetup_spot text,
+        created_at timestamptz default now()
+      );
+    `);
+    await client.query(`
+      create table if not exists public.study_buddy_reports (
+        id serial primary key,
+        reporter_username text not null,
+        reported_username text not null,
+        reason text,
         created_at timestamptz default now()
       );
     `);
@@ -2011,6 +2057,310 @@ function createApp(overrides = {}) {
     const [removed] = data.portraits.splice(idx, 1);
     writeAnimePortraitsFile(data);
     return { photoPath: removed.photoPath, resultPath: removed.resultPath };
+  }
+
+  // ---- Study Buddy: campus study-buddy / friend finder. A "connection" is
+  // one row per requester->recipient pair; it becomes a match (chat unlocked,
+  // Instagram handles revealed to each other) only once the recipient
+  // explicitly accepts -- never from one side alone. Age is self-reported
+  // (there's no ID verification on this site) and only checked at profile
+  // save time, same honesty-over-false-security approach as everywhere else
+  // real verification isn't possible.
+  function ensureStudyBuddyFile() {
+    const dir = path.dirname(STUDY_BUDDY_FILE);
+    fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(STUDY_BUDDY_FILE)) {
+      fs.writeFileSync(STUDY_BUDDY_FILE, JSON.stringify({
+        profiles: {}, nextConnectionId: 1, connections: [], nextMessageId: 1, messages: [], nextReportId: 1, reports: [],
+      }, null, 2), 'utf8');
+    }
+  }
+  function readStudyBuddyFile() {
+    ensureStudyBuddyFile();
+    try {
+      const parsed = JSON.parse(fs.readFileSync(STUDY_BUDDY_FILE, 'utf8'));
+      return {
+        profiles: parsed.profiles && typeof parsed.profiles === 'object' ? parsed.profiles : {},
+        nextConnectionId: parsed.nextConnectionId || 1,
+        connections: Array.isArray(parsed.connections) ? parsed.connections : [],
+        nextMessageId: parsed.nextMessageId || 1,
+        messages: Array.isArray(parsed.messages) ? parsed.messages : [],
+        nextReportId: parsed.nextReportId || 1,
+        reports: Array.isArray(parsed.reports) ? parsed.reports : [],
+      };
+    } catch (error) {
+      return { profiles: {}, nextConnectionId: 1, connections: [], nextMessageId: 1, messages: [], nextReportId: 1, reports: [] };
+    }
+  }
+  function writeStudyBuddyFile(data) {
+    ensureStudyBuddyFile();
+    fs.writeFileSync(STUDY_BUDDY_FILE, JSON.stringify(data, null, 2), 'utf8');
+  }
+
+  function ageFromBirthdate(birthdate) {
+    const dob = new Date(birthdate);
+    if (Number.isNaN(dob.getTime())) return null;
+    const today = new Date();
+    let age = today.getUTCFullYear() - dob.getUTCFullYear();
+    const hadBirthdayThisYear = (today.getUTCMonth() > dob.getUTCMonth())
+      || (today.getUTCMonth() === dob.getUTCMonth() && today.getUTCDate() >= dob.getUTCDate());
+    if (!hadBirthdayThisYear) age -= 1;
+    return age;
+  }
+
+  const PROFILE_SELECT_SQL = `username, birthdate, bio, subjects, campus, instagram_handle as "instagramHandle",
+    photo_path as "photoPath", photo_mime as "photoMime", created_at as "createdAt"`;
+
+  async function upsertStudyBuddyProfile({ username, birthdate, bio, subjects, campus, instagramHandle }) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `insert into public.study_buddy_profiles (username, birthdate, bio, subjects, campus, instagram_handle)
+         values ($1,$2,$3,$4,$5,$6)
+         on conflict (username) do update set birthdate=$2, bio=$3, subjects=$4, campus=$5, instagram_handle=$6
+         returning ${PROFILE_SELECT_SQL}`,
+        [username, birthdate, bio, subjects, campus, instagramHandle]
+      );
+      return result.rows[0];
+    }
+    const data = readStudyBuddyFile();
+    const existing = data.profiles[username.toLowerCase()];
+    const profile = {
+      username, birthdate, bio, subjects, campus, instagramHandle,
+      photoPath: existing ? existing.photoPath : null,
+      photoMime: existing ? existing.photoMime : null,
+      createdAt: existing ? existing.createdAt : new Date().toISOString(),
+    };
+    data.profiles[username.toLowerCase()] = profile;
+    writeStudyBuddyFile(data);
+    return profile;
+  }
+
+  async function getStudyBuddyProfile(username) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(`select ${PROFILE_SELECT_SQL} from public.study_buddy_profiles where lower(username)=lower($1)`, [username]);
+      return result.rows[0] || null;
+    }
+    const data = readStudyBuddyFile();
+    return data.profiles[username.toLowerCase()] || null;
+  }
+
+  async function listStudyBuddyProfiles({ excludeUsername }) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select ${PROFILE_SELECT_SQL} from public.study_buddy_profiles where lower(username)<>lower($1) order by created_at desc`,
+        [excludeUsername]
+      );
+      return result.rows;
+    }
+    const data = readStudyBuddyFile();
+    return Object.values(data.profiles)
+      .filter((p) => p.username.toLowerCase() !== excludeUsername.toLowerCase())
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  async function setStudyBuddyProfilePhoto(username, { photoPath, photoMime }) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `update public.study_buddy_profiles set photo_path=$1, photo_mime=$2 where lower(username)=lower($3) returning ${PROFILE_SELECT_SQL}`,
+        [photoPath, photoMime, username]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readStudyBuddyFile();
+    const profile = data.profiles[username.toLowerCase()];
+    if (!profile) return null;
+    profile.photoPath = photoPath;
+    profile.photoMime = photoMime;
+    writeStudyBuddyFile(data);
+    return profile;
+  }
+
+  async function deleteStudyBuddyProfile(username) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `delete from public.study_buddy_profiles where lower(username)=lower($1) returning photo_path as "photoPath"`,
+        [username]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readStudyBuddyFile();
+    const profile = data.profiles[username.toLowerCase()];
+    if (!profile) return null;
+    delete data.profiles[username.toLowerCase()];
+    writeStudyBuddyFile(data);
+    return { photoPath: profile.photoPath };
+  }
+
+  const CONNECTION_SELECT_SQL = `id, requester_username as "requesterUsername", recipient_username as "recipientUsername",
+    status, created_at as "createdAt", updated_at as "updatedAt"`;
+
+  async function getConnectionBetween(userA, userB) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select ${CONNECTION_SELECT_SQL} from public.study_buddy_connections
+         where (lower(requester_username)=lower($1) and lower(recipient_username)=lower($2))
+            or (lower(requester_username)=lower($2) and lower(recipient_username)=lower($1))
+         order by created_at desc limit 1`,
+        [userA, userB]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readStudyBuddyFile();
+    const matches = data.connections.filter((c) =>
+      (c.requesterUsername.toLowerCase() === userA.toLowerCase() && c.recipientUsername.toLowerCase() === userB.toLowerCase())
+      || (c.requesterUsername.toLowerCase() === userB.toLowerCase() && c.recipientUsername.toLowerCase() === userA.toLowerCase())
+    );
+    return matches.sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0] || null;
+  }
+
+  async function createConnectionRequest({ requesterUsername, recipientUsername }) {
+    const client = await getDbClient();
+    const now = new Date().toISOString();
+    if (client) {
+      const result = await client.query(
+        `insert into public.study_buddy_connections (requester_username, recipient_username, status, created_at, updated_at)
+         values ($1,$2,'pending',$3,$3) returning ${CONNECTION_SELECT_SQL}`,
+        [requesterUsername, recipientUsername, now]
+      );
+      return result.rows[0];
+    }
+    const data = readStudyBuddyFile();
+    const connection = { id: data.nextConnectionId, requesterUsername, recipientUsername, status: 'pending', createdAt: now, updatedAt: now };
+    data.connections.push(connection);
+    data.nextConnectionId += 1;
+    writeStudyBuddyFile(data);
+    return connection;
+  }
+
+  async function getConnectionById(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(`select ${CONNECTION_SELECT_SQL} from public.study_buddy_connections where id=$1`, [id]);
+      return result.rows[0] || null;
+    }
+    const data = readStudyBuddyFile();
+    return data.connections.find((c) => c.id === id) || null;
+  }
+
+  async function updateConnectionStatus(id, status) {
+    const client = await getDbClient();
+    const now = new Date().toISOString();
+    if (client) {
+      const result = await client.query(
+        `update public.study_buddy_connections set status=$1, updated_at=$2 where id=$3 returning ${CONNECTION_SELECT_SQL}`,
+        [status, now, id]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readStudyBuddyFile();
+    const connection = data.connections.find((c) => c.id === id);
+    if (!connection) return null;
+    connection.status = status;
+    connection.updatedAt = now;
+    writeStudyBuddyFile(data);
+    return connection;
+  }
+
+  async function listIncomingRequests(username) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select ${CONNECTION_SELECT_SQL} from public.study_buddy_connections where lower(recipient_username)=lower($1) and status='pending' order by created_at desc`,
+        [username]
+      );
+      return result.rows;
+    }
+    const data = readStudyBuddyFile();
+    return data.connections
+      .filter((c) => c.recipientUsername.toLowerCase() === username.toLowerCase() && c.status === 'pending')
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  async function listMatches(username) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select ${CONNECTION_SELECT_SQL} from public.study_buddy_connections
+         where (lower(requester_username)=lower($1) or lower(recipient_username)=lower($1)) and status='accepted'
+         order by updated_at desc`,
+        [username]
+      );
+      return result.rows;
+    }
+    const data = readStudyBuddyFile();
+    return data.connections
+      .filter((c) => (c.requesterUsername.toLowerCase() === username.toLowerCase() || c.recipientUsername.toLowerCase() === username.toLowerCase()) && c.status === 'accepted')
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  }
+
+  const SB_MESSAGE_SELECT_SQL = `id, connection_id as "connectionId", sender_username as "senderUsername",
+    body, kind, meetup_spot as "meetupSpot", created_at as "createdAt"`;
+
+  async function createStudyBuddyMessage({ connectionId, senderUsername, body, kind, meetupSpot }) {
+    const client = await getDbClient();
+    const now = new Date().toISOString();
+    if (client) {
+      const result = await client.query(
+        `insert into public.study_buddy_messages (connection_id, sender_username, body, kind, meetup_spot, created_at)
+         values ($1,$2,$3,$4,$5,$6) returning ${SB_MESSAGE_SELECT_SQL}`,
+        [connectionId, senderUsername, body, kind, meetupSpot, now]
+      );
+      return result.rows[0];
+    }
+    const data = readStudyBuddyFile();
+    const message = { id: data.nextMessageId, connectionId, senderUsername, body, kind, meetupSpot: meetupSpot || null, createdAt: now };
+    data.messages.push(message);
+    data.nextMessageId += 1;
+    writeStudyBuddyFile(data);
+    return message;
+  }
+
+  async function listMessagesForConnection(connectionId) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select ${SB_MESSAGE_SELECT_SQL} from public.study_buddy_messages where connection_id=$1 order by created_at asc`,
+        [connectionId]
+      );
+      return result.rows;
+    }
+    const data = readStudyBuddyFile();
+    return data.messages.filter((m) => m.connectionId === connectionId).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  }
+
+  async function createStudyBuddyReport({ reporterUsername, reportedUsername, reason }) {
+    const client = await getDbClient();
+    const now = new Date().toISOString();
+    if (client) {
+      await client.query(
+        `insert into public.study_buddy_reports (reporter_username, reported_username, reason, created_at) values ($1,$2,$3,$4)`,
+        [reporterUsername, reportedUsername, reason, now]
+      );
+      return;
+    }
+    const data = readStudyBuddyFile();
+    data.reports.push({ id: data.nextReportId, reporterUsername, reportedUsername, reason, createdAt: now });
+    data.nextReportId += 1;
+    writeStudyBuddyFile(data);
+  }
+
+  async function listStudyBuddyReportsAdmin() {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select id, reporter_username as "reporterUsername", reported_username as "reportedUsername", reason, created_at as "createdAt"
+         from public.study_buddy_reports order by created_at desc`
+      );
+      return result.rows;
+    }
+    const data = readStudyBuddyFile();
+    return [...data.reports].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }
 
   async function listUsersFromDb() {
@@ -3482,6 +3832,244 @@ function createApp(overrides = {}) {
     return res.redirect(302, data.publicUrl);
   });
 
+  // ---- Study Buddy: campus study-buddy / friend finder, framed around
+  // studying and making friends rather than branded as dating. Requires a
+  // real kunga.me account. A profile's Instagram handle is only ever
+  // included in a server response when the requester IS that profile's
+  // owner, or the two have an accepted (mutual) connection -- never in the
+  // public browse list, and never from a one-sided request.
+  const STUDY_BUDDY_BIO_MAX = 300;
+  const STUDY_BUDDY_SUBJECTS_MAX = 200;
+  const STUDY_BUDDY_CAMPUS_MAX = 100;
+  const STUDY_BUDDY_HANDLE_MAX = 60;
+  const STUDY_BUDDY_MESSAGE_MAX = 1000;
+  const STUDY_BUDDY_REPORT_REASON_MAX = 500;
+  const STUDY_BUDDY_MIN_AGE = 18;
+  const STUDY_BUDDY_MAX_AGE = 22;
+  const STUDY_BUDDY_PHOTO_MIME_EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+
+  function publicStudyBuddyProfile(profile) {
+    if (!profile) return null;
+    const { instagramHandle, birthdate, ...rest } = profile;
+    return rest;
+  }
+
+  app.get('/api/study-buddy/profile', async (req, res) => {
+    const username = String(req.query.username || '');
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    const profile = await getStudyBuddyProfile(user.username);
+    return res.json({ profile });
+  });
+
+  app.post('/api/study-buddy/profile', async (req, res) => {
+    const { username, birthdate, bio, subjects, campus, instagramHandle } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'Log in on kunga.me first.' });
+    const age = ageFromBirthdate(birthdate);
+    if (age === null) return res.status(400).json({ error: 'Enter a valid birthdate.' });
+    if (age < STUDY_BUDDY_MIN_AGE || age > STUDY_BUDDY_MAX_AGE) {
+      return res.status(400).json({ error: `Study Buddy is for ages ${STUDY_BUDDY_MIN_AGE}-${STUDY_BUDDY_MAX_AGE}. This is self-reported -- misrepresenting your age violates the terms.` });
+    }
+    const cleanBio = String(bio || '').trim().slice(0, STUDY_BUDDY_BIO_MAX);
+    const cleanSubjects = String(subjects || '').trim().slice(0, STUDY_BUDDY_SUBJECTS_MAX);
+    const cleanCampus = String(campus || '').trim().slice(0, STUDY_BUDDY_CAMPUS_MAX);
+    const cleanHandle = String(instagramHandle || '').trim().replace(/^@/, '').slice(0, STUDY_BUDDY_HANDLE_MAX);
+    const profile = await upsertStudyBuddyProfile({
+      username: user.username, birthdate, bio: cleanBio, subjects: cleanSubjects, campus: cleanCampus,
+      instagramHandle: cleanHandle || null,
+    });
+    return res.json({ profile });
+  });
+
+  app.post('/api/study-buddy/profile/photo', express.raw({ type: '*/*', limit: '8mb' }), async (req, res) => {
+    const username = String(req.query.username || '');
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    if (!supabaseAdmin) return res.status(503).json({ error: 'Photo storage is not configured on this server yet.' });
+    const profile = await getStudyBuddyProfile(user.username);
+    if (!profile) return res.status(404).json({ error: 'Create your profile first.' });
+    const contentType = (req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+    const ext = STUDY_BUDDY_PHOTO_MIME_EXT[contentType];
+    if (!ext) return res.status(400).json({ error: 'Only JPEG, PNG or WebP photos are accepted.' });
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) return res.status(400).json({ error: 'No photo data received.' });
+    const objectPath = user.username.toLowerCase() + '-' + Date.now() + '.' + ext;
+    const { error } = await supabaseAdmin.storage.from(STUDY_BUDDY_BUCKET).upload(objectPath, req.body, { contentType, upsert: true });
+    if (error) return res.status(502).json({ error: 'Upload to storage failed.', details: error.message });
+    const updated = await setStudyBuddyProfilePhoto(user.username, { photoPath: objectPath, photoMime: contentType });
+    return res.json({ profile: updated || profile });
+  });
+
+  app.post('/api/study-buddy/profile/delete', async (req, res) => {
+    const { username } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    const removed = await deleteStudyBuddyProfile(user.username);
+    if (removed && removed.photoPath && supabaseAdmin) {
+      await supabaseAdmin.storage.from(STUDY_BUDDY_BUCKET).remove([removed.photoPath]).catch(() => {});
+    }
+    return res.json({ ok: true });
+  });
+
+  app.get('/api/study-buddy/browse', async (req, res) => {
+    const username = String(req.query.username || '');
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    const profiles = await listStudyBuddyProfiles({ excludeUsername: user.username });
+    const connections = await Promise.all(profiles.map((p) => getConnectionBetween(user.username, p.username)));
+    const visible = profiles
+      .map((p, i) => ({ profile: p, connection: connections[i] }))
+      .filter(({ connection }) => !connection || connection.status === 'unmatched' || (connection.status === 'pending' && connection.recipientUsername.toLowerCase() === user.username.toLowerCase()));
+    return res.json({
+      profiles: visible.map(({ profile, connection }) => ({
+        ...publicStudyBuddyProfile(profile),
+        incomingRequestId: (connection && connection.status === 'pending' && connection.recipientUsername.toLowerCase() === user.username.toLowerCase()) ? connection.id : null,
+      })),
+    });
+  });
+
+  app.post('/api/study-buddy/connect', async (req, res) => {
+    const { requesterUsername, recipientUsername } = req.body || {};
+    const requester = await findUserByUsername(requesterUsername);
+    if (!requester) return res.status(404).json({ error: 'Log in on kunga.me first.' });
+    const recipient = await findUserByUsername(recipientUsername);
+    if (!recipient) return res.status(404).json({ error: 'That user was not found.' });
+    if (requester.username.toLowerCase() === recipient.username.toLowerCase()) return res.status(400).json({ error: "You can't connect with yourself." });
+    const recipientProfile = await getStudyBuddyProfile(recipient.username);
+    if (!recipientProfile) return res.status(404).json({ error: 'That person has no Study Buddy profile.' });
+
+    const existing = await getConnectionBetween(requester.username, recipient.username);
+    if (existing && existing.status === 'accepted') return res.status(409).json({ error: "You're already matched." });
+    if (existing && existing.status === 'pending' && existing.requesterUsername.toLowerCase() === requester.username.toLowerCase()) {
+      return res.status(409).json({ error: 'Request already sent.' });
+    }
+    if (existing && existing.status === 'pending' && existing.recipientUsername.toLowerCase() === requester.username.toLowerCase()) {
+      // They already requested you -- this is mutual interest, match immediately.
+      const matched = await updateConnectionStatus(existing.id, 'accepted');
+      return res.json({ connection: matched, matched: true });
+    }
+    const connection = await createConnectionRequest({ requesterUsername: requester.username, recipientUsername: recipient.username });
+    return res.json({ connection, matched: false });
+  });
+
+  app.get('/api/study-buddy/requests', async (req, res) => {
+    const username = String(req.query.username || '');
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    const requests = await listIncomingRequests(user.username);
+    const enriched = await Promise.all(requests.map(async (r) => ({
+      ...r,
+      profile: publicStudyBuddyProfile(await getStudyBuddyProfile(r.requesterUsername)),
+    })));
+    return res.json({ requests: enriched });
+  });
+
+  app.post('/api/study-buddy/requests/:id/accept', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const connection = await getConnectionById(id);
+    if (!connection) return res.status(404).json({ error: 'Not found.' });
+    const { username } = req.body || {};
+    if (String(username || '').toLowerCase() !== connection.recipientUsername.toLowerCase()) {
+      return res.status(403).json({ error: 'Only the recipient can accept this.' });
+    }
+    const updated = await updateConnectionStatus(id, 'accepted');
+    return res.json({ connection: updated });
+  });
+
+  app.post('/api/study-buddy/requests/:id/decline', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const connection = await getConnectionById(id);
+    if (!connection) return res.status(404).json({ error: 'Not found.' });
+    const { username } = req.body || {};
+    if (String(username || '').toLowerCase() !== connection.recipientUsername.toLowerCase()) {
+      return res.status(403).json({ error: 'Only the recipient can decline this.' });
+    }
+    const updated = await updateConnectionStatus(id, 'declined');
+    return res.json({ connection: updated });
+  });
+
+  app.get('/api/study-buddy/matches', async (req, res) => {
+    const username = String(req.query.username || '');
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    const matches = await listMatches(user.username);
+    const enriched = await Promise.all(matches.map(async (m) => {
+      const otherUsername = m.requesterUsername.toLowerCase() === user.username.toLowerCase() ? m.recipientUsername : m.requesterUsername;
+      const otherProfile = await getStudyBuddyProfile(otherUsername);
+      return { ...m, otherProfile };
+    }));
+    return res.json({ matches: enriched });
+  });
+
+  function isPartOfConnection(connection, username) {
+    return connection && (
+      connection.requesterUsername.toLowerCase() === username.toLowerCase()
+      || connection.recipientUsername.toLowerCase() === username.toLowerCase()
+    );
+  }
+
+  app.post('/api/study-buddy/matches/:id/unmatch', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const connection = await getConnectionById(id);
+    if (!connection) return res.status(404).json({ error: 'Not found.' });
+    const { username } = req.body || {};
+    if (!isPartOfConnection(connection, String(username || ''))) return res.status(403).json({ error: 'Not part of this match.' });
+    const updated = await updateConnectionStatus(id, 'unmatched');
+    return res.json({ connection: updated });
+  });
+
+  app.get('/api/study-buddy/matches/:id/messages', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const connection = await getConnectionById(id);
+    if (!connection || connection.status !== 'accepted') return res.status(404).json({ error: 'Not found.' });
+    const username = String(req.query.username || '');
+    if (!isPartOfConnection(connection, username)) return res.status(403).json({ error: 'Not part of this match.' });
+    const messages = await listMessagesForConnection(id);
+    return res.json({ messages });
+  });
+
+  app.post('/api/study-buddy/matches/:id/messages', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const connection = await getConnectionById(id);
+    if (!connection || connection.status !== 'accepted') return res.status(404).json({ error: 'Not found.' });
+    const { username, body, kind, meetupSpot } = req.body || {};
+    if (!isPartOfConnection(connection, String(username || ''))) return res.status(403).json({ error: 'Not part of this match.' });
+    const cleanKind = kind === 'meetup_suggestion' ? 'meetup_suggestion' : 'text';
+    const cleanMeetupSpot = cleanKind === 'meetup_suggestion' ? String(meetupSpot || '').trim().slice(0, 120) : null;
+    const cleanBody = String(body || '').trim().slice(0, STUDY_BUDDY_MESSAGE_MAX);
+    if (!cleanBody) return res.status(400).json({ error: 'Message is empty.' });
+    const message = await createStudyBuddyMessage({ connectionId: id, senderUsername: username, body: cleanBody, kind: cleanKind, meetupSpot: cleanMeetupSpot });
+    return res.json({ message });
+  });
+
+  app.post('/api/study-buddy/report', async (req, res) => {
+    const { reporterUsername, reportedUsername, reason } = req.body || {};
+    const reporter = await findUserByUsername(reporterUsername);
+    if (!reporter) return res.status(404).json({ error: 'Log in on kunga.me first.' });
+    const cleanReason = String(reason || '').trim().slice(0, STUDY_BUDDY_REPORT_REASON_MAX);
+    await createStudyBuddyReport({ reporterUsername: reporter.username, reportedUsername: String(reportedUsername || '').trim(), reason: cleanReason });
+    return res.json({ ok: true });
+  });
+
+  app.get('/api/study-buddy/admin/reports', async (req, res) => {
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const reports = await listStudyBuddyReportsAdmin();
+    return res.json({ reports });
+  });
+
+  app.get('/study-buddy-photo/:username', async (req, res) => {
+    if (!supabaseAdmin) return res.status(503).end();
+    const profile = await getStudyBuddyProfile(req.params.username);
+    if (!profile || !profile.photoPath) return res.status(404).end();
+    const { data } = supabaseAdmin.storage.from(STUDY_BUDDY_BUCKET).getPublicUrl(profile.photoPath);
+    return res.redirect(302, data.publicUrl);
+  });
+
   // ---- Kunga's Live: REST side of the live-streaming hub defined above
   // (the WebSocket side handles signaling + the lobby's real-time counts).
   // Going live requires a real kunga.me account (so there's someone to hold
@@ -4138,6 +4726,14 @@ function createApp(overrides = {}) {
     return res.sendFile(path.join(__dirname, 'anime-me.html'));
   });
 
+  app.get('/study-buddy', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'study-buddy.html'));
+  });
+
+  app.get('/study-buddy.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'study-buddy.html'));
+  });
+
   app.get('/poker', (req, res) => {
     return res.sendFile(path.join(__dirname, 'poker.html'));
   });
@@ -4394,6 +4990,7 @@ function createApp(overrides = {}) {
     ensureSpreadsheetsBucket,
     ensureMoviesBucket,
     ensureAnimeBucket,
+    ensureStudyBuddyBucket,
     ensureStripeProduct,
     ensureDiaryStripeProduct,
   };
@@ -4433,6 +5030,10 @@ if (require.main === module) {
   appState.ensureAnimeBucket().then((bucketStatus) => {
     if (bucketStatus.ok) console.log('Supabase Storage: anime-portraits bucket ready.');
     else console.log('Supabase Storage not active for anime portraits (' + bucketStatus.reason + ') — uploads would not persist.');
+  });
+  appState.ensureStudyBuddyBucket().then((bucketStatus) => {
+    if (bucketStatus.ok) console.log('Supabase Storage: study-buddy-photos bucket ready.');
+    else console.log('Supabase Storage not active for Study Buddy photos (' + bucketStatus.reason + ') — uploads would not persist.');
   });
   appState.ensureStripeProduct().then((stripeStatus) => {
     if (stripeStatus.ok) console.log('Stripe: Premium product/prices ready.');

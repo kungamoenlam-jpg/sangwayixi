@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Study Buddy</title>
+<meta name="description" content="Find a study buddy or new friend on campus — chat, then meet up at a spot you both pick.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c1416;--ink:#eef7f6;--muted:#9bb0ad;--accent:#14b8a6;--accent2:#f59e0b;
+  --good:#3FAE72;--bad:#ff6a6a;--font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 0%,#132524,#0c1416 60%);color:var(--ink);font-family:var(--font-body)}
+.topBar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:calc(14px + env(safe-area-inset-top,0px)) 18px 14px;background:rgba(12,20,22,.88);backdrop-filter:blur(8px)}
+.brand{font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--ink);text-decoration:none}
+
+.wrap{max-width:600px;margin:0 auto;padding:10px 18px calc(50px + env(safe-area-inset-bottom,0px))}
+h1{font-family:var(--font-display);font-weight:800;font-size:27px;margin:14px 0 4px;background:linear-gradient(90deg,#5eead4,var(--accent) 60%,#0d9488);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 16px}
+
+.safetyBanner{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:12px 14px;font-size:12.5px;color:#ffd9a0;line-height:1.6;margin-bottom:18px}
+.safetyBanner b{color:#ffe8c2}
+
+label.fieldLabel{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:0 0 8px}
+input#birthdateInput,input#campusInput,input#subjectsInput,input#handleInput{width:100%;font-family:var(--font-body);font-size:15px;padding:12px 14px;border-radius:12px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);outline:none;margin-bottom:16px}
+textarea#bioInput{width:100%;font-family:var(--font-body);font-size:15px;padding:12px 14px;border-radius:12px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);outline:none;resize:vertical;min-height:70px;margin-bottom:16px}
+.fileDrop{border:1.5px dashed rgba(255,255,255,.2);border-radius:14px;padding:16px;text-align:center;cursor:pointer;margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.fileDrop.has{border-style:solid;border-color:var(--accent)}
+.fileDrop input{display:none}
+.fileDrop .thumb{width:54px;height:54px;border-radius:10px;object-fit:cover;flex:0 0 auto;background:rgba(255,255,255,.06)}
+.fileDrop .label{font-size:13px;color:var(--ink);text-align:left}
+.fileDrop .hint{font-size:12px;color:var(--muted);margin-top:2px}
+.ageDisclosure{font-size:12px;color:var(--muted);line-height:1.6;margin:-6px 0 16px}
+
+.primaryBtn{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:100%;text-align:center;font-family:var(--font-display);font-weight:700;font-size:16px;padding:16px;border-radius:14px;background:linear-gradient(90deg,var(--accent),#0d9488);color:#042a26}
+.primaryBtn:disabled{opacity:.5;cursor:default}
+.errorBox{background:rgba(255,92,92,.14);border:1px solid rgba(255,92,92,.35);color:#ffb0b0;padding:10px 14px;border-radius:10px;font-size:13px;margin-top:12px;text-align:center}
+.flashBox{background:rgba(20,184,166,.12);border:1px solid rgba(20,184,166,.3);color:#a8f3ea;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;text-align:center}
+
+.tabBar{display:flex;gap:6px;margin-bottom:18px;background:rgba(255,255,255,.04);border-radius:12px;padding:4px}
+.tabBtn{all:unset;box-sizing:border-box;cursor:pointer;flex:1;text-align:center;font-size:13px;font-weight:600;padding:10px;border-radius:9px;color:var(--muted);position:relative}
+.tabBtn.active{background:rgba(20,184,166,.18);color:#fff}
+.tabBadge{position:absolute;top:2px;right:10px;background:var(--bad);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:999px}
+
+.profileCard{display:flex;gap:12px;padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);margin-bottom:12px}
+.profilePhoto{width:64px;height:64px;border-radius:12px;object-fit:cover;flex:0 0 auto;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:26px}
+.profileInfo{flex:1;min-width:0}
+.profileName{font-size:14.5px;font-weight:700}
+.profileCampus{font-size:11.5px;color:var(--accent2);margin-top:1px}
+.profileSubjects{font-size:12.5px;color:var(--muted);margin-top:4px}
+.profileBio{font-size:12.5px;color:#cfe4e1;margin-top:6px;line-height:1.5}
+.profileActions{display:flex;gap:8px;margin-top:10px}
+.smallBtn{all:unset;box-sizing:border-box;cursor:pointer;flex:1;text-align:center;font-size:12.5px;font-weight:600;padding:9px;border-radius:9px;background:rgba(20,184,166,.18);color:#fff}
+.smallBtn.decline{background:rgba(255,92,92,.14);color:var(--bad)}
+.smallBtn.ghost{background:rgba(255,255,255,.07);color:var(--ink)}
+.emptyState{text-align:center;color:var(--muted);font-size:13.5px;padding:40px 10px}
+.emptyState .glyph{font-size:36px;display:block;margin-bottom:8px}
+
+/* ---- Chat ---- */
+.chatOverlay{position:fixed;inset:0;background:var(--bg);z-index:60;display:none;flex-direction:column}
+.chatOverlay.open{display:flex}
+.chatTop{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
+.chatTopLeft{display:flex;align-items:center;gap:10px;min-width:0}
+.chatCloseBtn{all:unset;cursor:pointer;font-size:20px;color:var(--muted);padding:4px}
+.chatName{font-size:14.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chatHandle{font-size:11.5px;color:var(--accent2)}
+.chatMenuBtn{all:unset;cursor:pointer;font-size:18px;color:var(--muted);padding:4px}
+.chatMenu{position:absolute;top:60px;right:16px;background:#15201f;border:1px solid rgba(255,255,255,.1);border-radius:10px;overflow:hidden;z-index:30;display:none}
+.chatMenu.open{display:block}
+.chatMenuItem{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:160px;padding:11px 14px;font-size:13px;color:var(--ink)}
+.chatMenuItem.danger{color:var(--bad)}
+.chatBody{flex:1;overflow-y:auto;padding:16px}
+.msgRow{display:flex;margin-bottom:10px}
+.msgRow.mine{justify-content:flex-end}
+.msgBubble{max-width:75%;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.5}
+.msgRow.mine .msgBubble{background:var(--accent);color:#042a26}
+.msgRow.theirs .msgBubble{background:rgba(255,255,255,.08);color:var(--ink)}
+.msgBubble.meetup{background:rgba(245,158,11,.18)!important;color:#ffe8c2!important;border:1px solid rgba(245,158,11,.35)}
+.chatBottom{padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid rgba(255,255,255,.08)}
+.spotRow{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;margin-bottom:10px}
+.spotChip{all:unset;cursor:pointer;flex:0 0 auto;font-size:12px;padding:7px 12px;border-radius:999px;background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.3);color:#ffd9a0}
+.msgInputRow{display:flex;gap:8px}
+.msgInputRow input{flex:1;font-size:14px;padding:12px 14px;border-radius:999px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);outline:none}
+.sendBtn{all:unset;cursor:pointer;width:42px;height:42px;border-radius:50%;background:var(--accent);color:#042a26;display:grid;place-items:center;font-size:16px}
+
+.reportOverlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:70;display:none;align-items:flex-end;justify-content:center}
+.reportOverlay.open{display:flex}
+.reportCard{width:100%;max-width:480px;background:#101b19;border-radius:20px 20px 0 0;padding:22px 20px calc(26px + env(safe-area-inset-bottom,0px))}
+textarea#reportReason{width:100%;font-size:14px;padding:12px;border-radius:12px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);outline:none;resize:vertical;min-height:70px;margin-bottom:14px}
+</style>
+</head>
+<body>
+
+<div class="topBar">
+  <a class="brand" href="/">← kunga.me</a>
+  <span class="brand" style="color:var(--muted);font-weight:600">STUDY BUDDY</span>
+</div>
+
+<div class="wrap" id="wrap">
+  <h1>Study Buddy</h1>
+  <p class="sub">Find someone to study with or make a new friend on campus. Chat, then pick a spot and meet up.</p>
+  <div id="content"><div class="emptyState"><div class="glyph">⏳</div>Loading…</div></div>
+</div>
+
+<div class="chatOverlay" id="chatOverlay">
+  <div class="chatTop">
+    <div class="chatTopLeft">
+      <button class="chatCloseBtn" id="chatCloseBtn">←</button>
+      <div>
+        <div class="chatName" id="chatName"></div>
+        <div class="chatHandle" id="chatHandle"></div>
+      </div>
+    </div>
+    <button class="chatMenuBtn" id="chatMenuBtn">⋮</button>
+  </div>
+  <div class="chatMenu" id="chatMenu">
+    <button class="chatMenuItem" id="reportBtn">🚩 Report</button>
+    <button class="chatMenuItem danger" id="unmatchBtn">Unmatch</button>
+  </div>
+  <div class="chatBody" id="chatBody"></div>
+  <div class="chatBottom">
+    <div class="spotRow" id="spotRow"></div>
+    <div class="msgInputRow">
+      <input type="text" id="msgInput" maxlength="1000" placeholder="Message…">
+      <button class="sendBtn" id="sendBtn">➤</button>
+    </div>
+  </div>
+</div>
+
+<div class="reportOverlay" id="reportOverlay">
+  <div class="reportCard">
+    <label class="fieldLabel">Why are you reporting this person?</label>
+    <textarea id="reportReason" placeholder="What happened?"></textarea>
+    <button class="primaryBtn" id="submitReportBtn">Submit report</button>
+  </div>
+</div>
+
+<script>
+const SESSION_KEY = 'sangwa_session_v1';
+function currentUser(){
+  try{
+    const s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+    return (s && s.currentUser) ? String(s.currentUser) : null;
+  }catch(e){ return null; }
+}
+function esc(s){ return String(s === undefined || s === null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+const MEETUP_SPOTS = ['📚 Library', '🍽️ Student Union', '🌳 Quad', '☕ Campus Coffee Shop', '🏫 Study Room'];
+const content = document.getElementById('content');
+let myProfile = null;
+let activeTab = 'browse';
+let activeConnectionId = null;
+let chatPollTimer = null;
+
+async function init(){
+  const user = currentUser();
+  if(!user){
+    content.innerHTML = `<div class="emptyState"><div class="glyph">🔒</div>Log in on <a href="/" style="color:var(--accent)">kunga.me</a> first, then come back.</div>`;
+    return;
+  }
+  const resp = await fetch('/api/study-buddy/profile?username=' + encodeURIComponent(user));
+  const data = await resp.json();
+  myProfile = data.profile;
+  if(!myProfile){
+    renderProfileSetup();
+  } else {
+    renderMain();
+  }
+}
+
+function renderProfileSetup(flashHtml){
+  content.innerHTML = `
+    ${flashHtml || ''}
+    <div class="safetyBanner">🛡️ <b>Stay safe:</b> ages here are self-reported, not verified. Always meet in public campus spots, tell a friend where you're going, and trust your instincts — you can unmatch or report anyone at any time.</div>
+    <label class="fieldLabel" for="birthdateInput">Your birthdate</label>
+    <input type="date" id="birthdateInput">
+    <p class="ageDisclosure">Study Buddy is for ages 18-22. This is self-reported — there's no ID check, but misrepresenting your age violates the terms.</p>
+    <label class="fieldLabel" for="campusInput">Campus / university</label>
+    <input type="text" id="campusInput" maxlength="100" placeholder="e.g. State University">
+    <label class="fieldLabel" for="subjectsInput">Subjects / courses</label>
+    <input type="text" id="subjectsInput" maxlength="200" placeholder="e.g. Calculus II, Organic Chemistry">
+    <label class="fieldLabel" for="bioInput">About you</label>
+    <textarea id="bioInput" maxlength="300" placeholder="What are you looking for in a study buddy or friend?"></textarea>
+    <label class="fieldLabel" for="handleInput">Instagram handle (optional)</label>
+    <input type="text" id="handleInput" maxlength="60" placeholder="@yourhandle">
+    <p class="ageDisclosure">Leave this blank if you'd rather share it yourself in chat later. If filled in, it's revealed automatically once you match with someone — never before.</p>
+    <label class="fieldLabel">Photo (optional)</label>
+    <div class="fileDrop" id="fileDrop">
+      <img class="thumb" id="photoThumb" style="display:none">
+      <div>
+        <div class="label" id="fileDropText">Tap to add a photo</div>
+        <div class="hint">Helps people recognize you on campus.</div>
+      </div>
+      <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp">
+    </div>
+    <button class="primaryBtn" id="saveProfileBtn">Create my profile</button>
+    <div id="setupErrorBox"></div>
+  `;
+  let selectedPhoto = null;
+  document.getElementById('fileDrop').onclick = () => document.getElementById('fileInput').click();
+  document.getElementById('fileInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    selectedPhoto = file;
+    document.getElementById('fileDrop').classList.add('has');
+    document.getElementById('fileDropText').textContent = file.name;
+    const thumb = document.getElementById('photoThumb');
+    thumb.src = URL.createObjectURL(file);
+    thumb.style.display = 'block';
+  });
+  document.getElementById('saveProfileBtn').onclick = () => saveProfile(selectedPhoto);
+}
+
+async function saveProfile(selectedPhoto){
+  const birthdate = document.getElementById('birthdateInput').value;
+  const campus = document.getElementById('campusInput').value.trim();
+  const subjects = document.getElementById('subjectsInput').value.trim();
+  const bio = document.getElementById('bioInput').value.trim();
+  const instagramHandle = document.getElementById('handleInput').value.trim();
+  const errorBox = document.getElementById('setupErrorBox');
+  errorBox.innerHTML = '';
+  if(!birthdate){
+    errorBox.innerHTML = `<div class="errorBox">Enter your birthdate first.</div>`;
+    return;
+  }
+  const btn = document.getElementById('saveProfileBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  try{
+    const resp = await fetch('/api/study-buddy/profile', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: currentUser(), birthdate, campus, subjects, bio, instagramHandle }),
+    });
+    const data = await resp.json();
+    if(!resp.ok){
+      errorBox.innerHTML = `<div class="errorBox">${esc(data.error || 'Something went wrong.')}</div>`;
+      btn.disabled = false; btn.textContent = 'Create my profile';
+      return;
+    }
+    myProfile = data.profile;
+    if(selectedPhoto){
+      const buf = await selectedPhoto.arrayBuffer();
+      await fetch('/api/study-buddy/profile/photo?username=' + encodeURIComponent(currentUser()), {
+        method: 'POST', headers: { 'Content-Type': selectedPhoto.type || 'image/jpeg' }, body: buf,
+      }).catch(() => {});
+    }
+    renderMain();
+  }catch(e){
+    errorBox.innerHTML = `<div class="errorBox">Network error — try again.</div>`;
+    btn.disabled = false; btn.textContent = 'Create my profile';
+  }
+}
+
+async function renderMain(flashHtml){
+  content.innerHTML = `
+    ${flashHtml || ''}
+    <div class="safetyBanner">🛡️ Meet in public campus spots, tell a friend where you're going, and trust your instincts.</div>
+    <div class="tabBar" id="tabBar">
+      <button class="tabBtn" data-tab="browse">Browse</button>
+      <button class="tabBtn" data-tab="requests">Requests</button>
+      <button class="tabBtn" data-tab="matches">Matches</button>
+    </div>
+    <div id="tabContent"><div class="emptyState"><div class="glyph">⏳</div>Loading…</div></div>
+  `;
+  document.querySelectorAll('[data-tab]').forEach((btn) => {
+    btn.onclick = () => { activeTab = btn.dataset.tab; renderTabBar(); loadTab(); };
+  });
+  renderTabBar();
+  await loadTab();
+}
+
+function renderTabBar(){
+  document.querySelectorAll('[data-tab]').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.tab === activeTab);
+  });
+}
+
+async function loadTab(){
+  if(activeTab === 'browse') return loadBrowse();
+  if(activeTab === 'requests') return loadRequests();
+  if(activeTab === 'matches') return loadMatches();
+}
+
+async function loadBrowse(){
+  const tabContent = document.getElementById('tabContent');
+  const resp = await fetch('/api/study-buddy/browse?username=' + encodeURIComponent(currentUser()));
+  const data = await resp.json();
+  const profiles = data.profiles || [];
+  if(!profiles.length){
+    tabContent.innerHTML = `<div class="emptyState"><div class="glyph">🎓</div>No one else has a profile yet — check back soon!</div>`;
+    return;
+  }
+  tabContent.innerHTML = profiles.map((p, i) => `
+    <div class="profileCard">
+      ${p.photoPath ? `<img class="profilePhoto" src="/study-buddy-photo/${encodeURIComponent(p.username)}">` : `<div class="profilePhoto">🎓</div>`}
+      <div class="profileInfo">
+        <div class="profileName">${esc(p.username)}</div>
+        ${p.campus ? `<div class="profileCampus">${esc(p.campus)}</div>` : ''}
+        ${p.subjects ? `<div class="profileSubjects">${esc(p.subjects)}</div>` : ''}
+        ${p.bio ? `<div class="profileBio">${esc(p.bio)}</div>` : ''}
+        <div class="profileActions">
+          ${p.incomingRequestId
+            ? `<button class="smallBtn" data-accept="${p.incomingRequestId}">Accept request</button><button class="smallBtn decline" data-decline="${p.incomingRequestId}">Decline</button>`
+            : `<button class="smallBtn" data-connect="${i}">Connect</button>`}
+        </div>
+      </div>
+    </div>
+  `).join('');
+  tabContent.querySelectorAll('[data-connect]').forEach((btn) => {
+    btn.onclick = async () => {
+      btn.disabled = true; btn.textContent = 'Sending…';
+      const p = profiles[Number(btn.dataset.connect)];
+      const resp = await fetch('/api/study-buddy/connect', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requesterUsername: currentUser(), recipientUsername: p.username }),
+      });
+      const result = await resp.json();
+      if(!resp.ok){ alert(result.error || 'Could not send request.'); btn.disabled = false; btn.textContent = 'Connect'; return; }
+      btn.textContent = result.matched ? "It's a match! 🎉" : 'Request sent';
+    };
+  });
+  tabContent.querySelectorAll('[data-accept]').forEach((btn) => {
+    btn.onclick = async () => {
+      await fetch('/api/study-buddy/requests/' + btn.dataset.accept + '/accept', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser() }),
+      });
+      loadBrowse();
+    };
+  });
+  tabContent.querySelectorAll('[data-decline]').forEach((btn) => {
+    btn.onclick = async () => {
+      await fetch('/api/study-buddy/requests/' + btn.dataset.decline + '/decline', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser() }),
+      });
+      loadBrowse();
+    };
+  });
+}
+
+async function loadRequests(){
+  const tabContent = document.getElementById('tabContent');
+  const resp = await fetch('/api/study-buddy/requests?username=' + encodeURIComponent(currentUser()));
+  const data = await resp.json();
+  const requests = data.requests || [];
+  if(!requests.length){
+    tabContent.innerHTML = `<div class="emptyState"><div class="glyph">📬</div>No pending requests right now.</div>`;
+    return;
+  }
+  tabContent.innerHTML = requests.map((r) => `
+    <div class="profileCard">
+      ${r.profile && r.profile.photoPath ? `<img class="profilePhoto" src="/study-buddy-photo/${encodeURIComponent(r.requesterUsername)}">` : `<div class="profilePhoto">🎓</div>`}
+      <div class="profileInfo">
+        <div class="profileName">${esc(r.requesterUsername)}</div>
+        ${r.profile && r.profile.bio ? `<div class="profileBio">${esc(r.profile.bio)}</div>` : ''}
+        <div class="profileActions">
+          <button class="smallBtn" data-accept="${r.id}">Accept</button>
+          <button class="smallBtn decline" data-decline="${r.id}">Decline</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  tabContent.querySelectorAll('[data-accept]').forEach((btn) => {
+    btn.onclick = async () => {
+      await fetch('/api/study-buddy/requests/' + btn.dataset.accept + '/accept', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser() }),
+      });
+      loadRequests();
+    };
+  });
+  tabContent.querySelectorAll('[data-decline]').forEach((btn) => {
+    btn.onclick = async () => {
+      await fetch('/api/study-buddy/requests/' + btn.dataset.decline + '/decline', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser() }),
+      });
+      loadRequests();
+    };
+  });
+}
+
+let currentMatches = [];
+async function loadMatches(){
+  const tabContent = document.getElementById('tabContent');
+  const resp = await fetch('/api/study-buddy/matches?username=' + encodeURIComponent(currentUser()));
+  const data = await resp.json();
+  currentMatches = data.matches || [];
+  if(!currentMatches.length){
+    tabContent.innerHTML = `<div class="emptyState"><div class="glyph">💬</div>No matches yet — browse to find a study buddy!</div>`;
+    return;
+  }
+  tabContent.innerHTML = currentMatches.map((m, i) => `
+    <div class="profileCard">
+      ${m.otherProfile && m.otherProfile.photoPath ? `<img class="profilePhoto" src="/study-buddy-photo/${encodeURIComponent(m.otherProfile.username)}">` : `<div class="profilePhoto">🎓</div>`}
+      <div class="profileInfo">
+        <div class="profileName">${esc(m.otherProfile ? m.otherProfile.username : '')}</div>
+        ${m.otherProfile && m.otherProfile.instagramHandle ? `<div class="profileCampus">@${esc(m.otherProfile.instagramHandle)}</div>` : ''}
+        <div class="profileActions"><button class="smallBtn ghost" data-open="${i}">Open chat</button></div>
+      </div>
+    </div>
+  `).join('');
+  tabContent.querySelectorAll('[data-open]').forEach((btn) => {
+    btn.onclick = () => openChat(currentMatches[Number(btn.dataset.open)]);
+  });
+}
+
+// ---- Chat ----
+const chatOverlay = document.getElementById('chatOverlay');
+function openChat(match){
+  activeConnectionId = match.id;
+  document.getElementById('chatName').textContent = match.otherProfile ? match.otherProfile.username : '';
+  document.getElementById('chatHandle').textContent = match.otherProfile && match.otherProfile.instagramHandle ? '@' + match.otherProfile.instagramHandle : '';
+  document.getElementById('spotRow').innerHTML = MEETUP_SPOTS.map((s) => `<button class="spotChip" data-spot="${esc(s)}">${esc(s)}</button>`).join('');
+  document.querySelectorAll('[data-spot]').forEach((chip) => {
+    chip.onclick = () => suggestMeetup(chip.dataset.spot);
+  });
+  chatOverlay.classList.add('open');
+  loadMessages();
+  clearInterval(chatPollTimer);
+  chatPollTimer = setInterval(loadMessages, 4000);
+}
+async function loadMessages(){
+  const resp = await fetch('/api/study-buddy/matches/' + activeConnectionId + '/messages?username=' + encodeURIComponent(currentUser()));
+  if(!resp.ok) return;
+  const data = await resp.json();
+  const body = document.getElementById('chatBody');
+  const wasAtBottom = body.scrollTop + body.clientHeight >= body.scrollHeight - 30;
+  body.innerHTML = (data.messages || []).map((m) => {
+    const mine = m.senderUsername.toLowerCase() === currentUser().toLowerCase();
+    const bubbleClass = m.kind === 'meetup_suggestion' ? 'msgBubble meetup' : 'msgBubble';
+    const text = m.kind === 'meetup_suggestion' ? `📍 Suggested meeting at: ${esc(m.meetupSpot)}` : esc(m.body);
+    return `<div class="msgRow ${mine ? 'mine' : 'theirs'}"><div class="${bubbleClass}">${text}</div></div>`;
+  }).join('');
+  if(wasAtBottom) body.scrollTop = body.scrollHeight;
+}
+async function sendMessage(body, kind, meetupSpot){
+  await fetch('/api/study-buddy/matches/' + activeConnectionId + '/messages', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: currentUser(), body, kind, meetupSpot }),
+  });
+  loadMessages();
+}
+function suggestMeetup(spot){
+  sendMessage('Suggested meeting at: ' + spot, 'meetup_suggestion', spot);
+}
+document.getElementById('sendBtn').onclick = () => {
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
+  if(!text) return;
+  input.value = '';
+  sendMessage(text, 'text', null);
+};
+document.getElementById('msgInput').addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') document.getElementById('sendBtn').click();
+});
+document.getElementById('chatCloseBtn').onclick = () => {
+  chatOverlay.classList.remove('open');
+  clearInterval(chatPollTimer);
+  loadMatches();
+};
+document.getElementById('chatMenuBtn').onclick = () => document.getElementById('chatMenu').classList.toggle('open');
+document.getElementById('unmatchBtn').onclick = async () => {
+  if(!confirm('Unmatch? This ends the connection for both of you.')) return;
+  await fetch('/api/study-buddy/matches/' + activeConnectionId + '/unmatch', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: currentUser() }),
+  });
+  document.getElementById('chatMenu').classList.remove('open');
+  document.getElementById('chatCloseBtn').click();
+};
+
+// ---- Report ----
+const reportOverlay = document.getElementById('reportOverlay');
+document.getElementById('reportBtn').onclick = () => {
+  document.getElementById('chatMenu').classList.remove('open');
+  reportOverlay.classList.add('open');
+};
+reportOverlay.onclick = (e) => { if(e.target === reportOverlay) reportOverlay.classList.remove('open'); };
+document.getElementById('submitReportBtn').onclick = async () => {
+  const reason = document.getElementById('reportReason').value.trim();
+  const match = currentMatches.find((m) => m.id === activeConnectionId);
+  const reportedUsername = match && match.otherProfile ? match.otherProfile.username : '';
+  await fetch('/api/study-buddy/report', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reporterUsername: currentUser(), reportedUsername, reason }),
+  });
+  document.getElementById('reportReason').value = '';
+  reportOverlay.classList.remove('open');
+  alert('Thanks — this has been reported.');
+};
+
+init();
+</script>
+</body>
+</html>
