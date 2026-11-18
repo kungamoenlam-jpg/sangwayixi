@@ -10,6 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Noto+Sans+Tibetan:wght@400;600;700&family=Noto+Sans+SC:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <style>
   :root{
     --ink:#12213B;
@@ -96,7 +97,7 @@
   .appGrid{display:grid; grid-template-columns:repeat(4,1fr); gap:20px 10px; padding:20px 18px 12px;}
   .homeIcon{all:unset; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:7px; text-align:center;}
   .homeIcon.home-hidden{display:none;}
-  .homeIconGlyph{width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:25px; box-shadow:0 5px 12px rgba(0,0,0,.4); transition:transform .12s ease;}
+  .homeIconGlyph{width:56px; height:56px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:25px; color:#fff; box-shadow:0 5px 12px rgba(0,0,0,.4); transition:transform .12s ease;}
   .homeIcon:active .homeIconGlyph{transform:scale(.9);}
   .homeIconLabel{font-size:10.5px; color:var(--snow); font-weight:600; line-height:1.25; max-width:72px;}
   .phoneDock{flex:0 0 auto; display:flex; justify-content:center; padding:14px 0 max(14px, env(safe-area-inset-bottom,0px));}
@@ -889,8 +890,8 @@ const LEVELS = [
 const TRACKS = [
   {id:'en_bo', promptLang:'bo', answerLang:'en', title:'English',   native:'དབྱིན་ཇི།', nativeScript:'bo', tagline:'Learn English using Tibetan', glyph:'🇬🇧'},
   {id:'zh_bo', promptLang:'bo', answerLang:'zh', title:'中文',      native:'རྒྱ་སྐད།', nativeScript:'bo', tagline:'Learn Chinese using Tibetan', glyph:'🇨🇳'},
-  {id:'bo_zh', promptLang:'zh', answerLang:'bo', title:'བོད་སྐད།', native:'从中文学习', nativeScript:'zh', tagline:'Learn Tibetan using Chinese', glyph:'⛰️'},
-  {id:'bo_en', promptLang:'en', answerLang:'bo', title:'བོད་སྐད།', native:'Learn from English', nativeScript:'en', tagline:'Learn Tibetan using English', glyph:'⛰️'},
+  {id:'bo_zh', promptLang:'zh', answerLang:'bo', title:'བོད་སྐད།', native:'从中文学习', nativeScript:'zh', tagline:'Learn Tibetan using Chinese', glyph:yesheLogoSvg(30)},
+  {id:'bo_en', promptLang:'en', answerLang:'bo', title:'བོད་སྐད།', native:'Learn from English', nativeScript:'en', tagline:'Learn Tibetan using English', glyph:yesheLogoSvg(30)},
 ];
 const trackById = id => TRACKS.find(t=>t.id===id);
 
@@ -5110,7 +5111,7 @@ function topbar(opts){
   opts = opts||{};
   return `
   <div class="topbar">
-    ${opts.back ? `<button class="iconbtn" onclick='${opts.back}'>←</button>` : `<div class="brand"><span>⛰️</span>Yeshe<span class="peak">·</span></div>`}
+    ${opts.back ? `<button class="iconbtn" onclick='${opts.back}'>←</button>` : `<div class="brand"><span>${yesheLogoSvg(20)}</span>Yeshe<span class="peak">·</span></div>`}
     <div style="display:flex; gap:8px; align-items:center;">
       <div class="stat" title="${t('dayStreak')}">🔥 ${state.game.streak}</div>
       <div class="stat" title="${t('totalXP')}">⭐ ${state.game.xp}</div>
@@ -5216,6 +5217,15 @@ function setAuthMode(mode){ state.authMode = mode; state.authError=''; render();
 
 function setAppLang(lang){ state.appLang = lang; safeStorage.set(LANG_KEY, lang); render(); }
 function appLangClass(){ return state.appLang==='bo' ? 'lang-bo' : state.appLang==='zh' ? 'lang-zh' : ''; }
+// The Yeshe brand mark, drawn once as a tiny vector mountain+sun (same
+// shape as the favicon) instead of the mountain emoji previously used
+// wherever this brand mark appears -- a fixed pixel size for inline/text
+// contexts, or a percentage size so it scales inside a flex-centered icon
+// box like .homeIconGlyph.
+function yesheLogoSvg(size){
+  const dim = typeof size==='number' ? size+'px' : size;
+  return `<svg width="${dim}" height="${dim}" viewBox="0 0 100 100" style="vertical-align:middle;flex-shrink:0" xmlns="http://www.w3.org/2000/svg"><path d="M15 72 L38 34 L50 52 L60 38 L85 72 Z" fill="#fff"/><circle cx="60" cy="26" r="7" fill="#E8A33D"/></svg>`;
+}
 
 // ---- Logged-out landing: a phone home screen, "apps" being the different
 // parts of kunga.me. Data-driven so adding a 5th/6th app later is a one-line
@@ -5225,24 +5235,24 @@ function appLangClass(){ return state.appLang==='bo' ? 'lang-bo' : state.appLang
 // still lives behind the one login); tapping Yeshe or Maths just opens the
 // existing signup/login panel in place of the grid.
 const HOME_APPS = [
-  {key:'notebook', nameKey:'appNotebook', icon:'📝', bg:'linear-gradient(145deg,#ff6fae,#ff2d95)', action:"window.location.href='/notebook'"},
-  {key:'poker', nameKey:'appPoker', icon:'♠️', bg:'linear-gradient(145deg,#1fa05f,#0c4328)', action:"window.location.href='/poker'"},
-  {key:'maths', nameKey:'appMaths', icon:'🧮', bg:'linear-gradient(145deg,#a16bff,#5b2ac9)', action:"state.screen='guest_math_menu'; render();"},
-  {key:'optimism', nameKey:'appOptimism', icon:'🌅', bg:'linear-gradient(145deg,#ffb347,#ff7a59)', action:"window.location.href='/daily-optimism'"},
-  {key:'news', nameKey:'appNews', icon:'🗞️', bg:'linear-gradient(145deg,#4a7fd6,#1b2e52)', action:"window.location.href='/daily-news'"},
-  {key:'diary', nameKey:'appDiary', icon:'📔', bg:'linear-gradient(145deg,#ff8fbf,#c2578f)', action:"window.location.href='/diary'"},
-  {key:'tip', nameKey:'appTip', icon:'💸', bg:'linear-gradient(145deg,#e8a33d,#b87f2a)', action:"window.location.href='/tip'"},
-  {key:'calendar', nameKey:'appCalendar', icon:'📅', bg:'linear-gradient(145deg,#5b7fde,#2f4ea8)', action:"window.location.href='/calendar'"},
-  {key:'turkey', nameKey:'appTurkey', icon:'🦃', bg:'linear-gradient(145deg,#3a3f4b,#16181e)', action:"window.location.href='/turkey'"},
-  {key:'store', nameKey:'appStore', icon:'🛍️', bg:'linear-gradient(145deg,#d6559a,#8e2f68)', action:"window.location.href='/store'"},
-  {key:'messages', nameKey:'appMessages', icon:'💌', bg:'linear-gradient(145deg,#8b5cf6,#ec4899)', action:"window.location.href='/messages'"},
-  {key:'camera', nameKey:'appCamera', icon:'📷', bg:'linear-gradient(145deg,#ff8fbf,#ff6fae)', action:"window.location.href='/camera'"},
-  {key:'clips', nameKey:'appClips', icon:'🎬', bg:'linear-gradient(145deg,#ff3b5c,#8b1538)', action:"window.location.href='/clips'"},
-  {key:'animeme', nameKey:'appAnimeMe', icon:'🌸', bg:'linear-gradient(145deg,#ff8fd6,#a855f7)', action:"window.location.href='/anime-me'"},
-  {key:'live', nameKey:'appLive', icon:'🔴', bg:'linear-gradient(145deg,#ff2d75,#7c3aed)', action:"window.location.href='/live'"},
-  {key:'spreadsheets', nameKey:'appSpreadsheets', icon:'📊', bg:'linear-gradient(145deg,#4ade80,#0f6b39)', action:"window.location.href='/spreadsheets'"},
-  {key:'movies', nameKey:'appMovies', icon:'🎬', bg:'linear-gradient(145deg,#e3b23c,#8a1f1f)', action:"window.location.href='/movies'"},
-  {key:'studybuddy', nameKey:'appStudyBuddy', icon:'🎓', bg:'linear-gradient(145deg,#14b8a6,#0d9488)', action:"window.location.href='/study-buddy'"},
+  {key:'notebook', nameKey:'appNotebook', icon:'fa-pen-to-square', bg:'linear-gradient(145deg,#ff6fae,#ff2d95)', action:"window.location.href='/notebook'"},
+  {key:'poker', nameKey:'appPoker', icon:'fa-dice', bg:'linear-gradient(145deg,#1fa05f,#0c4328)', action:"window.location.href='/poker'"},
+  {key:'maths', nameKey:'appMaths', icon:'fa-calculator', bg:'linear-gradient(145deg,#a16bff,#5b2ac9)', action:"state.screen='guest_math_menu'; render();"},
+  {key:'optimism', nameKey:'appOptimism', icon:'fa-sun', bg:'linear-gradient(145deg,#ffb347,#ff7a59)', action:"window.location.href='/daily-optimism'"},
+  {key:'news', nameKey:'appNews', icon:'fa-newspaper', bg:'linear-gradient(145deg,#4a7fd6,#1b2e52)', action:"window.location.href='/daily-news'"},
+  {key:'diary', nameKey:'appDiary', icon:'fa-book-open', bg:'linear-gradient(145deg,#ff8fbf,#c2578f)', action:"window.location.href='/diary'"},
+  {key:'tip', nameKey:'appTip', icon:'fa-money-bill-wave', bg:'linear-gradient(145deg,#e8a33d,#b87f2a)', action:"window.location.href='/tip'"},
+  {key:'calendar', nameKey:'appCalendar', icon:'fa-calendar-days', bg:'linear-gradient(145deg,#5b7fde,#2f4ea8)', action:"window.location.href='/calendar'"},
+  {key:'turkey', nameKey:'appTurkey', icon:'fa-drumstick-bite', bg:'linear-gradient(145deg,#3a3f4b,#16181e)', action:"window.location.href='/turkey'"},
+  {key:'store', nameKey:'appStore', icon:'fa-bag-shopping', bg:'linear-gradient(145deg,#d6559a,#8e2f68)', action:"window.location.href='/store'"},
+  {key:'messages', nameKey:'appMessages', icon:'fa-envelope', bg:'linear-gradient(145deg,#8b5cf6,#ec4899)', action:"window.location.href='/messages'"},
+  {key:'camera', nameKey:'appCamera', icon:'fa-camera', bg:'linear-gradient(145deg,#ff8fbf,#ff6fae)', action:"window.location.href='/camera'"},
+  {key:'clips', nameKey:'appClips', icon:'fa-clapperboard', bg:'linear-gradient(145deg,#ff3b5c,#8b1538)', action:"window.location.href='/clips'"},
+  {key:'animeme', nameKey:'appAnimeMe', icon:'fa-wand-magic-sparkles', bg:'linear-gradient(145deg,#ff8fd6,#a855f7)', action:"window.location.href='/anime-me'"},
+  {key:'live', nameKey:'appLive', icon:'fa-tower-broadcast', bg:'linear-gradient(145deg,#ff2d75,#7c3aed)', action:"window.location.href='/live'"},
+  {key:'spreadsheets', nameKey:'appSpreadsheets', icon:'fa-table-cells', bg:'linear-gradient(145deg,#4ade80,#0f6b39)', action:"window.location.href='/spreadsheets'"},
+  {key:'movies', nameKey:'appMovies', icon:'fa-film', bg:'linear-gradient(145deg,#e3b23c,#8a1f1f)', action:"window.location.href='/movies'"},
+  {key:'studybuddy', nameKey:'appStudyBuddy', icon:'fa-graduation-cap', bg:'linear-gradient(145deg,#14b8a6,#0d9488)', action:"window.location.href='/study-buddy'"},
 ];
 function openHomeApp(view){ state.homeView=view; if(view==='auth') state.authMode='signup'; render(); }
 // Setting screen (not just homeView) makes this safe to call from any
@@ -5262,7 +5272,7 @@ const DOCK_FAVORITE_KEYS = ['notebook','camera','store','clips','messages'];
 function homeIconHtml(a, extraClass){
   return `
     <button class="homeIcon${extraClass?' '+extraClass:''}" data-app-label="${t(a.nameKey).toLowerCase()}" onclick="${a.action}">
-      <div class="homeIconGlyph" style="background:${a.bg}">${a.icon}</div>
+      <div class="homeIconGlyph" style="background:${a.bg}"><i class="fa-solid ${a.icon}"></i></div>
       <div class="homeIconLabel">${t(a.nameKey)}</div>
     </button>`;
 }
@@ -5285,7 +5295,7 @@ function renderPhoneHome(){
   <div class="phoneHome ${cls}">
     <div class="statusBar"><span>${phoneClock()}</span><span>●●●●  🛜  🔋</span></div>
     <div class="desktopMenuBar">
-      <div class="menuBarBrand">⛰️ Yeshe</div>
+      <div class="menuBarBrand">${yesheLogoSvg(16)} Yeshe</div>
       <div class="menuBarClock">${desktopMenuBarClock()}</div>
     </div>
     <div class="phoneHeader">
@@ -5304,7 +5314,7 @@ function renderPhoneHome(){
     <div class="phoneDock">
       <div class="dockBar">
         <button class="homeIcon dock" onclick="openHomeApp('auth')">
-          <div class="homeIconGlyph" style="background:linear-gradient(145deg,#4fa8e8,#1b2e52)">⛰️</div>
+          <div class="homeIconGlyph" style="background:linear-gradient(145deg,#4fa8e8,#1b2e52)">${yesheLogoSvg('55%')}</div>
           <div class="homeIconLabel">${t('appYeshe')}</div>
         </button>
         ${dockExtras}
@@ -5443,7 +5453,7 @@ function doLogout(){
 function renderPickLanguage(){
   return `
   <div class="topbar">
-    <div class="brand"><span>⛰️</span>Yeshe<span class="peak">·</span></div>
+    <div class="brand"><span>${yesheLogoSvg(20)}</span>Yeshe<span class="peak">·</span></div>
     <button class="iconbtn" title="${t('logOutTitle')}" onclick="doLogout()">⎋</button>
   </div>
   <div class="home ${appLangClass()}">
@@ -5461,7 +5471,7 @@ function renderPickLanguage(){
         <div><div class="tc-title">${t('cardChineseTitle')}</div><div class="tc-sub">${t('cardChineseSub')}</div></div>
       </button>
       <button class="track-card" onclick="chooseLanguage('bo')">
-        <div class="glyph">⛰️</div>
+        <div class="glyph">${yesheLogoSvg(30)}</div>
         <div><div class="tc-title lang-bo">${t('cardTibetanTitle')}</div><div class="tc-sub">${t('cardTibetanSub')}</div></div>
       </button>
     </div>
@@ -5478,7 +5488,7 @@ function renderPickBoSource(){
   return `
   <div class="topbar">
     <button class="iconbtn" onclick="state.screen='pick_language'; render();">←</button>
-    <div class="brand"><span>⛰️</span>Yeshe<span class="peak">·</span></div>
+    <div class="brand"><span>${yesheLogoSvg(20)}</span>Yeshe<span class="peak">·</span></div>
   </div>
   <div class="home ${appLangClass()}">
     <div class="hero">
