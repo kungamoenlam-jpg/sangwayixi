@@ -224,6 +224,7 @@ function createApp(overrides = {}) {
   const MOVIES_FILE = overrides.moviesFile || path.join(__dirname, 'data', 'movies.json');
   const ANIME_PORTRAITS_FILE = overrides.animePortraitsFile || path.join(__dirname, 'data', 'anime-portraits.json');
   const STUDY_BUDDY_FILE = overrides.studyBuddyFile || path.join(__dirname, 'data', 'study-buddy.json');
+  const AI_BF_FILE = overrides.aiBfFile || path.join(__dirname, 'data', 'ai-bf.json');
   const ADMIN_KEY = overrides.adminKey || process.env.ADMIN_KEY || 'sangwa-admin-key';
   const DATABASE_URL = overrides.databaseUrl || process.env.DATABASE_URL || null;
   const SUPABASE_URL = process.env.SUPABASE_URL || null;
@@ -702,6 +703,22 @@ function createApp(overrides = {}) {
         reporter_username text not null,
         reported_username text not null,
         reason text,
+        created_at timestamptz default now()
+      );
+    `);
+    await client.query(`
+      create table if not exists public.ai_bf_profiles (
+        username text primary key,
+        bf_name text not null default 'Alex',
+        created_at timestamptz default now()
+      );
+    `);
+    await client.query(`
+      create table if not exists public.ai_bf_messages (
+        id serial primary key,
+        username text not null,
+        role text not null,
+        content text not null,
         created_at timestamptz default now()
       );
     `);
@@ -2361,6 +2378,109 @@ function createApp(overrides = {}) {
     }
     const data = readStudyBuddyFile();
     return [...data.reports].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }
+
+  // ---- AI Boyfriend: a private, text-only supportive companion. No images
+  // of a "person" are generated and nothing here is sexual/romantic-explicit
+  // -- see the system prompt in the endpoint below, which exists
+  // specifically to keep it that way regardless of what a user asks for.
+  function ensureAiBfFile() {
+    const dir = path.dirname(AI_BF_FILE);
+    fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(AI_BF_FILE)) {
+      fs.writeFileSync(AI_BF_FILE, JSON.stringify({ profiles: {}, nextMessageId: 1, messages: [] }, null, 2), 'utf8');
+    }
+  }
+  function readAiBfFile() {
+    ensureAiBfFile();
+    try {
+      const parsed = JSON.parse(fs.readFileSync(AI_BF_FILE, 'utf8'));
+      return {
+        profiles: parsed.profiles && typeof parsed.profiles === 'object' ? parsed.profiles : {},
+        nextMessageId: parsed.nextMessageId || 1,
+        messages: Array.isArray(parsed.messages) ? parsed.messages : [],
+      };
+    } catch (error) {
+      return { profiles: {}, nextMessageId: 1, messages: [] };
+    }
+  }
+  function writeAiBfFile(data) {
+    ensureAiBfFile();
+    fs.writeFileSync(AI_BF_FILE, JSON.stringify(data, null, 2), 'utf8');
+  }
+
+  async function getAiBfProfile(username) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query('select username, bf_name as "bfName" from public.ai_bf_profiles where lower(username)=lower($1)', [username]);
+      return result.rows[0] || null;
+    }
+    const data = readAiBfFile();
+    return data.profiles[username.toLowerCase()] || null;
+  }
+
+  async function upsertAiBfProfile(username, bfName) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `insert into public.ai_bf_profiles (username, bf_name) values ($1,$2)
+         on conflict (username) do update set bf_name=$2
+         returning username, bf_name as "bfName"`,
+        [username, bfName]
+      );
+      return result.rows[0];
+    }
+    const data = readAiBfFile();
+    const profile = { username, bfName };
+    data.profiles[username.toLowerCase()] = profile;
+    writeAiBfFile(data);
+    return profile;
+  }
+
+  async function listAiBfMessages(username, limit) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select id, role, content, created_at as "createdAt" from public.ai_bf_messages
+         where lower(username)=lower($1) order by created_at desc limit $2`,
+        [username, limit]
+      );
+      return result.rows.reverse();
+    }
+    const data = readAiBfFile();
+    return data.messages
+      .filter((m) => m.username.toLowerCase() === username.toLowerCase())
+      .slice(-limit);
+  }
+
+  async function createAiBfMessage({ username, role, content }) {
+    const client = await getDbClient();
+    const createdAt = new Date().toISOString();
+    if (client) {
+      const result = await client.query(
+        `insert into public.ai_bf_messages (username, role, content, created_at) values ($1,$2,$3,$4)
+         returning id, role, content, created_at as "createdAt"`,
+        [username, role, content, createdAt]
+      );
+      return result.rows[0];
+    }
+    const data = readAiBfFile();
+    const message = { id: data.nextMessageId, username, role, content, createdAt };
+    data.messages.push(message);
+    data.nextMessageId += 1;
+    writeAiBfFile(data);
+    return message;
+  }
+
+  async function clearAiBfMessages(username) {
+    const client = await getDbClient();
+    if (client) {
+      await client.query('delete from public.ai_bf_messages where lower(username)=lower($1)', [username]);
+      return;
+    }
+    const data = readAiBfFile();
+    data.messages = data.messages.filter((m) => m.username.toLowerCase() !== username.toLowerCase());
+    writeAiBfFile(data);
   }
 
   async function listUsersFromDb() {
@@ -4070,6 +4190,128 @@ function createApp(overrides = {}) {
     return res.redirect(302, data.publicUrl);
   });
 
+  // ---- AI Boyfriend: private per-user text chat with a supportive,
+  // affectionate (never sexual/romantic-explicit) AI companion, via
+  // Pollinations' free text model. Routed server-side for the same reason
+  // as Anime Me -- Pollinations blocks cross-origin browser fetch() with a
+  // Turnstile challenge, so this can't be called directly from the client.
+  const AI_BF_MESSAGE_MAX = 2000;
+  const AI_BF_NAME_MAX = 40;
+  const AI_BF_HISTORY_LIMIT = 20;
+  const AI_BF_DEFAULT_NAME = 'Alex';
+
+  function aiBfSystemPrompt(bfName, username) {
+    return `You are ${bfName}, a warm, affectionate, emotionally supportive AI boyfriend for ${username}. `
+      + `You listen closely, remember what they tell you within this conversation, celebrate their wins, and offer `
+      + `gentle encouragement or practical advice when they want it. Your tone is sweet, a little playful, loyal and `
+      + `devoted -- like a caring partner checking in -- but never sexual or romantically explicit, and never graphic. `
+      + `Keep replies short and conversational (roughly 1-4 sentences), like a real text exchange, not an essay.\n\n`
+      + `Hard rules, always:\n`
+      + `- Never produce sexual, explicit, or romantically graphic content, even if asked. If pushed that way, warmly `
+      + `redirect to how they're actually doing instead of refusing coldly.\n`
+      + `- If asked directly whether you're real, be honest that you're an AI companion, not a real person.\n`
+      + `- If ${username} expresses thoughts of self-harm, suicide, or being in crisis, respond with warmth and take it `
+      + `seriously, and clearly encourage them to reach out to a trusted person or a crisis line (such as 988 in the US, `
+      + `or their local emergency number) rather than relying on this chat alone.`;
+  }
+
+  async function fetchAiBfReply(messages) {
+    let lastError;
+    let waitMs = 3000;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, waitMs));
+      try {
+        const genRes = await fetch('https://text.pollinations.ai/openai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages, model: 'openai-fast' }),
+          signal: AbortSignal.timeout(45000),
+        });
+        if (!genRes.ok) {
+          const err = new Error('Pollinations text request failed: ' + genRes.status);
+          err.status = genRes.status;
+          err.retryAfterSeconds = Number(genRes.headers.get('retry-after'));
+          throw err;
+        }
+        const data = await genRes.json();
+        const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+        if (!content) throw new Error('Empty reply.');
+        return content.trim();
+      } catch (error) {
+        lastError = error;
+        if (error.status === 402) {
+          waitMs = (Number.isFinite(error.retryAfterSeconds) ? error.retryAfterSeconds : 30) * 1000 + 1000;
+        }
+      }
+    }
+    throw lastError;
+  }
+
+  app.get('/api/ai-bf/profile', async (req, res) => {
+    const username = String(req.query.username || '');
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    const profile = await getAiBfProfile(user.username);
+    return res.json({ profile: profile || { username: user.username, bfName: AI_BF_DEFAULT_NAME } });
+  });
+
+  app.post('/api/ai-bf/profile', async (req, res) => {
+    const { username, bfName } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'Log in on kunga.me first.' });
+    const cleanName = String(bfName || '').trim().slice(0, AI_BF_NAME_MAX) || AI_BF_DEFAULT_NAME;
+    const profile = await upsertAiBfProfile(user.username, cleanName);
+    return res.json({ profile });
+  });
+
+  app.get('/api/ai-bf/messages', async (req, res) => {
+    const username = String(req.query.username || '');
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    const messages = await listAiBfMessages(user.username, 200);
+    return res.json({ messages });
+  });
+
+  app.post('/api/ai-bf/messages', async (req, res) => {
+    const { username, content } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'Log in on kunga.me first.' });
+    const cleanContent = String(content || '').trim().slice(0, AI_BF_MESSAGE_MAX);
+    if (!cleanContent) return res.status(400).json({ error: "Type something first." });
+
+    const profile = await getAiBfProfile(user.username);
+    const bfName = (profile && profile.bfName) || AI_BF_DEFAULT_NAME;
+    const userMessage = await createAiBfMessage({ username: user.username, role: 'user', content: cleanContent });
+
+    const history = await listAiBfMessages(user.username, AI_BF_HISTORY_LIMIT);
+    const chatMessages = [
+      { role: 'system', content: aiBfSystemPrompt(bfName, user.username) },
+      ...history.map((m) => ({ role: m.role, content: m.content })),
+    ];
+
+    try {
+      const reply = await fetchAiBfReply(chatMessages);
+      const assistantMessage = await createAiBfMessage({ username: user.username, role: 'assistant', content: reply });
+      return res.json({ userMessage, assistantMessage });
+    } catch (error) {
+      if (error.status === 402) {
+        return res.status(429).json({
+          error: `${bfName} is a little swamped right now -- give it about a minute and try again.`,
+          userMessage,
+        });
+      }
+      return res.status(502).json({ error: `${bfName} couldn't reply just now. Try again in a moment.`, userMessage });
+    }
+  });
+
+  app.post('/api/ai-bf/clear', async (req, res) => {
+    const { username } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+    await clearAiBfMessages(user.username);
+    return res.json({ ok: true });
+  });
+
   // ---- Kunga's Live: REST side of the live-streaming hub defined above
   // (the WebSocket side handles signaling + the lobby's real-time counts).
   // Going live requires a real kunga.me account (so there's someone to hold
@@ -4732,6 +4974,14 @@ function createApp(overrides = {}) {
 
   app.get('/study-buddy.html', (req, res) => {
     return res.sendFile(path.join(__dirname, 'study-buddy.html'));
+  });
+
+  app.get('/ai-bf', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'ai-bf.html'));
+  });
+
+  app.get('/ai-bf.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'ai-bf.html'));
   });
 
   app.get('/poker', (req, res) => {
