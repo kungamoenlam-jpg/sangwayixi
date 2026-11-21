@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kunga's Chat</title>
+<meta name="description" content="Message other kunga.me users directly.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1b22;--ink:#eefbf7;--muted:#8fb3ac;--accent:#2dd4bf;--accent2:#0ea5a0;
+  --good:#3FAE72;--bad:#ff8a8a;--font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:radial-gradient(circle at 50% 0%,#17323a,#0f1b22 60%);color:var(--ink);font-family:var(--font-body)}
+
+.loginWrap{max-width:480px;margin:0 auto;padding:10px 18px}
+.topBar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:calc(14px + env(safe-area-inset-top,0px)) 18px 14px;background:rgba(15,27,34,.88);backdrop-filter:blur(8px)}
+.brand{font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--ink);text-decoration:none}
+.loginNudge{text-align:center;color:var(--muted);font-size:13.5px;padding:60px 10px;line-height:1.7}
+.loginNudge a{color:var(--accent);font-weight:600}
+
+/* ---- inbox ---- */
+.inboxWrap{max-width:480px;margin:0 auto;padding:4px 18px 40px}
+.inboxWrap h1{font-family:var(--font-display);font-weight:800;font-size:24px;margin:10px 0 14px}
+.searchRow{position:relative;margin-bottom:10px}
+.searchRow input{width:100%;font-size:15px;padding:12px 14px;border-radius:12px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);outline:none}
+.searchRow input:focus{border-color:var(--accent)}
+.searchResults{margin-top:8px;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.04)}
+.searchResults:empty{display:none}
+.resultRow{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;padding:11px 14px;cursor:pointer;font-size:14.5px}
+.resultRow:hover{background:rgba(255,255,255,.06)}
+.avatarDot{flex:0 0 auto;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,var(--accent),var(--accent2));color:#042c28;font-weight:700;font-size:14px;text-transform:uppercase}
+.sectionLabel{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:22px 0 10px;font-weight:600}
+.convoList{display:grid;gap:8px}
+.convoRow{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.04);cursor:pointer}
+.convoRow:hover{background:rgba(255,255,255,.07)}
+.convoInfo{flex:1;min-width:0}
+.convoName{font-weight:700;font-size:14.5px}
+.convoPreview{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.convoTime{font-size:11px;color:var(--muted);flex:0 0 auto}
+.emptyState{text-align:center;color:var(--muted);font-size:13.5px;padding:40px 20px;line-height:1.7}
+.emptyState .glyph{font-size:30px;display:block;margin-bottom:8px}
+
+/* ---- thread ---- */
+.chatShell{height:100vh;display:flex;flex-direction:column}
+.chatTop{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px;border-bottom:1px solid rgba(255,255,255,.08);flex:0 0 auto}
+.chatTopLeft{display:flex;align-items:center;gap:10px;min-width:0}
+.chatBackBtn{all:unset;cursor:pointer;font-size:20px;color:var(--muted);padding:4px}
+.chatName{font-size:15px;font-weight:700}
+.chatBody{flex:1;min-height:0;overflow-y:auto;padding:16px}
+.msgRow{display:flex;margin-bottom:10px}
+.msgRow.mine{justify-content:flex-end}
+.msgBubble{max-width:75%;padding:10px 14px;border-radius:16px;font-size:14.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.msgRow.mine .msgBubble{background:var(--accent);color:#042c28;border-bottom-right-radius:4px}
+.msgRow.theirs .msgBubble{background:rgba(255,255,255,.08);color:var(--ink);border-bottom-left-radius:4px}
+.chatBottom{flex:0 0 auto;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid rgba(255,255,255,.08)}
+.errorNote{font-size:12px;color:var(--bad);text-align:center;margin-bottom:8px}
+.msgInputRow{display:flex;gap:8px}
+.msgInputRow input{flex:1;font-size:14px;padding:12px 14px;border-radius:999px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);outline:none}
+.sendBtn{all:unset;cursor:pointer;width:42px;height:42px;border-radius:50%;background:var(--accent);color:#042c28;display:grid;place-items:center;font-size:16px;flex:0 0 auto}
+.sendBtn:disabled{opacity:.4;cursor:default}
+</style>
+</head>
+<body>
+
+<div class="topBar">
+  <a class="brand" href="/">← kunga.me</a>
+  <span class="brand" style="color:var(--muted);font-weight:600">CHAT</span>
+</div>
+
+<div id="content"><div class="loginWrap"><div class="loginNudge">Loading…</div></div></div>
+
+<script>
+const SESSION_KEY = 'sangwa_session_v1';
+function currentUser(){
+  try{
+    const s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+    return (s && s.currentUser) ? String(s.currentUser) : null;
+  }catch(e){ return null; }
+}
+function esc(s){ return String(s === undefined || s === null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function timeAgo(iso){
+  if(!iso) return '';
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if(mins < 1) return 'now';
+  if(mins < 60) return mins + 'm';
+  const hrs = Math.floor(mins / 60);
+  if(hrs < 24) return hrs + 'h';
+  return Math.floor(hrs / 24) + 'd';
+}
+
+const content = document.getElementById('content');
+let activeConversationId = null;
+let activeOtherUsername = '';
+let chatPollTimer = null;
+let sending = false;
+let searchDebounce = null;
+
+async function init(){
+  const user = currentUser();
+  if(!user){
+    content.innerHTML = `<div class="loginWrap"><div class="loginNudge">Log in on <a href="/">kunga.me</a> first, then come back to chat.</div></div>`;
+    return;
+  }
+  renderInbox();
+}
+
+async function renderInbox(){
+  clearInterval(chatPollTimer);
+  activeConversationId = null;
+  content.innerHTML = `
+    <div class="inboxWrap">
+      <h1>Chat</h1>
+      <div class="searchRow">
+        <input type="text" id="searchInput" placeholder="Find someone by username…" maxlength="40">
+        <div class="searchResults" id="searchResults"></div>
+      </div>
+      <div class="sectionLabel">Conversations</div>
+      <div class="convoList" id="convoList"><div class="emptyState">Loading…</div></div>
+    </div>
+  `;
+  document.getElementById('searchInput').addEventListener('input', onSearchInput);
+  loadConversations();
+}
+
+function onSearchInput(e){
+  const q = e.target.value.trim();
+  clearTimeout(searchDebounce);
+  const resultsEl = document.getElementById('searchResults');
+  if(!q){ resultsEl.innerHTML = ''; return; }
+  searchDebounce = setTimeout(async () => {
+    const resp = await fetch('/api/chat/search?username=' + encodeURIComponent(currentUser()) + '&q=' + encodeURIComponent(q));
+    const data = await resp.json();
+    const users = data.users || [];
+    if(!users.length){ resultsEl.innerHTML = `<button class="resultRow" style="cursor:default;color:var(--muted)">No users found</button>`; return; }
+    resultsEl.innerHTML = users.map((u) => `
+      <button class="resultRow" data-start="${esc(u)}">
+        <div class="avatarDot">${esc(u.charAt(0))}</div>
+        <span>${esc(u)}</span>
+      </button>
+    `).join('');
+    resultsEl.querySelectorAll('[data-start]').forEach((btn) => {
+      btn.onclick = () => startConversation(btn.dataset.start);
+    });
+  }, 300);
+}
+
+async function startConversation(otherUsername){
+  const resp = await fetch('/api/chat/conversations', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username: currentUser(), otherUsername }),
+  });
+  const data = await resp.json();
+  if(!resp.ok){ alert(data.error || 'Could not start that conversation.'); return; }
+  openThread(data.conversation.id, data.conversation.otherUsername);
+}
+
+async function loadConversations(){
+  const resp = await fetch('/api/chat/conversations?username=' + encodeURIComponent(currentUser()));
+  const data = await resp.json();
+  const list = document.getElementById('convoList');
+  if(!list) return;
+  const conversations = data.conversations || [];
+  if(!conversations.length){
+    list.innerHTML = `<div class="emptyState"><span class="glyph">💬</span>No conversations yet — search for someone above to say hi.</div>`;
+    return;
+  }
+  list.innerHTML = conversations.map((c) => `
+    <button class="convoRow" data-open="${c.id}" data-user="${esc(c.otherUsername)}">
+      <div class="avatarDot">${esc(c.otherUsername.charAt(0))}</div>
+      <div class="convoInfo">
+        <div class="convoName">${esc(c.otherUsername)}</div>
+        <div class="convoPreview">${esc(c.lastMessagePreview || 'Say hi!')}</div>
+      </div>
+      <div class="convoTime">${timeAgo(c.lastMessageAt)}</div>
+    </button>
+  `).join('');
+  list.querySelectorAll('[data-open]').forEach((btn) => {
+    btn.onclick = () => openThread(btn.dataset.open, btn.dataset.user);
+  });
+}
+
+function openThread(conversationId, otherUsername){
+  activeConversationId = conversationId;
+  activeOtherUsername = otherUsername;
+  content.innerHTML = `
+    <div class="chatShell">
+      <div class="chatTop">
+        <div class="chatTopLeft">
+          <button class="chatBackBtn" id="threadBackBtn">←</button>
+          <div class="chatName">${esc(otherUsername)}</div>
+        </div>
+      </div>
+      <div class="chatBody" id="chatBody"></div>
+      <div class="chatBottom">
+        <div id="errorNoteWrap"></div>
+        <div class="msgInputRow">
+          <input type="text" id="msgInput" maxlength="2000" placeholder="Message ${esc(otherUsername)}…">
+          <button class="sendBtn" id="sendBtn">➤</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('threadBackBtn').onclick = renderInbox;
+  document.getElementById('sendBtn').onclick = sendMessage;
+  document.getElementById('msgInput').addEventListener('keydown', (e) => {
+    if(e.key === 'Enter') sendMessage();
+  });
+  loadMessages();
+  clearInterval(chatPollTimer);
+  chatPollTimer = setInterval(loadMessages, 4000);
+}
+
+async function loadMessages(){
+  if(!activeConversationId) return;
+  const resp = await fetch('/api/chat/conversations/' + activeConversationId + '/messages?username=' + encodeURIComponent(currentUser()));
+  if(!resp.ok) return;
+  const data = await resp.json();
+  const body = document.getElementById('chatBody');
+  if(!body) return;
+  const wasAtBottom = body.scrollTop + body.clientHeight >= body.scrollHeight - 30;
+  const messages = data.messages || [];
+  if(!messages.length){
+    body.innerHTML = `<div class="emptyState"><span class="glyph">💬</span>Say hi to ${esc(activeOtherUsername)}.</div>`;
+    return;
+  }
+  body.innerHTML = messages.map((m) => {
+    const mine = m.senderUsername.toLowerCase() === currentUser().toLowerCase();
+    return `<div class="msgRow ${mine ? 'mine' : 'theirs'}"><div class="msgBubble">${esc(m.body)}</div></div>`;
+  }).join('');
+  if(wasAtBottom) body.scrollTop = body.scrollHeight;
+}
+
+async function sendMessage(){
+  if(sending || !activeConversationId) return;
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
+  if(!text) return;
+  sending = true;
+  input.value = '';
+  document.getElementById('sendBtn').disabled = true;
+  document.getElementById('errorNoteWrap').innerHTML = '';
+
+  try{
+    const resp = await fetch('/api/chat/conversations/' + activeConversationId + '/messages', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: currentUser(), body: text }),
+    });
+    const data = await resp.json();
+    if(!resp.ok){
+      document.getElementById('errorNoteWrap').innerHTML = `<div class="errorNote">${esc(data.error || "Something went wrong.")}</div>`;
+    } else {
+      await loadMessages();
+    }
+  }catch(e){
+    document.getElementById('errorNoteWrap').innerHTML = `<div class="errorNote">Network error — try again.</div>`;
+  }
+  sending = false;
+  document.getElementById('sendBtn').disabled = false;
+}
+
+init();
+</script>
+</body>
+</html>

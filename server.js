@@ -225,6 +225,7 @@ function createApp(overrides = {}) {
   const ANIME_PORTRAITS_FILE = overrides.animePortraitsFile || path.join(__dirname, 'data', 'anime-portraits.json');
   const STUDY_BUDDY_FILE = overrides.studyBuddyFile || path.join(__dirname, 'data', 'study-buddy.json');
   const AI_BF_FILE = overrides.aiBfFile || path.join(__dirname, 'data', 'ai-bf.json');
+  const CHAT_FILE = overrides.chatFile || path.join(__dirname, 'data', 'chat.json');
   const ADMIN_KEY = overrides.adminKey || process.env.ADMIN_KEY || 'sangwa-admin-key';
   const DATABASE_URL = overrides.databaseUrl || process.env.DATABASE_URL || null;
   const SUPABASE_URL = process.env.SUPABASE_URL || null;
@@ -719,6 +720,29 @@ function createApp(overrides = {}) {
         username text not null,
         role text not null,
         content text not null,
+        created_at timestamptz default now()
+      );
+    `);
+    // Kunga's Chat: plain user-to-user DMs. One row per pair (user_a/user_b
+    // order is whichever order the conversation was first created in, not
+    // alphabetical -- lookups below always check both orders) rather than a
+    // separate thread per message, so the inbox list is a single cheap query.
+    await client.query(`
+      create table if not exists public.dm_conversations (
+        id serial primary key,
+        user_a text not null,
+        user_b text not null,
+        created_at timestamptz default now(),
+        last_message_at timestamptz,
+        last_message_preview text
+      );
+    `);
+    await client.query(`
+      create table if not exists public.dm_messages (
+        id serial primary key,
+        conversation_id integer not null,
+        sender_username text not null,
+        body text not null,
         created_at timestamptz default now()
       );
     `);
@@ -2481,6 +2505,163 @@ function createApp(overrides = {}) {
     const data = readAiBfFile();
     data.messages = data.messages.filter((m) => m.username.toLowerCase() !== username.toLowerCase());
     writeAiBfFile(data);
+  }
+
+  async function searchUsernames(query, excludeUsername, limit) {
+    const q = String(query || '').trim().toLowerCase();
+    if (!q) return [];
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select username from public.users where lower(username) like $1 and lower(username) <> $2 order by username asc limit $3`,
+        ['%' + q.replace(/[%_]/g, '') + '%', excludeUsername.toLowerCase(), limit]
+      );
+      return result.rows.map((r) => r.username);
+    }
+    const users = readUsers();
+    return users
+      .filter((u) => String(u.username || '').toLowerCase().includes(q) && String(u.username || '').toLowerCase() !== excludeUsername.toLowerCase())
+      .map((u) => u.username)
+      .slice(0, limit);
+  }
+
+  function ensureChatFile() {
+    const dir = path.dirname(CHAT_FILE);
+    fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(CHAT_FILE)) {
+      fs.writeFileSync(CHAT_FILE, JSON.stringify({ nextConversationId: 1, nextMessageId: 1, conversations: [], messages: [] }, null, 2), 'utf8');
+    }
+  }
+  function readChatFile() {
+    ensureChatFile();
+    try {
+      const parsed = JSON.parse(fs.readFileSync(CHAT_FILE, 'utf8'));
+      return {
+        nextConversationId: parsed.nextConversationId || 1,
+        nextMessageId: parsed.nextMessageId || 1,
+        conversations: Array.isArray(parsed.conversations) ? parsed.conversations : [],
+        messages: Array.isArray(parsed.messages) ? parsed.messages : [],
+      };
+    } catch (error) {
+      return { nextConversationId: 1, nextMessageId: 1, conversations: [], messages: [] };
+    }
+  }
+  function writeChatFile(data) {
+    ensureChatFile();
+    fs.writeFileSync(CHAT_FILE, JSON.stringify(data, null, 2), 'utf8');
+  }
+
+  async function getOrCreateDmConversation(usernameA, usernameB) {
+    const client = await getDbClient();
+    if (client) {
+      const existing = await client.query(
+        `select id, user_a as "userA", user_b as "userB", created_at as "createdAt",
+                last_message_at as "lastMessageAt", last_message_preview as "lastMessagePreview"
+         from public.dm_conversations
+         where (lower(user_a)=lower($1) and lower(user_b)=lower($2))
+            or (lower(user_a)=lower($2) and lower(user_b)=lower($1))`,
+        [usernameA, usernameB]
+      );
+      if (existing.rows[0]) return existing.rows[0];
+      const created = new Date().toISOString();
+      const inserted = await client.query(
+        `insert into public.dm_conversations (user_a, user_b, created_at, last_message_at)
+         values ($1,$2,$3,$3)
+         returning id, user_a as "userA", user_b as "userB", created_at as "createdAt",
+                   last_message_at as "lastMessageAt", last_message_preview as "lastMessagePreview"`,
+        [usernameA, usernameB, created]
+      );
+      return inserted.rows[0];
+    }
+    const data = readChatFile();
+    let convo = data.conversations.find((c) =>
+      (c.userA.toLowerCase() === usernameA.toLowerCase() && c.userB.toLowerCase() === usernameB.toLowerCase()) ||
+      (c.userA.toLowerCase() === usernameB.toLowerCase() && c.userB.toLowerCase() === usernameA.toLowerCase())
+    );
+    if (convo) return convo;
+    const createdAt = new Date().toISOString();
+    convo = { id: data.nextConversationId, userA: usernameA, userB: usernameB, createdAt, lastMessageAt: createdAt, lastMessagePreview: null };
+    data.conversations.push(convo);
+    data.nextConversationId += 1;
+    writeChatFile(data);
+    return convo;
+  }
+
+  async function findDmConversation(conversationId) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select id, user_a as "userA", user_b as "userB", created_at as "createdAt",
+                last_message_at as "lastMessageAt", last_message_preview as "lastMessagePreview"
+         from public.dm_conversations where id=$1`,
+        [conversationId]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readChatFile();
+    return data.conversations.find((c) => String(c.id) === String(conversationId)) || null;
+  }
+
+  async function listDmConversationsForUser(username) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select id, user_a as "userA", user_b as "userB", created_at as "createdAt",
+                last_message_at as "lastMessageAt", last_message_preview as "lastMessagePreview"
+         from public.dm_conversations
+         where lower(user_a)=lower($1) or lower(user_b)=lower($1)
+         order by coalesce(last_message_at, created_at) desc`,
+        [username]
+      );
+      return result.rows;
+    }
+    const data = readChatFile();
+    return data.conversations
+      .filter((c) => c.userA.toLowerCase() === username.toLowerCase() || c.userB.toLowerCase() === username.toLowerCase())
+      .sort((a, b) => new Date(b.lastMessageAt || b.createdAt) - new Date(a.lastMessageAt || a.createdAt));
+  }
+
+  async function listDmMessages(conversationId, limit) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select id, conversation_id as "conversationId", sender_username as "senderUsername", body, created_at as "createdAt"
+         from public.dm_messages where conversation_id=$1 order by created_at asc limit $2`,
+        [conversationId, limit]
+      );
+      return result.rows;
+    }
+    const data = readChatFile();
+    return data.messages
+      .filter((m) => String(m.conversationId) === String(conversationId))
+      .slice(-limit);
+  }
+
+  async function createDmMessage({ conversationId, senderUsername, body }) {
+    const client = await getDbClient();
+    const createdAt = new Date().toISOString();
+    const preview = body.slice(0, 140);
+    if (client) {
+      const result = await client.query(
+        `insert into public.dm_messages (conversation_id, sender_username, body, created_at)
+         values ($1,$2,$3,$4)
+         returning id, conversation_id as "conversationId", sender_username as "senderUsername", body, created_at as "createdAt"`,
+        [conversationId, senderUsername, body, createdAt]
+      );
+      await client.query(
+        `update public.dm_conversations set last_message_at=$2, last_message_preview=$3 where id=$1`,
+        [conversationId, createdAt, preview]
+      );
+      return result.rows[0];
+    }
+    const data = readChatFile();
+    const message = { id: data.nextMessageId, conversationId, senderUsername, body, createdAt };
+    data.messages.push(message);
+    data.nextMessageId += 1;
+    const convo = data.conversations.find((c) => String(c.id) === String(conversationId));
+    if (convo) { convo.lastMessageAt = createdAt; convo.lastMessagePreview = preview; }
+    writeChatFile(data);
+    return message;
   }
 
   async function listUsersFromDb() {
@@ -4312,6 +4493,70 @@ function createApp(overrides = {}) {
     return res.json({ ok: true });
   });
 
+  // ---- Kunga's Chat: plain text DMs between any two real kunga.me accounts.
+  // Same "trust the username the client sends" model as every other app
+  // here (no per-request password re-check) -- consistent with the rest of
+  // the API, not a new weaker spot. The only thing enforced server-side is
+  // that a conversation's two messages/listing endpoints only ever return
+  // data to one of its two participants.
+  const CHAT_MESSAGE_MAX = 2000;
+
+  app.get('/api/chat/search', async (req, res) => {
+    const user = await findUserByUsername(req.query.username);
+    if (!user) return res.status(404).json({ error: 'Log in on kunga.me first.' });
+    const results = await searchUsernames(req.query.q, user.username, 15);
+    return res.json({ users: results });
+  });
+
+  app.get('/api/chat/conversations', async (req, res) => {
+    const user = await findUserByUsername(req.query.username);
+    if (!user) return res.status(404).json({ error: 'Log in on kunga.me first.' });
+    const conversations = await listDmConversationsForUser(user.username);
+    const withOther = conversations.map((c) => ({
+      id: c.id,
+      otherUsername: c.userA.toLowerCase() === user.username.toLowerCase() ? c.userB : c.userA,
+      lastMessageAt: c.lastMessageAt,
+      lastMessagePreview: c.lastMessagePreview,
+    }));
+    return res.json({ conversations: withOther });
+  });
+
+  app.post('/api/chat/conversations', async (req, res) => {
+    const { username, otherUsername } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'Log in on kunga.me first.' });
+    const other = await findUserByUsername(otherUsername);
+    if (!other) return res.status(404).json({ error: 'That user was not found.' });
+    if (other.username.toLowerCase() === user.username.toLowerCase()) return res.status(400).json({ error: "You can't message yourself." });
+    const convo = await getOrCreateDmConversation(user.username, other.username);
+    return res.json({ conversation: { id: convo.id, otherUsername: other.username } });
+  });
+
+  app.get('/api/chat/conversations/:id/messages', async (req, res) => {
+    const user = await findUserByUsername(req.query.username);
+    if (!user) return res.status(404).json({ error: 'Log in on kunga.me first.' });
+    const convo = await findDmConversation(req.params.id);
+    if (!convo) return res.status(404).json({ error: 'Conversation not found.' });
+    const isMember = [convo.userA, convo.userB].some((u) => u.toLowerCase() === user.username.toLowerCase());
+    if (!isMember) return res.status(403).json({ error: 'Not your conversation.' });
+    const messages = await listDmMessages(convo.id, 300);
+    return res.json({ messages });
+  });
+
+  app.post('/api/chat/conversations/:id/messages', async (req, res) => {
+    const { username, body } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'Log in on kunga.me first.' });
+    const convo = await findDmConversation(req.params.id);
+    if (!convo) return res.status(404).json({ error: 'Conversation not found.' });
+    const isMember = [convo.userA, convo.userB].some((u) => u.toLowerCase() === user.username.toLowerCase());
+    if (!isMember) return res.status(403).json({ error: 'Not your conversation.' });
+    const cleanBody = String(body || '').trim().slice(0, CHAT_MESSAGE_MAX);
+    if (!cleanBody) return res.status(400).json({ error: 'Type something first.' });
+    const message = await createDmMessage({ conversationId: convo.id, senderUsername: user.username, body: cleanBody });
+    return res.json({ message });
+  });
+
   // ---- Kunga's Live: REST side of the live-streaming hub defined above
   // (the WebSocket side handles signaling + the lobby's real-time counts).
   // Going live requires a real kunga.me account (so there's someone to hold
@@ -4982,6 +5227,14 @@ function createApp(overrides = {}) {
 
   app.get('/ai-bf.html', (req, res) => {
     return res.sendFile(path.join(__dirname, 'ai-bf.html'));
+  });
+
+  app.get('/chat', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'chat.html'));
+  });
+
+  app.get('/chat.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'chat.html'));
   });
 
   app.get('/poker', (req, res) => {
