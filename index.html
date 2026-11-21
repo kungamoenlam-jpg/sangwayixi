@@ -1099,7 +1099,7 @@ function saveGame(){
 //      progress and accounts persist — see boot() below) ---------------------
 function defaultAppState(){
   return {
-    screen:'auth', authMode:'login', authError:'', homeView:'apps', perfChartDays:14,
+    screen:'auth', authMode:'login', authError:'', homeView:'auth', perfChartDays:14,
     appLang:'en',
     voicePref: {en:'female', zh:'female'},
     currentUser:null,
@@ -1151,10 +1151,15 @@ function boot(){
     state.currentUser = sess.currentUser;
     state.game = loadGame(sess.currentUser);
     regenHearts();
-    state.screen = 'pick_language';
+    // Landing page for a returning logged-in visitor is the app grid (all
+    // of kunga.me's apps), not straight into the language-learning flow --
+    // that's reached via the "Yeshe" dock icon now, same as any other app.
+    state.screen = 'auth';
+    state.homeView = 'apps';
     fetchSubscriptionStatus();
   } else {
     state.screen = 'auth';
+    state.homeView = 'auth';
   }
 
   // Returning from Stripe Checkout: the webhook may land a moment after the
@@ -5118,6 +5123,7 @@ function topbar(opts){
       <div class="stat" title="${t('totalXP')}">⭐ ${state.game.xp}</div>
       <button class="iconbtn" title="${t('heartsLabel')}" onclick="goProfile()">${state.game.hearts<=1?'💔':'❤️'} ${state.game.hearts}</button>
       ${state.currentUser ? `<button class="iconbtn" style="padding:0; overflow:hidden;" title="${t('myProgress')}" onclick="goProfile()">${renderAvatarHTML(state.currentUser, state.avatar, 30, false)}</button>` : ''}
+      ${state.currentUser ? `<button class="iconbtn" title="${t('backToHomeScreen')}" onclick="backToHomeScreen()"><i class="fa-solid fa-th-large"></i></button>` : ''}
     </div>
   </div>`;
 }
@@ -5256,7 +5262,15 @@ const HOME_APPS = [
   {key:'studybuddy', nameKey:'appStudyBuddy', icon:'fa-graduation-cap', bg:'linear-gradient(145deg,#14b8a6,#0d9488)', action:"window.location.href='/study-buddy'"},
   {key:'aibf', nameKey:'appAiBf', icon:'fa-hand-holding-heart', bg:'linear-gradient(145deg,#e8828a,#b8564f)', action:"window.location.href='/ai-bf'"},
 ];
-function openHomeApp(view){ state.homeView=view; if(view==='auth') state.authMode='signup'; render(); }
+function openHomeApp(view){
+  if(view==='auth' && state.currentUser){
+    // Already logged in -- the dock's "Yeshe" icon means "open the Yeshe
+    // learning app", not "show me a signup form I've already gotten past".
+    goHome();
+    return;
+  }
+  state.homeView=view; if(view==='auth') state.authMode='signup'; render();
+}
 // Setting screen (not just homeView) makes this safe to call from any
 // screen -- not just 'auth', where homeView alone used to be enough since
 // that was the only screen that ever checked it.
@@ -5331,7 +5345,6 @@ function renderAuth(){
   const cls = appLangClass();
   return `
   <div class="home ${cls}" style="padding-top:20px;">
-    <button class="iconbtn" style="margin:0 0 10px 20px;" onclick="backToHomeScreen()" title="${t('backToHomeScreen')}">←</button>
     <div class="hero">
       <h1>ཡེ་ཤེས་ <span style="color:var(--gold)">Yeshe</span></h1>
       <div class="sub">${t('heroSub')}</div>
@@ -5456,7 +5469,10 @@ function renderPickLanguage(){
   return `
   <div class="topbar">
     <div class="brand"><span>${yesheLogoSvg(20)}</span>Yeshe<span class="peak">·</span></div>
-    <button class="iconbtn" title="${t('logOutTitle')}" onclick="doLogout()">⎋</button>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <button class="iconbtn" title="${t('backToHomeScreen')}" onclick="backToHomeScreen()"><i class="fa-solid fa-th-large"></i></button>
+      <button class="iconbtn" title="${t('logOutTitle')}" onclick="doLogout()">⎋</button>
+    </div>
   </div>
   <div class="home ${appLangClass()}">
     <div class="hero">
@@ -5491,6 +5507,7 @@ function renderPickBoSource(){
   <div class="topbar">
     <button class="iconbtn" onclick="state.screen='pick_language'; render();">←</button>
     <div class="brand"><span>${yesheLogoSvg(20)}</span>Yeshe<span class="peak">·</span></div>
+    <button class="iconbtn" title="${t('backToHomeScreen')}" onclick="backToHomeScreen()"><i class="fa-solid fa-th-large"></i></button>
   </div>
   <div class="home ${appLangClass()}">
     <div class="hero">
