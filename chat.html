@@ -34,6 +34,9 @@ body{margin:0;background:radial-gradient(circle at 50% 0%,#17323a,#0f1b22 60%);c
 .resultRow{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;padding:11px 14px;cursor:pointer;font-size:14.5px}
 .resultRow:hover{background:rgba(255,255,255,.06)}
 .avatarDot{flex:0 0 auto;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,var(--accent),var(--accent2));color:#042c28;font-weight:700;font-size:14px;text-transform:uppercase}
+.avatarWrap{position:relative;flex:0 0 auto}
+.presenceDot{position:absolute;bottom:-2px;right:-2px;width:11px;height:11px;border-radius:50%;background:#55606b;border:2px solid #0f1b22}
+.presenceDot.active{background:var(--good)}
 .sectionLabel{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:22px 0 10px;font-weight:600}
 .convoList{display:grid;gap:8px}
 .convoRow{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.04);cursor:pointer}
@@ -51,18 +54,36 @@ body{margin:0;background:radial-gradient(circle at 50% 0%,#17323a,#0f1b22 60%);c
 .chatTopLeft{display:flex;align-items:center;gap:10px;min-width:0}
 .chatBackBtn{all:unset;cursor:pointer;font-size:20px;color:var(--muted);padding:4px}
 .chatName{font-size:15px;font-weight:700}
+.chatStatus{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;margin-top:1px}
+.statusDot{width:7px;height:7px;border-radius:50%;background:#55606b;flex:0 0 auto}
+.statusDot.active{background:var(--good)}
 .chatBody{flex:1;min-height:0;overflow-y:auto;padding:16px}
 .msgRow{display:flex;margin-bottom:10px}
 .msgRow.mine{justify-content:flex-end}
 .msgBubble{max-width:75%;padding:10px 14px;border-radius:16px;font-size:14.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
 .msgRow.mine .msgBubble{background:var(--accent);color:#042c28;border-bottom-right-radius:4px}
 .msgRow.theirs .msgBubble{background:rgba(255,255,255,.08);color:var(--ink);border-bottom-left-radius:4px}
+.gifBubble{width:200px;max-width:70vw;min-height:120px;border-radius:14px;display:block;object-fit:cover;background:rgba(255,255,255,.04)}
+.msgRow.mine .gifBubble{border-bottom-right-radius:4px}
+.msgRow.theirs .gifBubble{border-bottom-left-radius:4px}
 .chatBottom{flex:0 0 auto;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid rgba(255,255,255,.08)}
 .errorNote{font-size:12px;color:var(--bad);text-align:center;margin-bottom:8px}
 .msgInputRow{display:flex;gap:8px}
 .msgInputRow input{flex:1;font-size:14px;padding:12px 14px;border-radius:999px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);outline:none}
+.gifBtn{all:unset;cursor:pointer;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.08);color:var(--ink);display:grid;place-items:center;font-size:10.5px;font-weight:800;letter-spacing:.02em;flex:0 0 auto}
 .sendBtn{all:unset;cursor:pointer;width:42px;height:42px;border-radius:50%;background:var(--accent);color:#042c28;display:grid;place-items:center;font-size:16px;flex:0 0 auto}
 .sendBtn:disabled{opacity:.4;cursor:default}
+
+/* ---- GIF picker ---- */
+.gifPicker{position:fixed;left:0;right:0;bottom:0;max-height:62vh;background:#13262c;border-top:1px solid rgba(255,255,255,.1);border-radius:16px 16px 0 0;z-index:40;display:none;flex-direction:column;box-shadow:0 -10px 30px rgba(0,0,0,.3)}
+.gifPicker.open{display:flex}
+.gifPickerTop{display:flex;gap:8px;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08);flex:0 0 auto}
+.gifPickerTop input{flex:1;font-size:14px;padding:10px 12px;border-radius:10px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);outline:none}
+.gifPickerClose{all:unset;cursor:pointer;color:var(--muted);font-size:18px;padding:4px 6px}
+.gifGrid{flex:1;overflow-y:auto;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px}
+.gifThumb{all:unset;cursor:pointer;border-radius:10px;overflow:hidden;background:rgba(255,255,255,.05);aspect-ratio:1.2}
+.gifThumb img{width:100%;height:100%;object-fit:cover;display:block}
+.gifEmptyNote{text-align:center;color:var(--muted);font-size:13px;padding:30px 14px;grid-column:1/-1}
 </style>
 </head>
 <body>
@@ -92,6 +113,15 @@ function timeAgo(iso){
   const hrs = Math.floor(mins / 60);
   if(hrs < 24) return hrs + 'h';
   return Math.floor(hrs / 24) + 'd';
+}
+async function fetchPresence(usernames){
+  if(!usernames.length) return {};
+  try{
+    const resp = await fetch('/api/chat/presence?username=' + encodeURIComponent(currentUser()) + '&usernames=' + encodeURIComponent(usernames.join(',')));
+    if(!resp.ok) return {};
+    const data = await resp.json();
+    return data.presence || {};
+  }catch(e){ return {}; }
 }
 
 const content = document.getElementById('content');
@@ -172,7 +202,10 @@ async function loadConversations(){
   }
   list.innerHTML = conversations.map((c) => `
     <button class="convoRow" data-open="${c.id}" data-user="${esc(c.otherUsername)}">
-      <div class="avatarDot">${esc(c.otherUsername.charAt(0))}</div>
+      <div class="avatarWrap">
+        <div class="avatarDot">${esc(c.otherUsername.charAt(0))}</div>
+        <span class="presenceDot" data-presence="${esc(c.otherUsername)}"></span>
+      </div>
       <div class="convoInfo">
         <div class="convoName">${esc(c.otherUsername)}</div>
         <div class="convoPreview">${esc(c.lastMessagePreview || 'Say hi!')}</div>
@@ -182,6 +215,13 @@ async function loadConversations(){
   `).join('');
   list.querySelectorAll('[data-open]').forEach((btn) => {
     btn.onclick = () => openThread(btn.dataset.open, btn.dataset.user);
+  });
+  const others = conversations.map((c) => c.otherUsername);
+  fetchPresence(others).then((presence) => {
+    others.forEach((u) => {
+      const dot = list.querySelector(`[data-presence="${CSS.escape(u)}"]`);
+      if(dot && presence[u] && presence[u].active) dot.classList.add('active');
+    });
   });
 }
 
@@ -193,13 +233,24 @@ function openThread(conversationId, otherUsername){
       <div class="chatTop">
         <div class="chatTopLeft">
           <button class="chatBackBtn" id="threadBackBtn">←</button>
-          <div class="chatName">${esc(otherUsername)}</div>
+          <div>
+            <div class="chatName">${esc(otherUsername)}</div>
+            <div class="chatStatus" id="chatStatus"></div>
+          </div>
         </div>
       </div>
       <div class="chatBody" id="chatBody"></div>
+      <div class="gifPicker" id="gifPicker">
+        <div class="gifPickerTop">
+          <input type="text" id="gifSearchInput" placeholder="Search GIFs…">
+          <button class="gifPickerClose" id="gifPickerClose">✕</button>
+        </div>
+        <div class="gifGrid" id="gifGrid"></div>
+      </div>
       <div class="chatBottom">
         <div id="errorNoteWrap"></div>
         <div class="msgInputRow">
+          <button class="gifBtn" id="gifBtn">GIF</button>
           <input type="text" id="msgInput" maxlength="2000" placeholder="Message ${esc(otherUsername)}…">
           <button class="sendBtn" id="sendBtn">➤</button>
         </div>
@@ -211,9 +262,85 @@ function openThread(conversationId, otherUsername){
   document.getElementById('msgInput').addEventListener('keydown', (e) => {
     if(e.key === 'Enter') sendMessage();
   });
-  loadMessages();
+  document.getElementById('gifBtn').onclick = openGifPicker;
+  document.getElementById('gifPickerClose').onclick = closeGifPicker;
+  document.getElementById('gifSearchInput').addEventListener('input', (e) => {
+    clearTimeout(gifSearchDebounce);
+    const q = e.target.value.trim();
+    gifSearchDebounce = setTimeout(() => loadGifs(q), 350);
+  });
+  pollThread();
   clearInterval(chatPollTimer);
-  chatPollTimer = setInterval(loadMessages, 4000);
+  chatPollTimer = setInterval(pollThread, 4000);
+}
+
+function pollThread(){
+  loadMessages();
+  refreshThreadPresence();
+}
+
+async function refreshThreadPresence(){
+  if(!activeOtherUsername) return;
+  const presence = await fetchPresence([activeOtherUsername]);
+  const p = presence[activeOtherUsername];
+  const el = document.getElementById('chatStatus');
+  if(!el) return;
+  if(p && p.active){
+    el.innerHTML = `<span class="statusDot active"></span>Active now`;
+  } else if(p && p.lastSeenAt){
+    el.innerHTML = `<span class="statusDot"></span>Active ${timeAgo(p.lastSeenAt)} ago`;
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+let gifSearchDebounce = null;
+function openGifPicker(){
+  document.getElementById('gifPicker').classList.add('open');
+  document.getElementById('gifSearchInput').value = '';
+  document.getElementById('gifSearchInput').focus();
+  loadGifs('');
+}
+function closeGifPicker(){
+  const picker = document.getElementById('gifPicker');
+  if(picker) picker.classList.remove('open');
+}
+async function loadGifs(q){
+  const grid = document.getElementById('gifGrid');
+  if(!grid) return;
+  grid.innerHTML = `<div class="gifEmptyNote">Loading…</div>`;
+  try{
+    const resp = await fetch('/api/chat/gifs?username=' + encodeURIComponent(currentUser()) + (q ? '&q=' + encodeURIComponent(q) : ''));
+    const data = await resp.json();
+    if(!resp.ok){ grid.innerHTML = `<div class="gifEmptyNote">${esc(data.error || "GIFs aren't available right now.")}</div>`; return; }
+    const gifs = data.gifs || [];
+    if(!gifs.length){ grid.innerHTML = `<div class="gifEmptyNote">No GIFs found.</div>`; return; }
+    grid.innerHTML = gifs.map((g) => `<button class="gifThumb" data-gif="${esc(g.gifUrl)}"><img src="${esc(g.previewUrl)}" loading="lazy"></button>`).join('');
+    grid.querySelectorAll('[data-gif]').forEach((btn) => {
+      btn.onclick = () => sendGif(btn.dataset.gif);
+    });
+  }catch(e){
+    grid.innerHTML = `<div class="gifEmptyNote">Network error.</div>`;
+  }
+}
+async function sendGif(gifUrl){
+  closeGifPicker();
+  document.getElementById('errorNoteWrap').innerHTML = '';
+  try{
+    const resp = await fetch('/api/chat/conversations/' + activeConversationId + '/messages', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: currentUser(), body: gifUrl, kind: 'gif' }),
+    });
+    if(!resp.ok){
+      const data = await resp.json().catch(() => ({}));
+      document.getElementById('errorNoteWrap').innerHTML = `<div class="errorNote">${esc(data.error || 'Could not send that GIF.')}</div>`;
+      return;
+    }
+  }catch(e){
+    document.getElementById('errorNoteWrap').innerHTML = `<div class="errorNote">Network error — try again.</div>`;
+    return;
+  }
+  await loadMessages();
 }
 
 async function loadMessages(){
@@ -231,7 +358,10 @@ async function loadMessages(){
   }
   body.innerHTML = messages.map((m) => {
     const mine = m.senderUsername.toLowerCase() === currentUser().toLowerCase();
-    return `<div class="msgRow ${mine ? 'mine' : 'theirs'}"><div class="msgBubble">${esc(m.body)}</div></div>`;
+    const inner = m.kind === 'gif'
+      ? `<img class="gifBubble" src="${esc(m.body)}" loading="lazy">`
+      : `<div class="msgBubble">${esc(m.body)}</div>`;
+    return `<div class="msgRow ${mine ? 'mine' : 'theirs'}">${inner}</div>`;
   }).join('');
   if(wasAtBottom) body.scrollTop = body.scrollHeight;
 }

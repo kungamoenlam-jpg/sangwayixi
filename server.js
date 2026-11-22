@@ -743,8 +743,15 @@ function createApp(overrides = {}) {
         conversation_id integer not null,
         sender_username text not null,
         body text not null,
+        kind text not null default 'text',
         created_at timestamptz default now()
       );
+    `);
+    // The table above already existed before kind was added (gif support) --
+    // same "create table if not exists" blind spot as call_bookings.call_type.
+    await client.query(`
+      alter table public.dm_messages
+        add column if not exists kind text not null default 'text';
     `);
     databaseReady = true;
     return { connected: true, mode: 'supabase', url: SUPABASE_URL };
@@ -2625,7 +2632,7 @@ function createApp(overrides = {}) {
     const client = await getDbClient();
     if (client) {
       const result = await client.query(
-        `select id, conversation_id as "conversationId", sender_username as "senderUsername", body, created_at as "createdAt"
+        `select id, conversation_id as "conversationId", sender_username as "senderUsername", body, kind, created_at as "createdAt"
          from public.dm_messages where conversation_id=$1 order by created_at asc limit $2`,
         [conversationId, limit]
       );
@@ -2634,19 +2641,21 @@ function createApp(overrides = {}) {
     const data = readChatFile();
     return data.messages
       .filter((m) => String(m.conversationId) === String(conversationId))
+      .map((m) => ({ kind: 'text', ...m }))
       .slice(-limit);
   }
 
-  async function createDmMessage({ conversationId, senderUsername, body }) {
+  async function createDmMessage({ conversationId, senderUsername, body, kind }) {
     const client = await getDbClient();
     const createdAt = new Date().toISOString();
-    const preview = body.slice(0, 140);
+    const messageKind = kind === 'gif' ? 'gif' : 'text';
+    const preview = messageKind === 'gif' ? '🎞️ GIF' : body.slice(0, 140);
     if (client) {
       const result = await client.query(
-        `insert into public.dm_messages (conversation_id, sender_username, body, created_at)
-         values ($1,$2,$3,$4)
-         returning id, conversation_id as "conversationId", sender_username as "senderUsername", body, created_at as "createdAt"`,
-        [conversationId, senderUsername, body, createdAt]
+        `insert into public.dm_messages (conversation_id, sender_username, body, kind, created_at)
+         values ($1,$2,$3,$4,$5)
+         returning id, conversation_id as "conversationId", sender_username as "senderUsername", body, kind, created_at as "createdAt"`,
+        [conversationId, senderUsername, body, messageKind, createdAt]
       );
       await client.query(
         `update public.dm_conversations set last_message_at=$2, last_message_preview=$3 where id=$1`,
@@ -2655,7 +2664,7 @@ function createApp(overrides = {}) {
       return result.rows[0];
     }
     const data = readChatFile();
-    const message = { id: data.nextMessageId, conversationId, senderUsername, body, createdAt };
+    const message = { id: data.nextMessageId, conversationId, senderUsername, body, kind: messageKind, createdAt };
     data.messages.push(message);
     data.nextMessageId += 1;
     const convo = data.conversations.find((c) => String(c.id) === String(conversationId));
@@ -4493,24 +4502,52 @@ function createApp(overrides = {}) {
     return res.json({ ok: true });
   });
 
-  // ---- Kunga's Chat: plain text DMs between any two real kunga.me accounts.
-  // Same "trust the username the client sends" model as every other app
-  // here (no per-request password re-check) -- consistent with the rest of
-  // the API, not a new weaker spot. The only thing enforced server-side is
-  // that a conversation's two messages/listing endpoints only ever return
-  // data to one of its two participants.
+  // ---- Kunga's Chat: plain text + GIF DMs between any two real kunga.me
+  // accounts. Same "trust the username the client sends" model as every
+  // other app here (no per-request password re-check) -- consistent with
+  // the rest of the API, not a new weaker spot. The only thing enforced
+  // server-side is that a conversation's messages/listing endpoints only
+  // ever return data to one of its two participants.
   const CHAT_MESSAGE_MAX = 2000;
+
+  // Presence ("active now") is deliberately in-memory only, like the Live
+  // session hub above -- it's a live signal, not a record worth persisting
+  // across a restart. Any authenticated /api/chat/* hit refreshes the
+  // caller's timestamp, so just having the chat page open (it polls every
+  // 4s) is enough to show as active; no separate heartbeat endpoint needed.
+  const CHAT_PRESENCE_WINDOW_MS = 60 * 1000;
+  const chatPresence = new Map(); // lowercased username -> last-active ms timestamp
+  function touchChatPresence(username) {
+    if (username) chatPresence.set(String(username).toLowerCase(), Date.now());
+  }
+  function getChatPresence(username) {
+    const ts = chatPresence.get(String(username).toLowerCase());
+    if (!ts) return { active: false, lastSeenAt: null };
+    return { active: Date.now() - ts < CHAT_PRESENCE_WINDOW_MS, lastSeenAt: new Date(ts).toISOString() };
+  }
 
   app.get('/api/chat/search', async (req, res) => {
     const user = await findUserByUsername(req.query.username);
     if (!user) return res.status(404).json({ error: 'Log in on kunga.me first.' });
+    touchChatPresence(user.username);
     const results = await searchUsernames(req.query.q, user.username, 15);
     return res.json({ users: results });
+  });
+
+  app.get('/api/chat/presence', async (req, res) => {
+    const user = await findUserByUsername(req.query.username);
+    if (!user) return res.status(404).json({ error: 'Log in on kunga.me first.' });
+    touchChatPresence(user.username);
+    const usernames = String(req.query.usernames || '').split(',').map((u) => u.trim()).filter(Boolean);
+    const presence = {};
+    usernames.forEach((u) => { presence[u] = getChatPresence(u); });
+    return res.json({ presence });
   });
 
   app.get('/api/chat/conversations', async (req, res) => {
     const user = await findUserByUsername(req.query.username);
     if (!user) return res.status(404).json({ error: 'Log in on kunga.me first.' });
+    touchChatPresence(user.username);
     const conversations = await listDmConversationsForUser(user.username);
     const withOther = conversations.map((c) => ({
       id: c.id,
@@ -4525,6 +4562,7 @@ function createApp(overrides = {}) {
     const { username, otherUsername } = req.body || {};
     const user = await findUserByUsername(username);
     if (!user) return res.status(404).json({ error: 'Log in on kunga.me first.' });
+    touchChatPresence(user.username);
     const other = await findUserByUsername(otherUsername);
     if (!other) return res.status(404).json({ error: 'That user was not found.' });
     if (other.username.toLowerCase() === user.username.toLowerCase()) return res.status(400).json({ error: "You can't message yourself." });
@@ -4535,6 +4573,7 @@ function createApp(overrides = {}) {
   app.get('/api/chat/conversations/:id/messages', async (req, res) => {
     const user = await findUserByUsername(req.query.username);
     if (!user) return res.status(404).json({ error: 'Log in on kunga.me first.' });
+    touchChatPresence(user.username);
     const convo = await findDmConversation(req.params.id);
     if (!convo) return res.status(404).json({ error: 'Conversation not found.' });
     const isMember = [convo.userA, convo.userB].some((u) => u.toLowerCase() === user.username.toLowerCase());
@@ -4544,17 +4583,60 @@ function createApp(overrides = {}) {
   });
 
   app.post('/api/chat/conversations/:id/messages', async (req, res) => {
-    const { username, body } = req.body || {};
+    const { username, body, kind } = req.body || {};
     const user = await findUserByUsername(username);
     if (!user) return res.status(404).json({ error: 'Log in on kunga.me first.' });
+    touchChatPresence(user.username);
     const convo = await findDmConversation(req.params.id);
     if (!convo) return res.status(404).json({ error: 'Conversation not found.' });
     const isMember = [convo.userA, convo.userB].some((u) => u.toLowerCase() === user.username.toLowerCase());
     if (!isMember) return res.status(403).json({ error: 'Not your conversation.' });
+
+    if (kind === 'gif') {
+      // Only ever a Tenor-hosted media URL we handed the client ourselves in
+      // /api/chat/gifs -- not an open arbitrary-URL embed.
+      const gifUrl = String(body || '').trim();
+      if (!/^https:\/\/[a-z0-9.-]+\.tenor\.com\//i.test(gifUrl)) {
+        return res.status(400).json({ error: 'Invalid GIF.' });
+      }
+      const message = await createDmMessage({ conversationId: convo.id, senderUsername: user.username, body: gifUrl, kind: 'gif' });
+      return res.json({ message });
+    }
+
     const cleanBody = String(body || '').trim().slice(0, CHAT_MESSAGE_MAX);
     if (!cleanBody) return res.status(400).json({ error: 'Type something first.' });
-    const message = await createDmMessage({ conversationId: convo.id, senderUsername: user.username, body: cleanBody });
+    const message = await createDmMessage({ conversationId: convo.id, senderUsername: user.username, body: cleanBody, kind: 'text' });
     return res.json({ message });
+  });
+
+  // GIF search, proxied server-side so the Tenor API key never reaches the
+  // client (same reasoning as every other third-party key in this file).
+  // Returns a friendly 503 rather than erroring until TENOR_API_KEY is set.
+  const TENOR_API_KEY = process.env.TENOR_API_KEY || null;
+  app.get('/api/chat/gifs', async (req, res) => {
+    const user = await findUserByUsername(req.query.username);
+    if (!user) return res.status(404).json({ error: 'Log in on kunga.me first.' });
+    touchChatPresence(user.username);
+    if (!TENOR_API_KEY) return res.status(503).json({ error: 'GIF search is not set up yet.' });
+    const q = String(req.query.q || '').trim();
+    const params = new URLSearchParams({ key: TENOR_API_KEY, client_key: 'kunga_me_chat', limit: '24', media_filter: 'gif' });
+    if (q) params.set('q', q);
+    const endpoint = `https://tenor.googleapis.com/v2/${q ? 'search' : 'featured'}?${params.toString()}`;
+    try {
+      const tenorRes = await fetch(endpoint, { signal: AbortSignal.timeout(10000) });
+      if (!tenorRes.ok) throw new Error('Tenor request failed: ' + tenorRes.status);
+      const data = await tenorRes.json();
+      const gifs = (data.results || [])
+        .filter((r) => r.media_formats && r.media_formats.gif)
+        .map((r) => ({
+          id: r.id,
+          previewUrl: (r.media_formats.tinygif || r.media_formats.nanogif || r.media_formats.gif).url,
+          gifUrl: r.media_formats.gif.url,
+        }));
+      return res.json({ gifs });
+    } catch (error) {
+      return res.status(502).json({ error: 'Could not load GIFs right now.' });
+    }
   });
 
   // ---- Kunga's Live: REST side of the live-streaming hub defined above
