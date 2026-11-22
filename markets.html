@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Markets</title>
+<meta name="description" content="Kunga's daily market commentary and screenshots.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b1016;--ink:#eef2f6;--muted:#8b96a3;--accent:#3fd17a;--accent2:#1f8a4c;--bad:#ff8a8a;
+  --font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 50% 0%,#132019,#0b1016 60%);color:var(--ink);font-family:var(--font-body);min-height:100vh}
+.topBar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:calc(14px + env(safe-area-inset-top,0px)) 18px 14px;background:rgba(11,16,22,.88);backdrop-filter:blur(8px)}
+.brand{font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--ink);text-decoration:none}
+
+.wrap{max-width:560px;margin:0 auto;padding:4px 18px 60px}
+.hero{padding:16px 0 10px}
+.hero h1{font-family:var(--font-display);font-weight:800;font-size:26px;margin:0 0 6px}
+.hero p{color:var(--muted);font-size:13.5px;margin:0;line-height:1.6}
+
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:18px;margin-bottom:16px}
+.cardDate{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
+.cardTitle{font-family:var(--font-display);font-weight:700;font-size:18px;margin:0 0 10px}
+.cardBody{font-size:14.5px;line-height:1.65;white-space:pre-wrap;word-break:break-word;color:#dce3e8;margin-bottom:12px}
+.shotGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.shotGrid img{width:100%;aspect-ratio:1.4;object-fit:cover;border-radius:10px;cursor:pointer;background:rgba(255,255,255,.04);display:block}
+
+.emptyState{text-align:center;color:var(--muted);font-size:13.5px;padding:60px 20px;line-height:1.7}
+.emptyState .glyph{font-size:34px;display:block;margin-bottom:10px}
+
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;z-index:50;padding:24px}
+.lightbox.open{display:flex}
+.lightbox img{max-width:100%;max-height:100%;border-radius:8px}
+.lightboxClose{position:fixed;top:calc(16px + env(safe-area-inset-top,0px));right:16px;all:unset;cursor:pointer;color:#fff;font-size:22px;z-index:51}
+</style>
+</head>
+<body>
+
+<div class="topBar">
+  <a class="brand" href="/">← kunga.me</a>
+  <span class="brand" style="color:var(--muted);font-weight:600">THE MARKETS</span>
+</div>
+
+<div class="wrap">
+  <div class="hero">
+    <h1>📈 The Markets</h1>
+    <p>Daily notes and screenshots from the trading day — written by Kunga.</p>
+  </div>
+  <div id="feed"><div class="emptyState">Loading…</div></div>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightboxClose" id="lightboxClose">✕</button>
+  <img id="lightboxImg" src="">
+</div>
+
+<script>
+function esc(s){ return String(s === undefined || s === null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(iso){
+  try{ return new Date(iso).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'}); }
+  catch(e){ return iso; }
+}
+
+async function loadFeed(){
+  const feed = document.getElementById('feed');
+  try{
+    const resp = await fetch('/api/markets');
+    const data = await resp.json();
+    const updates = data.updates || [];
+    if(!updates.length){
+      feed.innerHTML = `<div class="emptyState"><span class="glyph">📈</span>No updates posted yet — check back soon.</div>`;
+      return;
+    }
+    feed.innerHTML = updates.map((u) => `
+      <div class="card">
+        <div class="cardDate">${esc(fmtDate(u.createdAt))}</div>
+        <div class="cardTitle">${esc(u.title)}</div>
+        ${u.body ? `<div class="cardBody">${esc(u.body)}</div>` : ''}
+        ${(u.images && u.images.length) ? `
+          <div class="shotGrid">
+            ${u.images.map((img, i) => `<img src="/market-photo/${u.id}/${i}" loading="lazy" data-full="/market-photo/${u.id}/${i}">`).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `).join('');
+    feed.querySelectorAll('.shotGrid img').forEach((img) => {
+      img.onclick = () => openLightbox(img.dataset.full);
+    });
+  }catch(e){
+    feed.innerHTML = `<div class="emptyState">Network error — try again.</div>`;
+  }
+}
+
+function openLightbox(src){
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox(){
+  document.getElementById('lightbox').classList.remove('open');
+}
+document.getElementById('lightboxClose').onclick = closeLightbox;
+document.getElementById('lightbox').onclick = (e) => {
+  if(e.target.id === 'lightbox') closeLightbox();
+};
+
+loadFeed();
+</script>
+</body>
+</html>

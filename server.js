@@ -226,6 +226,7 @@ function createApp(overrides = {}) {
   const STUDY_BUDDY_FILE = overrides.studyBuddyFile || path.join(__dirname, 'data', 'study-buddy.json');
   const AI_BF_FILE = overrides.aiBfFile || path.join(__dirname, 'data', 'ai-bf.json');
   const CHAT_FILE = overrides.chatFile || path.join(__dirname, 'data', 'chat.json');
+  const MARKETS_FILE = overrides.marketsFile || path.join(__dirname, 'data', 'markets.json');
   const ADMIN_KEY = overrides.adminKey || process.env.ADMIN_KEY || 'sangwa-admin-key';
   const DATABASE_URL = overrides.databaseUrl || process.env.DATABASE_URL || null;
   const SUPABASE_URL = process.env.SUPABASE_URL || null;
@@ -414,6 +415,7 @@ function createApp(overrides = {}) {
   const MOVIES_BUCKET = 'movies';
   const ANIME_BUCKET = 'anime-portraits';
   const STUDY_BUDDY_BUCKET = 'study-buddy-photos';
+  const MARKETS_BUCKET = 'market-screenshots';
   const supabaseAdmin = (SUPABASE_PROJECT_URL && SUPABASE_SERVICE_ROLE_KEY)
     ? createClient(SUPABASE_PROJECT_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
     : null;
@@ -440,6 +442,7 @@ function createApp(overrides = {}) {
   const ensureMoviesBucket = () => ensureBucket(MOVIES_BUCKET);
   const ensureAnimeBucket = () => ensureBucket(ANIME_BUCKET);
   const ensureStudyBuddyBucket = () => ensureBucket(STUDY_BUDDY_BUCKET);
+  const ensureMarketsBucket = () => ensureBucket(MARKETS_BUCKET);
 
   // High-quality neural voices: British English + Beijing-standard Mandarin, one
   // male and one female each. Mandarin uses Azure's newer "Multilingual" neural
@@ -752,6 +755,22 @@ function createApp(overrides = {}) {
     await client.query(`
       alter table public.dm_messages
         add column if not exists kind text not null default 'text';
+    `);
+    // The Markets: owner-only daily commentary + screenshots (NYSE etc.),
+    // viewable by anyone. Posting/editing is gated by x-admin-key, same as
+    // Kunga's Diary -- not the "trust the username" model the rest of this
+    // file uses, since this is published content, not a private account's
+    // own data. images is a jsonb array of {path, mime} Storage objects
+    // rather than one column, since a single day's update can carry several
+    // screenshots.
+    await client.query(`
+      create table if not exists public.market_updates (
+        id serial primary key,
+        title text not null,
+        body text,
+        images jsonb not null default '[]'::jsonb,
+        created_at timestamptz default now()
+      );
     `);
     databaseReady = true;
     return { connected: true, mode: 'supabase', url: SUPABASE_URL };
@@ -2671,6 +2690,108 @@ function createApp(overrides = {}) {
     if (convo) { convo.lastMessageAt = createdAt; convo.lastMessagePreview = preview; }
     writeChatFile(data);
     return message;
+  }
+
+  function ensureMarketsFile() {
+    const dir = path.dirname(MARKETS_FILE);
+    fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(MARKETS_FILE)) {
+      fs.writeFileSync(MARKETS_FILE, JSON.stringify({ nextId: 1, updates: [] }, null, 2), 'utf8');
+    }
+  }
+  function readMarketsFile() {
+    ensureMarketsFile();
+    try {
+      const parsed = JSON.parse(fs.readFileSync(MARKETS_FILE, 'utf8'));
+      return {
+        nextId: parsed.nextId || 1,
+        updates: Array.isArray(parsed.updates) ? parsed.updates : [],
+      };
+    } catch (error) {
+      return { nextId: 1, updates: [] };
+    }
+  }
+  function writeMarketsFile(data) {
+    ensureMarketsFile();
+    fs.writeFileSync(MARKETS_FILE, JSON.stringify(data, null, 2), 'utf8');
+  }
+
+  async function createMarketUpdate({ title, body }) {
+    const client = await getDbClient();
+    const createdAt = new Date().toISOString();
+    if (client) {
+      const result = await client.query(
+        `insert into public.market_updates (title, body, images, created_at) values ($1,$2,'[]'::jsonb,$3)
+         returning id, title, body, images, created_at as "createdAt"`,
+        [title, body, createdAt]
+      );
+      return result.rows[0];
+    }
+    const data = readMarketsFile();
+    const update = { id: data.nextId, title, body, images: [], createdAt };
+    data.updates.push(update);
+    data.nextId += 1;
+    writeMarketsFile(data);
+    return update;
+  }
+
+  async function listMarketUpdates(limit) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select id, title, body, images, created_at as "createdAt" from public.market_updates order by created_at desc limit $1`,
+        [limit]
+      );
+      return result.rows;
+    }
+    const data = readMarketsFile();
+    return [...data.updates].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, limit);
+  }
+
+  async function getMarketUpdateById(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select id, title, body, images, created_at as "createdAt" from public.market_updates where id=$1`,
+        [id]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readMarketsFile();
+    return data.updates.find((u) => String(u.id) === String(id)) || null;
+  }
+
+  async function addMarketUpdateImage(id, { path: imagePath, mime }) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `update public.market_updates set images = images || $2::jsonb where id=$1
+         returning id, title, body, images, created_at as "createdAt"`,
+        [id, JSON.stringify([{ path: imagePath, mime }])]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readMarketsFile();
+    const update = data.updates.find((u) => String(u.id) === String(id));
+    if (!update) return null;
+    if (!Array.isArray(update.images)) update.images = [];
+    update.images.push({ path: imagePath, mime });
+    writeMarketsFile(data);
+    return update;
+  }
+
+  async function deleteMarketUpdate(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(`delete from public.market_updates where id=$1 returning images`, [id]);
+      return result.rows[0] || null;
+    }
+    const data = readMarketsFile();
+    const idx = data.updates.findIndex((u) => String(u.id) === String(id));
+    if (idx === -1) return null;
+    const [removed] = data.updates.splice(idx, 1);
+    writeMarketsFile(data);
+    return removed;
   }
 
   async function listUsersFromDb() {
@@ -5141,6 +5262,100 @@ function createApp(overrides = {}) {
     return res.redirect(302, data.publicUrl);
   });
 
+  // ---- The Markets: Kunga's own daily commentary + screenshots (NYSE etc.)
+  // Reads are public, no login needed (same as Daily News). Writes are
+  // gated by x-admin-key rather than the "trust the client's username"
+  // model everywhere else -- this is published content anyone could
+  // otherwise forge by claiming to be the owner, unlike a private account's
+  // own data.
+  const MARKETS_TITLE_MAX = 140;
+  const MARKETS_BODY_MAX = 4000;
+  const MARKETS_MAX_IMAGES = 10;
+  const MARKETS_MIME_EXT = { 'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+
+  app.get('/api/markets', async (req, res) => {
+    // Public when no key is sent (the feed itself needs no login). The
+    // admin page always sends the key, purely so its "unlock" step has
+    // something to validate against -- a wrong key there still 401s.
+    const incomingKey = req.headers['x-admin-key'];
+    if (incomingKey && incomingKey !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const limit = Math.min(Number(req.query.limit) || 50, 100);
+    const updates = await listMarketUpdates(limit);
+    return res.json({ updates });
+  });
+
+  app.get('/api/markets/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const update = await getMarketUpdateById(id);
+    if (!update) return res.status(404).json({ error: 'Update not found.' });
+    return res.json({ update });
+  });
+
+  app.post('/api/markets', async (req, res) => {
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const { title, body } = req.body || {};
+    const cleanTitle = String(title || '').trim();
+    const cleanBody = String(body || '').trim();
+    if (!cleanTitle || cleanTitle.length > MARKETS_TITLE_MAX) {
+      return res.status(400).json({ error: `Title must be 1-${MARKETS_TITLE_MAX} characters.` });
+    }
+    if (cleanBody.length > MARKETS_BODY_MAX) {
+      return res.status(400).json({ error: `Commentary must be under ${MARKETS_BODY_MAX} characters.` });
+    }
+    const update = await createMarketUpdate({ title: cleanTitle, body: cleanBody });
+    return res.json({ update });
+  });
+
+  app.post('/api/markets/:id/photos', express.raw({ type: '*/*', limit: '10mb' }), async (req, res) => {
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    if (!supabaseAdmin) return res.status(503).json({ error: 'Photo storage is not configured on this server yet.' });
+    const update = await getMarketUpdateById(id);
+    if (!update) return res.status(404).json({ error: 'Update not found.' });
+    if ((update.images || []).length >= MARKETS_MAX_IMAGES) {
+      return res.status(400).json({ error: `Up to ${MARKETS_MAX_IMAGES} screenshots per update.` });
+    }
+    const contentType = (req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+    const ext = MARKETS_MIME_EXT[contentType];
+    if (!ext) return res.status(400).json({ error: 'Only JPEG, PNG or WebP images are accepted.' });
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+      return res.status(400).json({ error: 'No file data received.' });
+    }
+    const objectPath = id + '/' + Date.now() + '-' + crypto.randomUUID() + '.' + ext;
+    const { error } = await supabaseAdmin.storage.from(MARKETS_BUCKET).upload(objectPath, req.body, { contentType, upsert: true });
+    if (error) return res.status(502).json({ error: 'Upload to storage failed.', details: error.message });
+    const updated = await addMarketUpdateImage(id, { path: objectPath, mime: contentType });
+    return res.json({ update: updated });
+  });
+
+  app.delete('/api/markets/:id', async (req, res) => {
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const removed = await deleteMarketUpdate(id);
+    if (!removed) return res.status(404).json({ error: 'Update not found.' });
+    if (supabaseAdmin && Array.isArray(removed.images) && removed.images.length) {
+      await supabaseAdmin.storage.from(MARKETS_BUCKET).remove(removed.images.map((img) => img.path)).catch(() => {});
+    }
+    return res.json({ ok: true });
+  });
+
+  // Same redirect-to-Storage pattern as /news-photo above. :index picks
+  // which of an update's (possibly several) screenshots to serve.
+  app.get('/market-photo/:id/:index', async (req, res) => {
+    const id = Number(req.params.id);
+    const index = Number(req.params.index);
+    if (!Number.isInteger(id) || !Number.isInteger(index)) return res.status(400).end();
+    if (!supabaseAdmin) return res.status(503).end();
+    const update = await getMarketUpdateById(id);
+    const image = update && Array.isArray(update.images) ? update.images[index] : null;
+    if (!image) return res.status(404).end();
+    const { data } = supabaseAdmin.storage.from(MARKETS_BUCKET).getPublicUrl(image.path);
+    return res.redirect(302, data.publicUrl);
+  });
+
   app.get('/api/admin/users', async (req, res) => {
     const incomingKey = req.headers['x-admin-key'];
     if (incomingKey !== ADMIN_KEY) {
@@ -5317,6 +5532,22 @@ function createApp(overrides = {}) {
 
   app.get('/chat.html', (req, res) => {
     return res.sendFile(path.join(__dirname, 'chat.html'));
+  });
+
+  app.get('/markets', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'markets.html'));
+  });
+
+  app.get('/markets.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'markets.html'));
+  });
+
+  app.get('/markets/admin', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'markets-admin.html'));
+  });
+
+  app.get('/markets/admin.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'markets-admin.html'));
   });
 
   app.get('/poker', (req, res) => {
@@ -5576,6 +5807,7 @@ function createApp(overrides = {}) {
     ensureMoviesBucket,
     ensureAnimeBucket,
     ensureStudyBuddyBucket,
+    ensureMarketsBucket,
     ensureStripeProduct,
     ensureDiaryStripeProduct,
   };
@@ -5619,6 +5851,10 @@ if (require.main === module) {
   appState.ensureStudyBuddyBucket().then((bucketStatus) => {
     if (bucketStatus.ok) console.log('Supabase Storage: study-buddy-photos bucket ready.');
     else console.log('Supabase Storage not active for Study Buddy photos (' + bucketStatus.reason + ') — uploads would not persist.');
+  });
+  appState.ensureMarketsBucket().then((bucketStatus) => {
+    if (bucketStatus.ok) console.log('Supabase Storage: market-screenshots bucket ready.');
+    else console.log('Supabase Storage not active for The Markets (' + bucketStatus.reason + ') — screenshots would not persist.');
   });
   appState.ensureStripeProduct().then((stripeStatus) => {
     if (stripeStatus.ok) console.log('Stripe: Premium product/prices ready.');

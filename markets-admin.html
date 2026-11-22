@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>The Markets — Admin</title>
+<style>
+:root{
+  --bg:#0a0f1d;--panel:#121b2f;--text:#eef3ff;--muted:#9bb0d3;
+  --gold:#3fd17a;--accent:#7cc7ff;--danger:#ff7a7a;--good:#6fd79a;--border:rgba(255,255,255,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(180deg,#0a0f1d 0%,#0f172a 100%);color:var(--text);min-height:100vh}
+.shell{max-width:640px;margin:0 auto;padding:28px 18px 80px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px}
+.brand{font-size:1.25rem;font-weight:700}
+.brand span{color:var(--gold)}
+a{color:var(--accent);text-decoration:none;font-size:13px}
+.panel{background:rgba(18,27,47,.9);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+label{display:block;font-size:12.5px;color:var(--muted);margin:0 0 6px;font-weight:600}
+input[type=password],input[type=text],textarea,input[type=file]{width:100%;padding:11px 13px;border-radius:10px;border:1px solid var(--border);background:rgba(10,15,29,.8);color:var(--text);font-size:14px;outline:none;font-family:inherit;margin-bottom:14px}
+textarea{min-height:120px;resize:vertical}
+input:focus,textarea:focus{border-color:var(--gold)}
+button{border:0;border-radius:10px;background:linear-gradient(135deg,var(--gold),#2bb563);color:#06170e;font-weight:700;padding:11px 16px;cursor:pointer;font-size:13.5px}
+button.secondary{background:rgba(255,255,255,.08);color:var(--text)}
+button.danger{background:rgba(255,122,122,.15);color:var(--danger)}
+.actions{display:flex;gap:10px;margin-top:4px}
+.msg{font-size:13px;margin-top:10px;min-height:16px}
+.msg.bad{color:var(--danger)}
+.msg.good{color:var(--good)}
+.hidden{display:none}
+.empty{color:var(--muted);font-size:13px;text-align:center;padding:30px 0}
+
+.postCard{border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:12px}
+.postHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
+.postTitle{font-weight:700;font-size:15px}
+.postTime{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.postBody{font-size:13.5px;line-height:1.6;color:#dbe4f3;white-space:pre-wrap;word-break:break-word;margin-bottom:10px}
+.shotRow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.shotRow img{width:70px;height:50px;object-fit:cover;border-radius:6px}
+.postBtns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.postBtns button{padding:6px 12px;font-size:12px}
+.addShotInput{display:none}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="brand">The <span>Markets</span> — Admin</div>
+    <a href="/markets">View feed →</a>
+  </div>
+
+  <div class="panel" id="lockPanel">
+    <label>Admin key</label>
+    <input type="password" id="adminKeyInput" placeholder="Admin key">
+    <div class="actions"><button id="unlockBtn">Unlock</button></div>
+    <div class="msg bad" id="lockMsg"></div>
+  </div>
+
+  <div id="adminArea" class="hidden">
+    <div class="panel">
+      <label>Title</label>
+      <input type="text" id="titleInput" maxlength="140" placeholder="e.g. Market Update — Nov 22">
+      <label>Commentary</label>
+      <textarea id="bodyInput" maxlength="4000" placeholder="What happened today..."></textarea>
+      <label>Screenshots (optional, up to 10)</label>
+      <input type="file" id="photoInput" accept="image/jpeg,image/png,image/webp" multiple>
+      <div class="actions"><button id="postBtn">Post update</button></div>
+      <div class="msg" id="postMsg"></div>
+    </div>
+
+    <div id="postList"><div class="empty">Loading…</div></div>
+  </div>
+</div>
+
+<script>
+let adminKey = '';
+let posts = [];
+
+const lockPanel = document.getElementById('lockPanel');
+const adminArea = document.getElementById('adminArea');
+const lockMsg = document.getElementById('lockMsg');
+
+document.getElementById('unlockBtn').onclick = async () => {
+  adminKey = document.getElementById('adminKeyInput').value.trim();
+  if(!adminKey){ lockMsg.textContent = 'Enter the admin key.'; return; }
+  const ok = await loadPosts();
+  if(ok){
+    lockPanel.classList.add('hidden');
+    adminArea.classList.remove('hidden');
+  }
+};
+
+function esc(s){ return String(s === undefined || s === null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtTime(iso){
+  try{ return new Date(iso).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}); }
+  catch(e){ return iso; }
+}
+
+async function loadPosts(){
+  try{
+    const resp = await fetch('/api/markets?limit=100', { headers: { 'x-admin-key': adminKey } });
+    if(resp.status === 401){ lockMsg.textContent = 'Incorrect admin key.'; adminKey = ''; return false; }
+    const data = await resp.json();
+    posts = data.updates || [];
+    renderPosts();
+    return true;
+  }catch(e){
+    lockMsg.textContent = 'Network error.';
+    return false;
+  }
+}
+
+function renderPosts(){
+  const list = document.getElementById('postList');
+  if(!posts.length){ list.innerHTML = '<div class="empty">No updates posted yet.</div>'; return; }
+  list.innerHTML = posts.map((p) => `
+    <div class="postCard">
+      <div class="postHead">
+        <div class="postTitle">${esc(p.title)}</div>
+        <div class="postTime">${esc(fmtTime(p.createdAt))}</div>
+      </div>
+      ${p.body ? `<div class="postBody">${esc(p.body)}</div>` : ''}
+      ${(p.images && p.images.length) ? `
+        <div class="shotRow">
+          ${p.images.map((img, i) => `<img src="/market-photo/${p.id}/${i}">`).join('')}
+        </div>
+      ` : ''}
+      <div class="postBtns">
+        <button class="secondary" data-add-shot="${p.id}">+ Add screenshot</button>
+        <input type="file" class="addShotInput" id="addShotInput-${p.id}" accept="image/jpeg,image/png,image/webp">
+        <button class="danger" data-delete="${p.id}">Delete</button>
+      </div>
+    </div>
+  `).join('');
+
+  list.querySelectorAll('[data-delete]').forEach((btn) => {
+    btn.onclick = () => deletePost(btn.dataset.delete);
+  });
+  list.querySelectorAll('[data-add-shot]').forEach((btn) => {
+    btn.onclick = () => document.getElementById('addShotInput-' + btn.dataset.addShot).click();
+  });
+  list.querySelectorAll('.addShotInput').forEach((input) => {
+    input.onchange = async () => {
+      const id = input.id.replace('addShotInput-', '');
+      const file = input.files[0];
+      if(!file) return;
+      await uploadPhoto(id, file);
+      loadPosts();
+    };
+  });
+}
+
+async function uploadPhoto(id, file){
+  const buf = await file.arrayBuffer();
+  return fetch('/api/markets/' + id + '/photos', {
+    method: 'POST',
+    headers: { 'Content-Type': file.type, 'x-admin-key': adminKey },
+    body: buf,
+  });
+}
+
+document.getElementById('postBtn').onclick = async () => {
+  const postMsg = document.getElementById('postMsg');
+  postMsg.textContent = ''; postMsg.className = 'msg';
+  const title = document.getElementById('titleInput').value.trim();
+  const body = document.getElementById('bodyInput').value.trim();
+  if(!title){ postMsg.textContent = 'Title is required.'; postMsg.className = 'msg bad'; return; }
+
+  try{
+    const resp = await fetch('/api/markets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+      body: JSON.stringify({ title, body }),
+    });
+    const data = await resp.json();
+    if(!resp.ok){ postMsg.textContent = data.error || 'Could not post.'; postMsg.className = 'msg bad'; return; }
+
+    const files = [...document.getElementById('photoInput').files];
+    for(const file of files){
+      await uploadPhoto(data.update.id, file);
+    }
+
+    postMsg.textContent = 'Posted.'; postMsg.className = 'msg good';
+    document.getElementById('titleInput').value = '';
+    document.getElementById('bodyInput').value = '';
+    document.getElementById('photoInput').value = '';
+    loadPosts();
+  }catch(e){
+    postMsg.textContent = 'Network error.'; postMsg.className = 'msg bad';
+  }
+};
+
+async function deletePost(id){
+  if(!confirm('Delete this update? This can\'t be undone.')) return;
+  await fetch('/api/markets/' + id, {
+    method: 'DELETE',
+    headers: { 'x-admin-key': adminKey },
+  });
+  loadPosts();
+}
+</script>
+</body>
+</html>
