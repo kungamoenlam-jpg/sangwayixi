@@ -1,4 +1,4 @@
-<title>Kunga's Notebook</title>
+<title>Notebook</title>
 <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Pacifico&family=Ma+Shan+Zheng&family=Caveat&family=Dancing+Script&family=Playfair+Display&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -345,7 +345,7 @@ body.booklet #planPanel{top:auto;bottom:16px;left:16px;right:16px;width:auto;max
 </style>
 <div class="wrap">
   <header>
-    <h1 id="title" aria-label="Kunga's Notebook"></h1>
+    <h1 id="title" aria-label="Notebook"></h1>
     <div class="actions">
       <span id="sync" aria-live="polite">Saved on this device</span>
       <span id="status" role="status" aria-live="polite"></span>
@@ -406,7 +406,7 @@ body.booklet #planPanel{top:auto;bottom:16px;left:16px;right:16px;width:auto;max
       <button type="button" data-z="1" title="Bigger text (Ctrl + Shift + .)" aria-label="Bigger text">A+</button>
     </div>
     <button class="plain" id="bookletToggle" type="button" aria-pressed="false" title="Show this page and the next one side by side">📖 Booklet view</button>
-    <button class="plain" id="diaryToggle" type="button" hidden aria-pressed="false" title="A personal diary, separate from your subject notes. Keep entries private, or mark them public on kunga.me/diary.">📔 Kunga's Diary</button>
+    <button class="plain" id="diaryToggle" type="button" hidden aria-pressed="false" title="A personal diary, separate from your subject notes. Keep entries private, or mark them public on kunga.me/diary.">📔 Diary</button>
     <div id="ink">
       <div class="seg" id="pens" role="group" aria-label="Pen">
         <button type="button" data-k="rainbow"><i class="pen-dot" style="background:linear-gradient(90deg,#ff2d95,#ff7a00,#0fa05f,#1a7fff,#8b4dff)"></i>Rainbow</button>
@@ -482,7 +482,7 @@ body.booklet #planPanel{top:auto;bottom:16px;left:16px;right:16px;width:auto;max
   </section>
   <section id="diarySec" hidden>
     <div class="diaryTop">
-      <h3>📔 Kunga's Diary</h3>
+      <h3>📔 Diary</h3>
       <button type="button" class="plain" id="diaryCloseBtn">✕ Back to notebook</button>
     </div>
     <p class="hint">A personal diary, separate from your subject notes. Entries stay private until you mark one public -- public entries show up, read-only, at <a href="/diary" target="_blank" rel="noopener">kunga.me/diary</a>.</p>
@@ -688,7 +688,7 @@ function paint(el,text){
   }
   el.replaceChildren(f);
 }
-paint($('title'),"Kunga's Notebook");
+paint($('title'),"Notebook");
 
 const toHtml=s=>s.split('\n').map(l=>'<div>'+(l.replace(/&/g,'&amp;').replace(/</g,'&lt;')||'<br>')+'</div>').join('');
 const plainOf=h=>(h||'').replace(/<[^>]*>|&nbsp;|​/g,'').trim();
@@ -2042,7 +2042,7 @@ function prettyHtml(){
   const G=['--z','--fs','--lh','--ls','--pad'].map(k=>k+':'+cs.getPropertyValue(k)).join(';');
   const w=lines.clientWidth,h=lines.clientHeight;
   const img=state.strokes.length?`<img alt="" src="${c.toDataURL()}" style="position:absolute;left:0;top:0;width:${w}px;height:${h}px">`:'';
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Kunga's Notebook</title>
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Notebook</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="${document.querySelector('link[rel=stylesheet]').href}" rel="stylesheet">
 <style>:root{${V}}body{margin:0;padding:24px 12px;background:var(--desk)}
@@ -2367,7 +2367,7 @@ function beep(){
 function showTimerAlert(msg){
   beep();
   if('Notification' in window&&Notification.permission==='granted'){
-    try{new Notification("Kunga's Notebook",{body:msg});}catch(e){}
+    try{new Notification("Notebook",{body:msg});}catch(e){}
   }
   $('timerAlertMsg').textContent=msg;$('timerAlert').hidden=false;
   clearTimeout(alertT);alertT=setTimeout(()=>{$('timerAlert').hidden=true;},15000);
