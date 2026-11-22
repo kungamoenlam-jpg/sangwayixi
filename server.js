@@ -227,6 +227,7 @@ function createApp(overrides = {}) {
   const AI_BF_FILE = overrides.aiBfFile || path.join(__dirname, 'data', 'ai-bf.json');
   const CHAT_FILE = overrides.chatFile || path.join(__dirname, 'data', 'chat.json');
   const MARKETS_FILE = overrides.marketsFile || path.join(__dirname, 'data', 'markets.json');
+  const FEED_FILE = overrides.feedFile || path.join(__dirname, 'data', 'feed.json');
   const ADMIN_KEY = overrides.adminKey || process.env.ADMIN_KEY || 'sangwa-admin-key';
   const DATABASE_URL = overrides.databaseUrl || process.env.DATABASE_URL || null;
   const SUPABASE_URL = process.env.SUPABASE_URL || null;
@@ -416,6 +417,7 @@ function createApp(overrides = {}) {
   const ANIME_BUCKET = 'anime-portraits';
   const STUDY_BUDDY_BUCKET = 'study-buddy-photos';
   const MARKETS_BUCKET = 'market-screenshots';
+  const FEED_BUCKET = 'feed-photos';
   const supabaseAdmin = (SUPABASE_PROJECT_URL && SUPABASE_SERVICE_ROLE_KEY)
     ? createClient(SUPABASE_PROJECT_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } })
     : null;
@@ -443,6 +445,7 @@ function createApp(overrides = {}) {
   const ensureAnimeBucket = () => ensureBucket(ANIME_BUCKET);
   const ensureStudyBuddyBucket = () => ensureBucket(STUDY_BUDDY_BUCKET);
   const ensureMarketsBucket = () => ensureBucket(MARKETS_BUCKET);
+  const ensureFeedBucket = () => ensureBucket(FEED_BUCKET);
 
   // High-quality neural voices: British English + Beijing-standard Mandarin, one
   // male and one female each. Mandarin uses Azure's newer "Multilingual" neural
@@ -770,6 +773,30 @@ function createApp(overrides = {}) {
         body text,
         images jsonb not null default '[]'::jsonb,
         created_at timestamptz default now()
+      );
+    `);
+    // Kunga's Feed: users post a photo of themselves + a caption; anyone
+    // can like any post. feed_likes is a separate table (one row per
+    // like, unique per post+username) rather than a counter column, so
+    // "did I already like this" and "unlike" are simple lookups/deletes
+    // instead of needing to track per-user state inside the post row.
+    await client.query(`
+      create table if not exists public.feed_posts (
+        id serial primary key,
+        username text not null,
+        caption text,
+        photo_path text,
+        photo_mime text,
+        created_at timestamptz default now()
+      );
+    `);
+    await client.query(`
+      create table if not exists public.feed_likes (
+        id serial primary key,
+        post_id integer not null,
+        username text not null,
+        created_at timestamptz default now(),
+        unique (post_id, username)
       );
     `);
     databaseReady = true;
@@ -2791,6 +2818,156 @@ function createApp(overrides = {}) {
     if (idx === -1) return null;
     const [removed] = data.updates.splice(idx, 1);
     writeMarketsFile(data);
+    return removed;
+  }
+
+  function ensureFeedFile() {
+    const dir = path.dirname(FEED_FILE);
+    fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(FEED_FILE)) {
+      fs.writeFileSync(FEED_FILE, JSON.stringify({ nextPostId: 1, posts: [], likes: [] }, null, 2), 'utf8');
+    }
+  }
+  function readFeedFile() {
+    ensureFeedFile();
+    try {
+      const parsed = JSON.parse(fs.readFileSync(FEED_FILE, 'utf8'));
+      return {
+        nextPostId: parsed.nextPostId || 1,
+        posts: Array.isArray(parsed.posts) ? parsed.posts : [],
+        likes: Array.isArray(parsed.likes) ? parsed.likes : [],
+      };
+    } catch (error) {
+      return { nextPostId: 1, posts: [], likes: [] };
+    }
+  }
+  function writeFeedFile(data) {
+    ensureFeedFile();
+    fs.writeFileSync(FEED_FILE, JSON.stringify(data, null, 2), 'utf8');
+  }
+
+  async function createFeedPost({ username, caption }) {
+    const client = await getDbClient();
+    const createdAt = new Date().toISOString();
+    if (client) {
+      const result = await client.query(
+        `insert into public.feed_posts (username, caption, created_at) values ($1,$2,$3)
+         returning id, username, caption, photo_path as "photoPath", photo_mime as "photoMime", created_at as "createdAt"`,
+        [username, caption, createdAt]
+      );
+      return result.rows[0];
+    }
+    const data = readFeedFile();
+    const post = { id: data.nextPostId, username, caption, photoPath: null, photoMime: null, createdAt };
+    data.posts.push(post);
+    data.nextPostId += 1;
+    writeFeedFile(data);
+    return post;
+  }
+
+  async function getFeedPostById(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select id, username, caption, photo_path as "photoPath", photo_mime as "photoMime", created_at as "createdAt"
+         from public.feed_posts where id=$1`,
+        [id]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readFeedFile();
+    return data.posts.find((p) => String(p.id) === String(id)) || null;
+  }
+
+  async function setFeedPostPhoto(id, { photoPath, photoMime }) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `update public.feed_posts set photo_path=$2, photo_mime=$3 where id=$1
+         returning id, username, caption, photo_path as "photoPath", photo_mime as "photoMime", created_at as "createdAt"`,
+        [id, photoPath, photoMime]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readFeedFile();
+    const post = data.posts.find((p) => String(p.id) === String(id));
+    if (!post) return null;
+    post.photoPath = photoPath;
+    post.photoMime = photoMime;
+    writeFeedFile(data);
+    return post;
+  }
+
+  async function listFeedPosts(viewerUsername, limit) {
+    const client = await getDbClient();
+    const viewer = String(viewerUsername || '');
+    if (client) {
+      const result = await client.query(
+        `select p.id, p.username, p.caption, p.photo_path as "photoPath", p.photo_mime as "photoMime", p.created_at as "createdAt",
+                (select count(*)::int from public.feed_likes l where l.post_id = p.id) as "likeCount",
+                exists(select 1 from public.feed_likes l2 where l2.post_id = p.id and lower(l2.username) = lower($1)) as "likedByMe"
+         from public.feed_posts p
+         where p.photo_path is not null
+         order by p.created_at desc limit $2`,
+        [viewer, limit]
+      );
+      return result.rows;
+    }
+    const data = readFeedFile();
+    return data.posts
+      .filter((p) => p.photoPath)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, limit)
+      .map((p) => ({
+        ...p,
+        likeCount: data.likes.filter((l) => String(l.postId) === String(p.id)).length,
+        likedByMe: viewer ? data.likes.some((l) => String(l.postId) === String(p.id) && l.username.toLowerCase() === viewer.toLowerCase()) : false,
+      }));
+  }
+
+  async function toggleFeedLike(postId, username) {
+    const client = await getDbClient();
+    if (client) {
+      const existing = await client.query(
+        `select id from public.feed_likes where post_id=$1 and lower(username)=lower($2)`,
+        [postId, username]
+      );
+      if (existing.rows[0]) {
+        await client.query(`delete from public.feed_likes where id=$1`, [existing.rows[0].id]);
+      } else {
+        await client.query(`insert into public.feed_likes (post_id, username, created_at) values ($1,$2,$3)`, [postId, username, new Date().toISOString()]);
+      }
+      const countResult = await client.query(`select count(*)::int as count from public.feed_likes where post_id=$1`, [postId]);
+      return { liked: !existing.rows[0], likeCount: countResult.rows[0].count };
+    }
+    const data = readFeedFile();
+    const idx = data.likes.findIndex((l) => String(l.postId) === String(postId) && l.username.toLowerCase() === username.toLowerCase());
+    let liked;
+    if (idx === -1) {
+      data.likes.push({ postId, username, createdAt: new Date().toISOString() });
+      liked = true;
+    } else {
+      data.likes.splice(idx, 1);
+      liked = false;
+    }
+    writeFeedFile(data);
+    const likeCount = data.likes.filter((l) => String(l.postId) === String(postId)).length;
+    return { liked, likeCount };
+  }
+
+  async function deleteFeedPost(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(`delete from public.feed_posts where id=$1 returning photo_path as "photoPath"`, [id]);
+      if (result.rows[0]) await client.query(`delete from public.feed_likes where post_id=$1`, [id]);
+      return result.rows[0] || null;
+    }
+    const data = readFeedFile();
+    const idx = data.posts.findIndex((p) => String(p.id) === String(id));
+    if (idx === -1) return null;
+    const [removed] = data.posts.splice(idx, 1);
+    data.likes = data.likes.filter((l) => String(l.postId) !== String(id));
+    writeFeedFile(data);
     return removed;
   }
 
@@ -5356,6 +5533,87 @@ function createApp(overrides = {}) {
     return res.redirect(302, data.publicUrl);
   });
 
+  // ---- Kunga's Feed: users post a photo of themselves + caption; anyone
+  // can like anyone's post. Same two-step create-row-then-upload-binary
+  // pattern as Clips, and the same "trust the client's username" model as
+  // the rest of this file -- this is a normal user-to-user social feature,
+  // not published/owner-only content like The Markets.
+  const FEED_CAPTION_MAX = 280;
+  const FEED_MIME_EXT = { 'image/jpeg': 'jpg', 'image/jpg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+
+  app.get('/api/feed', async (req, res) => {
+    const limit = Math.min(Number(req.query.limit) || 50, 100);
+    const posts = await listFeedPosts(req.query.username, limit);
+    return res.json({ posts });
+  });
+
+  app.post('/api/feed', async (req, res) => {
+    const { username, caption } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'Log in on kunga.me first.' });
+    const cleanCaption = String(caption || '').trim().slice(0, FEED_CAPTION_MAX);
+    const post = await createFeedPost({ username: user.username, caption: cleanCaption });
+    return res.json({ post });
+  });
+
+  app.post('/api/feed/:id/photo', express.raw({ type: '*/*', limit: '8mb' }), async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    if (!supabaseAdmin) return res.status(503).json({ error: 'Photo storage is not configured on this server yet.' });
+    const post = await getFeedPostById(id);
+    if (!post) return res.status(404).json({ error: 'Post not found.' });
+    if (post.photoPath) return res.status(409).json({ error: 'This post already has a photo.' });
+    const contentType = (req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+    const ext = FEED_MIME_EXT[contentType];
+    if (!ext) return res.status(400).json({ error: 'Only JPEG, PNG or WebP images are accepted.' });
+    if (!Buffer.isBuffer(req.body) || req.body.length === 0) return res.status(400).json({ error: 'No file data received.' });
+    const objectPath = id + '.' + ext;
+    const { error } = await supabaseAdmin.storage.from(FEED_BUCKET).upload(objectPath, req.body, { contentType, upsert: true });
+    if (error) return res.status(502).json({ error: 'Upload to storage failed.', details: error.message });
+    const updated = await setFeedPostPhoto(id, { photoPath: objectPath, photoMime: contentType });
+    if (!updated) return res.status(409).json({ error: 'This post already has a photo.' });
+    return res.json({ post: updated });
+  });
+
+  app.post('/api/feed/:id/like', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const { username } = req.body || {};
+    const user = await findUserByUsername(username);
+    if (!user) return res.status(404).json({ error: 'Log in on kunga.me first.' });
+    const post = await getFeedPostById(id);
+    if (!post) return res.status(404).json({ error: 'Post not found.' });
+    const result = await toggleFeedLike(id, user.username);
+    return res.json(result);
+  });
+
+  app.post('/api/feed/:id/delete', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const post = await getFeedPostById(id);
+    if (!post) return res.status(404).json({ error: 'Post not found.' });
+    const { username } = req.body || {};
+    const isOwner = username && String(username).toLowerCase() === String(post.username).toLowerCase();
+    const isAdmin = req.headers['x-admin-key'] === ADMIN_KEY;
+    if (!isOwner && !isAdmin) return res.status(403).json({ error: 'Only the poster or an admin can delete this.' });
+    const removed = await deleteFeedPost(id);
+    if (removed && removed.photoPath && supabaseAdmin) {
+      await supabaseAdmin.storage.from(FEED_BUCKET).remove([removed.photoPath]).catch(() => {});
+    }
+    return res.json({ ok: true });
+  });
+
+  // Same redirect-to-Storage pattern as /news-photo and /market-photo.
+  app.get('/feed-photo/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).end();
+    if (!supabaseAdmin) return res.status(503).end();
+    const post = await getFeedPostById(id);
+    if (!post || !post.photoPath) return res.status(404).end();
+    const { data } = supabaseAdmin.storage.from(FEED_BUCKET).getPublicUrl(post.photoPath);
+    return res.redirect(302, data.publicUrl);
+  });
+
   app.get('/api/admin/users', async (req, res) => {
     const incomingKey = req.headers['x-admin-key'];
     if (incomingKey !== ADMIN_KEY) {
@@ -5548,6 +5806,14 @@ function createApp(overrides = {}) {
 
   app.get('/markets/admin.html', (req, res) => {
     return res.sendFile(path.join(__dirname, 'markets-admin.html'));
+  });
+
+  app.get('/feed', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'feed.html'));
+  });
+
+  app.get('/feed.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'feed.html'));
   });
 
   app.get('/poker', (req, res) => {
@@ -5808,6 +6074,7 @@ function createApp(overrides = {}) {
     ensureAnimeBucket,
     ensureStudyBuddyBucket,
     ensureMarketsBucket,
+    ensureFeedBucket,
     ensureStripeProduct,
     ensureDiaryStripeProduct,
   };
@@ -5855,6 +6122,10 @@ if (require.main === module) {
   appState.ensureMarketsBucket().then((bucketStatus) => {
     if (bucketStatus.ok) console.log('Supabase Storage: market-screenshots bucket ready.');
     else console.log('Supabase Storage not active for The Markets (' + bucketStatus.reason + ') — screenshots would not persist.');
+  });
+  appState.ensureFeedBucket().then((bucketStatus) => {
+    if (bucketStatus.ok) console.log('Supabase Storage: feed-photos bucket ready.');
+    else console.log('Supabase Storage not active for Kunga\'s Feed (' + bucketStatus.reason + ') — photos would not persist.');
   });
   appState.ensureStripeProduct().then((stripeStatus) => {
     if (stripeStatus.ok) console.log('Stripe: Premium product/prices ready.');
