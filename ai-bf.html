@@ -3,33 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>AI Boyfriend</title>
-<meta name="description" content="A warm, supportive AI companion to talk to about your day — not a real person, just here to listen.">
+<title>My AI Assistant</title>
+<meta name="description" content="A helpful AI assistant to talk to about everyday questions, schoolwork, and advice — not a real person.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#1f1210;--ink:#fdf3ef;--muted:#caa59a;--accent:#e8828a;--accent2:#b8564f;
+  --bg:#11152a;--ink:#eef0fb;--muted:#9aa3c7;--accent:#6c8ef5;--accent2:#3451b5;
   --good:#3FAE72;--bad:#ff8a8a;--font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
-body{margin:0;background:radial-gradient(circle at 50% 0%,#3a201c,#1f1210 60%);color:var(--ink);font-family:var(--font-body)}
+body{margin:0;background:radial-gradient(circle at 50% 0%,#1d2550,#11152a 60%);color:var(--ink);font-family:var(--font-body)}
 
 .loginWrap{max-width:480px;margin:0 auto;padding:10px 18px}
-.topBar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:calc(14px + env(safe-area-inset-top,0px)) 18px 14px;background:rgba(31,18,16,.88);backdrop-filter:blur(8px)}
+.topBar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:calc(14px + env(safe-area-inset-top,0px)) 18px 14px;background:rgba(17,21,42,.88);backdrop-filter:blur(8px)}
 .brand{font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--ink);text-decoration:none}
 .loginNudge{text-align:center;color:var(--muted);font-size:13.5px;padding:60px 10px;line-height:1.7}
 .loginNudge a{color:var(--accent);font-weight:600}
-
-/* ---- naming step ---- */
-.nameWrap{max-width:420px;margin:0 auto;padding:60px 24px}
-.nameWrap h1{font-family:var(--font-display);font-weight:800;font-size:26px;margin:0 0 10px;text-align:center;background:linear-gradient(90deg,#ffd6cf,var(--accent) 60%,var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
-.nameWrap p{color:var(--muted);font-size:14px;text-align:center;line-height:1.6;margin:0 0 24px}
-input#bfNameInput{width:100%;font-family:var(--font-body);font-size:16px;padding:14px 16px;border-radius:14px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);outline:none;text-align:center;margin-bottom:16px}
-.primaryBtn{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:100%;text-align:center;font-family:var(--font-display);font-weight:700;font-size:16px;padding:16px;border-radius:14px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#2a0f0c}
-.disclosureNote{font-size:11.5px;color:var(--muted);text-align:center;margin-top:18px;line-height:1.6}
 
 /* ---- chat view ---- */
 .chatShell{height:100vh;display:flex;flex-direction:column}
@@ -40,7 +32,7 @@ input#bfNameInput{width:100%;font-family:var(--font-body);font-size:16px;padding
 .chatBfName{font-size:15px;font-weight:700}
 .chatBfSub{font-size:10.5px;color:var(--muted)}
 .chatMenuBtn{all:unset;cursor:pointer;font-size:18px;color:var(--muted);padding:4px;position:relative}
-.chatMenu{position:absolute;top:56px;right:16px;background:#2a1714;border:1px solid rgba(255,255,255,.1);border-radius:10px;overflow:hidden;z-index:30;display:none}
+.chatMenu{position:absolute;top:56px;right:16px;background:#1a1f3f;border:1px solid rgba(255,255,255,.1);border-radius:10px;overflow:hidden;z-index:30;display:none}
 .chatMenu.open{display:block}
 .chatMenuItem{all:unset;box-sizing:border-box;cursor:pointer;display:block;width:170px;padding:11px 14px;font-size:13px;color:var(--ink)}
 .chatMenuItem.danger{color:var(--bad)}
@@ -50,7 +42,7 @@ input#bfNameInput{width:100%;font-family:var(--font-body);font-size:16px;padding
 .msgRow{display:flex;margin-bottom:10px}
 .msgRow.mine{justify-content:flex-end}
 .msgBubble{max-width:75%;padding:10px 14px;border-radius:16px;font-size:14.5px;line-height:1.5;white-space:pre-wrap}
-.msgRow.mine .msgBubble{background:var(--accent);color:#2a0f0c;border-bottom-right-radius:4px}
+.msgRow.mine .msgBubble{background:var(--accent);color:#0b1230;border-bottom-right-radius:4px}
 .msgRow.theirs .msgBubble{background:rgba(255,255,255,.08);color:var(--ink);border-bottom-left-radius:4px}
 .typingBubble{background:rgba(255,255,255,.08);border-radius:16px;border-bottom-left-radius:4px;padding:12px 16px;display:inline-flex;gap:4px}
 .typingDot{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:typingBounce 1.2s infinite}
@@ -61,7 +53,7 @@ input#bfNameInput{width:100%;font-family:var(--font-body);font-size:16px;padding
 .errorNote{font-size:12px;color:var(--bad);text-align:center;margin-bottom:8px}
 .msgInputRow{display:flex;gap:8px}
 .msgInputRow input{flex:1;font-size:14px;padding:12px 14px;border-radius:999px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);outline:none}
-.sendBtn{all:unset;cursor:pointer;width:42px;height:42px;border-radius:50%;background:var(--accent);color:#2a0f0c;display:grid;place-items:center;font-size:16px;flex:0 0 auto}
+.sendBtn{all:unset;cursor:pointer;width:42px;height:42px;border-radius:50%;background:var(--accent);color:#0b1230;display:grid;place-items:center;font-size:16px;flex:0 0 auto}
 .sendBtn:disabled{opacity:.4;cursor:default}
 </style>
 </head>
@@ -69,7 +61,7 @@ input#bfNameInput{width:100%;font-family:var(--font-body);font-size:16px;padding
 
 <div class="topBar">
   <a class="brand" href="/">← kunga.me</a>
-  <span class="brand" style="color:var(--muted);font-weight:600">AI BOYFRIEND</span>
+  <span class="brand" style="color:var(--muted);font-weight:600">MY AI ASSISTANT</span>
 </div>
 
 <div id="content"><div class="loginWrap"><div class="loginNudge">Loading…</div></div></div>
@@ -85,7 +77,6 @@ function currentUser(){
 function esc(s){ return String(s === undefined || s === null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 const content = document.getElementById('content');
-let bfName = 'Alex';
 let sending = false;
 
 async function init(){
@@ -94,44 +85,9 @@ async function init(){
     content.innerHTML = `<div class="loginWrap"><div class="loginNudge">Log in on <a href="/">kunga.me</a> first, then come back to chat.</div></div>`;
     return;
   }
-  const resp = await fetch('/api/ai-bf/profile?username=' + encodeURIComponent(user));
-  const data = await resp.json();
-  const hasCustomName = data.profile && data.profile.bfName && data.profile.bfName !== 'Alex';
-  bfName = (data.profile && data.profile.bfName) || 'Alex';
-
   const messagesResp = await fetch('/api/ai-bf/messages?username=' + encodeURIComponent(user));
   const messagesData = await messagesResp.json();
-  const hasHistory = messagesData.messages && messagesData.messages.length > 0;
-
-  if(!hasCustomName && !hasHistory){
-    renderNameStep();
-  } else {
-    renderChat(messagesData.messages || []);
-  }
-}
-
-function renderNameStep(){
-  content.innerHTML = `
-    <div class="nameWrap">
-      <h1>Meet your AI Boyfriend</h1>
-      <p>A warm, supportive companion to talk to about your day, your wins, your worries — whatever's on your mind. What would you like to call him?</p>
-      <input type="text" id="bfNameInput" maxlength="40" placeholder="Alex" value="Alex">
-      <button class="primaryBtn" id="saveNameBtn">Start chatting</button>
-      <p class="disclosureNote">Heads up: this is an AI companion, not a real person. It's here to listen and chat — not for anything sexual or romantic-explicit.</p>
-    </div>
-  `;
-  const input = document.getElementById('bfNameInput');
-  input.focus();
-  input.select();
-  document.getElementById('saveNameBtn').onclick = async () => {
-    const name = input.value.trim() || 'Alex';
-    await fetch('/api/ai-bf/profile', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: currentUser(), bfName: name }),
-    });
-    bfName = name;
-    renderChat([]);
-  };
+  renderChat(messagesData.messages || []);
 }
 
 function renderChat(messages){
@@ -141,21 +97,20 @@ function renderChat(messages){
         <div class="chatTopLeft">
           <a class="chatBackBtn" href="/">←</a>
           <div class="chatBfInfo">
-            <div class="chatBfName">${esc(bfName)}</div>
-            <div class="chatBfSub">AI companion · not a real person</div>
+            <div class="chatBfName">My AI Assistant</div>
+            <div class="chatBfSub">AI assistant · not a real person</div>
           </div>
         </div>
         <button class="chatMenuBtn" id="chatMenuBtn">⋮</button>
       </div>
       <div class="chatMenu" id="chatMenu">
-        <button class="chatMenuItem" id="renameBtn">Rename</button>
         <button class="chatMenuItem danger" id="clearBtn">Clear conversation</button>
       </div>
       <div class="chatBody" id="chatBody"></div>
       <div class="chatBottom">
         <div id="errorNoteWrap"></div>
         <div class="msgInputRow">
-          <input type="text" id="msgInput" maxlength="2000" placeholder="Message ${esc(bfName)}…">
+          <input type="text" id="msgInput" maxlength="2000" placeholder="Ask your AI assistant…">
           <button class="sendBtn" id="sendBtn">➤</button>
         </div>
       </div>
@@ -164,10 +119,6 @@ function renderChat(messages){
   renderMessages(messages);
 
   document.getElementById('chatMenuBtn').onclick = () => document.getElementById('chatMenu').classList.toggle('open');
-  document.getElementById('renameBtn').onclick = () => {
-    document.getElementById('chatMenu').classList.remove('open');
-    renderNameStep();
-  };
   document.getElementById('clearBtn').onclick = async () => {
     document.getElementById('chatMenu').classList.remove('open');
     if(!confirm('Clear this whole conversation? This can\'t be undone.')) return;
@@ -186,7 +137,7 @@ function renderChat(messages){
 function renderMessages(messages){
   const body = document.getElementById('chatBody');
   if(!messages.length){
-    body.innerHTML = `<div class="emptyChat"><span class="glyph">💬</span>Say hi to ${esc(bfName)} — this is just the two of you.</div>`;
+    body.innerHTML = `<div class="emptyChat"><span class="glyph">🤖</span>Ask your AI assistant anything — homework help, advice, or just a question.</div>`;
     return;
   }
   body.innerHTML = messages.map((m) => `

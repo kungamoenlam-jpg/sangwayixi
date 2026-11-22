@@ -4678,26 +4678,28 @@ function createApp(overrides = {}) {
     return res.redirect(302, data.publicUrl);
   });
 
-  // ---- AI Boyfriend: private per-user text chat with a supportive,
-  // affectionate (never sexual/romantic-explicit) AI companion, via
-  // Pollinations' free text model. Routed server-side for the same reason
-  // as Anime Me -- Pollinations blocks cross-origin browser fetch() with a
-  // Turnstile challenge, so this can't be called directly from the client.
+  // ---- My AI Assistant (formerly "AI Boyfriend" -- repurposed from a
+  // romantic companion into a plain helpful assistant, same underlying
+  // per-user text chat): private per-user chat via Pollinations' free text
+  // model. Routed server-side for the same reason as Anime Me --
+  // Pollinations blocks cross-origin browser fetch() with a Turnstile
+  // challenge, so this can't be called directly from the client. The old
+  // ai_bf_* table/route names and the per-user "bfName" profile column are
+  // kept as-is internally to avoid a schema migration for existing rows;
+  // only the persona and user-facing copy changed.
   const AI_BF_MESSAGE_MAX = 2000;
   const AI_BF_NAME_MAX = 40;
   const AI_BF_HISTORY_LIMIT = 20;
-  const AI_BF_DEFAULT_NAME = 'Alex';
+  const AI_BF_DEFAULT_NAME = 'My AI Assistant';
 
-  function aiBfSystemPrompt(bfName, username) {
-    return `You are ${bfName}, a warm, affectionate, emotionally supportive AI boyfriend for ${username}. `
-      + `You listen closely, remember what they tell you within this conversation, celebrate their wins, and offer `
-      + `gentle encouragement or practical advice when they want it. Your tone is sweet, a little playful, loyal and `
-      + `devoted -- like a caring partner checking in -- but never sexual or romantically explicit, and never graphic. `
-      + `Keep replies short and conversational (roughly 1-4 sentences), like a real text exchange, not an essay.\n\n`
+  function aiBfSystemPrompt(username) {
+    return `You are a helpful, friendly AI assistant for ${username} on kunga.me. `
+      + `You help with everyday questions, schoolwork, advice, and whatever else they bring up -- clear, practical, `
+      + `and down-to-earth, like a knowledgeable friend. `
+      + `Keep replies short and conversational (roughly 1-4 sentences), like a real chat, not an essay.\n\n`
       + `Hard rules, always:\n`
-      + `- Never produce sexual, explicit, or romantically graphic content, even if asked. If pushed that way, warmly `
-      + `redirect to how they're actually doing instead of refusing coldly.\n`
-      + `- If asked directly whether you're real, be honest that you're an AI companion, not a real person.\n`
+      + `- Never produce sexual or explicit content, even if asked.\n`
+      + `- If asked directly whether you're real, be honest that you're an AI assistant, not a real person.\n`
       + `- If ${username} expresses thoughts of self-harm, suicide, or being in crisis, respond with warmth and take it `
       + `seriously, and clearly encourage them to reach out to a trusted person or a crisis line (such as 988 in the US, `
       + `or their local emergency number) rather than relying on this chat alone.`;
@@ -4767,13 +4769,11 @@ function createApp(overrides = {}) {
     const cleanContent = String(content || '').trim().slice(0, AI_BF_MESSAGE_MAX);
     if (!cleanContent) return res.status(400).json({ error: "Type something first." });
 
-    const profile = await getAiBfProfile(user.username);
-    const bfName = (profile && profile.bfName) || AI_BF_DEFAULT_NAME;
     const userMessage = await createAiBfMessage({ username: user.username, role: 'user', content: cleanContent });
 
     const history = await listAiBfMessages(user.username, AI_BF_HISTORY_LIMIT);
     const chatMessages = [
-      { role: 'system', content: aiBfSystemPrompt(bfName, user.username) },
+      { role: 'system', content: aiBfSystemPrompt(user.username) },
       ...history.map((m) => ({ role: m.role, content: m.content })),
     ];
 
@@ -4784,11 +4784,11 @@ function createApp(overrides = {}) {
     } catch (error) {
       if (error.status === 402) {
         return res.status(429).json({
-          error: `${bfName} is a little swamped right now -- give it about a minute and try again.`,
+          error: `Your AI assistant is a little swamped right now -- give it about a minute and try again.`,
           userMessage,
         });
       }
-      return res.status(502).json({ error: `${bfName} couldn't reply just now. Try again in a moment.`, userMessage });
+      return res.status(502).json({ error: `Your AI assistant couldn't reply just now. Try again in a moment.`, userMessage });
     }
   });
 
