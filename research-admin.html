@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Research — Admin</title>
+<style>
+:root{
+  --bg:#0a0f1d;--panel:#121b2f;--text:#eef3ff;--muted:#9bb0d3;
+  --gold:#b794f6;--accent:#7cc7ff;--danger:#ff7a7a;--good:#6fd79a;--border:rgba(255,255,255,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(180deg,#0a0f1d 0%,#0f172a 100%);color:var(--text);min-height:100vh}
+.shell{max-width:760px;margin:0 auto;padding:28px 18px 80px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px}
+.brand{font-size:1.25rem;font-weight:700}
+.brand span{color:var(--gold)}
+a{color:var(--accent);text-decoration:none;font-size:13px}
+.panel{background:rgba(18,27,47,.9);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:18px;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+label{display:block;font-size:12.5px;color:var(--muted);margin:0 0 6px;font-weight:600}
+input[type=password],input[type=text],input[type=date],textarea{width:100%;padding:11px 13px;border-radius:10px;border:1px solid var(--border);background:rgba(10,15,29,.8);color:var(--text);font-size:14px;outline:none;font-family:inherit;margin-bottom:14px}
+textarea{min-height:360px;resize:vertical;font-family:ui-monospace,monospace;font-size:13px;line-height:1.6}
+input:focus,textarea:focus{border-color:var(--gold)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+button{border:0;border-radius:10px;background:linear-gradient(135deg,var(--gold),#8b5cf6);color:#120a1f;font-weight:700;padding:11px 16px;cursor:pointer;font-size:13.5px}
+button.secondary{background:rgba(255,255,255,.08);color:var(--text)}
+button.danger{background:rgba(255,122,122,.15);color:var(--danger)}
+.actions{display:flex;gap:10px;margin-top:4px}
+.msg{font-size:13px;margin-top:10px;min-height:16px}
+.msg.bad{color:var(--danger)}
+.msg.good{color:var(--good)}
+.hidden{display:none}
+.empty{color:var(--muted);font-size:13px;text-align:center;padding:30px 0}
+.hint{font-size:11.5px;color:var(--muted);margin:-8px 0 14px;line-height:1.5}
+
+.postCard{border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px}
+.postHead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:4px}
+.postTitle{font-weight:700;font-size:14.5px}
+.postMeta{font-size:11.5px;color:var(--muted)}
+.postBtns{display:flex;gap:8px;margin-top:8px}
+.postBtns button{padding:6px 12px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div class="brand">Research — <span>Admin</span></div>
+    <a href="/research">View feed →</a>
+  </div>
+
+  <div class="panel" id="lockPanel">
+    <label>Admin key</label>
+    <input type="password" id="adminKeyInput" placeholder="Admin key">
+    <div class="actions"><button id="unlockBtn">Unlock</button></div>
+    <div class="msg bad" id="lockMsg"></div>
+  </div>
+
+  <div id="adminArea" class="hidden">
+    <div class="panel">
+      <div id="formHeading" style="font-weight:700;margin-bottom:14px">Write a new post</div>
+      <label>Title</label>
+      <input type="text" id="titleInput" maxlength="200" placeholder="e.g. Machine Learning in Blood Cancer Care">
+      <label>Subtitle (optional)</label>
+      <input type="text" id="subtitleInput" maxlength="300" placeholder="A short dek under the title">
+      <div class="row2">
+        <div>
+          <label>Author</label>
+          <input type="text" id="authorInput" maxlength="100" value="Kunga Moenlam">
+        </div>
+        <div>
+          <label>Published date</label>
+          <input type="date" id="dateInput">
+        </div>
+      </div>
+      <label>Body</label>
+      <div class="hint">Plain text. Blank line = new paragraph. ## Heading, **bold**, *italic*, --- for a divider. Bare domains like nature.com/articles/x auto-link.</div>
+      <textarea id="bodyInput" placeholder="Write the article here…"></textarea>
+      <div class="actions">
+        <button id="saveBtn">Publish</button>
+        <button class="secondary hidden" id="cancelEditBtn">Cancel edit</button>
+      </div>
+      <div class="msg" id="saveMsg"></div>
+    </div>
+
+    <div id="postList"><div class="empty">Loading…</div></div>
+  </div>
+</div>
+
+<script>
+let adminKey = '';
+let posts = [];
+let editingId = null;
+
+const lockPanel = document.getElementById('lockPanel');
+const adminArea = document.getElementById('adminArea');
+const lockMsg = document.getElementById('lockMsg');
+
+document.getElementById('dateInput').valueAsDate = new Date();
+
+document.getElementById('unlockBtn').onclick = async () => {
+  adminKey = document.getElementById('adminKeyInput').value.trim();
+  if(!adminKey){ lockMsg.textContent = 'Enter the admin key.'; return; }
+  const ok = await loadPosts();
+  if(ok){
+    lockPanel.classList.add('hidden');
+    adminArea.classList.remove('hidden');
+  }
+};
+
+function esc(s){ return String(s === undefined || s === null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtTime(iso){
+  try{ return new Date(iso).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}); }
+  catch(e){ return iso; }
+}
+
+async function loadPosts(){
+  try{
+    const resp = await fetch('/api/research?limit=100', { headers: { 'x-admin-key': adminKey } });
+    if(resp.status === 401){ lockMsg.textContent = 'Incorrect admin key.'; adminKey = ''; return false; }
+    const data = await resp.json();
+    posts = data.posts || [];
+    renderPosts();
+    return true;
+  }catch(e){
+    lockMsg.textContent = 'Network error.';
+    return false;
+  }
+}
+
+function renderPosts(){
+  const list = document.getElementById('postList');
+  if(!posts.length){ list.innerHTML = '<div class="empty">No posts yet.</div>'; return; }
+  list.innerHTML = posts.map((p) => `
+    <div class="postCard">
+      <div class="postHead">
+        <div class="postTitle">${esc(p.title)}</div>
+        <div class="postMeta">${esc(p.publishedDate)}</div>
+      </div>
+      <div class="postMeta">${esc(p.author)} · created ${esc(fmtTime(p.createdAt))}</div>
+      <div class="postBtns">
+        <button class="secondary" data-edit="${p.id}">Edit</button>
+        <a href="/research?id=${p.id}" target="_blank"><button class="secondary" type="button">View</button></a>
+        <button class="danger" data-delete="${p.id}">Delete</button>
+      </div>
+    </div>
+  `).join('');
+  list.querySelectorAll('[data-edit]').forEach((btn) => {
+    btn.onclick = () => editPost(btn.dataset.edit);
+  });
+  list.querySelectorAll('[data-delete]').forEach((btn) => {
+    btn.onclick = () => deletePost(btn.dataset.delete);
+  });
+}
+
+function editPost(id){
+  const p = posts.find((x) => String(x.id) === String(id));
+  if(!p) return;
+  editingId = p.id;
+  document.getElementById('formHeading').textContent = 'Editing: ' + p.title;
+  document.getElementById('titleInput').value = p.title;
+  document.getElementById('subtitleInput').value = p.subtitle || '';
+  document.getElementById('authorInput').value = p.author;
+  document.getElementById('dateInput').value = p.publishedDate;
+  document.getElementById('bodyInput').value = p.bodyRaw;
+  document.getElementById('cancelEditBtn').classList.remove('hidden');
+  document.getElementById('saveBtn').textContent = 'Save changes';
+  window.scrollTo(0, 0);
+}
+
+function resetForm(){
+  editingId = null;
+  document.getElementById('formHeading').textContent = 'Write a new post';
+  document.getElementById('titleInput').value = '';
+  document.getElementById('subtitleInput').value = '';
+  document.getElementById('authorInput').value = 'Kunga Moenlam';
+  document.getElementById('dateInput').valueAsDate = new Date();
+  document.getElementById('bodyInput').value = '';
+  document.getElementById('cancelEditBtn').classList.add('hidden');
+  document.getElementById('saveBtn').textContent = 'Publish';
+}
+document.getElementById('cancelEditBtn').onclick = resetForm;
+
+document.getElementById('saveBtn').onclick = async () => {
+  const saveMsg = document.getElementById('saveMsg');
+  saveMsg.textContent = ''; saveMsg.className = 'msg';
+  const title = document.getElementById('titleInput').value.trim();
+  const subtitle = document.getElementById('subtitleInput').value.trim();
+  const author = document.getElementById('authorInput').value.trim();
+  const publishedDate = document.getElementById('dateInput').value;
+  const body = document.getElementById('bodyInput').value;
+  if(!title){ saveMsg.textContent = 'Title is required.'; saveMsg.className = 'msg bad'; return; }
+  if(!body.trim()){ saveMsg.textContent = 'Body is required.'; saveMsg.className = 'msg bad'; return; }
+
+  try{
+    const url = editingId ? '/api/research/' + editingId : '/api/research';
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+      body: JSON.stringify({ title, subtitle, author, publishedDate, body }),
+    });
+    const data = await resp.json();
+    if(!resp.ok){ saveMsg.textContent = data.error || 'Could not save.'; saveMsg.className = 'msg bad'; return; }
+
+    saveMsg.textContent = 'Saved.'; saveMsg.className = 'msg good';
+    resetForm();
+    loadPosts();
+  }catch(e){
+    saveMsg.textContent = 'Network error.'; saveMsg.className = 'msg bad';
+  }
+};
+
+async function deletePost(id){
+  if(!confirm('Delete this post? This can\'t be undone.')) return;
+  await fetch('/api/research/' + id + '/delete', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+  });
+  loadPosts();
+}
+</script>
+</body>
+</html>

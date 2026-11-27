@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Research</title>
+<meta name="description" content="Kunga's research write-ups.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#13131a;--ink:#f1f0f6;--muted:#9a97ab;--accent:#b794f6;--accent2:#6b46c1;--bad:#ff8a8a;
+  --font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at 50% 0%,#241f33,#13131a 60%);color:var(--ink);font-family:var(--font-body);min-height:100vh}
+.topBar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:calc(14px + env(safe-area-inset-top,0px)) 18px 14px;background:rgba(19,19,26,.88);backdrop-filter:blur(8px)}
+.brand{font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--ink);text-decoration:none}
+
+.wrap{max-width:640px;margin:0 auto;padding:4px 20px 60px}
+.hero{padding:16px 0 10px}
+.hero h1{font-family:var(--font-display);font-weight:800;font-size:26px;margin:0 0 6px}
+.hero p{color:var(--muted);font-size:13.5px;margin:0;line-height:1.6}
+
+.postList{display:grid;gap:14px}
+.postCard{all:unset;cursor:pointer;display:block;box-sizing:border-box;width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:18px 20px}
+.postCard:hover{background:rgba(255,255,255,.06)}
+.postCardTitle{font-family:var(--font-display);font-weight:700;font-size:18px;margin:0 0 4px}
+.postCardSub{color:var(--muted);font-size:13.5px;margin:0 0 10px;line-height:1.5}
+.postCardMeta{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+
+.emptyState{text-align:center;color:var(--muted);font-size:13.5px;padding:60px 20px;line-height:1.7}
+.emptyState .glyph{font-size:34px;display:block;margin-bottom:10px}
+
+/* ---- article view ---- */
+.article{max-width:640px;margin:0 auto;padding:10px 20px 70px}
+.articleBack{all:unset;cursor:pointer;color:var(--muted);font-size:13px;margin-bottom:18px;display:inline-block}
+.articleTitle{font-family:var(--font-display);font-weight:800;font-size:28px;margin:0 0 8px;line-height:1.25}
+.articleSub{color:var(--muted);font-size:15px;margin:0 0 14px;line-height:1.5}
+.articleMeta{font-size:12.5px;color:var(--muted);margin-bottom:26px}
+.articleBody{font-size:16px;line-height:1.75}
+.articleBody h2{font-family:var(--font-display);font-weight:700;font-size:19px;margin:28px 0 10px}
+.articleBody h3{font-family:var(--font-display);font-weight:700;font-size:16.5px;margin:22px 0 8px}
+.articleBody p{margin:0 0 16px}
+.articleBody hr{border:none;border-top:1px solid rgba(255,255,255,.12);margin:26px 0}
+.articleBody a{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<div class="topBar">
+  <a class="brand" href="/">← kunga.me</a>
+  <span class="brand" style="color:var(--muted);font-weight:600">RESEARCH</span>
+</div>
+
+<div id="content"><div class="wrap"><div class="emptyState">Loading…</div></div></div>
+
+<script>
+function esc(s){ return String(s === undefined || s === null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(dateStr){
+  try{
+    const [y,m,d] = dateStr.split('-').map(Number);
+    return new Date(y, m-1, d).toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'});
+  }catch(e){ return dateStr; }
+}
+
+const content = document.getElementById('content');
+
+function getIdFromUrl(){
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+  return id ? Number(id) : null;
+}
+
+async function init(){
+  const id = getIdFromUrl();
+  if(id){
+    renderArticle(id);
+  } else {
+    renderList();
+  }
+}
+
+async function renderList(){
+  content.innerHTML = `
+    <div class="wrap">
+      <div class="hero">
+        <h1>🔬 Research</h1>
+        <p>Write-ups on machine learning, medicine, and whatever else I've been reading about.</p>
+      </div>
+      <div class="postList" id="postList"><div class="emptyState">Loading…</div></div>
+    </div>
+  `;
+  try{
+    const resp = await fetch('/api/research');
+    const data = await resp.json();
+    const posts = data.posts || [];
+    const list = document.getElementById('postList');
+    if(!posts.length){
+      list.innerHTML = `<div class="emptyState"><span class="glyph">🔬</span>No write-ups posted yet.</div>`;
+      return;
+    }
+    list.innerHTML = posts.map((p) => `
+      <button class="postCard" data-open="${p.id}">
+        <div class="postCardTitle">${esc(p.title)}</div>
+        ${p.subtitle ? `<div class="postCardSub">${esc(p.subtitle)}</div>` : ''}
+        <div class="postCardMeta">${esc(p.author)} · ${esc(fmtDate(p.publishedDate))}</div>
+      </button>
+    `).join('');
+    list.querySelectorAll('[data-open]').forEach((btn) => {
+      btn.onclick = () => {
+        history.pushState({}, '', '/research?id=' + btn.dataset.open);
+        renderArticle(Number(btn.dataset.open));
+      };
+    });
+  }catch(e){
+    document.getElementById('postList').innerHTML = `<div class="emptyState">Network error — try again.</div>`;
+  }
+}
+
+async function renderArticle(id){
+  content.innerHTML = `<div class="article"><div class="emptyState">Loading…</div></div>`;
+  try{
+    const resp = await fetch('/api/research/' + id);
+    const data = await resp.json();
+    if(!resp.ok){
+      content.innerHTML = `<div class="article"><button class="articleBack" id="backBtn">← All research</button><div class="emptyState">${esc(data.error || 'Not found.')}</div></div>`;
+      document.getElementById('backBtn').onclick = goToList;
+      return;
+    }
+    const p = data.post;
+    content.innerHTML = `
+      <div class="article">
+        <button class="articleBack" id="backBtn">← All research</button>
+        <h1 class="articleTitle">${esc(p.title)}</h1>
+        ${p.subtitle ? `<p class="articleSub">${esc(p.subtitle)}</p>` : ''}
+        <div class="articleMeta">${esc(p.author)} · ${esc(fmtDate(p.publishedDate))}</div>
+        <div class="articleBody">${p.bodyHtml}</div>
+      </div>
+    `;
+    document.getElementById('backBtn').onclick = goToList;
+  }catch(e){
+    content.innerHTML = `<div class="article"><div class="emptyState">Network error — try again.</div></div>`;
+  }
+}
+
+function goToList(){
+  history.pushState({}, '', '/research');
+  renderList();
+}
+
+window.addEventListener('popstate', init);
+init();
+</script>
+</body>
+</html>

@@ -74,6 +74,49 @@ function sanitizeDiaryHtml(html) {
   });
 }
 
+// Research articles: the admin writes plain text with a tiny markdown-lite
+// syntax (## headings, blank-line paragraphs, **bold**, *italic*, --- rules,
+// and bare domain citations auto-linked) rather than hand-written HTML --
+// nobody wants to type <p> tags for a multi-page article. Converted to HTML
+// here, then still run through sanitizeResearchHtml below before storage,
+// same defense-in-depth reasoning as the Diary's sanitizer: never trust a
+// rendering step to have produced only safe output, even your own.
+function escapeHtmlLite(s) {
+  return String(s === undefined || s === null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function researchInlineFormat(line) {
+  let s = escapeHtmlLite(line);
+  s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  s = s.replace(/(^|[\s(])((?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s<]*)?)/gi, (m, pre, url) => {
+    if (/^https?:\/\//i.test(url)) return m;
+    return `${pre}<a href="https://${url}" target="_blank" rel="noopener">${url}</a>`;
+  });
+  return s;
+}
+function markdownLiteToHtml(text) {
+  const src = String(text || '').replace(/\r\n/g, '\n');
+  const blocks = src.split(/\n{2,}/).map((b) => b.trim()).filter(Boolean);
+  return blocks.map((block) => {
+    if (/^-{3,}$/.test(block)) return '<hr>';
+    const headingMatch = block.match(/^(#{2,3})\s+(.*)$/);
+    if (headingMatch) {
+      const level = headingMatch[1].length;
+      return `<h${level}>${researchInlineFormat(headingMatch[2])}</h${level}>`;
+    }
+    const lines = block.split('\n').map(researchInlineFormat);
+    return `<p>${lines.join('<br>')}</p>`;
+  }).join('\n');
+}
+const RESEARCH_ALLOWED_TAGS = ['h2', 'h3', 'p', 'br', 'strong', 'em', 'a', 'hr'];
+function sanitizeResearchHtml(html) {
+  return sanitizeHtml(String(html || ''), {
+    allowedTags: RESEARCH_ALLOWED_TAGS,
+    allowedAttributes: { a: ['href', 'target', 'rel'] },
+    allowedSchemes: ['http', 'https'],
+  });
+}
+
 function randomLetters(n) {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz';
   let out = '';
@@ -228,6 +271,7 @@ function createApp(overrides = {}) {
   const CHAT_FILE = overrides.chatFile || path.join(__dirname, 'data', 'chat.json');
   const MARKETS_FILE = overrides.marketsFile || path.join(__dirname, 'data', 'markets.json');
   const FEED_FILE = overrides.feedFile || path.join(__dirname, 'data', 'feed.json');
+  const RESEARCH_FILE = overrides.researchFile || path.join(__dirname, 'data', 'research.json');
   const ADMIN_KEY = overrides.adminKey || process.env.ADMIN_KEY || 'sangwa-admin-key';
   const DATABASE_URL = overrides.databaseUrl || process.env.DATABASE_URL || null;
   const SUPABASE_URL = process.env.SUPABASE_URL || null;
@@ -797,6 +841,22 @@ function createApp(overrides = {}) {
         username text not null,
         created_at timestamptz default now(),
         unique (post_id, username)
+      );
+    `);
+    // Research: owner-authored long-form articles. Admin-key gated writes,
+    // same reasoning as The Markets -- published content, not user data.
+    // body_raw keeps the admin's original markdown-lite source so a post can
+    // be re-edited later; body_html is the sanitized render actually served.
+    await client.query(`
+      create table if not exists public.research_posts (
+        id serial primary key,
+        title text not null,
+        subtitle text,
+        author text not null default 'Kunga Moenlam',
+        published_date date not null default current_date,
+        body_raw text not null,
+        body_html text not null,
+        created_at timestamptz default now()
       );
     `);
     databaseReady = true;
@@ -2968,6 +3028,107 @@ function createApp(overrides = {}) {
     const [removed] = data.posts.splice(idx, 1);
     data.likes = data.likes.filter((l) => String(l.postId) !== String(id));
     writeFeedFile(data);
+    return removed;
+  }
+
+  function ensureResearchFile() {
+    const dir = path.dirname(RESEARCH_FILE);
+    fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(RESEARCH_FILE)) {
+      fs.writeFileSync(RESEARCH_FILE, JSON.stringify({ nextId: 1, posts: [] }, null, 2), 'utf8');
+    }
+  }
+  function readResearchFile() {
+    ensureResearchFile();
+    try {
+      const parsed = JSON.parse(fs.readFileSync(RESEARCH_FILE, 'utf8'));
+      return { nextId: parsed.nextId || 1, posts: Array.isArray(parsed.posts) ? parsed.posts : [] };
+    } catch (error) {
+      return { nextId: 1, posts: [] };
+    }
+  }
+  function writeResearchFile(data) {
+    ensureResearchFile();
+    fs.writeFileSync(RESEARCH_FILE, JSON.stringify(data, null, 2), 'utf8');
+  }
+
+  const RESEARCH_SELECT_SQL = `id, title, subtitle, author, published_date as "publishedDate",
+    body_raw as "bodyRaw", body_html as "bodyHtml", created_at as "createdAt"`;
+
+  async function createResearchPost({ title, subtitle, author, publishedDate, bodyRaw, bodyHtml }) {
+    const client = await getDbClient();
+    const createdAt = new Date().toISOString();
+    if (client) {
+      const result = await client.query(
+        `insert into public.research_posts (title, subtitle, author, published_date, body_raw, body_html, created_at)
+         values ($1,$2,$3,$4,$5,$6,$7)
+         returning ${RESEARCH_SELECT_SQL}`,
+        [title, subtitle, author, publishedDate, bodyRaw, bodyHtml, createdAt]
+      );
+      return result.rows[0];
+    }
+    const data = readResearchFile();
+    const post = { id: data.nextId, title, subtitle, author, publishedDate, bodyRaw, bodyHtml, createdAt };
+    data.posts.push(post);
+    data.nextId += 1;
+    writeResearchFile(data);
+    return post;
+  }
+
+  async function updateResearchPost(id, { title, subtitle, author, publishedDate, bodyRaw, bodyHtml }) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `update public.research_posts set title=$2, subtitle=$3, author=$4, published_date=$5, body_raw=$6, body_html=$7
+         where id=$1 returning ${RESEARCH_SELECT_SQL}`,
+        [id, title, subtitle, author, publishedDate, bodyRaw, bodyHtml]
+      );
+      return result.rows[0] || null;
+    }
+    const data = readResearchFile();
+    const post = data.posts.find((p) => String(p.id) === String(id));
+    if (!post) return null;
+    Object.assign(post, { title, subtitle, author, publishedDate, bodyRaw, bodyHtml });
+    writeResearchFile(data);
+    return post;
+  }
+
+  async function listResearchPosts(limit) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(
+        `select ${RESEARCH_SELECT_SQL} from public.research_posts order by published_date desc, created_at desc limit $1`,
+        [limit]
+      );
+      return result.rows;
+    }
+    const data = readResearchFile();
+    return [...data.posts]
+      .sort((a, b) => (b.publishedDate || '').localeCompare(a.publishedDate || '') || new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, limit);
+  }
+
+  async function getResearchPostById(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(`select ${RESEARCH_SELECT_SQL} from public.research_posts where id=$1`, [id]);
+      return result.rows[0] || null;
+    }
+    const data = readResearchFile();
+    return data.posts.find((p) => String(p.id) === String(id)) || null;
+  }
+
+  async function deleteResearchPost(id) {
+    const client = await getDbClient();
+    if (client) {
+      const result = await client.query(`delete from public.research_posts where id=$1 returning id`, [id]);
+      return result.rows[0] || null;
+    }
+    const data = readResearchFile();
+    const idx = data.posts.findIndex((p) => String(p.id) === String(id));
+    if (idx === -1) return null;
+    const [removed] = data.posts.splice(idx, 1);
+    writeResearchFile(data);
     return removed;
   }
 
@@ -5614,6 +5775,72 @@ function createApp(overrides = {}) {
     return res.redirect(302, data.publicUrl);
   });
 
+  // ---- Research: owner-authored long-form articles. Public reads, same
+  // admin-key-gated writes as The Markets -- published content, not a
+  // normal user-to-user feature.
+  const RESEARCH_TITLE_MAX = 200;
+  const RESEARCH_SUBTITLE_MAX = 300;
+  const RESEARCH_AUTHOR_MAX = 100;
+  const RESEARCH_BODY_MAX = 200000;
+
+  app.get('/api/research', async (req, res) => {
+    const incomingKey = req.headers['x-admin-key'];
+    if (incomingKey && incomingKey !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const limit = Math.min(Number(req.query.limit) || 50, 100);
+    const posts = await listResearchPosts(limit);
+    return res.json({ posts });
+  });
+
+  app.get('/api/research/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const post = await getResearchPostById(id);
+    if (!post) return res.status(404).json({ error: 'Post not found.' });
+    return res.json({ post });
+  });
+
+  function validateResearchFields(body) {
+    const title = String(body.title || '').trim();
+    const subtitle = String(body.subtitle || '').trim();
+    const author = String(body.author || '').trim() || 'Kunga Moenlam';
+    const publishedDate = /^\d{4}-\d{2}-\d{2}$/.test(String(body.publishedDate || '')) ? body.publishedDate : new Date().toISOString().slice(0, 10);
+    const bodyRaw = String(body.body || '').trim();
+    if (!title || title.length > RESEARCH_TITLE_MAX) return { error: `Title must be 1-${RESEARCH_TITLE_MAX} characters.` };
+    if (subtitle.length > RESEARCH_SUBTITLE_MAX) return { error: `Subtitle must be under ${RESEARCH_SUBTITLE_MAX} characters.` };
+    if (author.length > RESEARCH_AUTHOR_MAX) return { error: `Author must be under ${RESEARCH_AUTHOR_MAX} characters.` };
+    if (!bodyRaw || bodyRaw.length > RESEARCH_BODY_MAX) return { error: `Body must be 1-${RESEARCH_BODY_MAX} characters.` };
+    const bodyHtml = sanitizeResearchHtml(markdownLiteToHtml(bodyRaw));
+    return { title, subtitle, author, publishedDate, bodyRaw, bodyHtml };
+  }
+
+  app.post('/api/research', async (req, res) => {
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const fields = validateResearchFields(req.body || {});
+    if (fields.error) return res.status(400).json({ error: fields.error });
+    const post = await createResearchPost(fields);
+    return res.json({ post });
+  });
+
+  app.post('/api/research/:id', async (req, res) => {
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const fields = validateResearchFields(req.body || {});
+    if (fields.error) return res.status(400).json({ error: fields.error });
+    const post = await updateResearchPost(id, fields);
+    if (!post) return res.status(404).json({ error: 'Post not found.' });
+    return res.json({ post });
+  });
+
+  app.post('/api/research/:id/delete', async (req, res) => {
+    if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(401).json({ error: 'Unauthorized.' });
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Invalid id.' });
+    const removed = await deleteResearchPost(id);
+    if (!removed) return res.status(404).json({ error: 'Post not found.' });
+    return res.json({ ok: true });
+  });
+
   app.get('/api/admin/users', async (req, res) => {
     const incomingKey = req.headers['x-admin-key'];
     if (incomingKey !== ADMIN_KEY) {
@@ -5814,6 +6041,22 @@ function createApp(overrides = {}) {
 
   app.get('/feed.html', (req, res) => {
     return res.sendFile(path.join(__dirname, 'feed.html'));
+  });
+
+  app.get('/research', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'research.html'));
+  });
+
+  app.get('/research.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'research.html'));
+  });
+
+  app.get('/research/admin', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'research-admin.html'));
+  });
+
+  app.get('/research/admin.html', (req, res) => {
+    return res.sendFile(path.join(__dirname, 'research-admin.html'));
   });
 
   app.get('/poker', (req, res) => {
